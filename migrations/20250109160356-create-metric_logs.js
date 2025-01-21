@@ -1,0 +1,51 @@
+"use strict";
+
+/** @type {import('sequelize-cli').Migration} */
+module.exports = {
+  up: async (queryInterface, Sequelize) => {
+    return queryInterface.sequelize.transaction(async (transaction) => {
+      await queryInterface.createTable(
+        "metric_logs",
+        {
+          id: {
+            type: Sequelize.UUID,
+            defaultValue: Sequelize.literal("uuid_generate_v4()"),
+            primaryKey: true,
+            allowNull: false,
+          },
+          metric_id: {
+            type: Sequelize.UUID,
+            allowNull: false,
+            references: { model: "metrics", key: "id" },
+            onDelete: "CASCADE",
+          },
+          log_value: {
+            type: Sequelize.FLOAT,
+            allowNull: false,
+          },
+          type: {
+            type: Sequelize.STRING,
+            allowNull: false,
+          },
+          created_at: {
+            allowNull: false,
+            type: Sequelize.DATE,
+            defaultValue: Sequelize.literal("NOW()"),
+          },
+          updated_at: {
+            allowNull: false,
+            type: Sequelize.DATE,
+            defaultValue: Sequelize.literal("NOW()"),
+          },
+        },
+        { transaction }
+      );
+    });
+  },
+
+  down: async (queryInterface, Sequelize) => {
+    return queryInterface.sequelize.transaction(async (transaction) => {
+      await queryInterface.dropTable("metric_logs", { transaction });
+    });
+  },
+};
