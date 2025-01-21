@@ -1,0 +1,72 @@
+# Node.js Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment Variables
+.env
+.env.test
+.env.production
+
+# Build and Distribution
+dist/
+build/
+coverage/
+tmp/
+temp/
+
+# Sequelize CLI
+.migrate/
+.sequelize/
+sequelize-meta.json
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# OS Specific Files
+.DS_Store
+Thumbs.db
+
+# Optional npm cache directory
+.npm/
+
+# Optional eslint cache
+.eslintcache
+
+# TypeScript
+*.tsbuildinfo
+
+# Optional REPL history
+.node_repl_history
+
+# dotenv environment variable files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Miscellaneous
+*.tgz
+*.bak
+*.backup
+*.swp
+*.swo
+*.lock
+
+# Ignore coverage reports
+coverage/
