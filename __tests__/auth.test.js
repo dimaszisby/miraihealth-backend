@@ -26,8 +26,8 @@ describe("Auth Endpoints", () => {
     }
 
     expect(res.statusCode).toEqual(201);
-    expect(res.body).toHaveProperty("token");
-    expect(res.body.user).toHaveProperty("email", userData.email);
+    expect(res.body.data).toHaveProperty("token");
+    expect(res.body.data.user).toHaveProperty("email", userData.email);
   });
 
   it("should login the user", async () => {
@@ -47,8 +47,8 @@ describe("Auth Endpoints", () => {
       console.log("Login Error:", loginRes.body);
     }
     expect(loginRes.statusCode).toEqual(200);
-    expect(loginRes.body).toHaveProperty("token");
-    expect(loginRes.body.user).toHaveProperty("email", userData.email);
+    expect(loginRes.body.data).toHaveProperty("token");
+    expect(loginRes.body.data.user).toHaveProperty("email", userData.email);
   });
 
   it("should not login with wrong credentials", async () => {
@@ -56,6 +56,7 @@ describe("Auth Endpoints", () => {
       email: "test@example.com",
       password: "WrongPassword",
     });
+
     expect(res.statusCode).toEqual(401);
     expect(res.body).toHaveProperty("message", "Invalid email or password");
   });

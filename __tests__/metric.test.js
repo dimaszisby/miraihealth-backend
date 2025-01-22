@@ -40,8 +40,8 @@ describe("Metric Endpoints", () => {
       console.log("Login Error:", loginRes.body);
     }
 
-    console.log("Token Recieved:", loginRes.body.token);
-    token = loginRes.body.token;
+    console.log("Token Recieved:", loginRes.body.data.token);
+    token = loginRes.body.data.token;
 
     if (!token) {
       throw new Error("Authentication failed. Token not received.");
@@ -96,10 +96,10 @@ describe("Metric Endpoints", () => {
     }
 
     expect(res.statusCode).toEqual(201);
-    expect(res.body).toHaveProperty("metric");
-    expect(res.body.metric).toHaveProperty("id");
-    expect(res.body.metric).toHaveProperty("name", "Weight");
-    expect(res.body.metric).toHaveProperty("unit", "Kg");
+    expect(res.body.data).toHaveProperty("metric");
+    expect(res.body.data.metric).toHaveProperty("id");
+    expect(res.body.data.metric).toHaveProperty("name", "Weight");
+    expect(res.body.data.metric).toHaveProperty("unit", "Kg");
     // expect(res.body.metric.name).toEqual("Weight");
     // expect(res.body.metric.unit).toEqual("Kg");
   });
@@ -121,7 +121,7 @@ describe("Metric Endpoints", () => {
       console.log("Create Metric Error:", dummyMetric.body);
     }
     console.log("Dummy Metric Id:", dummyMetric.body.id);
-    dummyId = dummyMetric.body.metric.id;
+    dummyId = dummyMetric.body.data.metric.id;
 
     // Metric
     const res = await request(app)
@@ -141,11 +141,11 @@ describe("Metric Endpoints", () => {
     }
 
     expect(res.statusCode).toEqual(201);
-    expect(res.body.metric).toHaveProperty("id");
-    expect(res.body.metric).toHaveProperty("name", "Height");
-    expect(res.body.metric).toHaveProperty("unit", "cm");
-    expect(res.body.metric.name).toEqual("Height");
-    expect(res.body.metric.unit).toEqual("cm");
+    expect(res.body.data.metric).toHaveProperty("id");
+    expect(res.body.data.metric).toHaveProperty("name", "Height");
+    expect(res.body.data.metric).toHaveProperty("unit", "cm");
+    expect(res.body.data.metric.name).toEqual("Height");
+    expect(res.body.data.metric.unit).toEqual("cm");
   });
 
   it("Should fetch all metrics for authenticated user", async () => {
@@ -153,8 +153,10 @@ describe("Metric Endpoints", () => {
       .get(`/api/v1/metrics`)
       .set("Authorization", `Bearer ${token}`);
 
+    console.log("RES Metrics", res.statusCode);
+
     expect(res.statusCode).toEqual(200);
-    expect(Array.isArray(res.body.metrics)).toBe(true);
+    expect(Array.isArray(res.body.data.metrics)).toBe(true);
   });
 
   it("Should fetch a metric for authenticated user", async () => {
@@ -173,7 +175,7 @@ describe("Metric Endpoints", () => {
       console.log("Create Metric for Fetch Error:", createRes.body);
     }
 
-    const metricId = createRes.body.metric.id;
+    const metricId = createRes.body.data.metric.id;
 
     // Fetch Settings
     const res = await request(app)
@@ -185,8 +187,8 @@ describe("Metric Endpoints", () => {
     }
 
     expect(res.statusCode).toEqual(200);
-    expect(res.body).toHaveProperty("metric");
-    expect(res.body.metric).toHaveProperty("id", metricId);
+    expect(res.body.data).toHaveProperty("metric");
+    expect(res.body.data.metric).toHaveProperty("id", metricId);
   });
 
   it("should update a metric", async () => {
@@ -205,7 +207,7 @@ describe("Metric Endpoints", () => {
       console.log("Create Metric for Update Error:", createRes.body);
     }
 
-    const metricId = createRes.body.metric.id;
+    const metricId = createRes.body.data.metric.id;
 
     // Update metric
     const res = await request(app)
@@ -217,7 +219,7 @@ describe("Metric Endpoints", () => {
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty("message", "Metric updated successfully");
-    expect(res.body.metric.name).toEqual("Body Mass Index");
+    expect(res.body.data.metric.name).toEqual("Body Mass Index");
   });
 
   it("should delete a metric", async () => {
@@ -236,7 +238,7 @@ describe("Metric Endpoints", () => {
       console.log("Create Metric for Deletion Error:", createRes.body);
     }
 
-    const metricId = createRes.body.metric.id;
+    const metricId = createRes.body.data.metric.id;
 
     // Delete metric
     const res = await request(app)

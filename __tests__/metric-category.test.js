@@ -39,7 +39,7 @@ describe("Metric Category Endpoints", () => {
     }
 
     // Validate Token Token for test
-    token = loginRes.body.token;
+    token = loginRes.body.data.token;
     if (!token) {
       throw new Error("Authentication failed. Token not received.");
     }
@@ -71,8 +71,8 @@ describe("Metric Category Endpoints", () => {
 
     expect(res.statusCode).toEqual(201);
     expect(res.body).toHaveProperty("message", "Category created successfully");
-    expect(res.body.category).toHaveProperty("name", "Muscle");
-    expect(res.body.category.name).toEqual("Muscle");
+    expect(res.body.data.category).toHaveProperty("name", "Muscle");
+    expect(res.body.data.category.name).toEqual("Muscle");
   });
 
   it("Should fetch all categories from authenticated user", async () => {
@@ -85,7 +85,7 @@ describe("Metric Category Endpoints", () => {
     }
 
     expect(res.statusCode).toEqual(200);
-    expect(Array.isArray(res.body.categories)).toBe(true);
+    expect(Array.isArray(res.body.data.categories)).toBe(true);
   });
 
   it("Should fetch a category from authenticated user", async () => {
@@ -101,7 +101,7 @@ describe("Metric Category Endpoints", () => {
       console.log("Create Category Error:", category.body);
     }
 
-    const categoryId = category.body.category.id;
+    const categoryId = category.body.data.category.id;
 
     // Get category
     const res = await request(app)
@@ -113,9 +113,9 @@ describe("Metric Category Endpoints", () => {
     }
 
     expect(res.statusCode).toEqual(200);
-    expect(res.body.category).toHaveProperty("name");
-    expect(res.body.category).toHaveProperty("icon");
-    expect(res.body.category).toHaveProperty("color");
+    expect(res.body.data.category).toHaveProperty("name");
+    expect(res.body.data.category).toHaveProperty("icon");
+    expect(res.body.data.category).toHaveProperty("color");
   });
 
   it("Should update a category", async () => {
@@ -130,7 +130,7 @@ describe("Metric Category Endpoints", () => {
     if (category.statusCode !== 201) {
       console.log("Create Category Error:", category.body);
     }
-    const categoryId = category.body.category.id;
+    const categoryId = category.body.data.category.id;
 
     // Update category
     const res = await request(app)
@@ -146,7 +146,7 @@ describe("Metric Category Endpoints", () => {
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty("message", "Category updated successfully");
-    expect(res.body.category.name).toEqual("Body Mass Index");
+    expect(res.body.data.category.name).toEqual("Body Mass Index");
   });
 
   it("Should delete a category", async () => {
@@ -161,7 +161,7 @@ describe("Metric Category Endpoints", () => {
     if (category.statusCode !== 201) {
       console.log("Create Category Error:", category.body);
     }
-    const categoryId = category.body.category.id;
+    const categoryId = category.body.data.category.id;
 
     // Delete category
     const res = await request(app)

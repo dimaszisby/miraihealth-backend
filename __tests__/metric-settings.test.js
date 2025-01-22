@@ -41,7 +41,7 @@ describe("Metric Settings Endpoints", () => {
     }
 
     // Validate token
-    token = loginRes.body.token;
+    token = loginRes.body.data.token;
     if (!token) {
       throw new Error("Authentication failed. Token not received.");
     }
@@ -69,7 +69,7 @@ describe("Metric Settings Endpoints", () => {
       console.log("Metric Setup Creation Error:", metric.body);
     }
 
-    metricParent = metric.body.metric;
+    metricParent = metric.body.data.metric;
   });
 
   afterEach(async () => {
@@ -101,11 +101,11 @@ describe("Metric Settings Endpoints", () => {
       "message",
       "Metric Settings created successfully"
     );
-    expect(res.body).toHaveProperty("settings");
-    expect(res.body.settings).toHaveProperty("id");
-    expect(res.body.settings).toHaveProperty("isTracked", true);
-    expect(res.body.settings).toHaveProperty("goalValue", 10);
-    expect(new Date(res.body.settings.versionDate).getTime()).toBeCloseTo(
+    expect(res.body.data).toHaveProperty("settings");
+    expect(res.body.data.settings).toHaveProperty("id");
+    expect(res.body.data.settings).toHaveProperty("isTracked", true);
+    expect(res.body.data.settings).toHaveProperty("goalValue", 10);
+    expect(new Date(res.body.data.settings.versionDate).getTime()).toBeCloseTo(
       timestamp,
       -1
     );
@@ -121,7 +121,7 @@ describe("Metric Settings Endpoints", () => {
     }
 
     expect(res.statusCode).toEqual(200);
-    expect(Array.isArray(res.body.settings)).toBe(true);
+    expect(Array.isArray(res.body.data.settings)).toBe(true);
   });
 
   it("Should fetch a Settings for Metric", async () => {
@@ -140,8 +140,8 @@ describe("Metric Settings Endpoints", () => {
     if (createRes.statusCode !== 201) {
       console.log("Create Setting for Fetch Error:", createRes.body);
     }
-    console.log("-- SettingsId", createRes.body.settings.id);
-    const settingsId = createRes.body.settings.id;
+    console.log("-- SettingsId", createRes.body.data.settings.id);
+    const settingsId = createRes.body.data.settings.id;
 
     // Fetch Settings
     const res = await request(app)
@@ -153,11 +153,11 @@ describe("Metric Settings Endpoints", () => {
     }
 
     expect(res.statusCode).toEqual(200);
-    expect(res.body).toHaveProperty("settings");
-    expect(res.body.settings).toHaveProperty("id", settingsId);
-    expect(res.body.settings).toHaveProperty("isTracked", true);
-    expect(res.body.settings).toHaveProperty("goalValue", 15);
-    expect(new Date(res.body.settings.versionDate).getTime()).toBeCloseTo(
+    expect(res.body.data).toHaveProperty("settings");
+    expect(res.body.data.settings).toHaveProperty("id", settingsId);
+    expect(res.body.data.settings).toHaveProperty("isTracked", true);
+    expect(res.body.data.settings).toHaveProperty("goalValue", 15);
+    expect(new Date(res.body.data.settings.versionDate).getTime()).toBeCloseTo(
       timestamp,
       -1
     );
@@ -180,7 +180,7 @@ describe("Metric Settings Endpoints", () => {
       console.log("Create Setting for Update Error:", createRes.body);
     }
 
-    const settingsId = createRes.body.settings.id;
+    const settingsId = createRes.body.data.settings.id;
 
     // Update Settings
     const res = await request(app)
@@ -196,8 +196,8 @@ describe("Metric Settings Endpoints", () => {
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty("message", "Settings updated successfully");
-    expect(res.body).toHaveProperty("settings");
-    expect(res.body.settings).toHaveProperty("goalValue", 20);
+    expect(res.body.data).toHaveProperty("settings");
+    expect(res.body.data.settings).toHaveProperty("goalValue", 20);
   });
 
   it("Should delete a Settings for Metric", async () => {
@@ -217,7 +217,7 @@ describe("Metric Settings Endpoints", () => {
       console.log("Create Setting for Deletion Error:", createRes.body);
     }
 
-    const settingsId = createRes.body.settings.id;
+    const settingsId = createRes.body.data.settings.id;
 
     // Delete settings
     const res = await request(app)
@@ -230,7 +230,7 @@ describe("Metric Settings Endpoints", () => {
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty("message", "Settings deleted successfully");
-    expect(res.body).toHaveProperty("settings");
-    expect(res.body.settings).toHaveProperty("id", settingsId);
+    expect(res.body.data).toHaveProperty("settings");
+    expect(res.body.data.settings).toHaveProperty("id", settingsId);
   });
 });

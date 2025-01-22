@@ -40,7 +40,7 @@ describe("Metric Log Endpoints", () => {
     }
 
     // Validate token
-    token = loginRes.body.token;
+    token = loginRes.body.data.token;
     if (!token) {
       throw new Error("Authentication failed. Token not received.");
     }
@@ -68,7 +68,7 @@ describe("Metric Log Endpoints", () => {
       console.log("Metric Setup Creation Error:", metric.body);
     }
 
-    metricParent = metric.body.metric;
+    metricParent = metric.body.data.metric;
     console.log("Metric Setup:", metricParent);
   });
 
@@ -91,11 +91,11 @@ describe("Metric Log Endpoints", () => {
     }
 
     expect(res.statusCode).toEqual(201);
-    expect(res.body.log).toHaveProperty("id");
-    expect(res.body.log).toHaveProperty("logValue", 10);
-    expect(res.body.log).toHaveProperty("type", "manual");
-    expect(res.body.log.logValue).toEqual(10);
-    expect(res.body.log.type).toEqual("manual");
+    expect(res.body.data.log).toHaveProperty("id");
+    expect(res.body.data.log).toHaveProperty("logValue", 10);
+    expect(res.body.data.log).toHaveProperty("type", "manual");
+    expect(res.body.data.log.logValue).toEqual(10);
+    expect(res.body.data.log.type).toEqual("manual");
   });
 
   it("Should fetch all logs for a Metirc", async () => {
@@ -108,7 +108,7 @@ describe("Metric Log Endpoints", () => {
     }
 
     expect(res.statusCode).toEqual(200);
-    expect(Array.isArray(res.body.logs)).toBe(true);
+    expect(Array.isArray(res.body.data.logs)).toBe(true);
   });
 
   it("Should fetch a log from a Metric", async () => {
@@ -124,7 +124,7 @@ describe("Metric Log Endpoints", () => {
       console.log("Create Log Error:", logRes.body);
     }
 
-    logId = logRes.body.log.id;
+    logId = logRes.body.data.log.id;
 
     // Fetch Log
     const res = await request(app)
@@ -136,9 +136,9 @@ describe("Metric Log Endpoints", () => {
     }
 
     expect(res.statusCode).toEqual(200);
-    expect(res.body.log).toHaveProperty("id", logId);
-    expect(res.body.log).toHaveProperty("logValue", 20);
-    expect(res.body.log).toHaveProperty("type", "manual");
+    expect(res.body.data.log).toHaveProperty("id", logId);
+    expect(res.body.data.log).toHaveProperty("logValue", 20);
+    expect(res.body.data.log).toHaveProperty("type", "manual");
   });
 
   it("Should update a Log from a Metric", async () => {
@@ -154,7 +154,7 @@ describe("Metric Log Endpoints", () => {
       console.log("Create Log Error:", logRes.body);
     }
 
-    logId = logRes.body.log.id;
+    logId = logRes.body.data.log.id;
 
     // Update Log
     const res = await request(app)
@@ -170,7 +170,7 @@ describe("Metric Log Endpoints", () => {
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty("message", "Log updated successfully");
-    expect(res.body.log.logValue).toEqual(30);
+    expect(res.body.data.log.logValue).toEqual(30);
   });
 
   it("Should delete a Log from a Metric:", async () => {
@@ -186,7 +186,7 @@ describe("Metric Log Endpoints", () => {
       console.log("Create Log Error:", logRes.body);
     }
 
-    logId = logRes.body.log.id;
+    logId = logRes.body.data.log.id;
 
     // Delete Log
     const res = await request(app)
