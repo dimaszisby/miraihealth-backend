@@ -1,9 +1,10 @@
-const { MetricLog, Metric } = require("../models");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const { where } = require("sequelize");
+const AppError = require("../utils/AppError");
+const { MetricLog, Metric } = require("../models");
+const { successResponse } = require("../utils/response-formatter");
 
-exports.createMetricLog = async (req, res) => {
+exports.createMetricLog = async (req, res, next) => {
   const metricId = req.params.metricId;
   const { type, logValue } = req.body;
 
@@ -13,20 +14,24 @@ exports.createMetricLog = async (req, res) => {
   console.log(`Request Body:`, req.body);
 
   if (!metricId) {
-    return res.status(400).json({ message: "metricId is required in the URL" });
+    throw new AppError(
+      "Required Metric Id parameter is empty, cancelling operations",
+      400
+    );
   }
 
-  if (!type || !logValue) {
-    return res.status(400).json({
-      message: "Both 'type' and 'logValue' are required in the body",
-    });
+  if (!logValue) {
+    throw new AppError(
+      "Required Log Value body is empty, cancelling operations",
+      400
+    );
   }
 
   try {
     // Verify that the parent Metric exists
     const metric = await Metric.findOne({ where: { id: metricId } });
     if (!metric) {
-      return res.status(404).json({ message: "Parent Metric not found" });
+      throw new AppError("Parent Metric not found", 404);
     }
 
     const log = await MetricLog.create({
@@ -35,73 +40,105 @@ exports.createMetricLog = async (req, res) => {
       logValue,
     });
 
-    res.status(201).json({ message: "Metric Log created successfully", log });
+    successResponse(res, 201, { log }, "Metric Log created successfully");
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    next(error);
   }
 };
 
-exports.getAllLogsByMetric = async (req, res) => {
+exports.getAllLogsByMetric = async (req, res, next) => {
   const metricId = req.params.metricId;
+
+  if (!metricId) {
+    throw new AppError(
+      "Required Metric Id parameter is empty, cancelling operations",
+      400
+    );
+  }
 
   try {
     const logs = await MetricLog.findAll({
       where: { metricId: metricId },
     });
 
-    res.status(200).json({ logs });
+    successResponse(res, 200, { logs });
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    next(error);
   }
 };
 
-exports.getLogById = async (req, res) => {
+exports.getLogById = async (req, res, next) => {
   const { id, metricId } = req.params;
+
+  if (!id || !metricId) {
+    throw new AppError(
+      "Required User Id or Metric Id parameter is empty, cancelling operations",
+      400
+    );
+  }
 
   try {
     const log = await MetricLog.findOne({
       where: { id: id, metricId: metricId },
     });
+    if (!log) {
+      throw new AppError("Log not found", 404);
+    }
 
-    res.status(200).json({ log });
+    successResponse(res, 200, { log });
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    next(error);
   }
 };
 
-exports.updateLog = async (req, res) => {
+exports.updateLog = async (req, res, next) => {
   const { id, metricId } = req.params;
   const { logValue, type } = req.body;
 
+  if (!id || !metricId) {
+    throw new AppError(
+      "Required User Id or Metric Id parameter is empty, cancelling operations",
+      400
+    );
+  }
+
   try {
     const log = await MetricLog.findOne({
       where: { id: id, metricId: metricId },
     });
-    if (!log) return status(500).json({ message: "Log Not Found" });
+    if (!log) {
+      throw new AppError("Log not found", 404);
+    }
 
     await log.update({ logValue, type });
 
-    res.status(200).json({ message: "Log updated successfully", log });
+    successResponse(res, 200, { log }, "Log updated successfully");
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
-exports.deletelog = async (req, res) => {
+exports.deletelog = async (req, res, next) => {
   const { id, metricId } = req.params;
+
+  if (!id || !metricId) {
+    throw new AppError(
+      "Required User Id or Metric Id parameter is empty, cancelling operations",
+      400
+    );
+  }
 
   try {
     const log = await MetricLog.findOne({
       where: { id: id, metricId: metricId },
     });
-    if (!log)
-      return res
-        .status(404)
-        .json({ message: "Log Not Found, cancel deletion" });
+    if (!log) {
+      throw new AppError("Log not found", 404);
+    }
 
     await log.destroy();
-    res.status(200).json({ message: "Log deleted successfully", log });
+    successResponse(res, 200, { log }, "Log deleted successfully");
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    next(error);
   }
 };

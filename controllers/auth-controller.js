@@ -1,6 +1,8 @@
 const { User } = require("../models");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const AppError = require("../utils/AppError");
+const { successResponse } = require("../utils/response-formatter");
 
 // Generate JWT Token
 const generateToken = (user) => {
@@ -9,15 +11,16 @@ const generateToken = (user) => {
   });
 };
 
-exports.register = async (req, res) => {
+exports.register = async (req, res, next) => {
   const { username, email, password, age, sex, isPublicProfile } = req.body;
 
   try {
     const existingUser = await User.findOne({
       where: { email: email, username: username },
     });
-    if (existingUser)
-      return res.status(400).json({ message: "Credential already in use" });
+    if (existingUser) {
+      throw new AppError("Credential already in use", 400);
+    }
 
     const user = await User.create({
       username,
@@ -29,31 +32,23 @@ exports.register = async (req, res) => {
     });
     const token = generateToken(user);
 
-    res.status(201).json({
-      token,
-      user: { id: user.id, username, email, age, sex, isPublicProfile },
-    });
+    successResponse(res, 201, { token, user }, "User created successfully");
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    next(error);
   }
 };
 
-exports.login = async (req, res) => {
+exports.login = async (req, res, next) => {
   const { email, password } = req.body;
 
   try {
     const user = await User.findOne({ where: { email } });
     if (!user || !user.validPassword(password)) {
-      return res.status(401).json({ message: "Invalid email or password" });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      throw new AppError("Invalid email or password", 401);
     }
 
     const token = generateToken(user);
-    res.status(200).json({
+    successResponse(res, 200, {
       token,
       user: {
         id: user.id,
@@ -65,15 +60,15 @@ exports.login = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    next(error);
   }
 };
 
 // Get authenticated user's profile
-exports.getProfile = async (req, res) => {
+exports.getProfile = async (req, res, next) => {
   const user = req.user;
 
-  res.status(200).json({
+  successResponse(res, 200, {
     id: user.id,
     username: user.username,
     email: user.email,
@@ -86,27 +81,29 @@ exports.getProfile = async (req, res) => {
 };
 
 // Update authenticated user's profile
-exports.updateProfile = async (req, res) => {
+exports.updateProfile = async (req, res, next) => {
   const user = req.user;
   const { username, email, password, age, sex, isPublicProfile } = req.body;
 
   try {
     if (email && email !== user.email) {
       const existingEmail = await User.findOne({ where: { email } });
-      if (existingEmail)
-        return res.status(400).json({ message: "Email already in use" });
+      if (existingEmail) {
+        throw new AppError("Email already in use", 401);
+      }
     }
 
     if (username && username !== user.username) {
       const existingUsername = await User.findOne({ where: { username } });
-      if (existingUsername)
-        return res.status(400).json({ message: "Username already in use" });
+      if (existingUsername) {
+        throw new AppError("Username already in use", 401);
+      }
     }
 
     await user.update({ username, email, password, age, sex, isPublicProfile });
-    res.status(200).json({ message: "Profile updated successfully" });
+    successResponse(res, 200, "Profile updated successfully");
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    next(error);
   }
 };
 

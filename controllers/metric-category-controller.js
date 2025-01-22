@@ -1,11 +1,23 @@
-const { MetricCategory } = require("../models");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const { where } = require("sequelize");
+const AppError = require("../utils/AppError");
+const { MetricCategory } = require("../models");
+const { successResponse } = require("../utils/response-formatter");
 
-exports.createCategory = async (req, res) => {
+exports.createCategory = async (req, res, next) => {
   const userId = req.user.id;
   const { name, color, icon } = req.body;
+
+  if (!userId) {
+    throw new AppError("Required User ID parameter is empty", 400);
+  }
+
+  if (!name) {
+    throw new AppError(
+      `Request body incomplete. Received - name: ${name}, color: ${color}, icon: ${icon}`,
+      400
+    );
+  }
 
   try {
     const category = await MetricCategory.create({
@@ -15,82 +27,108 @@ exports.createCategory = async (req, res) => {
       icon: icon || "📁",
     });
 
-    res
-      .status(201)
-      .json({ message: "Category created successfully", category });
+    successResponse(res, 201, { category }, "Category created successfully");
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    next(error);
   }
 };
 
-exports.getAllCategories = async (req, res) => {
+exports.getAllCategories = async (req, res, next) => {
   const userId = req.user.id;
+
+  if (!userId) {
+    throw new AppError("Required User ID parameter is empty", 400);
+  }
 
   try {
     const categories = await MetricCategory.findAll({
       where: { userId: userId },
     });
 
-    res.status(200).json({ categories });
+    successResponse(res, 200, { categories });
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    next(error);
   }
 };
 
-exports.getCategoryById = async (req, res) => {
+exports.getCategoryById = async (req, res, next) => {
   const userId = req.user.id;
   const { id } = req.params;
+
+  if (!userId) {
+    throw new AppError("Required User ID parameter is empty", 400);
+  }
+
+  if (!id) {
+    throw new AppError("Required Category ID parameter is empty", 400);
+  }
 
   try {
     const category = await MetricCategory.findOne({
       where: { id: id, userId: userId },
     });
+    if (!category) {
+      throw new AppError("Category not found", 404);
+    }
 
-    res.status(200).json({ category });
+    successResponse(res, 200, { category });
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    next(error);
   }
 };
 
-exports.updateCategory = async (req, res) => {
+exports.updateCategory = async (req, res, next) => {
   const userId = req.user.id;
   const { id } = req.params;
   const { name, icon, color } = req.body;
 
+  if (!userId) {
+    throw new AppError("Required User ID parameter is empty", 400);
+  }
+
+  if (!id) {
+    throw new AppError("Required Category ID parameter is empty", 400);
+  }
+
   try {
     const category = await MetricCategory.findOne({
       where: { id: id, userId: userId },
     });
-    if (!category)
-      return res.status(404).json({ message: "Category not found" });
+    if (!category) {
+      throw new AppError("Category not found", 404);
+    }
 
     await category.update({ name, color, icon });
-    res
-      .status(200)
-      .json({ message: "Category updated successfully", category });
+    successResponse(res, 200, { category }, "Category updated successfully");
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    next(error);
   }
 };
 
-exports.deleteCategory = async (req, res) => {
+exports.deleteCategory = async (req, res, next) => {
   const userId = req.user.id;
   const { id } = req.params;
+
+  if (!userId) {
+    throw new AppError("Required User ID parameter is empty", 400);
+  }
+
+  if (!id) {
+    throw new AppError("Required Category ID parameter is empty", 400);
+  }
 
   try {
     const category = await MetricCategory.findOne({
       where: { id, userId: userId },
     });
-    if (!category)
-      return res
-        .status(404)
-        .json({ message: "Category not found, delete cancelled" });
+    if (!category) {
+      throw new AppError("Category not found", 404);
+    }
 
     await category.destroy();
-    res
-      .status(200)
-      .json({ message: "Category deleted successfully", category });
+
+    successResponse(res, 200, { category }, "Category deleted successfully");
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    next(error);
   }
 };

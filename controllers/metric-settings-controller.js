@@ -1,34 +1,35 @@
-const { Metric, MetricSettings } = require("../models");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const { where } = require("sequelize");
+const AppError = require("util");
+const { Metric, MetricSettings } = require("../models");
+const { successResponse } = require("../utils/response-formatter");
 
-exports.createMetricSettings = async (req, res) => {
+exports.createMetricSettings = async (req, res, next) => {
   const metricId = req.params.metricId;
   const { isTracked, goalValue, versionDate } = req.body;
 
   console.log(`Received request to create Settings for metricId: ${metricId}`);
   console.log(`Request Body:`, req.body);
 
-  // Validate params
-  if (!metricId)
-    return res
-      .status(400)
-      .json({ message: "MetricId is required for this function" });
+  if (!metricId) {
+    throw new AppError(
+      "Required Metric Id parameter is empty, cancelling operations",
+      400
+    );
+  }
 
-  // Validate Body
-  if (!isTracked || !goalValue || !versionDate)
-    return res.status(400).json({
-      message:
-        "Required properties to create Settings for Metric are not complete",
-    });
+  if (!isTracked || !goalValue) {
+    throw new AppError("Required body is missing, cancelling operations", 400);
+  }
 
   try {
     // Validate Metric as a parent entity of Metic Settings
     const metric = await Metric.findOne({
       where: { id: metricId },
     });
-    if (!metric) return res.status(404).json({ message: "Metric not found" });
+    if (!metric) {
+      throw new AppError("Metric not found", 404);
+    }
 
     const settings = await MetricSettings.create({
       metricId: metric.id,
@@ -36,110 +37,118 @@ exports.createMetricSettings = async (req, res) => {
       goalValue,
       versionDate,
     });
-    if (!settings)
-      return res.status(404).json({ message: "Settings for Metric not found" });
+    if (!settings) {
+      throw new AppError("Settings for Metric not found", 404);
+    }
 
-    res
-      .status(201)
-      .json({ message: "Metric Settings created successfully", settings });
+    successResponse(
+      res,
+      201,
+      { settings },
+      "Metric Settings created successfully"
+    );
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    next(error);
   }
 };
 
-exports.getAllMetricSettings = async (req, res) => {
+exports.getAllMetricSettings = async (req, res, next) => {
   const metricId = req.params.metricId;
 
-  // Validate params
-  if (!metricId)
-    return res
-      .status(400)
-      .json({ message: "MetricId is required for this function" });
+  if (!metricId) {
+    throw new AppError(
+      "Required MetricId param is empty, cancelling operations",
+      400
+    );
+  }
 
   try {
     const settings = await MetricSettings.findAll({
       where: { metricId: metricId },
     });
-    if (!settings)
-      return res.status(400).json({ message: "Settings for Metric not found" });
+    if (!settings) {
+      throw new AppError("Settings for Metric not found", 404);
+    }
 
-    res.status(200).json({ settings });
+    successResponse(res, 200, { settings });
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    next(error);
   }
 };
 
-exports.getMetricSettingsById = async (req, res) => {
+exports.getMetricSettingsById = async (req, res, next) => {
   const { metricId, id } = req.params;
 
-  // Validate params
-  if (!metricId || !id)
-    return res
-      .status(400)
-      .json({ message: "MetricId is required for this function" });
+  if (!metricId || !id) {
+    throw new AppError(
+      "Required MetricId or Settings Id param is empty, cancelling operations",
+      400
+    );
+  }
 
   try {
     const settings = await MetricSettings.findOne({
       where: { id: id, metricId: metricId },
     });
-    if (!settings)
-      return res.status(400).json({ message: "Settings for Metric not found" });
+    if (!settings) {
+      throw new AppError("Settings for Metric not found", 404);
+    }
 
-    res.status(200).json({ settings });
+    successResponse(res, 200, { settings });
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    next(error);
   }
 };
 
-exports.updateMetricSettings = async (req, res) => {
+exports.updateMetricSettings = async (req, res, next) => {
   const { metricId, id } = req.params;
   const { isTracked, goalValue, versionDate } = req.body;
 
-  // Validate params
-  if (!metricId || !id)
-    return res.status(400).json({
-      message: "MetricId or SettingsId is required for this function",
-    });
+  if (!metricId || !id) {
+    throw new AppError(
+      "Required MetricId or Settings Id param is empty, cancelling operations",
+      400
+    );
+  }
 
   try {
     const settings = await MetricSettings.findOne({
       where: { id: id, metricId: metricId },
     });
-    if (!settings)
-      return res.status(400).json({ message: "Settings for Metric not found" });
+    if (!settings) {
+      throw new AppError("Settings for Metric not found", 404);
+    }
 
     await settings.update({ isTracked, goalValue, versionDate });
 
-    res
-      .status(200)
-      .json({ message: "Settings updated successfully", settings });
+    successResponse(res, 200, { settings }, "Settings updated successfully");
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    next(error);
   }
 };
 
-exports.deleteMetricSettings = async (req, res) => {
+exports.deleteMetricSettings = async (req, res, next) => {
   const { metricId, id } = req.params;
 
-  // Validate params
-  if (!metricId || !id)
-    return res.status(400).json({
-      message: "MetricId or SettingsId is required for this function",
-    });
+  if (!metricId || !id) {
+    throw new AppError(
+      "Required MetricId or Settings Id param is empty, cancelling operations",
+      400
+    );
+  }
 
   try {
     const settings = await MetricSettings.findOne({
       where: { id: id, metricId: metricId },
     });
-    if (!settings)
-      return res.status(400).json({ message: "Settings for Metric not found" });
+    if (!settings) {
+      throw new AppError("Settings for Metric not found", 404);
+    }
 
     await settings.destroy();
 
-    res
-      .status(200)
-      .json({ message: "Settings deleted successfully", settings });
+    successResponse(res, 200, { settings }, "Settings deleted successfully");
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    next(error);
   }
 };

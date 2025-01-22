@@ -1,22 +1,25 @@
-const { Metric } = require("../models");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const metricService = require("../services/metric-service");
+const AppError = require("../utils/AppError");
+const { Metric } = require("../models");
+const { getMetricData } = require("../services/metric-service");
+const { successResponse } = require("../utils/response-formatter");
 
-exports.createMetric = async (req, res) => {
+exports.createMetric = async (req, res, next) => {
   const userId = req.user.id;
   const { categoryId, originalMetricId, name, unit, version, isPublic } =
     req.body;
 
-  if (!userId)
-    return res
-      .status(404)
-      .json({ message: "User Id parameter is empty, cancelling operations" });
+  if (!userId) {
+    throw new AppError("Required User ID parameter is empty", 400);
+  }
 
-  if (!name || !unit)
-    return res.status(404).json({
-      message: `Request body incomplete, cancelling operations. Input was name:${name} and unit:${unit}`,
-    });
+  if (!name || !unit) {
+    throw new AppError(
+      `Request body incomplete. Received - name: ${name}, unit: ${unit}`,
+      400
+    );
+  }
 
   try {
     const metric = await Metric.create({
@@ -29,74 +32,89 @@ exports.createMetric = async (req, res) => {
       isPublic,
     });
 
-    res.status(201).json({ message: "Metric created successfully", metric });
+    successResponse(res, 201, { metric }, "Metric created successfully.");
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    next(error);
   }
 };
 
-exports.getAllMetrics = async (req, res) => {
+exports.getAllMetrics = async (req, res, next) => {
   const userId = req.user.id;
 
-  if (!userId)
-    return res
-      .status(404)
-      .json({ message: "User Id parameter is empty, cancelling operations" });
+  if (!userId) {
+    throw new AppError(
+      "Required User Id parameter is empty, cancelling operations",
+      400
+    );
+  }
 
   try {
-    const metrics = await metricService.getMetricData(userId);
-    res.status(200).json({ metrics });
+    const metrics = await getMetricData(userId);
+    successResponse(res, 200, { metrics });
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    next(error);
   }
 };
 
-exports.getMetricById = async (req, res) => {
+exports.getMetricById = async (req, res, next) => {
   const userId = req.user.id;
   const { id } = req.params;
 
-  if (!userId)
-    return res
-      .status(404)
-      .json({ message: "User Id parameter is empty, cancelling operations" });
+  if (!userId) {
+    throw new AppError(
+      "Required User Id parameter is empty, cancelling operations",
+      400
+    );
+  }
 
-  if (!id)
-    return res
-      .status(404)
-      .json({ message: "Metric Id is empty, cancelling operations" });
+  if (!id) {
+    throw new AppError(
+      "Required Metric Id parameter is empty, cancelling operations",
+      400
+    );
+  }
 
   try {
     const metric = await Metric.findOne({
       where: { id: id, userId: userId },
     });
+    if (!metric) {
+      throw new AppError("Metric not found", 404);
+    }
 
-    res.status(200).json({ metric });
+    successResponse(res, 200, { metric });
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    next(error);
   }
 };
 
-exports.updateMetric = async (req, res) => {
+exports.updateMetric = async (req, res, next) => {
   const userId = req.user.id;
   const { id } = req.params;
   const { categoryId, originalMetricId, name, unit, version, isPublic } =
     req.body;
 
-  if (!userId)
-    return res
-      .status(404)
-      .json({ message: "User Id parameter is empty, cancelling operations" });
+  if (!userId) {
+    throw new AppError(
+      "Required User Id parameter is empty, cancelling operations",
+      400
+    );
+  }
 
-  if (!id)
-    return res
-      .status(404)
-      .json({ message: "Metric Id is empty, cancelling operations" });
+  if (!id) {
+    throw new AppError(
+      "Required Metric Id parameter is empty, cancelling operations",
+      400
+    );
+  }
 
   try {
     const metric = await Metric.findOne({
       where: { id: id, userId: userId },
     });
-    if (!metric) res.status(404).json({ message: "Metric not found" });
+    if (!metric) {
+      throw new AppError("Metric not found", 404);
+    }
 
     await metric.update({
       categoryId,
@@ -107,36 +125,42 @@ exports.updateMetric = async (req, res) => {
       isPublic,
     });
 
-    res.status(200).json({ message: "Metric updated successfully", metric });
+    successResponse(res, 200, { metric }, "Metric updated successfully");
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    next(error);
   }
 };
 
-exports.deleteMetric = async (req, res) => {
+exports.deleteMetric = async (req, res, next) => {
   const userId = req.user.id;
   const { id } = req.params;
 
-  if (!userId)
-    return res
-      .status(404)
-      .json({ message: "User Id parameter is empty, cancelling operations" });
+  if (!userId) {
+    throw new AppError(
+      "Required User Id parameter is empty, cancelling operations",
+      400
+    );
+  }
 
-  if (!id)
-    return res
-      .status(404)
-      .json({ message: "Metric Id is empty, cancelling operations" });
+  if (!id) {
+    throw new AppError(
+      "Required Metric Id parameter is empty, cancelling operations",
+      400
+    );
+  }
 
   try {
     const metric = await Metric.findOne({
       where: { id: id, userId: userId },
     });
-    if (!metric) return res.status(404).json({ message: "Metric not found" });
+    if (!metric) {
+      throw new AppError("Metric not found", 404);
+    }
 
     await metric.destroy();
 
-    res.status(200).json({ message: "Metric deleted successfully", metric });
+    successResponse(res, 200, { metric }, "Metric deleted successfully");
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    next(error);
   }
 };
