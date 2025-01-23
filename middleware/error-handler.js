@@ -26,6 +26,14 @@ const errorHandler = (err, req, res, next) => {
     err = new AppError("Internal Server Error", 500);
   }
 
+  // For programming or unknown errors, don't leak details
+  if (process.env.NODE_ENV === "production") {
+    return res.status(500).json({
+      status: "error",
+      message: "Something went wrong!",
+    });
+  }
+
   // Send the error response
   res.status(err.statusCode).json({
     status: err.status,
