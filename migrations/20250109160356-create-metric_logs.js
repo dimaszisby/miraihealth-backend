@@ -26,6 +26,7 @@ module.exports = {
           type: {
             type: Sequelize.STRING,
             allowNull: false,
+            defaultValue: "manual",
           },
           created_at: {
             allowNull: false,

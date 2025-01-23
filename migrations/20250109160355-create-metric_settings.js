@@ -5,7 +5,7 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     return queryInterface.sequelize.transaction(async (transaction) => {
       await queryInterface.createTable(
-        'metric_settings',
+        "metric_settings",
         {
           id: {
             type: Sequelize.UUID,
@@ -29,7 +29,7 @@ module.exports = {
           },
           version_date: {
             type: Sequelize.DATE,
-            allowNull: false,
+            allowNull: true,
           },
           created_at: {
             allowNull: false,
@@ -49,7 +49,7 @@ module.exports = {
 
   down: async (queryInterface, Sequelize) => {
     return queryInterface.sequelize.transaction(async (transaction) => {
-      await queryInterface.dropTable('metric_settings', { transaction });
+      await queryInterface.dropTable("metric_settings", { transaction });
     });
   },
 };
