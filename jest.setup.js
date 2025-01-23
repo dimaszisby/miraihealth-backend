@@ -1,12 +1,26 @@
 // jest.setup.js
+
+// * Setup for Jest testing
+// This will executed before and after the testing process
+
+const app = require("./server");
 const sequelize = require("./config/db");
+const request = require("supertest");
 const { exec } = require("child_process");
+
+let server; // Declare server in the outer scope
 
 // Optional: Extend Jest timeout if needed
 jest.setTimeout(30000); // 30 seconds
 
 beforeAll(async () => {
   try {
+    // Start the server on a test port
+    server = app.listen(4000, () => {
+      console.log("Test server running on port 4000");
+    });
+
+    // Authenticate the database connection
     await sequelize.authenticate();
     console.log("Database connection established.");
 
@@ -88,9 +102,19 @@ beforeEach(async () => {
 
 afterAll(async () => {
   try {
+    // Close the server if it's defined
+    if (server) {
+      await server.close();
+      console.log("Test server closed.");
+    }
+
+    // Close the database connection
     await sequelize.close();
     console.log("Database connection closed.");
   } catch (error) {
     console.error("Error closing the database connection:", error);
   }
 });
+
+// Export the supertest request instance for use in tests
+module.exports = { request: request(app) };
