@@ -3,8 +3,10 @@ const bcrypt = require("bcrypt");
 const AppError = require("../utils/AppError");
 const { MetricLog, Metric } = require("../models");
 const { successResponse } = require("../utils/response-formatter");
+const catchAsync = require("../utils/catch-async");
 
-exports.createMetricLog = async (req, res, next) => {
+// Create a Log for a metric
+exports.createMetricLog = catchAsync(async (req, res, next) => {
   const metricId = req.params.metricId;
   const { type, logValue } = req.body;
 
@@ -13,132 +15,74 @@ exports.createMetricLog = async (req, res, next) => {
   );
   console.log(`Request Body:`, req.body);
 
-  if (!metricId) {
-    throw new AppError(
-      "Required Metric Id parameter is empty, cancelling operations",
-      400
-    );
+  // Verify that the parent Metric exists
+  const metric = await Metric.findOne({ where: { id: metricId } });
+  if (!metric) {
+    throw new AppError("Parent Metric not found", 404);
   }
 
-  if (!logValue) {
-    throw new AppError(
-      "Required Log Value body is empty, cancelling operations",
-      400
-    );
-  }
+  const log = await MetricLog.create({
+    metricId: metric.id,
+    type,
+    logValue,
+  });
 
-  try {
-    // Verify that the parent Metric exists
-    const metric = await Metric.findOne({ where: { id: metricId } });
-    if (!metric) {
-      throw new AppError("Parent Metric not found", 404);
-    }
+  successResponse(res, 201, { log }, "Metric Log created successfully");
+});
 
-    const log = await MetricLog.create({
-      metricId: metric.id,
-      type,
-      logValue,
-    });
-
-    successResponse(res, 201, { log }, "Metric Log created successfully");
-  } catch (error) {
-    next(error);
-  }
-};
-
-exports.getAllLogsByMetric = async (req, res, next) => {
+// Get All Logs owned by a Metric
+exports.getAllLogsByMetric = catchAsync(async (req, res, next) => {
   const metricId = req.params.metricId;
 
-  if (!metricId) {
-    throw new AppError(
-      "Required Metric Id parameter is empty, cancelling operations",
-      400
-    );
-  }
+  const logs = await MetricLog.findAll({
+    where: { metricId: metricId },
+  });
 
-  try {
-    const logs = await MetricLog.findAll({
-      where: { metricId: metricId },
-    });
+  successResponse(res, 200, { logs });
+});
 
-    successResponse(res, 200, { logs });
-  } catch (error) {
-    next(error);
-  }
-};
-
-exports.getLogById = async (req, res, next) => {
+// Get specific Log by Id
+exports.getLogById = catchAsync(async (req, res, next) => {
   const { id, metricId } = req.params;
 
-  if (!id || !metricId) {
-    throw new AppError(
-      "Required User Id or Metric Id parameter is empty, cancelling operations",
-      400
-    );
+  const log = await MetricLog.findOne({
+    where: { id: id, metricId: metricId },
+  });
+  if (!log) {
+    throw new AppError("Log not found", 404);
   }
 
-  try {
-    const log = await MetricLog.findOne({
-      where: { id: id, metricId: metricId },
-    });
-    if (!log) {
-      throw new AppError("Log not found", 404);
-    }
+  successResponse(res, 200, { log });
+});
 
-    successResponse(res, 200, { log });
-  } catch (error) {
-    next(error);
-  }
-};
-
-exports.updateLog = async (req, res, next) => {
+// Update a Log
+exports.updateLog = catchAsync(async (req, res, next) => {
   const { id, metricId } = req.params;
   const { logValue, type } = req.body;
 
-  if (!id || !metricId) {
-    throw new AppError(
-      "Required User Id or Metric Id parameter is empty, cancelling operations",
-      400
-    );
+  const log = await MetricLog.findOne({
+    where: { id: id, metricId: metricId },
+  });
+  if (!log) {
+    throw new AppError("Log not found", 404);
   }
 
-  try {
-    const log = await MetricLog.findOne({
-      where: { id: id, metricId: metricId },
-    });
-    if (!log) {
-      throw new AppError("Log not found", 404);
-    }
+  await log.update({ logValue, type });
 
-    await log.update({ logValue, type });
+  successResponse(res, 200, { log }, "Log updated successfully");
+});
 
-    successResponse(res, 200, { log }, "Log updated successfully");
-  } catch (error) {
-    next(error);
-  }
-};
-
-exports.deletelog = async (req, res, next) => {
+// Delete a Log
+exports.deletelog = catchAsync(async (req, res, next) => {
   const { id, metricId } = req.params;
 
-  if (!id || !metricId) {
-    throw new AppError(
-      "Required User Id or Metric Id parameter is empty, cancelling operations",
-      400
-    );
+  const log = await MetricLog.findOne({
+    where: { id: id, metricId: metricId },
+  });
+  if (!log) {
+    throw new AppError("Log not found", 404);
   }
 
-  try {
-    const log = await MetricLog.findOne({
-      where: { id: id, metricId: metricId },
-    });
-    if (!log) {
-      throw new AppError("Log not found", 404);
-    }
-
-    await log.destroy();
-    successResponse(res, 200, { log }, "Log deleted successfully");
-  } catch (error) {
-    next(error);
-  }
-};
+  await log.destroy();
+  successResponse(res, 200, { log }, "Log deleted successfully");
+});
