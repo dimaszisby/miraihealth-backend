@@ -1,14 +1,51 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 const logController = require("../controllers/metric-log-controller");
-const authMiddleware = require('../middleware/auth-middleware');
+const authMiddleware = require("../middleware/auth-middleware");
+const validate = require("../middleware/validate");
+const {
+  createMetricLogSchema,
+  updateMetricLogSchema,
+  getAllMetricLogsSchema,
+  getMetricLogSchema,
+  deleteMetricLogSchema,
+} = require("../validators/metric-log-validator");
 
 router.use(authMiddleware);
 
-router.post('/:metricId/logs/', logController.createMetricLog);
-router.get('/:metricId/logs/', logController.getAllLogsByMetric);
-router.get('/:metricId/logs/:id', logController.getLogById);
-router.put('/:metricId/logs/:id', logController.updateLog);
-router.delete('/:metricId/logs/:id', logController.deletelog);
+// CREATE Log
+router.post(
+  "/:metricId/logs/",
+  validate(createMetricLogSchema),
+  logController.createMetricLog
+);
+
+// GET All Logs by Metric Id
+router.get(
+  "/:metricId/logs/",
+  validate(getAllMetricLogsSchema),
+  logController.getAllLogsByMetric
+);
+
+// GET Specific Log by Id
+router.get(
+  "/:metricId/logs/:id",
+  validate(getMetricLogSchema),
+  logController.getLogById
+);
+
+// UPDATE Log
+router.put(
+  "/:metricId/logs/:id",
+  validate(updateMetricLogSchema),
+  logController.updateLog
+);
+
+// DELETE Log
+router.delete(
+  "/:metricId/logs/:id",
+  validate(getMetricLogSchema),
+  logController.deletelog
+);
 
 module.exports = router;

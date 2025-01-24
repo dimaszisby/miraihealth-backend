@@ -3,6 +3,7 @@ const router = express.Router();
 const metricController = require("../controllers/metric-controller");
 const trendsController = require("../controllers/trend-controller");
 const authMiddleware = require("../middleware/auth-middleware");
+const cacheMiddleware = require("../middleware/cache-middleware");
 const validate = require("../middleware/validate");
 const {
   createMetricSchema,
@@ -13,24 +14,31 @@ const {
 
 router.use(authMiddleware);
 
+/**
+ * * Key Generator Function
+ * Customize the key based on request parameters or user
+ */
+const metricsCacheKey = (req) => `metrics:${req.user.id}`;
+
 // * Metrics Endpoints
-// CREATE
+// CREATE Metric
 router.post("/", validate(createMetricSchema), metricController.createMetric);
 
-// GET All by userId
+// GET All Metric by User Id
 router.get("/", metricController.getAllMetrics);
 
-// GET by ID
+// GET specific Metric by ID
 router.get(
   "/:id",
   validate(getMetricByIdSchema),
+  cacheMiddleware(metricsCacheKey, 300), // Cache for 5 minutes
   metricController.getMetricById
 );
 
-// UPDATE
+// UPDATE Metric
 router.put("/:id", validate(updateMetricSchema), metricController.updateMetric);
 
-// DELETE
+// DELETE Metric
 router.delete(
   "/:id",
   validate(deleteMetricSchema),
