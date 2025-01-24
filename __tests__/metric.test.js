@@ -68,7 +68,7 @@ describe("Metric Endpoints", () => {
     }
 
     console.log("Dummy Category Created:", newCategory.body);
-    dummyCategory = newCategory.body;
+    dummyCategory = newCategory.body.data.category;
   });
 
   afterAll(async () => {
@@ -94,6 +94,8 @@ describe("Metric Endpoints", () => {
     if (res.statusCode !== 201) {
       console.log("Create Metric Error:", res.body);
     }
+
+    console.log("RES Metric", res.body);
 
     expect(res.statusCode).toEqual(201);
     expect(res.body.data).toHaveProperty("metric");
@@ -152,8 +154,6 @@ describe("Metric Endpoints", () => {
     const res = await request(app)
       .get(`/api/v1/metrics`)
       .set("Authorization", `Bearer ${token}`);
-
-    console.log("RES Metrics", res.statusCode);
 
     expect(res.statusCode).toEqual(200);
     expect(Array.isArray(res.body.data.metrics)).toBe(true);
