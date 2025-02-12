@@ -1,5 +1,9 @@
-// * Validation Middleware
-// Used to validate incoming requests agsinst schemas
+// middleware/validate.js
+
+/**
+ * * Validation Middleware
+ * Used to validate incoming requests agsinst schemas
+ */
 
 const { ZodError } = require("zod");
 
