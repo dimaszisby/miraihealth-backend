@@ -8,12 +8,23 @@ const catchAsync = require("../utils/catch-async");
 // Create a Settings for a Metric
 exports.createMetricSettings = catchAsync(async (req, res, next) => {
   const metricId = req.params.metricId;
-  const { isTracked, goalValue, versionDate } = req.body;
+
+  const {
+    goalEnabled,
+    goalType,
+    goalValue,
+    timeFrameEnabled,
+    startDate,
+    deadlineDate,
+    alertsEnabled,
+    alertThresholds,
+    displayOptions,
+  } = req.body;
 
   console.log(`Received request to create Settings for metricId: ${metricId}`);
   console.log(`Request Body:`, req.body);
 
-  // Validate Metric as a parent entity of Metic Settings
+  // Validate that the parent Metric exists
   const metric = await Metric.findOne({
     where: { id: metricId },
   });
@@ -21,20 +32,23 @@ exports.createMetricSettings = catchAsync(async (req, res, next) => {
     throw new AppError("Metric not found", 404);
   }
 
-  const settings = await MetricSettings.create({
-    metricId: metric.id,
-    isTracked,
+  const metricSettings = await MetricSettings.create({
+    metricId,
+    goalEnabled,
+    goalType,
     goalValue,
-    versionDate,
+    timeFrameEnabled,
+    startDate,
+    deadlineDate,
+    alertsEnabled,
+    alertThresholds,
+    displayOptions,
   });
-  if (!settings) {
-    throw new AppError("Settings for Metric not found", 404);
-  }
 
   successResponse(
     res,
     201,
-    { settings },
+    { metricSettings },
     "Metric Settings created successfully"
   );
 });
@@ -46,11 +60,17 @@ exports.getAllMetricSettings = catchAsync(async (req, res, next) => {
   const settings = await MetricSettings.findAll({
     where: { metricId: metricId },
   });
-  if (!settings) {
+
+  if (!settings || settings.length === 0) {
     throw new AppError("Settings for Metric not found", 404);
   }
 
-  successResponse(res, 200, { settings });
+  successResponse(
+    res,
+    200,
+    { settings },
+    "Metric Settings retrieved successfully"
+  );
 });
 
 // Get a Specific Settings for a Metric
@@ -60,28 +80,37 @@ exports.getMetricSettingsById = catchAsync(async (req, res, next) => {
   const settings = await MetricSettings.findOne({
     where: { id: id, metricId: metricId },
   });
+
   if (!settings) {
     throw new AppError("Settings for Metric not found", 404);
   }
 
-  successResponse(res, 200, { settings });
+  successResponse(
+    res,
+    200,
+    { settings },
+    "Metric Settings retrieved successfully"
+  );
 });
 
 // Update a Setting for a Metric
 exports.updateMetricSettings = catchAsync(async (req, res, next) => {
   const { metricId, id } = req.params;
-  const { isTracked, goalValue, versionDate } = req.body;
+  const updates = req.body;
 
-  const settings = await MetricSettings.findOne({
+  const metricSettings = await MetricSettings.findOne({
     where: { id: id, metricId: metricId },
   });
-  if (!settings) {
-    throw new AppError("Settings for Metric not found", 404);
-  }
+  if (!metricSettings) throw new AppError("Metric settings not found.", 404);
 
-  await settings.update({ isTracked, goalValue, versionDate });
+  await metricSettings.update(updates);
 
-  successResponse(res, 200, { settings }, "Settings updated successfully");
+  successResponse(
+    res,
+    200,
+    metricSettings,
+    "Metric settings updated successfully."
+  );
 });
 
 // Delete a Settings for Metric
