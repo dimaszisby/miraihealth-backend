@@ -21,11 +21,13 @@ module.exports = {
           },
           category_id: {
             type: Sequelize.UUID,
+            allowNull: true,
             references: { model: "metric_categories", key: "id" },
             onDelete: "SET NULL",
           },
           original_metric_id: {
             type: Sequelize.UUID,
+            allowNull: true,
             references: { model: "metrics", key: "id" },
             onDelete: "SET NULL",
           },
@@ -33,30 +35,37 @@ module.exports = {
             type: Sequelize.STRING,
             allowNull: false,
           },
-          unit: {
+          description: {
+            type: Sequelize.STRING,
+            allowNull: true,
+          },
+          default_unit: {
             type: Sequelize.STRING,
             allowNull: false,
           },
           version: {
             type: Sequelize.INTEGER,
+            allowNull: false,
             defaultValue: 1,
           },
           is_public: {
             type: Sequelize.BOOLEAN,
+            allowNull: false,
             defaultValue: true,
           },
           created_at: {
-            allowNull: false,
             type: Sequelize.DATE,
+            allowNull: false,
             defaultValue: Sequelize.literal("NOW()"),
           },
           updated_at: {
-            allowNull: false,
             type: Sequelize.DATE,
+            allowNull: false,
             defaultValue: Sequelize.literal("NOW()"),
           },
           deleted_at: {
             type: Sequelize.DATE,
+            allowNull: true,
           },
         },
         { transaction }

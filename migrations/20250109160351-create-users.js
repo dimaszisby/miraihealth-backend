@@ -5,7 +5,7 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     return queryInterface.sequelize.transaction(async (transaction) => {
       await queryInterface.createTable(
-        'users',
+        "users",
         {
           id: {
             type: Sequelize.UUID,
@@ -29,33 +29,39 @@ module.exports = {
           },
           age: {
             type: Sequelize.INTEGER,
+            allowNull: true,
           },
           sex: {
             type: Sequelize.ENUM(
               "male",
               "female",
               "other",
-              "prefer not specify"
+              "prefer not to specify"
             ),
             allowNull: false,
+            defaultValue: "prefer not to specify",
           },
           is_public_profile: {
             type: Sequelize.BOOLEAN,
+            allowNull: false,
             defaultValue: true,
           },
           created_at: {
             type: Sequelize.DATE,
+            allowNull: false,
             defaultValue: Sequelize.literal("NOW()"),
           },
           updated_at: {
             type: Sequelize.DATE,
+            allowNull: false,
             defaultValue: Sequelize.literal("NOW()"),
           },
           deleted_at: {
             type: Sequelize.DATE,
+            allowNull: true,
           },
         },
-        { transaction, schema: 'public'}
+        { transaction, schema: "public" }
       );
     });
   },
