@@ -1,31 +1,35 @@
-const redis = require("redis");
-const { promisify } = require("util");
+// utils/redis-cleint.js
+
+/**
+ * * Redist Client
+ * This the base redist client for the app
+ */
+
+const { createClient } = require("redis");
 const logger = require("./logger");
 const config = require("../config/config");
 
-const redisClient = redis.createClient({
+// 1. Create Redis Client
+const redisClient = createClient({
   socket: {
-    host: config.development.redis.host,
-    port: config.development.redis.port,
+    host: process.env.REDIS_HOST || "127.0.0.1",
+    port: process.env.REDIS_PORT || 6379,
   },
-  password: process.env.REDIS_PASSWORD || undefined,
-  // TODO: Additional configurations like TLS, etc., for production
+  password: process.env.REDIS_PASSWORD || null,
 });
 
-// Connect to Redis
-redisClient.connect().catch((err) => {
-  logger.error("Redis connection error:", err);
-});
+// 2. Handle Connections to Redis
+redisClient.on("error", (err) => logger.error("Redis Client Error", err));
+redisClient.on("connect", () => logger.info("Connected to Redis"));
 
-// Handle Redis events
-redisClient.on("error", (err) => {
-  logger.error("Redis error:", err);
-});
+// 3. Ensure connection before exporting
+(async () => {
+  try {
+    await redisClient.connect();
+    logger.info("Redis connection established.");
+  } catch (err) {
+    logger.error("Redis connection failed:", err);
+  }
+})();
 
-redisClient.on("connect", () => {
-  logger.info("Connected to Redis");
-});
-
-module.exports = {
-  redisClient,
-};
+module.exports = redisClient;
