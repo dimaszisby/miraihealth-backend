@@ -19,12 +19,7 @@ router.post("/login", authController.login);
 
 // * Protected Routes
 // GET current User Profile
-router.get(
-  "/profile",
-  validate(getUserSchema),
-  authMiddleware,
-  authController.getProfile
-);
+router.get("/profile", authMiddleware, authController.getProfile);
 
 // UPDATE current User Profile
 router.put(
