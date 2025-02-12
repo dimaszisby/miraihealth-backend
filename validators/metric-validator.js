@@ -6,9 +6,10 @@ const createMetricSchema = z.object({
     categoryId: z.string().uuid("Invalid categoryId").optional(),
     originalMetricId: z.string().uuid("Invalid originalMetricId").optional(),
     name: z.string().min(1, "Name is required"),
-    unit: z.string().min(1, "Unit is required"),
-    version: z.number().optional().default(1),
+    description: z.string().optional(),
+    defaultUnit: z.string().min(1, "Unit is required"),
     isPublic: z.boolean().optional().default(true),
+    deleted: z.date().optional(),
   }),
 });
 
@@ -22,8 +23,10 @@ const updateMetricSchema = z.object({
     originalMetricId: z.string().uuid("Invalid originalMetricId").optional(),
     name: z.string().min(1).optional(),
     unit: z.string().min(1).optional(),
-    version: z.number().optional(),
+    description: z.string().optional(),
+    defaultUnit: z.string().min(1),
     isPublic: z.boolean().optional(),
+    deleted: z.date().optional(),
   }),
 });
 
