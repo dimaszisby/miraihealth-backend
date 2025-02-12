@@ -1,3 +1,10 @@
+// middleware/auth-middleware.js
+
+/**
+ * * Auth Middleware
+ * Wrapper class for routes that require authentication
+ */
+
 const jwt = require("jsonwebtoken");
 const { User } = require("../models");
 
