@@ -14,7 +14,7 @@ const generateToken = (user) => {
 
 // Register
 exports.register = catchAsync(async (req, res, next) => {
-  const { username, email, password, age, sex, isPublicProfile } = req.body;
+  const { username, email, password, passwordConfirmation, age, sex, isPublicProfile } = req.body;
 
   const existingUser = await User.findOne({
     where: { email: email, username: username },
@@ -41,7 +41,7 @@ exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
 
   const user = await User.findOne({ where: { email } });
-  if (!user || !user.validPassword(password)) {
+  if (!user || !(await user.validPassword(password))) {
     throw new AppError("Invalid email or password", 401);
   }
 
