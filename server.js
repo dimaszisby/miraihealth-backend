@@ -10,7 +10,7 @@ const dotenv = require("dotenv");
 const helmet = require("helmet");
 const xss = require("xss-clean"); // Additional security
 const hpp = require("hpp"); // Prevent HTTP parameter pollution
-const { globalRateLimiter } = require("./middleware/rate-limiter");
+// const { globalRateLimiter } = require("./middleware/rate-limiter");
 
 // Routes
 const authRoutes = require("./routes/auth-routes");
@@ -41,17 +41,23 @@ app.use(express.json());
 
 // Data Sanitization against XSS
 // TODO: Extended implementations
-app.use(xss());
+// app.use(xss());
 
 // Prevent HTTP Parameter Pollution
 // TODO: Extended implementations
-app.use(hpp());
+// app.use(hpp());
 
-// TODO: Extended implementations
-app.use(cors());
+// Configure CORS
+app.use(
+  cors({
+    origin: "http://localhost:3000", // Replace with your frontend's origin
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true, // If you need to send cookies or authentication headers
+  })
+);
 
 // Global Rate Limiter
-app.use(globalRateLimiter);
+// app.use(globalRateLimiter);
 
 // * Routes
 // Main Routes
@@ -94,7 +100,7 @@ if (process.env.NODE_ENV !== "test") {
     "DATABASE_URL:",
     process.env.NODE_ENV === "test"
       ? process.env.TEST_DATABASE_URL
-      : process.env.DATABASE_URL
+      : process.env.DEVELOPMENT_DATABASE_URL
   );
 } else {
   // In test environment, avoid connecting and starting the server
