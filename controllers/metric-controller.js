@@ -2,14 +2,23 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const AppError = require("../utils/AppError");
 const { Metric } = require("../models");
-const { getMetricData } = require("../services/metric-service");
+const {
+  getMetricData,
+  getMetricDetailData,
+} = require("../services/metric-service");
 const { successResponse } = require("../utils/response-formatter");
 const catchAsync = require("../utils/catch-async");
 
 // Create Metric
 exports.createMetric = catchAsync(async (req, res, next) => {
-  const { categoryId, originalMetricId, name, unit, version, isPublic } =
-    req.body;
+  const {
+    categoryId,
+    originalMetricId,
+    name,
+    description,
+    defaultUnit,
+    isPublic,
+  } = req.body;
   const userId = req.user.id;
 
   const metric = await Metric.create({
@@ -17,8 +26,8 @@ exports.createMetric = catchAsync(async (req, res, next) => {
     categoryId,
     originalMetricId,
     name,
-    unit,
-    version,
+    description,
+    defaultUnit,
     isPublic,
   });
 
@@ -38,9 +47,7 @@ exports.getMetricById = catchAsync(async (req, res, next) => {
   const userId = req.user.id;
   const { id } = req.params;
 
-  const metric = await Metric.findOne({
-    where: { id: id, userId: userId },
-  });
+  const metric = await getMetricDetailData(userId, id);
   if (!metric) {
     throw new AppError("Metric not found", 404);
   }
