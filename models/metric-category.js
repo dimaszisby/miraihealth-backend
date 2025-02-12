@@ -26,7 +26,7 @@ module.exports = (sequelize, DataTypes) => {
       name: { type: DataTypes.STRING, allowNull: false },
       color: { type: DataTypes.STRING, defaultValue: "#E897A3" },
       icon: { type: DataTypes.STRING, defaultValue: "📁" },
-      deletedAt: { type: DataTypes.DATE }
+      deletedAt: { type: DataTypes.DATE },
     },
     {
       sequelize,
@@ -35,7 +35,7 @@ module.exports = (sequelize, DataTypes) => {
       paranoid: true,
       underscored: true,
       quoteIdentifiers: false,
-      schema: 'public',
+      schema: "public",
     }
   );
   return MetricCategory;

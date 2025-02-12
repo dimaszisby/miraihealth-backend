@@ -14,9 +14,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "originalMetricId",
         onDelete: "SET NULL",
       });
-      Metric.hasMany(models.MetricSettings, {
+      Metric.hasOne(models.MetricSettings, {
         foreignKey: "metricId",
         onDelete: "CASCADE",
+        as: "MetricSettings", // Define an alias for clarity
       });
       Metric.hasMany(models.MetricLog, {
         foreignKey: "metricId",
@@ -56,10 +57,27 @@ module.exports = (sequelize, DataTypes) => {
           key: "id",
         },
       },
-      name: { type: DataTypes.STRING, allowNull: false },
-      unit: { type: DataTypes.STRING, allowNull: false },
-      version: { type: DataTypes.INTEGER, defaultValue: 1 },
-      isPublic: { type: DataTypes.BOOLEAN, defaultValue: true },
+      name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      description: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      defaultUnit: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      isPublic: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
+      },
+      deletedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
     },
     {
       sequelize,
@@ -68,7 +86,7 @@ module.exports = (sequelize, DataTypes) => {
       paranoid: true,
       underscored: true,
       quoteIdentifiers: false,
-      schema: 'public',
+      schema: "public",
     }
   );
   return Metric;
