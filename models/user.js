@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
 
     // Method to compare passwords
     validPassword(password) {
-      return bcrypt.compareSync(password, this.password);
+      return bcrypt.compare(password, this.password);
     }
   }
 
@@ -46,14 +46,21 @@ module.exports = (sequelize, DataTypes) => {
       },
       age: {
         type: DataTypes.INTEGER,
+        allowNull: true,
       },
       sex: {
-        type: DataTypes.ENUM("male", "female", "other", "prefer not specify"),
+        type: DataTypes.ENUM("male", "female", "other", "prefer not to specify"),
         allowNull: false,
+        defaultValue: "prefer not to specify",
       },
       isPublicProfile: {
         type: DataTypes.BOOLEAN,
+        allowNull: false,
         defaultValue: true,
+      },
+      deletedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
       },
     },
     {
