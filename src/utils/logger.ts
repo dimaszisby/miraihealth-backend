@@ -1,13 +1,10 @@
-// utils/logger.js
+import { createLogger, format, transports, Logger } from "winston";
+const { combine, timestamp, printf, errors, colorize, json, splat } = format;
 
 /**
- * * Logging using Winston
- * This is a template for base logging format
- * Might be overhauled later
+ * * Winston Logging Utility
+ * Provides a structured logging format.
  */
-
-const { createLogger, format, transports } = require("winston");
-const { combine, timestamp, printf, errors } = format;
 
 // 1. Define custom log format
 const logFormat = printf(({ level, message, timestamp, stack }) => {
@@ -15,13 +12,13 @@ const logFormat = printf(({ level, message, timestamp, stack }) => {
 });
 
 // 2. Create Winston logger instance
-const logger = createLogger({
+const logger: Logger = createLogger({
   level: "info",
-  format: format.combine(
-    format.timestamp(),
-    format.errors({ stack: true }), // Capture stack trace
-    format.splat(),
-    format.json()
+  format: combine(
+    timestamp(),
+    errors({ stack: true }), // Capture stack trace
+    splat(),
+    json()
   ),
   defaultMeta: { service: "miraihealth-backend" },
   transports: [
@@ -31,13 +28,13 @@ const logger = createLogger({
   exitOnError: false, // Do not exit on handled exceptions
 });
 
-// If not in production, log to the console as well
+// 3. Enable console logging in non-production environments
 if (process.env.NODE_ENV !== "production") {
   logger.add(
     new transports.Console({
-      format: combine(format.colorize(), logFormat),
+      format: combine(colorize(), logFormat),
     })
   );
 }
 
-module.exports = logger;
+export default logger;

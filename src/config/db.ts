@@ -1,6 +1,6 @@
-const { Sequelize } = require("sequelize");
-const dotenv = require("dotenv");
-const path = require("path");
+import { Sequelize } from "sequelize";
+import dotenv from "dotenv";
+import path from "path";
 
 // 1. Load environment variables based on NODE_ENV
 const env = process.env.NODE_ENV || "development";
@@ -27,9 +27,8 @@ const sequelize = new Sequelize(config[env].url, {
   define: {
     freezeTableName: false,
     underscored: true,
-    quoteIdentifiers: false,
   },
   dialectOptions: config[env].dialectOptions, // Use dialectOptions from config.js
 });
 
-module.exports = sequelize;
+export default sequelize;

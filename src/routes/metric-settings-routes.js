@@ -1,5 +1,5 @@
 const authMiddleware = require("../middleware/auth-middleware");
-const settingsController = require("../controllers/metric-settings-controller");
+const settingsController = require("../src/controllers/metric-settings-controller");
 const express = require("express");
 const router = express.Router();
 const validate = require("../middleware/validate");

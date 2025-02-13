@@ -13,7 +13,7 @@ const hpp = require("hpp"); // Prevent HTTP parameter pollution
 // const { globalRateLimiter } = require("./middleware/rate-limiter");
 
 // Routes
-const authRoutes = require("./routes/auth-routes");
+import authRoutes from "routes/auth-routes";
 const metricRoutes = require("./routes/metric-routes");
 const metricCategoryRoutes = require("./routes/metric-category-routes");
 const metricSettingsRoutes = require("./routes/metric-settings-routes");

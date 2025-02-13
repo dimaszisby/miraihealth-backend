@@ -5,13 +5,13 @@
     "baseUrl": ".", // Base directory to resolve non-relative module names
     "paths": {
       // Define path aliases for cleaner imports
-      "@controllers/*": ["controllers/*"],
-      "@services/*": ["services/*"],
-      "@models/*": ["models/*"],
-      "@middleware/*": ["middleware/*"],
-      "@routes/*": ["routes/*"],
-      "@config/*": ["config/*"],
-      "@utils/*": ["utils/*"],
+      "@controllers/*": ["src/controllers/*"],
+      "@services/*": ["src/services/*"],
+      "@models/*": ["src/models/*"],
+      "@middleware/*": ["src/middleware/*"],
+      "@routes/*": ["src/routes/*"],
+      "@config/*": ["src/config/*"],
+      "@utils/*": ["src/utils/*"],
       "@tests/*": ["tests/*"]
     },
     "checkJs": false, // Enable type checking on JavaScript files
@@ -24,14 +24,15 @@
     "skipLibCheck": true // Skip type checking of all declaration files
   },
   "include": [
-    "server.js",
-    "controllers/**/*.js",
-    "models/**/*.js",
-    "routes/**/*.js",
-    "middleware/**/*.js",
-    "config/**/*.js",
-    "utils/**/*.js",
-    "tests/**/*.js"
-  ],
-  "exclude": ["node_modules", "dist", "migrations", "seeders"]
+    "src/server.ts",
+    "src/controllers/**/*.js",
+    "src/models/**/*.js",
+    "src/routes/**/*.js",
+    "src/middleware/**/*.js",
+    "src/config/**/*.js",
+    "src/utils/**/*.js",
+    "tests/**/*.js",
+    "src/config/config.ts"
+, "src/utils/response-formatter.ts", "src/utils/redis-client.ts", "src/utils/logger.ts", "src/utils/catch-async.ts", "src/config/db.ts", "src/utils/AppError.ts", "src/routes/auth-routes.ts"  ],
+  "exclude": ["node_modules", "dist", "src/migrations", "seeders"]
 }

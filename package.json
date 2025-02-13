@@ -3,16 +3,18 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "migrate:dev": "npx sequelize-cli db:migrate",
-    "migrate:test": "NODE_ENV=test npx sequelize-cli db:migrate",
+    "migrate:dev": "ts-node --transpileOnly ./node_modules/.bin/sequelize db:migrate",
+    "migrate:test": "NODE_ENV=test ts-node --transpileOnly ./node_modules/.bin/sequelize db:migrate",
     "test": "npm run migrate:test && NODE_ENV=test jest --runInBand"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "description": "",
   "dependencies": {
     "bcrypt": "^5.1.1",
@@ -33,9 +35,20 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/dotenv": "^6.1.1",
+    "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.8",
+    "@types/node": "^22.13.2",
+    "@types/supertest": "^6.0.2",
+    "@typescript-eslint/eslint-plugin": "^8.24.0",
+    "@typescript-eslint/parser": "^8.24.0",
+    "eslint": "^9.20.1",
     "jest": "^29.7.0",
     "nodemon": "^3.1.9",
     "sequelize-cli": "^6.6.2",
-    "supertest": "^7.0.0"
+    "supertest": "^7.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
   }
 }
