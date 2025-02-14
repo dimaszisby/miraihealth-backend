@@ -1,4 +1,4 @@
-import { Model, DataTypes, Sequelize } from "sequelize";
+import { Model, DataTypes, Sequelize, Optional, DateOnlyDataType } from "sequelize";
 import bcrypt from "bcrypt";
 
 /**
@@ -14,46 +14,56 @@ export interface UserAttributes {
   age?: number;
   sex: "male" | "female" | "other" | "prefer not to specify";
   isPublicProfile: boolean;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
   deletedAt?: Date | null;
 }
+
+export interface UserCreationAttributes
+  extends Optional<UserAttributes, "id"> {}
 
 export interface UserInstance extends Model<UserAttributes>, UserAttributes {
   validPassword(password: string): Promise<boolean>;
 }
 
-export default (sequelize: Sequelize) => {
-  class User extends Model<UserAttributes, UserInstance> implements UserInstance {
-    id!: string;
-    username!: string;
-    email!: string;
-    password!: string;
-    age?: number;
-    sex!: "male" | "female" | "other" | "prefer not to specify";
-    isPublicProfile!: boolean;
-    deletedAt?: Date | null;
+export class User
+  extends Model<UserAttributes, UserCreationAttributes>
+  implements UserAttributes
+{
+  id!: string;
+  username!: string;
+  email!: string;
+  password!: string;
+  age?: number;
+  sex!: "male" | "female" | "other" | "prefer not to specify";
+  isPublicProfile!: boolean;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
+  deletedAt?: Date | null;
 
-    /**
-     * * Associations
-     */
-    static associate(models: any) {
-      User.hasMany(models.Metric, {
-        foreignKey: "userId",
-        onDelete: "CASCADE",
-      });
-      User.hasMany(models.MetricCategory, {
-        foreignKey: "userId",
-        onDelete: "CASCADE",
-      });
-    }
-
-    /**
-     * * Compare passwords for authentication
-     */
-    async validPassword(password: string): Promise<boolean> {
-      return bcrypt.compare(password, this.password);
-    }
+  /**
+   * * Associations
+   */
+  static associate(models: any) {
+    User.hasMany(models.Metric, {
+      foreignKey: "userId",
+      onDelete: "CASCADE",
+    });
+    User.hasMany(models.MetricCategory, {
+      foreignKey: "userId",
+      onDelete: "CASCADE",
+    });
   }
 
+  /**
+   * * Compare passwords for authentication
+   */
+  async validPassword(password: string): Promise<boolean> {
+    return bcrypt.compare(password, this.password);
+  }
+}
+
+export default (sequelize: Sequelize) => {
   User.init(
     {
       id: {
@@ -81,7 +91,12 @@ export default (sequelize: Sequelize) => {
         allowNull: true,
       },
       sex: {
-        type: DataTypes.ENUM("male", "female", "other", "prefer not to specify"),
+        type: DataTypes.ENUM(
+          "male",
+          "female",
+          "other",
+          "prefer not to specify"
+        ),
         allowNull: false,
         defaultValue: "prefer not to specify",
       },

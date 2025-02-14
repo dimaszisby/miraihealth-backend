@@ -1,4 +1,7 @@
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
+import { MetricCategory } from "./metric-category.js";
+import { MetricSettings } from "./metric-settings.js";
+import { MetricLog } from "./metric-log.js";
 
 /**
  * * Metric Model
@@ -16,12 +19,19 @@ export interface MetricAttributes {
   defaultUnit: string;
   isPublic: boolean;
   deletedAt?: Date | null;
+  MetricCategory?: MetricCategory; // ✅ Add Type
+  MetricSettings?: MetricSettings; // ✅ Add Type
+  MetricLogs?: MetricLog[]; // ✅ Add Type
 }
 
 // Define optional fields for Sequelize
-export interface MetricCreationAttributes extends Optional<MetricAttributes, "id"> {}
+export interface MetricCreationAttributes
+  extends Optional<MetricAttributes, "id"> {}
 
-export class Metric extends Model<MetricAttributes, MetricCreationAttributes> implements MetricAttributes {
+export class Metric
+  extends Model<MetricAttributes, MetricCreationAttributes>
+  implements MetricAttributes
+{
   public id!: string;
   public userId!: string;
   public categoryId!: string | null;
@@ -31,7 +41,9 @@ export class Metric extends Model<MetricAttributes, MetricCreationAttributes> im
   public defaultUnit!: string;
   public isPublic!: boolean;
   public deletedAt!: Date | null;
-
+  public MetricCategory?: MetricCategory;
+  public MetricSettings?: MetricSettings;
+  public MetricLogs?: MetricLog[];
   /**
    * * Associations
    */
