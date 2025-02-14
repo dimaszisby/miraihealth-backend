@@ -1,3 +1,4 @@
+// src/middleware/validate.ts
 import { Request, Response, NextFunction } from "express";
 import { ZodSchema, ZodError } from "zod";
 
@@ -38,3 +39,5 @@ export const validate =
       next(error); // ✅ Pass unexpected errors to global error handler
     }
   };
+
+export default validate;
