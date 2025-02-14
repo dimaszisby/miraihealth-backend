@@ -1,4 +1,4 @@
-// utils/catchAsync.js
+// src/utils/catchAsync.js
 
 import { Request, Response, NextFunction } from "express";
 
@@ -10,7 +10,7 @@ import { Request, Response, NextFunction } from "express";
  * @returns A function that handles errors and passes them to `next()`.
  */
 const catchAsync =
-  (fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) =>
+  (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) =>
   (req: Request, res: Response, next: NextFunction): void => {
     fn(req, res, next).catch(next);
   };
