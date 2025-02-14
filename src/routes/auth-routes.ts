@@ -1,39 +1,47 @@
+// src/routes/auth-routes.ts
+
 import { Router } from "express";
-const router = Router();
 import {
   register,
   login,
   getProfile,
   updateProfile,
   logout,
-} from "../src/controllers/auth-controller";
-import authMiddleware from "../middleware/auth-middleware";
-import validate from "../middleware/validate";
+} from "../controllers/auth-controller.js";
+import { authMiddleware } from "../middleware/auth-middleware.js";
+import { validate } from "../middleware/validate.js";
 import {
   createUserSchema,
   updateUserSchema,
-} from "../validators/user-validator";
+} from "../validators/user-validator.js";
 
-// *Public Routes
-// CREATE User
+const router = Router();
+
+/**
+ * * Authentication Routes
+ * Handles user registration, login, profile management, and logout.
+ */
+
+// ✅ **Public Routes**
+// 🔹 Register a new user
 router.post("/register", validate(createUserSchema), register);
 
-// LOGIN User
+// 🔹 Login user and get token
 router.post("/login", login);
 
-// * Protected Routes
-// GET current User Profile
+// ✅ **Protected Routes (Require Authentication)**
+// 🔹 Get current user profile
 router.get("/profile", authMiddleware, getProfile);
 
-// UPDATE current User Profile
+// 🔹 Update current user profile
 router.put(
   "/profile",
-  validate(updateUserSchema),
   authMiddleware,
+  validate(updateUserSchema),
   updateProfile
 );
 
-// LOGOUT current User
+// 🔹 Logout user (Handled client-side for JWT)
 router.post("/logout", authMiddleware, logout);
 
 export default router;
