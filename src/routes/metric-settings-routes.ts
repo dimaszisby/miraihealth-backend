@@ -5,6 +5,8 @@ import {
   getMetricSettingsById,
   updateMetricSettings,
   deleteMetricSettings,
+  updateGoalAchievement,
+  updateDisplayOptions,
 } from "../controllers/metric-settings-controller.js";
 import { authMiddleware } from "../middleware/auth-middleware.js";
 import { validate } from "../middleware/validate.js";
@@ -57,5 +59,9 @@ router.delete(
   validate(deleteMetricSettingsSchema),
   deleteMetricSettings
 );
+
+// New PATCH endpoints
+router.patch("/:metricId/settings/:id/achieve", updateGoalAchievement);
+router.patch("/:metricId/settings/:id/display", updateDisplayOptions);
 
 export default router;
