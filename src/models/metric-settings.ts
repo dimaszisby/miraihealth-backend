@@ -1,4 +1,7 @@
+//src/models/metric-settings.ts
+
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
+import { Metric } from "./metric.js";
 
 /**
  * * MetricSettings Model
@@ -27,6 +30,9 @@ export interface MetricSettingsAttributes {
   };
   createdAt?: Date;
   updatedAt?: Date;
+
+  // Optional associated objects
+  Metric?: Metric;
 }
 
 // Define optional fields for Sequelize
@@ -37,34 +43,36 @@ export class MetricSettings
   extends Model<MetricSettingsAttributes, MetricSettingsCreationAttributes>
   implements MetricSettingsAttributes
 {
-  public id!: string;
-  public metricId!: string;
-  public goalEnabled!: boolean;
-  public goalType!: "cumulative" | "incremental" | null;
-  public goalValue!: number | null;
-  public timeFrameEnabled!: boolean;
-  public startDate!: string | null;
-  public deadlineDate!: string | null;
-  public alertEnabled!: boolean;
-  public alertThresholds!: number | null;
-  public isAchieved!: boolean;
-  public isActive!: boolean;
-  public displayOptions!: {
+  declare id: string;
+  declare metricId: string;
+  declare goalEnabled: boolean;
+  declare goalType?: "cumulative" | "incremental" | null;
+  declare goalValue?: number | null;
+  declare timeFrameEnabled: boolean;
+  declare startDate?: string | null;
+  declare deadlineDate?: string | null;
+  declare alertEnabled: boolean;
+  declare alertThresholds?: number | null;
+  declare isAchieved: boolean;
+  declare isActive: boolean;
+  declare displayOptions: {
     showOnDashboard: boolean;
     priority: number | null;
     chartType: string | null;
     color: string | null;
   };
-  public createdAt!: Date;
-  public updatedAt!: Date;
+
+  // Optional associated objects
+  declare Metric?: Metric;
 
   /**
    * * Associations
    */
   public static associate(models: any) {
     MetricSettings.belongsTo(models.Metric, {
-      foreignKey: "metricId",
       as: "Metric",
+      foreignKey: "metricId",
+      onDelete: "SET NULL",
     });
   }
 
@@ -72,22 +80,18 @@ export class MetricSettings
    * * Convert data for API response
    */
   public toJSON(): Record<string, any> {
+    // Get all attributes as a plain object
+    const attributes = this.get();
+
+    // Format createdAt and updatedAt (if they exist) as ISO strings
     return {
-      id: this.id,
-      metricId: this.metricId,
-      goalEnabled: this.goalEnabled,
-      goalType: this.goalType,
-      goalValue: this.goalValue,
-      startDate: this.startDate,
-      timeFrameEnabled: this.timeFrameEnabled,
-      deadlineDate: this.deadlineDate,
-      alertEnabled: this.alertEnabled,
-      alertThresholds: this.alertThresholds,
-      isAchieved: this.isAchieved,
-      isActive: this.isActive,
-      displayOptions: this.displayOptions,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
+      ...attributes,
+      createdAt: attributes.createdAt
+        ? new Date(attributes.createdAt).toISOString()
+        : null,
+      updatedAt: attributes.updatedAt
+        ? new Date(attributes.updatedAt).toISOString()
+        : null,
     };
   }
 }
@@ -123,7 +127,7 @@ export default (sequelize: Sequelize) => {
         type: DataTypes.FLOAT,
         allowNull: true,
         validate: {
-          isPositive(value: number) {
+          isValidValue(value: number | null) {
             if (value !== null && value <= 0) {
               throw new Error("Goal value must be greater than 0.");
             }
@@ -142,21 +146,12 @@ export default (sequelize: Sequelize) => {
         type: DataTypes.DATEONLY,
         allowNull: true,
         validate: {
-          isAfterStart(value: unknown) {
-            if (
-              this.startDate &&
-              typeof value === "string" &&
-              typeof this.startDate === "string"
-            ) {
+          isAfterStart(this: { startDate?: string | null }, value: unknown) {
+            if (this.startDate && value) {
               const startDate = new Date(this.startDate);
-              const deadline = new Date(value);
-
-              if (!isNaN(startDate.getTime()) && !isNaN(deadline.getTime())) {
-                if (deadline <= startDate) {
-                  throw new Error(
-                    "Deadline date must be after the start date."
-                  );
-                }
+              const deadline = new Date(value as string);
+              if (deadline <= startDate) {
+                throw new Error("Deadline date must be after the start date.");
               }
             }
           },
@@ -216,11 +211,6 @@ export default (sequelize: Sequelize) => {
           }
           if (!metricSettings.alertEnabled) {
             metricSettings.alertThresholds = null;
-          }
-          if (!metricSettings.displayOptions.showOnDashboard) {
-            metricSettings.displayOptions.priority = null;
-            metricSettings.displayOptions.chartType = null;
-            metricSettings.displayOptions.color = null;
           }
         },
       },

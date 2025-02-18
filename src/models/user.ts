@@ -1,4 +1,12 @@
-import { Model, DataTypes, Sequelize, Optional, DateOnlyDataType } from "sequelize";
+// src/models/user.ts
+
+import {
+  Model,
+  DataTypes,
+  Sequelize,
+  Optional,
+  DateOnlyDataType,
+} from "sequelize";
 import bcrypt from "bcrypt";
 
 /**
@@ -30,26 +38,28 @@ export class User
   extends Model<UserAttributes, UserCreationAttributes>
   implements UserAttributes
 {
-  id!: string;
-  username!: string;
-  email!: string;
-  password!: string;
-  age?: number;
-  sex!: "male" | "female" | "other" | "prefer not to specify";
-  isPublicProfile!: boolean;
-  createdAt?: Date | null;
-  updatedAt?: Date | null;
-  deletedAt?: Date | null;
+  declare id: string;
+  declare username: string;
+  declare email: string;
+  declare password: string;
+  declare age?: number;
+  declare sex: "male" | "female" | "other" | "prefer not to specify";
+  declare isPublicProfile: boolean;
+  declare createdAt?: Date | null;
+  declare updatedAt?: Date | null;
+  declare deletedAt?: Date | null;
 
   /**
    * * Associations
    */
   static associate(models: any) {
     User.hasMany(models.Metric, {
+      as: "Metric",
       foreignKey: "userId",
       onDelete: "CASCADE",
     });
     User.hasMany(models.MetricCategory, {
+      as: "MetricCategory",
       foreignKey: "userId",
       onDelete: "CASCADE",
     });
@@ -122,11 +132,17 @@ export default (sequelize: Sequelize) => {
          * * Hash password before saving
          */
         beforeCreate: async (user: UserInstance) => {
+          if (!user.password) {
+            throw new Error("Password is required for registration.");
+          }
           const salt = await bcrypt.genSalt(10);
           user.password = await bcrypt.hash(user.password, salt);
         },
         beforeUpdate: async (user: UserInstance) => {
           if (user.changed("password")) {
+            if (!user.password) {
+              throw new Error("Password is required for update.");
+            }
             const salt = await bcrypt.genSalt(10);
             user.password = await bcrypt.hash(user.password, salt);
           }

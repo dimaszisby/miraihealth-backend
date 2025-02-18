@@ -1,4 +1,8 @@
+// src/models/metric-category.ts
+
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
+import { Metric } from "./metric.js";
+import { User } from "./user.js";
 
 /**
  * * MetricCategory Model
@@ -13,6 +17,10 @@ export interface MetricCategoryAttributes {
   color: string;
   icon: string;
   deletedAt?: Date | null;
+
+  // Optional associated objects
+  User?: User;
+  Metrics?: Metric[];
 }
 
 // Define optional fields for Sequelize
@@ -23,19 +31,31 @@ export class MetricCategory
   extends Model<MetricCategoryAttributes, MetricCategoryCreationAttributes>
   implements MetricCategoryAttributes
 {
-  public id!: string;
-  public userId!: string;
-  public name!: string;
-  public color!: string;
-  public icon!: string;
-  public deletedAt!: Date | null;
+  declare id: string;
+  declare userId: string;
+  declare name: string;
+  declare color: string;
+  declare icon: string;
+  declare deletedAt?: Date | null;
+
+  // Optional associated objects
+  declare User?: User;
+  declare Metrics?: Metric[];
 
   /**
    * * Associations
    */
   public static associate(models: any) {
-    MetricCategory.belongsTo(models.User, { foreignKey: "userId" });
-    MetricCategory.hasMany(models.Metric, { foreignKey: "categoryId" });
+    MetricCategory.belongsTo(models.User, {
+      as: "User",
+      foreignKey: "userId",
+      onDelete: "SET NULL",
+    });
+    MetricCategory.hasMany(models.Metric, {
+      as: "Metric",
+      foreignKey: "categoryId",
+      onDelete: "SET NULL",
+    });
   }
 }
 

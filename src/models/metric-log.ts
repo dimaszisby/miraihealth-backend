@@ -1,4 +1,7 @@
+// src/models/metric-log.ts
+
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
+import { Metric } from "./metric.js";
 
 /**
  * * MetricLog Model
@@ -11,29 +14,42 @@ export interface MetricLogAttributes {
   metricId: string;
   type: string;
   logValue: number;
+  loggedAt: Date;
   createdAt?: Date;
   updatedAt?: Date;
+
+  // Optional associated objects
+  Metric?: Metric;
 }
 
 // Define optional fields for Sequelize
-export interface MetricLogCreationAttributes extends Optional<MetricLogAttributes, "id"> {}
+export interface MetricLogCreationAttributes
+  extends Optional<MetricLogAttributes, "id"> {}
 
 export class MetricLog
   extends Model<MetricLogAttributes, MetricLogCreationAttributes>
   implements MetricLogAttributes
 {
-  public id!: string;
-  public metricId!: string;
-  public type!: string;
-  public logValue!: number;
-  public createdAt!: Date;
-  public updatedAt!: Date;
+  declare id: string;
+  declare metricId: string;
+  declare type: string;
+  declare logValue: number;
+  declare loggedAt: Date;
+  declare createdAt?: Date;
+  declare updatedAt?: Date;
+
+  // Optional associated objects
+  declare Metric?: Metric;
 
   /**
    * * Associations
    */
   public static associate(models: any) {
-    MetricLog.belongsTo(models.Metric, { foreignKey: "metricId" });
+    MetricLog.belongsTo(models.Metric, {
+      as: "Metric",
+      foreignKey: "metricId",
+      onDelete: "SET NULL",
+    });
   }
 }
 
@@ -71,6 +87,11 @@ export default (sequelize: Sequelize) => {
             }
           },
         },
+      },
+      loggedAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.literal("NOW()"),
       },
     },
     {
