@@ -14,7 +14,7 @@ export const errorHandler = (
   req: Request,
   res: Response,
   next: NextFunction
-): Response => {
+): void => {
   // Debugging: Check if err is an instance of AppError
   logger.error(`Error Occurred: ${err.message}`, err);
 
@@ -23,14 +23,14 @@ export const errorHandler = (
 
   // Hide sensitive error details in production
   if (process.env.NODE_ENV === "production") {
-    return res.status(appError.statusCode).json({
+    res.status(appError.statusCode).json({
       status: "error",
       message: "Something went wrong!",
     });
   }
 
   // Send detailed error response in development
-  return res.status(appError.statusCode).json({
+  res.status(appError.statusCode).json({
     status: appError.status,
     message: appError.message,
     ...(process.env.NODE_ENV === "development" && { stack: appError.stack }),

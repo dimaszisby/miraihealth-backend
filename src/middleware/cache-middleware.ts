@@ -19,6 +19,10 @@ export type KeyGenerator = (req: Request) => string;
 export const cacheMiddleware =
   (keyGenerator: KeyGenerator, duration: number) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    if (process.env.NODE_ENV === "test") {
+      return next();
+    }
+
     try {
       const key = keyGenerator(req);
       const cachedData = await redisClient.get(key);

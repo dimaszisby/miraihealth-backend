@@ -2,8 +2,9 @@
 
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import UserModel from "../models/user.js"; // ✅ Import model function
-import sequelize from "../config/db.js"; // ✅ Import Sequelize instance
+import UserModel from "../models/user.js";
+import sequelize from "../config/db.js";
+import AppError from "../utils/AppError.js";
 
 /**
  * * Auth Middleware
@@ -27,31 +28,28 @@ export const authMiddleware = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
+  // 1. Check if Authorization header is present
   const authHeader = req.headers.authorization;
-
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    res.status(401).json({ message: "Unauthorized: No token provided" });
-    return;
+    return next(new AppError("Unauthorized: No token provided", 401));
   }
 
+  // 2. Extract token from Authorization header
   const token = authHeader.split(" ")[1];
-
   try {
+    // 3. Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
       id: string;
     };
-
+    // 4. Check if user exists
     const user = await User.findByPk(decoded.id);
-
     if (!user) {
-      res.status(401).json({ message: "Unauthorized: User not found" });
-      return;
+      return next(new AppError("Unauthorized: User not found", 401));
     }
-
-    req.user = user; // ✅ Attach user to request
+    // 5. Attach user to request
+    req.user = user;
     next();
   } catch (error) {
-    res.status(401).json({ message: "Unauthorized: Invalid token" });
-    return;
+    return next(new AppError("Unauthorized: Invalid token", 401));
   }
 };
