@@ -1,9 +1,12 @@
+// src/controllers/metric-controller.ts
+
 import { Request, Response, NextFunction } from "express";
 import { Metric } from "../models/metric.js";
 import AppError from "../utils/AppError.js";
 import { successResponse } from "../utils/response-formatter.js";
 import catchAsync from "../utils/catch-async.js";
 import {
+  createMetricData,
   getMetricData,
   getMetricDetailData,
 } from "../services/metric-service.js";
@@ -37,8 +40,8 @@ export const createMetric = catchAsync(
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
 
-    const metric = await Metric.create({
-      userId,
+    // Delegate metric creation to the service
+    const metric = await createMetricData(userId, {
       categoryId,
       originalMetricId,
       name,

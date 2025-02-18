@@ -36,6 +36,9 @@ const generateToken = (user: User): string => {
  */
 export const register = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
+    console.log(
+      `Received request to register new user with Body: ${req.body.password}`
+    );
     const {
       username,
       email,

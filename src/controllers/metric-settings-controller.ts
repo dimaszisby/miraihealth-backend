@@ -22,7 +22,6 @@ export interface AuthRequest extends Request {
 export const createMetricSettings = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     const { metricId } = req.params;
-
     if (!metricId) throw new AppError("Metric ID is required", 400);
 
     const {
@@ -40,13 +39,31 @@ export const createMetricSettings = catchAsync(
     console.log(
       `Received request to create settings for metricId: ${metricId}`
     );
-    console.log("Request Body:", req.body);
+    console.log("Raw Request Body:", req.body);
 
     // Validate that the parent Metric exists
     const metric = await Metric.findOne({ where: { id: metricId } });
-    if (!metric) throw new AppError("Metric not found", 404);
+    if (!metric) {
+      console.error(`Metric with id ${metricId} not found.`);
+      throw new AppError("Metric not found", 404);
+    }
+    console.log("Found parent metric:", metric.toJSON());
 
-    const metricSettings = await MetricSettings.create({
+    // Apply default values if optional fields are undefined
+    const finalAlertEnabled = alertEnabled !== undefined ? alertEnabled : false;
+    const finalAlertThresholds =
+      alertThresholds !== undefined ? alertThresholds : 80;
+    const finalDisplayOptions =
+      displayOptions !== undefined
+        ? displayOptions
+        : {
+            showOnDashboard: true,
+            priority: 1,
+            chartType: "line",
+            color: "#E897A3",
+          };
+
+    const creationData = {
       metricId,
       goalEnabled,
       goalType,
@@ -54,19 +71,31 @@ export const createMetricSettings = catchAsync(
       timeFrameEnabled,
       startDate,
       deadlineDate,
-      alertEnabled,
-      alertThresholds,
-      displayOptions,
+      alertEnabled: finalAlertEnabled,
+      alertThresholds: finalAlertThresholds,
+      displayOptions: finalDisplayOptions,
       isAchieved: false,
       isActive: true,
-    });
+    };
 
-    successResponse(
-      res,
-      201,
-      { metricSettings },
-      "Metric Settings created successfully."
-    );
+    console.log("Final data for MetricSettings creation:", creationData);
+
+    try {
+      const metricSettings = await MetricSettings.create(creationData);
+      console.log(
+        "Successfully created MetricSettings:",
+        metricSettings.toJSON()
+      );
+      successResponse(
+        res,
+        201,
+        { metricSettings },
+        "Metric Settings created successfully"
+      );
+    } catch (error) {
+      console.error("Error creating MetricSettings:", (error as Error).stack);
+      throw error;
+    }
   }
 );
 
@@ -82,14 +111,14 @@ export const getAllMetricSettings = catchAsync(
 
     const settings = await MetricSettings.findAll({ where: { metricId } });
 
-    if (!settings || settings.length === 0)
-      throw new AppError("No settings found for the given Metric", 404);
+    // Return empty array if no settings found
+    const metricSettings = settings || [];
 
     successResponse(
       res,
       200,
-      { settings },
-      "Metric Settings retrieved successfully."
+      { metricSettings },
+      "Metric Settings retrieved successfully"
     );
   }
 );
@@ -105,15 +134,17 @@ export const getMetricSettingsById = catchAsync(
     if (!metricId || !id)
       throw new AppError("Metric ID and Settings ID are required", 400);
 
-    const settings = await MetricSettings.findOne({ where: { id, metricId } });
-
-    if (!settings) throw new AppError("Settings for Metric not found", 404);
+    const metricSettings = await MetricSettings.findOne({
+      where: { id, metricId },
+    });
+    if (!metricSettings)
+      throw new AppError("Settings for Metric not found", 404);
 
     successResponse(
       res,
       200,
-      { settings },
-      "Metric Settings retrieved successfully."
+      { metricSettings },
+      "Metric Settings retrieved successfully"
     );
   }
 );
@@ -142,7 +173,7 @@ export const updateMetricSettings = catchAsync(
       res,
       200,
       { metricSettings },
-      "Metric settings updated successfully."
+      "Metric settings updated successfully"
     );
   }
 );
@@ -158,17 +189,87 @@ export const deleteMetricSettings = catchAsync(
     if (!metricId || !id)
       throw new AppError("Metric ID and Settings ID are required", 400);
 
-    const settings = await MetricSettings.findOne({ where: { id, metricId } });
+    const metricSettings = await MetricSettings.findOne({
+      where: { id, metricId },
+    });
+    if (!metricSettings)
+      throw new AppError("Settings for Metric not found", 404);
 
-    if (!settings) throw new AppError("Settings for Metric not found", 404);
-
-    await settings.destroy();
+    await metricSettings.destroy();
 
     successResponse(
       res,
       200,
-      { settings },
-      "Metric settings deleted successfully."
+      { metricSettings },
+      "Metric Settings deleted successfully"
+    );
+  }
+);
+
+/**
+ * * Update Goal Achievement
+ * @route PATCH /api/metrics/:metricId/settings/:id/achieve
+ */
+export const updateGoalAchievement = catchAsync(
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    const { metricId, id } = req.params;
+
+    if (!metricId || !id) {
+      throw new AppError("Metric ID and Settings ID are required", 400);
+    }
+
+    const metricSettings = await MetricSettings.findOne({
+      where: { id, metricId },
+    });
+    if (!metricSettings) {
+      throw new AppError("Metric settings not found", 404);
+    }
+
+    // Update the achievement flag (for example, setting isAchieved to true)
+    metricSettings.isAchieved = true;
+    await metricSettings.save();
+
+    successResponse(
+      res,
+      200,
+      { metricSettings },
+      "Goal achievement updated successfully"
+    );
+  }
+);
+
+/**
+ * * Update Display Options
+ * @route PATCH /api/metrics/:metricId/settings/:id/display
+ */
+export const updateDisplayOptions = catchAsync(
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    const { metricId, id } = req.params;
+    const { displayOptions } = req.body;
+
+    if (!metricId || !id) {
+      throw new AppError("Metric ID and Settings ID are required", 400);
+    }
+    if (!displayOptions) {
+      throw new AppError("Display options are required", 400);
+    }
+
+    const metricSettings = await MetricSettings.findOne({
+      where: { id, metricId },
+    });
+    if (!metricSettings) {
+      throw new AppError("Metric settings not found", 404);
+    }
+
+    // Update the display options (this could be a merge instead of a full replace if needed)
+    metricSettings.displayOptions = displayOptions;
+    await metricSettings.save();
+
+    successResponse(
+      res,
+      200,
+      { metricSettings },
+      "Display options updated successfully"
     );
   }
 );

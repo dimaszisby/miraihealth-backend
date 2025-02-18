@@ -1,3 +1,5 @@
+//src/controllers/metric-category-controller.ts
+
 import { Request, Response, NextFunction } from "express";
 import { MetricCategory } from "../models/metric-category.js";
 import AppError from "../utils/AppError.js";
@@ -25,6 +27,14 @@ export const createCategory = catchAsync(
 
     const { name, color = "#E897A3", icon = "📁" } = req.body;
 
+    // Check for duplicate category name for the same user:
+    const existingCategory = await MetricCategory.findOne({
+      where: { userId, name },
+    });
+    if (existingCategory) {
+      throw new AppError("Category already exists", 400);
+    }
+
     const category = await MetricCategory.create({
       userId,
       name,
@@ -32,7 +42,7 @@ export const createCategory = catchAsync(
       icon,
     });
 
-    successResponse(res, 201, { category }, "Category created successfully.");
+    successResponse(res, 201, { category }, "Category created successfully");
   }
 );
 
@@ -88,7 +98,7 @@ export const updateCategory = catchAsync(
 
     await category.update({ name, color, icon });
 
-    successResponse(res, 200, { category }, "Category updated successfully.");
+    successResponse(res, 200, { category }, "Category updated successfully");
   }
 );
 
@@ -109,6 +119,6 @@ export const deleteCategory = catchAsync(
 
     await category.destroy();
 
-    successResponse(res, 200, { category }, "Category deleted successfully.");
+    successResponse(res, 200, { category }, "Category deleted successfully");
   }
 );
