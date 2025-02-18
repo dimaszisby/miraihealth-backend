@@ -1,32 +1,15 @@
-// TODO: Load Redis based on env variables
-interface Config {
-  development: {
-    url?: string;
-    database: string;
-    host: string;
-    port: number;
-    dialect: string;
-    logging: boolean | ((...args: any[]) => void);
-    dialectOptions: { options: string; ssl: boolean };
-    redis: { host: string; port: number; password?: string };
-  };
-  test: {
-    url?: string;
-    database: string;
-    host: string;
-    port: number;
-    dialect: string;
-    logging: boolean;
-    redis: { host: string; port: number; password?: string };
-  };
-  production: {
-    url?: string;
-    dialect: string;
-    redis: { host: string; port: number; password?: string };
-  };
-}
+// src/config/config.cjs
 
-const config: Config = {
+const dotenv = require("dotenv");
+const path = require("path");
+
+const envPath =
+  process.env.NODE_ENV === "test"
+    ? path.resolve(process.cwd(), ".env.test")
+    : path.resolve(process.cwd(), ".env");
+dotenv.config({ path: envPath });
+
+module.exports = {
   development: {
     url: process.env.DEVELOPMENT_DATABASE_URL,
     database: "miraihealth",
@@ -60,6 +43,9 @@ const config: Config = {
   production: {
     url: process.env.PRODUCTION_DATABASE_URL,
     dialect: "postgres",
+    host: process.env.DB_HOST || "127.0.0.1",
+    port: Number(process.env.DB_PORT) || 5432,
+    logging: false,
     redis: {
       host: process.env.REDIS_HOST || "127.0.0.1",
       port: Number(process.env.REDIS_PORT) || 6379,
@@ -67,5 +53,3 @@ const config: Config = {
     },
   },
 };
-
-export default config;

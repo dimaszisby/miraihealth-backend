@@ -1,34 +1,77 @@
+// src/config/db.ts
+
 import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
 import path from "path";
+import { fileURLToPath } from "url";
 
-// 1. Load environment variables based on NODE_ENV
-const env = process.env.NODE_ENV || "development";
+// Fix for ES Modules (NodeNext)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// 2. Set separate test database
-dotenv.config({
-  path:
-    env === "test"
-      ? path.resolve(__dirname, "../.env.test")
-      : path.resolve(__dirname, "../.env"),
-});
+// Load Environment Variables
+const envPath =
+  process.env.NODE_ENV === "test"
+    ? path.resolve(__dirname, "../../.env.test")
+    : path.resolve(__dirname, "../../.env");
 
-// 3. Require the configuration after loading environment variables
-const config = require("./config");
+console.log(`🟢 Loading environment variables from: ${envPath}`);
+dotenv.config({ path: envPath });
 
-// 4. Initialize Sequelize
-const sequelize = new Sequelize(config[env].url, {
-  host: config[env].host || "127.0.0.1",
-  port: config[env].port || 5432,
-  protocol: "postgres",
-  dialect: config[env].dialect,
-  logging: config[env].logging || false, // Disable logging; default: console.log
-  quoteIdentifiers: false,
+const dbConfig = {
+  development: {
+    url: process.env.DEVELOPMENT_DATABASE_URL,
+    dialect: "postgres",
+    host: process.env.DB_HOST || "127.0.0.1",
+    port: Number(process.env.DB_PORT) || 5432,
+    logging: console.log,
+    dialectOptions: {
+      ssl: false,
+    },
+  },
+  test: {
+    url: process.env.TEST_DATABASE_URL,
+    dialect: "postgres",
+    host: process.env.DB_HOST || "127.0.0.1",
+    port: Number(process.env.DB_PORT) || 5432,
+    logging: false,
+    dialectOptions: {
+      ssl: false,
+    },
+  },
+  production: {
+    url: process.env.PRODUCTION_DATABASE_URL,
+    dialect: "postgres",
+    host: process.env.DB_HOST || "127.0.0.1",
+    port: Number(process.env.DB_PORT) || 5432,
+    logging: false,
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false,
+      },
+    },
+  },
+};
+
+const env = (process.env.NODE_ENV || "development") as keyof typeof dbConfig;
+const config = dbConfig[env];
+
+if (!config.url) {
+  throw new Error(`Database URL not found for environment: ${env}`);
+}
+
+const sequelize = new Sequelize(config.url, {
+  dialect: "postgres",
+  host: config.host,
+  port: config.port,
+  logging: config.logging,
+  dialectOptions: config.dialectOptions,
   define: {
     freezeTableName: false,
     underscored: true,
+    timestamps: true,
   },
-  dialectOptions: config[env].dialectOptions, // Use dialectOptions from config.js
 });
 
 export default sequelize;
