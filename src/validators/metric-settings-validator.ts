@@ -1,3 +1,5 @@
+//src/validators/metric-settings-validator.ts
+
 import { z } from "zod";
 
 /**
@@ -22,18 +24,25 @@ export const createMetricSettingsSchema = z.object({
     .object({
       goalEnabled: z.boolean().optional().default(false),
       goalType: z.enum(["cumulative", "incremental"]).optional().nullable(),
-      goalValue: z.number().positive("Goal value must be greater than 0").optional().nullable(),
+      goalValue: z
+        .number()
+        .positive("Goal value must be greater than 0")
+        .optional()
+        .nullable(),
       timeFrameEnabled: z.boolean().optional().default(false),
       startDate: z.preprocess(
-        (arg) => (typeof arg === "string" || arg instanceof Date ? new Date(arg) : arg),
+        (arg) =>
+          typeof arg === "string" || arg instanceof Date ? new Date(arg) : arg,
         z.date().optional().nullable()
       ),
       deadlineDate: z.preprocess(
-        (arg) => (typeof arg === "string" || arg instanceof Date ? new Date(arg) : arg),
+        (arg) =>
+          typeof arg === "string" || arg instanceof Date ? new Date(arg) : arg,
         z.date().optional().nullable()
       ),
-      alertsEnabled: z.boolean().optional().default(false),
-      alertThresholds: z.number()
+      alertEnabled: z.boolean().optional().default(false),
+      alertThresholds: z
+        .number()
         .int({ message: "Alert threshold must be an integer" })
         .min(0, { message: "Alert threshold must be at least 0" })
         .max(100, { message: "Alert threshold must be at most 100" })
@@ -41,24 +50,34 @@ export const createMetricSettingsSchema = z.object({
         .default(80),
       displayOptions: displayOptionsSchema.optional(),
     })
-    .refine((data) => {
-      if (data.goalEnabled) {
-        return data.goalType !== null && data.goalValue !== null;
+    .refine(
+      (data) => {
+        if (data.goalEnabled) {
+          return data.goalType !== null && data.goalValue !== null;
+        }
+        return true;
+      },
+      {
+        message:
+          "goalType and goalValue are required when goalEnabled is true.",
       }
-      return true;
-    }, {
-      message: "goalType and goalValue are required when goalEnabled is true.",
-      path: ["body"],
-    })
-    .refine((data) => {
-      if (data.timeFrameEnabled) {
-        return data.startDate && data.deadlineDate && data.deadlineDate > data.startDate;
+    )
+    .refine(
+      (data) => {
+        if (data.timeFrameEnabled) {
+          return (
+            data.startDate &&
+            data.deadlineDate &&
+            data.deadlineDate > data.startDate
+          );
+        }
+        return true;
+      },
+      {
+        message:
+          "startDate and deadlineDate are required, and deadlineDate must be after startDate when timeFrameEnabled is true.",
       }
-      return true;
-    }, {
-      message: "startDate and deadlineDate are required, and deadlineDate must be after startDate when timeFrameEnabled is true.",
-      path: ["body"],
-    }),
+    ),
 });
 
 // ✅ UPDATE MetricSettings Schema
