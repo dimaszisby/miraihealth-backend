@@ -1,26 +1,23 @@
-// server.js
+// src/server.ts
 
-// Internals
-const express = require("express");
-const sequelize = require("./config/db");
-const cors = require("cors");
-const dotenv = require("dotenv");
-
-// Security Middlewares
-const helmet = require("helmet");
-const xss = require("xss-clean"); // Additional security
-const hpp = require("hpp"); // Prevent HTTP parameter pollution
-// const { globalRateLimiter } = require("./middleware/rate-limiter");
+import express, { Application } from "express";
+import sequelize from "./config/db.js";
+import cors from "cors";
+import dotenv from "dotenv";
+import helmet from "helmet";
+import xssClean from "xss-clean";
+import hpp from "hpp";
 
 // Routes
-import authRoutes from "./routes/auth-routes";
-const metricRoutes = require("./routes/metric-routes");
-const metricCategoryRoutes = require("./routes/metric-category-routes");
-const metricSettingsRoutes = require("./routes/metric-settings-routes");
-const metricLogRoutes = require("./routes/metric-log-routes");
+import authRoutes from "./routes/auth-routes.js";
+import metricRoutes from "./routes/metric-routes.js";
+import metricCategoryRoutes from "./routes/metric-category-routes.js";
+import metricSettingsRoutes from "./routes/metric-settings-routes.js";
+import metricLogRoutes from "./routes/metric-log-routes.js";
 
-// other setups
-const errorHandler = require("./middleware/error-handler");
+// Other Setup
+import { errorHandler } from "./middleware/error-handler.js";
+// import { globalRateLimiter } from "./middleware/rate-limiter.js"; // Uncomment when needed
 
 /**
  * * App Entry
@@ -34,29 +31,27 @@ const errorHandler = require("./middleware/error-handler");
 
 // * Environment Variables
 dotenv.config();
-const app = express();
+
+const app: Application = express();
 
 // * Middlewares
 app.use(express.json());
 
-// Data Sanitization against XSS
-// TODO: Extended implementations
-// app.use(xss());
-
-// Prevent HTTP Parameter Pollution
-// TODO: Extended implementations
-// app.use(hpp());
+// Security Enhancements
+app.use(helmet()); // Secure HTTP headers
+app.use(xssClean()); // Prevent XSS attacks
+app.use(hpp()); // Prevent HTTP Parameter Pollution
 
 // Configure CORS
 app.use(
   cors({
-    origin: "http://localhost:3000", // Replace with your frontend's origin
+    origin: process.env.CORS_ORIGIN || "http://localhost:3000", // Fallback if env variable is missing
     methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true, // If you need to send cookies or authentication headers
+    credentials: true, // Allow cookies and auth headers
   })
 );
 
-// Global Rate Limiter
+// Global Rate Limiter (Uncomment when needed)
 // app.use(globalRateLimiter);
 
 // * Routes
@@ -69,42 +64,42 @@ app.use("/api/v1/categories", metricCategoryRoutes);
 app.use("/api/v1/metrics", metricSettingsRoutes);
 app.use("/api/v1/metrics", metricLogRoutes);
 
-// * Global Error Handler
-// Should be initialized after all midlewares and routes
+// * Global Error Handler (Should be last middleware)
 app.use(errorHandler);
 
 // * Server Mode Init
-// Only authenticate and start server if not in test environment
+// Avoid server initialization in test environment
 if (process.env.NODE_ENV !== "test") {
   sequelize
     .authenticate()
     .then(async () => {
-      console.log("Connection has been established successfully.");
+      console.log("✅ Database connection established successfully.");
 
       // Find out which DB you’re really connected to
-      const [results] = await sequelize.query("SELECT current_database()");
-      console.log("Currently connected to DB:", results[0].current_database);
+      const [results]: any = await sequelize.query("SELECT current_database()");
+      console.log(
+        `📦 Currently connected to DB: ${results[0].current_database}`
+      );
     })
     .catch((err) => {
-      console.error("Unable to connect to the database:", err);
+      console.error("❌ Unable to connect to the database:", err);
     });
 
   // Start Server
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
-    console.log(`MiraiHealth backend running on port ${PORT}`);
+    console.log(`🚀 MiraiHealth backend running on port ${PORT}`);
   });
 
   // Log DATABASE_URL only if not in test
   console.log(
-    "DATABASE_URL:",
+    "🔍 DATABASE_URL:",
     process.env.NODE_ENV === "test"
       ? process.env.TEST_DATABASE_URL
       : process.env.DEVELOPMENT_DATABASE_URL
   );
 } else {
-  // In test environment, avoid connecting and starting the server
-  console.log("Running in test environment. Server not started.");
+  console.log("🧪 Running in test environment. Server not started.");
 }
 
-module.exports = app;
+export default app;
