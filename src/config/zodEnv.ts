@@ -2,9 +2,12 @@
 
 import { z } from "zod";
 import dotenv from "dotenv";
+import path from "path";
 
 // Load .env file (place this as early as possible in your app).
-dotenv.config();
+// ✅ Load the correct environment file before validation
+const envFile = `.env.${process.env.NODE_ENV || "development"}`;
+dotenv.config({ path: path.resolve(envFile) });
 
 /**
  * Define the environment schema using Zod.
@@ -83,5 +86,9 @@ type Env = z.infer<typeof envSchema>;
  * If validation fails, it will throw an error and terminate the process.
  */
 const env: Env = envSchema.parse(process.env);
+
+if (!env.TEST_DATABASE_URL && env.NODE_ENV === "test") {
+  throw new Error("❌ TEST_DATABASE_URL is missing in .env.test!");
+}
 
 export { env, Env };
