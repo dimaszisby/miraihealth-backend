@@ -15,8 +15,10 @@ pnpm-debug.log*
 
 # Environment Variables
 .env
-.env.test
+.env.development
 .env.production
+.env.staging
+.env.test
 
 # Build and Distribution
 dist/
