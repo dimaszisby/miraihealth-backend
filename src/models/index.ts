@@ -3,31 +3,52 @@
 import fs from "fs";
 import path from "path";
 import { Sequelize, DataTypes, Options } from "sequelize";
-import process from "process";
 import { fileURLToPath } from "url";
-import configData from "../config/config.cjs";
+import { env } from "../config/zodEnv.js";
+import { createRequire } from "module";
 
 /**
  * Prepare the Sequelize instance and models.
  */
 
+const require = createRequire(import.meta.url);
+const configData = require("../config/config.cjs");
+
 // Get the current filename and directory name
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const basename = path.basename(__filename);
-const env = process.env.NODE_ENV || "development";
 
-// Ensure env is one of the known environments
-type ConfigKey = keyof typeof configData;
-const selectedConfig = configData[env as ConfigKey];
+// ✅ Ensure environment mode is set correctly
+const activeEnv = env.NODE_ENV || "development";
+
+// ✅ Validate config availability
+if (!configData[activeEnv]) {
+  throw new Error(
+    `❌ ERROR: No configuration found for environment: ${activeEnv}`
+  );
+}
+
+const config = configData[activeEnv] as CustomSequelizeOptions;
 
 // Define a custom Sequelize options interface
 interface CustomSequelizeOptions extends Options {
-  use_env_variable?: string;
+  use_env_variable?:
+    | "DEVELOPMENT_DATABASE_URL"
+    | "TEST_DATABASE_URL"
+    | "STAGING_DATABASE_URL"
+    | "PRODUCTION_DATABASE_URL";
 }
-// Cast the selected config to our custom interface
-const config = selectedConfig as CustomSequelizeOptions;
+
+// ✅ Initialize Sequelize with the correct database connection
+const sequelize = config.use_env_variable
+  ? new Sequelize(env[config.use_env_variable] as string, config) // Use the environment variable
+  : new Sequelize(
+      config.database as string,
+      config.username as string,
+      config.password as string,
+      config
+    );
 
 // Define the DB models
 import type { User } from "./user.js";
@@ -54,62 +75,54 @@ export interface DB extends DBModels {
 /**
  * Dynamically load all models and associate them.
  */
-const db = {} as DB;
-const sequelize = config.use_env_variable
-  ? new Sequelize(process.env[config.use_env_variable] as string, config)
-  : new Sequelize(
-      config.database as string,
-      config.username as string,
-      config.password as string,
-      config
+// Cast the selected config to our custom interface
+// ✅ Load all models dynamically
+const initializeDB = async () => {
+  const db = {} as DB;
+
+  // ✅ Ensure correct file extensions based on environment
+  const fileExtensions = activeEnv === "production" ? [".js"] : [".js", ".ts"];
+  const files = fs.readdirSync(__dirname).filter((file) => {
+    return (
+      file.indexOf(".") !== 0 &&
+      file !== basename &&
+      fileExtensions.some((ext) => file.endsWith(ext)) &&
+      !file.endsWith(".test.js") &&
+      !file.endsWith(".test.ts")
     );
+  });
 
-/**
- * Load all models in the current directory.
- */
-const fileExtensions = env === "production" ? [".js"] : [".js", ".ts"];
-const files = fs.readdirSync(__dirname).filter((file) => {
-  return (
-    file.indexOf(".") !== 0 &&
-    file !== basename &&
-    fileExtensions.some((ext) => file.endsWith(ext)) &&
-    !file.endsWith(".test.js") &&
-    !file.endsWith(".test.ts")
+  console.log("🔍 Found model files:", files);
+
+  // ✅ Load each model dynamically
+  const modelImports = await Promise.all(
+    files.map((file) => import(path.join(__dirname, file)))
   );
-});
 
-console.log("Found model files:", files);
+  modelImports.forEach((modelImport) => {
+    // ✅ Initialize each model
+    const model = modelImport.default(sequelize, DataTypes);
+    db[model.name as keyof DBModels] = model;
+    console.log(`✅ Loaded model: ${model.name}`);
+  });
 
-// Load each model file dynamically
-const modelImports = await Promise.all(
-  files.map((file) => import(path.join(__dirname, file)))
-);
+  // ✅ Associate models if applicable
+  Object.keys(db).forEach((modelName) => {
+    if (modelName === "sequelize" || modelName === "Sequelize") return;
+    const model = db[modelName as keyof DBModels];
+    if (model && "associate" in model) {
+      (model as any).associate(db);
+      console.log(`🔗 Associated model: ${modelName}`);
+    }
+  });
 
-// Initialize each model and associate them
-modelImports.forEach((modelImport) => {
-  // Each model file exports a function that initializes the model.
-  const model = modelImport.default(sequelize, DataTypes);
-  // Assume the model's name (set via Model.init) matches our DBModels keys.
-  db[model.name as keyof DBModels] = model;
-  console.log(`Loaded model: ${model.name}`);
-});
+  console.log("📌 Registered Models:", Object.keys(db));
 
-// Associate each model if it has an associate method
-Object.keys(db).forEach((modelName) => {
-  // Skip non‑model properties
-  if (modelName === "sequelize" || modelName === "Sequelize") return;
-  const model = db[modelName as keyof DBModels];
-  if (model && "associate" in model) {
-    (model as any).associate(db);
-    console.log(`Associated model: ${modelName}`);
-  }
-});
+  // ✅ Attach Sequelize instance to DB object
+  db.sequelize = sequelize;
+  db.Sequelize = Sequelize;
 
-// Log the registered models for verification
-console.log("Registered Models:", Object.keys(db));
+  return db;
+};
 
-// Export the DB instance
-db.sequelize = sequelize;
-db.Sequelize = Sequelize;
-
-export default db;
+export default initializeDB;
