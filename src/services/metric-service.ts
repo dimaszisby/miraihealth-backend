@@ -4,7 +4,8 @@ import AppError from "../utils/AppError.js";
 import logger from "../utils/logger.js";
 
 // Now that our DB is correctly typed, these are the model classes.
-const { Metric, MetricCategory, MetricSettings, MetricLog } = db;
+const initializeDB = await db();
+const { Metric, MetricCategory, MetricSettings, MetricLog } = initializeDB;
 
 /**
  * Create a new metric for a user.
