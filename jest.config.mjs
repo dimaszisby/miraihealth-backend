@@ -1,3 +1,5 @@
+// jest.config.mjs
+
 export default {
   preset: "ts-jest/presets/default-esm",
   testEnvironment: "node",
@@ -8,7 +10,7 @@ export default {
   testTimeout: 30000,
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1",
-    "^@/(.*)$": "<rootDir>/src/$1"
+    "^@/(.*)$": "<rootDir>/src/$1",
   },
   transform: {
     "^.+\\.ts$": [
@@ -18,15 +20,16 @@ export default {
         tsconfig: {
           target: "ESNext",
           module: "ESNext",
-          moduleResolution: "bundler"
-        }
-      }
-    ]
+          moduleResolution: "bundler",
+        },
+      },
+      { isolatedModules: true },
+    ],
   },
   extensionsToTreatAsEsm: [".ts"],
   globals: {
     "ts-jest": {
-      useESM: true
-    }
-  }
+      useESM: true,
+    },
+  },
 };
