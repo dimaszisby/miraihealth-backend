@@ -97,6 +97,6 @@
       "module": "NodeNext"
     }
   },
-  "include": ["src/**/*", "tests/**/*", "jest.setup.ts", "jest.config.mjs", "__tests__/metric-category.test.ts", "__tests__/metric.test.ts", "s__tests__/metric-settings.test.ts, "s__tests__/metric-log.test.ts, "__tests__/auth.test.ts"],
+  "include": ["src/**/*", "tests/**/*", "jest.setup.ts", "jest.config.mjs", "__tests__/metric-category.test.ts", "__tests__/metric.test.ts", "s__tests__/metric-settings.test.ts", "s__tests__/metric-log.test.ts", "__tests__/auth.test.ts"],
   "exclude": ["node_modules", "dist"]
 }
