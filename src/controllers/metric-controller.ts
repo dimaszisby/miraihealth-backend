@@ -2,6 +2,7 @@
 
 import { Request, Response, NextFunction } from "express";
 import { Metric } from "../models/metric.js";
+import { redisClient } from "../utils/redis-client.js";
 import AppError from "../utils/AppError.js";
 import { successResponse } from "../utils/response-formatter.js";
 import catchAsync from "../utils/catch-async.js";
@@ -10,6 +11,7 @@ import {
   getMetricData,
   getMetricDetailData,
 } from "../services/metric-service.js";
+import logger from "../utils/logger.js";
 
 /**
  * * Metric Controller
@@ -106,6 +108,11 @@ export const updateMetric = catchAsync(
       throw new AppError("Metric not found", 404);
     }
 
+    // Invalidate Redis cache
+    await redisClient.del(`metric:${id}`);
+    await redisClient.del("metrics:*"); // Invalidate all cached lists
+    logger.info(`♻️ Cache invalidated for metric:${id} and metrics:*`);
+
     await metric.update({
       categoryId,
       originalMetricId,
@@ -136,6 +143,11 @@ export const deleteMetric = catchAsync(
     }
 
     await metric.destroy();
+
+    // Invalidate Redis cache
+    await redisClient.del(`metric:${id}`);
+    await redisClient.del("metrics:*");
+    logger.info(`♻️ Cache invalidated for metric:${id} and metrics:*`);
 
     successResponse(res, 200, { metric }, "Metric deleted successfully");
   }

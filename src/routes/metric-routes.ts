@@ -33,13 +33,13 @@ const metricsCacheKey = (req: any) => `metrics:${req.user?.id}`;
 router.post("/", validate(createMetricSchema), createMetric);
 
 // GET All Metric by User Id
-router.get("/", getAllMetrics);
+router.get("/", cacheMiddleware(metricsCacheKey, 300), getAllMetrics);
 
 // GET specific Metric by ID with caching
 router.get(
   "/:id",
   validate(getMetricSchema),
-  cacheMiddleware(metricsCacheKey, 300), // Cache for 5 minutes
+  cacheMiddleware(metricsCacheKey, 300),
   getMetricById
 );
 
