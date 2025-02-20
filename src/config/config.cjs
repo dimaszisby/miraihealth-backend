@@ -1,55 +1,146 @@
 // src/config/config.cjs
 
-const dotenv = require("dotenv");
 const path = require("path");
+const dotenv = require("dotenv");
+const { z } = require("zod");
 
-const envPath =
-  process.env.NODE_ENV === "test"
-    ? path.resolve(process.cwd(), ".env.test")
-    : path.resolve(process.cwd(), ".env");
-dotenv.config({ path: envPath });
+/**
+ * Define the configuration for the app.
+ * Mainly used for Database/sequelize configuration.
+ * Ensures type safety while allowing transformation.
+ */
 
-module.exports = {
+const envFile = `.env.${process.env.NODE_ENV || "development"}`;
+dotenv.config({ path: path.resolve(envFile) });
+
+// ✅ Define Zod schema for validation
+const envSchema = z.object({
+  NODE_ENV: z
+    .enum(["development", "test", "staging", "production"])
+    .default("development"),
+  PORT: z.preprocess((val) => Number(val) || 5000, z.number()),
+  JWT_SECRET: z.string().min(1, { message: "JWT_SECRET is required" }),
+  CORS_ORIGIN: z.string().optional(),
+  DEVELOPMENT_DATABASE_URL: z.string().optional(),
+  TEST_DATABASE_URL: z.string().optional(),
+  STAGING_DATABASE_URL: z.string().optional(),
+  PRODUCTION_DATABASE_URL: z.string().optional(),
+  DB_HOST: z.string().default("127.0.0.1"),
+  DB_PORT: z.preprocess((val) => Number(val) || 5432, z.number()),
+  DB_LOGGING: z.string().default("false"),
+  REDIS_HOST: z.string().default("127.0.0.1"),
+  REDIS_PORT: z.preprocess((val) => Number(val) || 6379, z.number()),
+  REDIS_PASSWORD: z.string().optional(),
+  REDIS_REQUIRED: z
+    .preprocess((val) => val === "true", z.boolean())
+    .default(false),
+});
+
+// ✅ Validate environment variables
+const env = envSchema.parse(process.env);
+
+// module.exports = {
+//   development: {
+//     url: env.DEVELOPMENT_DATABASE_URL,
+//     database: "miraihealth",
+//     host: env.DB_HOST,
+//     port: env.DB_PORT,
+//     dialect: "postgres",
+//     logging: console.log, // Enable logging in dev
+//     dialectOptions: {
+//       ssl: false,
+//     },
+//     redis: {
+//       host: env.REDIS_HOST,
+//       port: env.REDIS_PORT,
+//       password: env.REDIS_PASSWORD || undefined,
+//     },
+//   },
+//   test: {
+//     url: env.TEST_DATABASE_URL,
+//     database: "miraihealth_test",
+//     host: env.DB_HOST,
+//     port: env.DB_PORT,
+//     dialect: "postgres",
+//     logging: false, // Disable logging in tests
+//     redis: {
+//       host: env.REDIS_HOST,
+//       port: env.REDIS_PORT,
+//       password: env.REDIS_PASSWORD || undefined,
+//     },
+//   },
+//   staging: {
+//     url: env.STAGING_DATABASE_URL,
+//     database: "miraihealth_staging",
+//     host: env.DB_HOST,
+//     port: env.DB_PORT,
+//     dialect: "postgres",
+//     logging: false, // Disable logging in staging
+//     dialectOptions: {
+//       ssl: {
+//         require: true,
+//         rejectUnauthorized: false,
+//       },
+//     },
+//     redis: {
+//       host: env.REDIS_HOST,
+//       port: env.REDIS_PORT,
+//       password: env.REDIS_PASSWORD || undefined,
+//     },
+//   },
+//   production: {
+//     url: env.PRODUCTION_DATABASE_URL,
+//     database: "miraihealth_prod",
+//     host: env.DB_HOST,
+//     port: env.DB_PORT,
+//     dialect: "postgres",
+//     logging: env.DB_LOGGING === "true" ? console.log : false, // Optional logging
+//     dialectOptions: {
+//       ssl: {
+//         require: true,
+//         rejectUnauthorized: false,
+//       },
+//     },
+//     redis: {
+//       host: env.REDIS_HOST,
+//       port: env.REDIS_PORT,
+//       password: env.REDIS_PASSWORD || undefined,
+//     },
+//   },
+// };
+
+const config = {
   development: {
-    url: process.env.DEVELOPMENT_DATABASE_URL,
-    database: "miraihealth",
-    host: process.env.DB_HOST || "127.0.0.1",
-    port: Number(process.env.DB_PORT) || 5432,
+    url: env.DEVELOPMENT_DATABASE_URL,
     dialect: "postgres",
     logging: console.log,
-    dialectOptions: {
-      options: "-c search_path=public",
-      ssl: false,
-    },
-    redis: {
-      host: process.env.REDIS_HOST || "127.0.0.1",
-      port: Number(process.env.REDIS_PORT) || 6379,
-      password: process.env.REDIS_PASSWORD || undefined,
-    },
+    dialectOptions: { ssl: false },
   },
   test: {
-    url: process.env.TEST_DATABASE_URL,
-    database: "miraihealth_test",
-    host: process.env.DB_HOST || "127.0.0.1",
-    port: Number(process.env.DB_PORT) || 5432,
+    url: env.TEST_DATABASE_URL,
     dialect: "postgres",
     logging: false,
-    redis: {
-      host: process.env.REDIS_HOST || "127.0.0.1",
-      port: Number(process.env.REDIS_PORT) || 6379,
-      password: process.env.REDIS_PASSWORD || undefined,
-    },
+  },
+  staging: {
+    url: env.STAGING_DATABASE_URL,
+    dialect: "postgres",
+    logging: false,
+    dialectOptions: { ssl: { require: true, rejectUnauthorized: false } },
   },
   production: {
-    url: process.env.PRODUCTION_DATABASE_URL,
+    url: env.PRODUCTION_DATABASE_URL,
     dialect: "postgres",
-    host: process.env.DB_HOST || "127.0.0.1",
-    port: Number(process.env.DB_PORT) || 5432,
-    logging: false,
-    redis: {
-      host: process.env.REDIS_HOST || "127.0.0.1",
-      port: Number(process.env.REDIS_PORT) || 6379,
-      password: process.env.REDIS_PASSWORD || undefined,
-    },
+    logging: env.DB_LOGGING === "true" ? console.log : false,
+    dialectOptions: { ssl: { require: true, rejectUnauthorized: false } },
   },
 };
+
+// ✅ Ensure the environment exists
+const activeEnv = env.NODE_ENV;
+if (!config[activeEnv]) {
+  throw new Error(
+    `❌ ERROR: No configuration found for environment: ${activeEnv}`
+  );
+}
+
+module.exports = config;

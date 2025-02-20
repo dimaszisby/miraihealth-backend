@@ -15,7 +15,7 @@ const envSchema = z.object({
   NODE_ENV: z
     .preprocess(
       (val) => (typeof val === "string" ? val.toLowerCase() : val),
-      z.enum(["development", "test", "production"])
+      z.enum(["development", "test", "staging", "production"])
     )
     .default("development"),
 
@@ -40,7 +40,16 @@ const envSchema = z.object({
   // Database URLs (separate environment variables for dev/test/prod)
   DEVELOPMENT_DATABASE_URL: z.string().optional(),
   TEST_DATABASE_URL: z.string().optional(),
+  STAGING_DATABASE_URL: z.string().optional(),
   PRODUCTION_DATABASE_URL: z.string().optional(),
+
+  // Or if you rely on a DB_HOST/DB_PORT approach:
+  DB_HOST: z.string().default("127.0.0.1"),
+  DB_PORT: z
+    .string()
+    .transform((val) => parseInt(val, 10))
+    .default("5432"),
+  DB_LOGGING: z.string().default("false"), // Allows enabling/disabling logging
 
   // Redis
   REDIS_HOST: z.string().default("127.0.0.1"),
@@ -55,6 +64,13 @@ const envSchema = z.object({
     })
     .default("6379"),
   REDIS_PASSWORD: z.string().optional(),
+  REDIS_REQUIRED: z
+    .string()
+    .transform((val) => val === "true") // Convert string to boolean
+    .default("false"),
+
+  // Jest
+  JEST_TIMEOUT: z.string().transform(Number).default("30000"),
 });
 
 /**
