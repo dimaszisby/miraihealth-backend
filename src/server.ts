@@ -1,14 +1,13 @@
 // src/server.ts
-
 import express, { Application } from "express";
 import { env } from "./config/zodEnv.js"; // Custom Environment Variables using Zod for setup
 import sequelize from "./config/db.js";
 import cors from "cors";
-import dotenv from "dotenv";
 import helmet from "helmet";
 import xssClean from "xss-clean";
 import hpp from "hpp";
 import http from "http";
+import { disconnectRedis } from "./utils/redis-client.js";
 
 // Routes
 import authRoutes from "./routes/auth-routes.js";
@@ -33,7 +32,6 @@ import { errorHandler } from "./middleware/error-handler.js";
  */
 
 // * Environment Variables
-dotenv.config();
 
 const app: Application = express();
 
@@ -81,7 +79,7 @@ const isTestEnv = (env: string): env is "test" => env === "test";
  */
 const startServer = async () => {
   try {
-    if (isTestEnv(env.NODE_ENV)) {
+    if (env.NODE_ENV === "test") {
       console.log("🧪 Running in test environment. Server not started.");
       return;
     }
@@ -90,7 +88,7 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log("✅ Database connection established successfully.");
 
-    // Fetch database name for logging and debugging
+    // Fetch database name for debugging
     const [results]: any = await sequelize.query("SELECT current_database()");
     console.log(`📦 Connected to DB: ${results[0].current_database}`);
 
@@ -99,14 +97,6 @@ const startServer = async () => {
     server = app.listen(PORT, () => {
       console.log(`🚀 MiraiHealth backend running on port ${PORT}`);
     });
-
-    // Log DATABASE_URL only if not in test
-    console.log(
-      "🔍 DATABASE_URL:",
-      isTestEnv(env.NODE_ENV)
-        ? env.TEST_DATABASE_URL
-        : env.DEVELOPMENT_DATABASE_URL
-    );
   } catch (error) {
     console.error("❌ Server initialization failed:", error);
     process.exit(1); // Exit if the server fails to start
@@ -129,13 +119,16 @@ const shutdown = async (signal: string) => {
   try {
     if (server) {
       console.log("🛑 Closing HTTP server...");
-      await new Promise((resolve, reject) => {
-        server!.close((err?: any) => (err ? reject(err) : resolve(true)));
-      });
+      await new Promise((resolve) => server!.close(resolve));
     }
 
+    // Close database connection
     console.log("🛑 Closing database connection...");
     await sequelize.close();
+
+    // Close Redis connection
+    console.log("🛑 Closing Redis connection...");
+    await disconnectRedis();
 
     console.log("✅ Cleanup completed. Exiting.");
     process.exit(0);
@@ -146,9 +139,9 @@ const shutdown = async (signal: string) => {
 };
 
 // Handle termination signals
-["SIGTERM", "SIGINT"].forEach((signal) => {
-  process.on(signal, () => shutdown(signal));
-});
+["SIGTERM", "SIGINT"].forEach((signal) =>
+  process.on(signal, () => shutdown(signal))
+);
 
 // Handle uncaught exceptions and promise rejections
 process.on("uncaughtException", (error) => {
