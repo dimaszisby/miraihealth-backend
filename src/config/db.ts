@@ -6,6 +6,14 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { env } from "./zodEnv.js"; // Use validated env variables
 
+// ✅ Ensure database URL is set correctly
+const databaseUrl =
+  env.NODE_ENV === "test" ? env.TEST_DATABASE_URL : env.DEVELOPMENT_DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error(`❌ Database URL is missing for environment: ${env.NODE_ENV}`);
+}
+
 const dbConfig = {
   development: {
     url: env.DEVELOPMENT_DATABASE_URL,
@@ -64,7 +72,7 @@ if (!config.url) {
 }
 
 // Initialize Sequelize
-const sequelize = new Sequelize(config.url, {
+const sequelize = new Sequelize(databaseUrl, {
   dialect: "postgres",
   host: config.host,
   port: config.port,
