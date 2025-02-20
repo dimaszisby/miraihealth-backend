@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import UserModel from "../models/user.js";
 import sequelize from "../config/db.js";
 import AppError from "../utils/AppError.js";
+import { env } from "../config/zodEnv.js";
 
 /**
  * * Auth Middleware
@@ -38,7 +39,7 @@ export const authMiddleware = async (
   const token = authHeader.split(" ")[1];
   try {
     // 3. Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
+    const decoded = jwt.verify(token, env.JWT_SECRET as string) as {
       id: string;
     };
     // 4. Check if user exists

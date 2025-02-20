@@ -6,6 +6,7 @@ import { User } from "../models/user.js";
 import AppError from "../utils/AppError.js";
 import { successResponse } from "../utils/response-formatter.js";
 import catchAsync from "../utils/catch-async.js";
+import { env } from "../config/zodEnv.js";
 
 /**
  * * Authentication Controller
@@ -25,7 +26,7 @@ export interface AuthRequest extends Request {
 const generateToken = (user: User): string => {
   return jwt.sign(
     { id: user.id, email: user.email },
-    process.env.JWT_SECRET as string,
+    env.JWT_SECRET as string,
     { expiresIn: "7d" }
   );
 };

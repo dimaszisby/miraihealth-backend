@@ -1,5 +1,8 @@
+// src/utils/logger.ts
+
 import { createLogger, format, transports, Logger } from "winston";
 const { combine, timestamp, printf, errors, colorize, json, splat } = format;
+import { env } from "../config/zodEnv.js";
 
 /**
  * * Winston Logging Utility
@@ -29,7 +32,7 @@ const logger: Logger = createLogger({
 });
 
 // 3. Enable console logging in non-production environments
-if (process.env.NODE_ENV !== "production") {
+if (env.NODE_ENV !== "production") {
   logger.add(
     new transports.Console({
       format: combine(colorize(), logFormat),

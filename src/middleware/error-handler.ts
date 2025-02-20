@@ -3,6 +3,7 @@
 import { Request, Response, NextFunction } from "express";
 import AppError from "../utils/AppError.js";
 import logger from "../utils/logger.js";
+import { env } from "../config/zodEnv.js";
 
 /**
  * * Centralized Error Handling Middleware
@@ -22,7 +23,7 @@ export const errorHandler = (
     err instanceof AppError ? err : new AppError("Internal Server Error", 500);
 
   // Hide sensitive error details in production
-  if (process.env.NODE_ENV === "production") {
+  if (env.NODE_ENV === "production") {
     res.status(appError.statusCode).json({
       status: "error",
       message: "Something went wrong!",
@@ -33,6 +34,6 @@ export const errorHandler = (
   res.status(appError.statusCode).json({
     status: appError.status,
     message: appError.message,
-    ...(process.env.NODE_ENV === "development" && { stack: appError.stack }),
+    ...(env.NODE_ENV === "development" && { stack: appError.stack }),
   });
 };
