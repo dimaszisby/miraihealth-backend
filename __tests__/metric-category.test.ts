@@ -1,7 +1,10 @@
-import request from "supertest";
+// __tests__/metric-category.test.ts
+
+import db from "../src/models/index.js";import request from "supertest";
 import app from "../src/server.js";
-import { User } from "../src/models/user.js";
 import { Response } from "supertest";
+
+const { sequelize, User, MetricCategory } = db;
 
 /**
  * Generates unique user test data to avoid conflicts.
@@ -20,7 +23,7 @@ const generateUniqueUserData = () => {
 
 describe("📂 Metric Category Endpoints", () => {
   let token: string;
-  let user: User;
+  let user: typeof User;
 
   beforeEach(async () => {
     // 🛠 Setup User: Register a new user

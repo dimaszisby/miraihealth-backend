@@ -1,8 +1,10 @@
+// __test__/metric.test.ts
+
+import db from "../src/models/index.js";
 import request, { Response } from "supertest";
 import app from "../src/server";
-import { User } from "../src/models/user";
-import { MetricCategory } from "../src/models/metric-category"; // Ensure correct import
-import { Metric } from "../src/models/metric"; // Ensure correct import
+
+const { sequelize, User, Metric, MetricSettings, MetricCategory } = db;
 
 /**
  * * Generate Unique User Data
@@ -21,9 +23,9 @@ const generateUniqueUserData = () => {
 };
 
 describe("Metric Endpoints", () => {
-  let user: User;
+  let user: typeof User;
   let token: string;
-  let dummyCategory: MetricCategory;
+  let dummyCategory: typeof MetricCategory;
   let metricId: string; // ✅ Store metricId for consistency
 
   beforeEach(async () => {

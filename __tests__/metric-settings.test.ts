@@ -1,8 +1,10 @@
 // __tests__/metric-settings.test.ts
+
+import db from "../src/models/index.js";
 import request, { Response } from "supertest";
 import app from "../src/server";
-import { User } from "../src/models/user";
-import { Metric } from "../src/models/metric"; // Ensure correct import if Metric model exists
+
+const { sequelize, User, Metric, MetricSettings } = db;
 
 /**
  * * Generate Unique User Data
@@ -26,9 +28,9 @@ const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000)
   .split("T")[0]; // e.g., "2025-02-18"
 
 describe("Metric Settings Endpoints", () => {
-  let user: User;
+  let user: typeof User;
   let token: string;
-  let metricParent: Metric;
+  let metricParent: typeof Metric;
   let settingsId: string; // ✅ Declare settingsId properly to avoid scope issues
   const nonExistentId = "11111111-1111-1111-1111-111111111111";
 
@@ -128,6 +130,9 @@ describe("Metric Settings Endpoints", () => {
     expect(createRes.statusCode).toBe(201);
     settingsId = createRes.body.data.metricSettings.id;
 
+    // Wait for the settings to be created
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
     // 🛠 Fetch the settings
     const res: Response = await request(app)
       .get(`/api/v1/metrics/${metricParent.id}/settings/${settingsId}`)
@@ -156,6 +161,9 @@ describe("Metric Settings Endpoints", () => {
 
     expect(createRes.statusCode).toBe(201);
     settingsId = createRes.body.data.metricSettings.id;
+
+    // Wait for the settings to be created
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     // 🛠 Update the settings
     const res: Response = await request(app)
@@ -189,6 +197,9 @@ describe("Metric Settings Endpoints", () => {
 
     expect(createRes.statusCode).toBe(201);
     settingsId = createRes.body.data.metricSettings.id;
+
+    // Wait for the settings to be created
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     // 🛠 Delete the settings
     const res: Response = await request(app)

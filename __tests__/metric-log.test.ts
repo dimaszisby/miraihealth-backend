@@ -1,8 +1,11 @@
 //src/__tests__/metric-log.test.ts
+
+import db from "../src/models/index.js";
 import request, { Response } from "supertest";
 import app from "../src/server";
-import { User } from "../src/models/user";
-import { Metric } from "../src/models/metric"; // Ensure correct import if Metric model exists
+
+
+const { sequelize, User, Metric, MetricLog } = db;
 
 /**
  * * Generate Unique User Data
@@ -21,9 +24,9 @@ const generateUniqueUserData = () => {
 };
 
 describe("Metric Log Endpoints", () => {
-  let user: User;
+  let user: typeof User;
   let token: string;
-  let metricParent: Metric;
+  let metricParent: typeof Metric;
   let logId: string; // ✅ Declare logId properly to avoid scope issues
   const nonExistentId = "11111111-1111-1111-1111-111111111111";
 
