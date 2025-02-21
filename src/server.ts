@@ -1,13 +1,13 @@
 // src/server.ts
+
 import express, { Application } from "express";
 import { env } from "./config/zodEnv.js"; // Custom Environment Variables using Zod for setup
-import sequelize from "./config/db.js";
+import db from "./models/index.js";
 import cors from "cors";
 import helmet from "helmet";
 import xssClean from "xss-clean";
 import hpp from "hpp";
 import http from "http";
-import { disconnectRedis } from "./utils/redis-client.js";
 
 // Routes
 import authRoutes from "./routes/auth-routes.js";
@@ -17,8 +17,8 @@ import metricSettingsRoutes from "./routes/metric-settings-routes.js";
 import metricLogRoutes from "./routes/metric-log-routes.js";
 
 // Other Setup
-
 import { errorHandler } from "./middleware/error-handler.js";
+import { disconnectRedis } from "./utils/redis-client.js";
 // import { globalRateLimiter } from "./middleware/rate-limiter.js"; // Uncomment when needed
 
 /**
@@ -85,12 +85,13 @@ const startServer = async () => {
     }
 
     // Authenticate database connection
-    await sequelize.authenticate();
+    // await db.sequelize.authenticate();
     console.log("✅ Database connection established successfully.");
 
+    // Deprecated: Use Sequelize's `database` property instead
     // Fetch database name for debugging
-    const [results]: any = await sequelize.query("SELECT current_database()");
-    console.log(`📦 Connected to DB: ${results[0].current_database}`);
+    // const [results]: any = await sequelize.query("SELECT current_database()");
+    // console.log(`📦 Connected to DB: ${results[0].current_database}`);
 
     // Start HTTP Server
     const PORT = env.PORT || 5000;
@@ -124,7 +125,7 @@ const shutdown = async (signal: string) => {
 
     // Close database connection
     console.log("🛑 Closing database connection...");
-    await sequelize.close();
+    // await db.sequelize.close();
 
     // Close Redis connection
     console.log("🛑 Closing Redis connection...");

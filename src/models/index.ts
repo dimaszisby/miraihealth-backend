@@ -1,128 +1,142 @@
-// src/models/index.ts
-
 import fs from "fs";
 import path from "path";
-import { Sequelize, DataTypes, Options } from "sequelize";
+import { Sequelize, DataTypes } from "sequelize";
 import { fileURLToPath } from "url";
 import { env } from "../config/zodEnv.js";
-import { createRequire } from "module";
+import logger from "../utils/logger.js";
 
 /**
- * Prepare the Sequelize instance and models.
+ * Instead of "initializeDB()",
+ * we directly set up & export the Sequelize instance and models.
+ * We'll do it in a more dynamic, future-proof way:
+ *  1) Dynamically pick the DB URL from environment
+ *  2) Dynamically load model files
+ *  3) Call .associate(...) automatically
  */
 
-const require = createRequire(import.meta.url);
-const configData = require("../config/config.cjs");
+/** 
+ * 1. Dynamically pick the DB URL based on environment variables
+ *    so you don't need to hardcode e.g. env.TEST_DATABASE_URL!
+ */
+function getDatabaseUrl(): string {
+  switch (env.NODE_ENV) {
+    case "production":
+      if (!env.PRODUCTION_DATABASE_URL) {
+        throw new Error("❌ Missing PRODUCTION_DATABASE_URL in environment");
+      }
+      return env.PRODUCTION_DATABASE_URL;
+    case "staging":
+      if (!env.STAGING_DATABASE_URL) {
+        throw new Error("❌ Missing STAGING_DATABASE_URL in environment");
+      }
+      return env.STAGING_DATABASE_URL;
+    case "test":
+      if (!env.TEST_DATABASE_URL) {
+        throw new Error("❌ Missing TEST_DATABASE_URL in environment");
+      }
+      return env.TEST_DATABASE_URL;
+    default: // "development"
+      if (!env.DEVELOPMENT_DATABASE_URL) {
+        throw new Error("❌ Missing DEVELOPMENT_DATABASE_URL in environment");
+      }
+      return env.DEVELOPMENT_DATABASE_URL;
+  }
+}
 
-// Get the current filename and directory name
+// ✅ Create the Sequelize instance using whichever config you want:
+const databaseUrl = getDatabaseUrl();
+const sequelize = new Sequelize(databaseUrl, {
+  dialect: "postgres",
+  logging: env.DB_LOGGING === "true" ? console.log : false,
+});
+
+// 2. Dynamically load each model file from the current directory
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const basename = path.basename(__filename);
 
-// ✅ Ensure environment mode is set correctly
-const activeEnv = env.NODE_ENV || "development";
-
-// ✅ Validate config availability
-if (!configData[activeEnv]) {
-  throw new Error(
-    `❌ ERROR: No configuration found for environment: ${activeEnv}`
-  );
-}
-
-const config = configData[activeEnv] as CustomSequelizeOptions;
-
-// Define a custom Sequelize options interface
-interface CustomSequelizeOptions extends Options {
-  use_env_variable?:
-    | "DEVELOPMENT_DATABASE_URL"
-    | "TEST_DATABASE_URL"
-    | "STAGING_DATABASE_URL"
-    | "PRODUCTION_DATABASE_URL";
-}
-
-// ✅ Initialize Sequelize with the correct database connection
-const sequelize = config.use_env_variable
-  ? new Sequelize(env[config.use_env_variable] as string, config) // Use the environment variable
-  : new Sequelize(
-      config.database as string,
-      config.username as string,
-      config.password as string,
-      config
-    );
-
-// Define the DB models
-import type { User } from "./user.js";
-import type { Metric } from "./metric.js";
-import type { MetricSettings } from "./metric-settings.js";
-import type { MetricLog } from "./metric-log.js";
-import type { MetricCategory } from "./metric-category.js";
-
-// Define the DB models interface
-export interface DBModels {
-  User: typeof User;
-  Metric: typeof Metric;
-  MetricSettings: typeof MetricSettings;
-  MetricLog: typeof MetricLog;
-  MetricCategory: typeof MetricCategory;
-}
-
-// Extend the interface to include Sequelize instance info.
-export interface DB extends DBModels {
-  sequelize: Sequelize;
-  Sequelize: typeof Sequelize;
-}
+// We'll store references to all imported models in this object
+const db: Record<string, any> = {};
 
 /**
- * Dynamically load all models and associate them.
+ * Read .ts/.js model files from this folder.
+ * This approach is basically what Sequelize "classic" used to do
+ * in the default template, but we can replicate it in TypeScript.
  */
-// Cast the selected config to our custom interface
-// ✅ Load all models dynamically
-const initializeDB = async () => {
-  const db = {} as DB;
-
-  // ✅ Ensure correct file extensions based on environment
-  const fileExtensions = activeEnv === "production" ? [".js"] : [".js", ".ts"];
-  const files = fs.readdirSync(__dirname).filter((file) => {
-    return (
-      file.indexOf(".") !== 0 &&
-      file !== basename &&
-      fileExtensions.some((ext) => file.endsWith(ext)) &&
-      !file.endsWith(".test.js") &&
-      !file.endsWith(".test.ts")
-    );
+const modelFiles = fs
+  .readdirSync(__dirname)
+  .filter((file) => {
+    // Skip non-model files, index itself, and test files:
+    if (file.indexOf(".") === 0) return false;
+    if (file === basename) return false; // skip index.ts
+    if (file.endsWith(".test.ts") || file.endsWith(".test.js")) return false;
+    // Accept .ts or .js or .mjs:
+    return file.endsWith(".ts") || file.endsWith(".js") || file.endsWith(".mjs");
   });
 
-  console.log("🔍 Found model files:", files);
+// Import each model definition and initialize it:
+const modelPromises = modelFiles.map(async (file) => {
+  // Because we’re in ES modules, we can do a synchronous `require` or an import:
+  // For brevity, using require() here is typical in older Sequelize setups:
+  const modelImport = await import(path.join(__dirname, file));
+  // If the model file uses `export default (sequelize) => { ... }`:
+  const initModelFunc = modelImport.default;
+  if (typeof initModelFunc !== "function") return;
 
-  // ✅ Load each model dynamically
-  const modelImports = await Promise.all(
-    files.map((file) => import(path.join(__dirname, file)))
-  );
+  // Initialize the model
+  const model = initModelFunc(sequelize, DataTypes);
+  db[model.name] = model;
+  logger.info(`✅ Loaded model: ${model.name}`);
+});
 
-  modelImports.forEach((modelImport) => {
-    // ✅ Initialize each model
-    const model = modelImport.default(sequelize, DataTypes);
-    db[model.name as keyof DBModels] = model;
-    console.log(`✅ Loaded model: ${model.name}`);
-  });
+await Promise.all(modelPromises);
 
-  // ✅ Associate models if applicable
-  Object.keys(db).forEach((modelName) => {
-    if (modelName === "sequelize" || modelName === "Sequelize") return;
-    const model = db[modelName as keyof DBModels];
-    if (model && "associate" in model) {
-      (model as any).associate(db);
-      console.log(`🔗 Associated model: ${modelName}`);
-    }
-  });
+/**
+ * 3. Call .associate(...) on each model that has it.
+ *    This way, any "belongsTo"/"hasMany" relationships are created automatically.
+ */
+Object.keys(db).forEach((modelName) => {
+  if (modelName.toLowerCase() === "sequelize") return;
+  if (db[modelName] && typeof db[modelName].associate === "function") {
+    db[modelName].associate(db);
+    logger.info(`🔗 Associated model: ${modelName}`);
+  }
+});
 
-  console.log("📌 Registered Models:", Object.keys(db));
+/**
+ * Finally, export everything. We'll attach `sequelize` plus the models as named exports.
+ */
+db.sequelize = sequelize;
 
-  // ✅ Attach Sequelize instance to DB object
-  db.sequelize = sequelize;
-  db.Sequelize = Sequelize;
 
-  return db;
+export default db;
+
+
+// or export them individually as needed:
+
+// export const { 
+//   sequelize: sequelizeInstance, 
+//   User, 
+//   Metric, 
+//   MetricCategory, 
+//   MetricSettings, 
+//   MetricLog 
+// } = db;
+
+/**
+ * If you prefer named exports for each Model, you can do:
+
+export { 
+  sequelizeInstance as sequelize,
+  db.User as User,
+  db.Metric as Metric,
+  db.MetricCategory as MetricCategory,
+  db.MetricSettings as MetricSettings,
+  db.MetricLog as MetricLog
 };
 
-export default initializeDB;
+ * 
+ * That’s it! 
+ * Now the code is more dynamic for future expansions.
+ */
+

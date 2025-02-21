@@ -1,14 +1,14 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 //jest.setup.ts
 
 import type { Server } from "http";
 import { QueryTypes } from "sequelize";
 import { setImmediate } from "timers";
 import app from "./src/server.js";
-import sequelize from "./src/config/db.js";
+import db from "./src/models/index.js";
 import request from "supertest";
 import { env } from "./src/config/zodEnv.js";
-import initializeDB from "./src/models/index.js";
+
+const { sequelize } = db;
 
 // // Jest configuration should be in jest.config.mjs
 // const timeout = env.JEST_TIMEOUT;
@@ -24,6 +24,8 @@ if (!process.env.NODE_ENV) {
 
 console.log(`🛠 Jest running in environment: ${process.env.NODE_ENV}`);
 console.log(`🔗 Connected to test DB: ${process.env.TEST_DATABASE_URL}`);
+console.log(`DB_HOST: ${process.env.DB_HOST}`);
+console.log(`DB_PORT: ${process.env.DB_PORT}`);
 
 // ✅ Ensure immediate functions are available in Jest
 global.setImmediate = setImmediate;
@@ -35,10 +37,6 @@ let server: Server;
  */
 beforeAll(async () => {
   try {
-    // ✅ Ensure database is initialized
-    console.log("🔍 Initializing database...");
-    await initializeDB();
-
     // ✅ Run database migrations
     console.log("🔄 Running database migrations...");
     await sequelize.sync({ force: true });
@@ -75,9 +73,11 @@ beforeEach(async () => {
       if (["SequelizeMeta", "SequelizeData", "users"].includes(tableName)) {
         continue; // Skip meta & user table
       }
+      // await sequelize.query("SET FOREIGN_KEY_CHECKS = 0");
       await sequelize.query(
         `TRUNCATE TABLE "${tableName}" RESTART IDENTITY CASCADE;`
       );
+      // await sequelize.query("SET FOREIGN_KEY_CHECKS = 1");
     }
 
     console.log("✅ Completed raw SQL table truncation.");
