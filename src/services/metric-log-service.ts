@@ -1,8 +1,9 @@
 // src/services/metric-log-service.ts
+import db from "../models/index.js";
 import { Op, Order } from "sequelize";
-import { MetricLog } from "../models/metric-log.js";
-import { Metric } from "../models/metric.js";
 import AppError from "../utils/AppError.js";
+
+const { Metric, MetricLog, MetricSettings, MetricCategory } = db;
 
 export interface LogData {
   type?: "manual" | "automatic";
@@ -173,10 +174,10 @@ export const getAggregatedStats = async (userId: string, metricId: string) => {
     return { average: 0, min: 0, max: 0 };
   }
 
-  const logValues = logs.map((log) => log.logValue);
+  const logValues = logs.map((log: typeof MetricLog) => log.logValue);
 
   return {
-    average: logValues.reduce((a, b) => a + b, 0) / logValues.length,
+    average: logValues.reduce((a: number, b: number) => a + b, 0) / logValues.length,
     min: Math.min(...logValues),
     max: Math.max(...logValues),
   };

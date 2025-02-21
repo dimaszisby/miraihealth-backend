@@ -1,11 +1,10 @@
 // src/services/metric-service.ts
+
 import db from "../models/index.js";
 import AppError from "../utils/AppError.js";
 import logger from "../utils/logger.js";
 
-// Now that our DB is correctly typed, these are the model classes.
-const initializeDB = await db();
-const { Metric, MetricCategory, MetricSettings, MetricLog } = initializeDB;
+const { Metric, MetricLog, MetricSettings, MetricCategory } = db;
 
 /**
  * Create a new metric for a user.
@@ -100,14 +99,14 @@ export const getMetricData = async (userId: string): Promise<MetricData[]> => {
     logger.info(`Fetched ${metrics.length} metrics for user ${userId}`);
 
     // Transform each metric: nest the category data under the property 'category'
-    const transformed: MetricData[] = metrics.map((metric) => {
-      const plainMetric = metric.toJSON();
-      // Extract the category (if any) and remove it from the top level.
-      const { MetricCategory, MetricSettings, ...rest } = plainMetric;
-      return {
-        ...rest,
-        // Nest the category data if it exists.
-        category: MetricCategory
+   const transformed: MetricData[] = metrics.map((metric: typeof Metric) => {
+     const plainMetric = metric.toJSON();
+     // Extract the category (if any) and remove it from the top level.
+     const { MetricCategory, MetricSettings, ...rest } = plainMetric;
+     return {
+       ...rest,
+       // Nest the category data if it exists.
+       category: MetricCategory
           ? {
               id: MetricCategory.id,
               name: MetricCategory.name,
