@@ -1,11 +1,13 @@
 //src/controllers/metric-log-controller.ts
+
+import db from "../models/index.js";
 import { Request, Response, NextFunction } from "express";
-import { MetricLog } from "../models/metric-log.js";
-import { Metric } from "../models/metric.js";
 import AppError from "../utils/AppError.js";
 import { successResponse } from "../utils/response-formatter.js";
 import catchAsync from "../utils/catch-async.js";
 import * as metricLogService from "../services/metric-log-service.js";
+
+const { Metric, MetricLog, MetricSettings, MetricCategory } = db;
 
 /**
  * * Metric Log Controller

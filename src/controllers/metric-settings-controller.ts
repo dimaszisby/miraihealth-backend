@@ -1,9 +1,12 @@
+// src/controllers/metric-settings-controller.ts
+
+import db from "../models/index.js";
 import { Request, Response, NextFunction } from "express";
-import { Metric } from "../models/metric.js";
-import { MetricSettings } from "../models/metric-settings.js";
 import AppError from "../utils/AppError.js";
-import { successResponse } from "../utils/response-formatter.js";
 import catchAsync from "../utils/catch-async.js";
+import { successResponse } from "../utils/response-formatter.js";
+
+const { Metric, MetricLog, MetricSettings, MetricCategory } = db;
 
 /**
  * * Metric Settings Controller

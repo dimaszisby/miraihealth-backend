@@ -1,10 +1,12 @@
 //src/controllers/metric-category-controller.ts
 
+import db from "../models/index.js";
 import { Request, Response, NextFunction } from "express";
-import { MetricCategory } from "../models/metric-category.js";
 import AppError from "../utils/AppError.js";
 import { successResponse } from "../utils/response-formatter.js";
 import catchAsync from "../utils/catch-async.js";
+
+const { Metric, MetricLog, MetricSettings, MetricCategory } = db;
 
 /**
  * * Metric Category Controller

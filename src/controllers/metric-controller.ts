@@ -1,7 +1,8 @@
 // src/controllers/metric-controller.ts
 
+import db from "../models/index.js";
+import { env } from "../config/zodEnv.js";
 import { Request, Response, NextFunction } from "express";
-import { Metric } from "../models/metric.js";
 import { redisClient } from "../utils/redis-client.js";
 import AppError from "../utils/AppError.js";
 import { successResponse } from "../utils/response-formatter.js";
@@ -12,6 +13,8 @@ import {
   getMetricDetailData,
 } from "../services/metric-service.js";
 import logger from "../utils/logger.js";
+
+const { Metric, MetricLog, MetricSettings, MetricCategory } = db;
 
 /**
  * * Metric Controller
@@ -108,11 +111,7 @@ export const updateMetric = catchAsync(
       throw new AppError("Metric not found", 404);
     }
 
-    // Invalidate Redis cache
-    await redisClient.del(`metric:${id}`);
-    await redisClient.del("metrics:*"); // Invalidate all cached lists
-    logger.info(`♻️ Cache invalidated for metric:${id} and metrics:*`);
-
+    // Update metric
     await metric.update({
       categoryId,
       originalMetricId,
@@ -120,8 +119,28 @@ export const updateMetric = catchAsync(
       defaultUnit,
       isPublic,
     });
+    logger.info(`Metric updated successfully in database`);
 
-    successResponse(res, 200, { metric }, "Metric updated successfully");
+    // Fetch updated metric
+    const updatedMetric = await Metric.findOne({ where: { id, userId } });
+
+    // Invalidate Redis cache
+    if (redisClient.isOpen) {
+      await redisClient.del(`metric:${id}`);
+      await redisClient.del("metrics:*");
+      logger.info(`♻️ Cache invalidated for metric:${id} and metrics:*`);
+    } else {
+      logger.warn(
+        `Skipping Redis calls in ${env.NODE_ENV} environment because client is closed.`
+      );
+    }
+
+    successResponse(
+      res,
+      200,
+      { metric: updatedMetric },
+      "Metric updated successfully"
+    );
   }
 );
 
@@ -131,23 +150,34 @@ export const updateMetric = catchAsync(
  */
 export const deleteMetric = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
+    // Ensure userId is extracted from the request
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
 
+    // Extract metric ID from request
     const { id } = req.params;
     if (!id) throw new AppError("Metric ID is required", 400);
 
+    // Ensure metric exists
     const metric = await Metric.findOne({ where: { id, userId } });
     if (!metric) {
       throw new AppError("Metric not found", 404);
     }
 
+    // Delete metric from database
     await metric.destroy();
+    logger.info(`Metric deleted successfully from database`);
 
     // Invalidate Redis cache
-    await redisClient.del(`metric:${id}`);
-    await redisClient.del("metrics:*");
-    logger.info(`♻️ Cache invalidated for metric:${id} and metrics:*`);
+    if (redisClient.isOpen) {
+      await redisClient.del(`metric:${id}`);
+      await redisClient.del("metrics:*");
+      logger.info(`♻️ Cache invalidated for metric:${id} and metrics:*`);
+    } else {
+      logger.warn(
+        `Skipping Redis calls in ${env.NODE_ENV} environment because client is closed.`
+      );
+    }
 
     successResponse(res, 200, { metric }, "Metric deleted successfully");
   }
