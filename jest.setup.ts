@@ -10,13 +10,6 @@ import { env } from "./src/config/zodEnv.js";
 
 const { sequelize } = db;
 
-// // Jest configuration should be in jest.config.mjs
-// const timeout = env.JEST_TIMEOUT;
-// if (typeof jest !== "undefined") {
-//   const timeout = env.JEST_TIMEOUT || 30000;
-//   jest.setTimeout(timeout);
-// }
-
 // ✅ Ensure Jest uses the correct test environment
 if (!process.env.NODE_ENV) {
   throw new Error("❌ NODE_ENV not set. Check your .env.test file.");
@@ -37,11 +30,6 @@ let server: Server;
  */
 beforeAll(async () => {
   try {
-    // ✅ Run database migrations
-    console.log("🔄 Running database migrations...");
-    await sequelize.sync({ force: true });
-    console.log("✅ Database reset completed.");
-
     // ✅ Start test server
     server = app.listen(4000, () => {
       console.log("✅ Test server running on port 4000");
@@ -70,7 +58,7 @@ beforeEach(async () => {
 
     for (const table of tables) {
       const tableName = table.tablename;
-      if (["SequelizeMeta", "SequelizeData", "users"].includes(tableName)) {
+      if (["SequelizeMeta", "SequelizeData"].includes(tableName)) {
         continue; // Skip meta & user table
       }
       // await sequelize.query("SET FOREIGN_KEY_CHECKS = 0");
