@@ -23,7 +23,6 @@ export default {
           moduleResolution: "bundler",
         },
       },
-      { isolatedModules: true },
     ],
   },
   extensionsToTreatAsEsm: [".ts"],
