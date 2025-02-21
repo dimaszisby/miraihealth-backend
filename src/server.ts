@@ -85,13 +85,8 @@ const startServer = async () => {
     }
 
     // Authenticate database connection
-    // await db.sequelize.authenticate();
+    await db.sequelize.authenticate();
     console.log("✅ Database connection established successfully.");
-
-    // Deprecated: Use Sequelize's `database` property instead
-    // Fetch database name for debugging
-    // const [results]: any = await sequelize.query("SELECT current_database()");
-    // console.log(`📦 Connected to DB: ${results[0].current_database}`);
 
     // Start HTTP Server
     const PORT = env.PORT || 5000;
@@ -125,7 +120,7 @@ const shutdown = async (signal: string) => {
 
     // Close database connection
     console.log("🛑 Closing database connection...");
-    // await db.sequelize.close();
+    await db.sequelize.close();
 
     // Close Redis connection
     console.log("🛑 Closing Redis connection...");
