@@ -3,7 +3,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import UserModel from "../models/user.js";
-import sequelize from "../config/db.js";
+import db from "../models/index.js";
 import AppError from "../utils/AppError.js";
 import { env } from "../config/zodEnv.js";
 
@@ -11,6 +11,7 @@ import { env } from "../config/zodEnv.js";
  * * Auth Middleware
  * Wrapper class for routes that require authentication
  */
+const { sequelize } = db;
 
 export interface AuthRequest extends Request {
   user?: any; // Use `any` or define a proper User interface if needed
