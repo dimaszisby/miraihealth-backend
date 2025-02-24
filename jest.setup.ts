@@ -11,14 +11,14 @@ import { env } from "./src/config/zodEnv.js";
 const { sequelize } = db;
 
 // ✅ Ensure Jest uses the correct test environment
-if (!process.env.NODE_ENV) {
+if (!env.NODE_ENV) {
   throw new Error("❌ NODE_ENV not set. Check your .env.test file.");
 }
 
-console.log(`🛠 Jest running in environment: ${process.env.NODE_ENV}`);
-console.log(`🔗 Connected to test DB: ${process.env.TEST_DATABASE_URL}`);
-console.log(`DB_HOST: ${process.env.DB_HOST}`);
-console.log(`DB_PORT: ${process.env.DB_PORT}`);
+console.log(`🛠 Jest running in environment: ${env.NODE_ENV}`);
+console.log(`🔗 Connected to test DB: ${env.TEST_DATABASE_URL}`);
+console.log(`DB_HOST: ${env.DB_HOST}`);
+console.log(`DB_PORT: ${env.DB_PORT}`);
 
 // ✅ Ensure immediate functions are available in Jest
 global.setImmediate = setImmediate;
