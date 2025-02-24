@@ -5,9 +5,14 @@ const dotenv = require("dotenv");
 const { z } = require("zod");
 
 /**
- * Define the configuration for the app.
+ * * Define the configuration for the app.
  * Mainly used for Database/sequelize configuration.
  * Ensures type safety while allowing transformation.
+ *
+ * * Environment Usage
+ * Uses the process.env.NODE_ENV to determine the environment instead of the env from zodEnv.js
+ * Ensures Sequelize configuration is based on the environment.
+ * note: Might be unified with zondEnv later
  */
 
 const envFile = `.env.${process.env.NODE_ENV || "development"}`;
