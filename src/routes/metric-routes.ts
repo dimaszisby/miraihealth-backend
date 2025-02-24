@@ -1,3 +1,5 @@
+// src/routes/metric-routes.ts
+
 import { Router } from "express";
 import {
   createMetric,
@@ -19,7 +21,7 @@ import {
 
 const router = Router();
 
-// * Apply Authentication Middleware for all metric routes
+// Apply Authentication Middleware for all metric routes
 router.use(authMiddleware);
 
 /**
@@ -27,8 +29,11 @@ router.use(authMiddleware);
  * Generates a cache key based on user ID
  */
 const metricsCacheKey = (req: any) => `metrics:${req.user?.id}`;
+const metricCacheKey = (req: any) => `metric:${req.user?.id}:${req.params.id}`;
 
-// * Metrics Endpoints
+/**
+ * * Metrics Endpoints
+ */
 // CREATE Metric
 router.post("/", validate(createMetricSchema), createMetric);
 
@@ -39,7 +44,7 @@ router.get("/", cacheMiddleware(metricsCacheKey, 300), getAllMetrics);
 router.get(
   "/:id",
   validate(getMetricSchema),
-  cacheMiddleware(metricsCacheKey, 300),
+  cacheMiddleware(metricCacheKey, 300),
   getMetricById
 );
 
@@ -49,7 +54,10 @@ router.put("/:id", validate(updateMetricSchema), updateMetric);
 // DELETE Metric
 router.delete("/:id", validate(deleteMetricSchema), deleteMetric);
 
-// * Trends Endpoint
+/**
+ * * Trends Endpoint
+ */
+
 router.get("/:metricId/trends", getTrends);
 
 export default router;

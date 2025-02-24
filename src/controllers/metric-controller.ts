@@ -55,6 +55,16 @@ export const createMetric = catchAsync(
       isPublic,
     });
 
+    // Invalidate only the metrics list cache (not individual metric cache)
+    if (redisClient.isOpen) {
+      await redisClient.del(`metrics:${userId}`);
+      logger.info(`♻️ Cache invalidated for metrics:${userId}`);
+    } else {
+      logger.warn(
+        `Skipping Redis calls in ${env.NODE_ENV} environment because client is closed.`
+      );
+    }
+
     successResponse(res, 201, { metric }, "Metric created successfully.");
   }
 );
@@ -126,9 +136,11 @@ export const updateMetric = catchAsync(
 
     // Invalidate Redis cache
     if (redisClient.isOpen) {
-      await redisClient.del(`metric:${id}`);
-      await redisClient.del("metrics:*");
-      logger.info(`♻️ Cache invalidated for metric:${id} and metrics:*`);
+      await redisClient.del(`metric:${userId}:${id}`); // Invalidate the single metric cache
+      await redisClient.del(`metrics:${userId}`); // Invalidate the metrics list cache
+      logger.info(
+        `♻️ Cache invalidated for metric:${userId}:${id} and metrics:${userId}`
+      );
     } else {
       logger.warn(
         `Skipping Redis calls in ${env.NODE_ENV} environment because client is closed.`
@@ -170,9 +182,11 @@ export const deleteMetric = catchAsync(
 
     // Invalidate Redis cache
     if (redisClient.isOpen) {
-      await redisClient.del(`metric:${id}`);
-      await redisClient.del("metrics:*");
-      logger.info(`♻️ Cache invalidated for metric:${id} and metrics:*`);
+      await redisClient.del(`metric:${userId}:${id}`); // Invalidate the single metric cache
+      await redisClient.del(`metrics:${userId}`); // Invalidate the metrics list cache
+      logger.info(
+        `♻️ Cache invalidated for metric:${userId}:${id} and metrics:${userId}`
+      );
     } else {
       logger.warn(
         `Skipping Redis calls in ${env.NODE_ENV} environment because client is closed.`
