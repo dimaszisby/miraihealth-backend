@@ -1,3 +1,5 @@
+// src/routes/metric-settings-routes.ts
+
 import { Router } from "express";
 import {
   createMetricSettings,
@@ -9,6 +11,7 @@ import {
   updateDisplayOptions,
 } from "../controllers/metric-settings-controller.js";
 import { authMiddleware } from "../middleware/auth-middleware.js";
+import { cacheMiddleware } from "../middleware/cache-middleware.js";
 import { validate } from "../middleware/validate.js";
 import {
   createMetricSettingsSchema,
@@ -20,10 +23,16 @@ import {
 
 const router = Router();
 
-// * Apply Authentication Middleware Globally
+// Apply Authentication Middleware Globally
 router.use(authMiddleware);
 
-// * Routes
+/**
+ * * Key Generator Function
+ * Generates a cache key based on user ID, metric ID, and settings ID
+ */
+const metricSettingsCacheKey = (req: any) => `metricSettings:${req.user?.id}:${req.params.metricId}`;
+const metricSettingCacheKey = (req: any) => `metricSetting:${req.user?.id}:${req.params.metricId}:${req.params.id}`;
+const goalStatsCacheKey = (req: any) => `goalStats:${req.user?.id}:${req.params.metricId}`;
 
 // CREATE Settings
 router.post(
@@ -36,6 +45,7 @@ router.post(
 router.get(
   "/:metricId/settings/",
   validate(getAllMetricSettingsSchema),
+  cacheMiddleware(metricSettingsCacheKey, 300),
   getAllMetricSettings
 );
 
@@ -43,6 +53,7 @@ router.get(
 router.get(
   "/:metricId/settings/:id",
   validate(getMetricSettingsSchema),
+  cacheMiddleware(metricSettingCacheKey, 300),
   getMetricSettingsById
 );
 

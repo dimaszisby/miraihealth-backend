@@ -2,11 +2,12 @@
 
 import db from "../models/index.js";
 import { Request, Response, NextFunction } from "express";
+import { redisClient } from "../utils/redis-client.js";
 import AppError from "../utils/AppError.js";
 import catchAsync from "../utils/catch-async.js";
 import { successResponse } from "../utils/response-formatter.js";
 
-const { Metric, MetricLog, MetricSettings, MetricCategory } = db;
+const { Metric, MetricSettings } = db;
 
 /**
  * * Metric Settings Controller
@@ -89,6 +90,15 @@ export const createMetricSettings = catchAsync(
         "Successfully created MetricSettings:",
         metricSettings.toJSON()
       );
+
+      // Invalidate cache for metric settings
+      if (redisClient.isOpen) {
+        await redisClient.del(`metricSettings:${req.user?.id}:${metricId}`);
+        console.info(
+          `♻️ Cache invalidated for metric settings of metric:${metricId}`
+        );
+      }
+
       successResponse(
         res,
         201,
@@ -172,6 +182,15 @@ export const updateMetricSettings = catchAsync(
 
     await metricSettings.update(updates);
 
+    // Invalidate cache for updated settings
+    if (redisClient.isOpen) {
+      await redisClient.del(`metricSetting:${req.user?.id}:${metricId}:${id}`);
+      await redisClient.del(`metricSettings:${req.user?.id}:${metricId}`);
+      console.info(
+        `♻️ Cache invalidated for metric settings:${id} and all settings of metric:${metricId}`
+      );
+    }
+
     successResponse(
       res,
       200,
@@ -199,6 +218,15 @@ export const deleteMetricSettings = catchAsync(
       throw new AppError("Settings for Metric not found", 404);
 
     await metricSettings.destroy();
+
+    // Invalidate cache for deleted settings
+    if (redisClient.isOpen) {
+      await redisClient.del(`metricSetting:${req.user?.id}:${metricId}:${id}`);
+      await redisClient.del(`metricSettings:${req.user?.id}:${metricId}`);
+      console.info(
+        `♻️ Cache invalidated for metric settings:${id} and all settings of metric:${metricId}`
+      );
+    }
 
     successResponse(
       res,
