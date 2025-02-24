@@ -1,4 +1,5 @@
 //src/routes/metric-log-routes.ts
+
 import { Router } from "express";
 import {
   createMetricLog,
@@ -9,6 +10,7 @@ import {
   getAggregatedStats,
 } from "../controllers/metric-log-controller.js";
 import { authMiddleware } from "../middleware/auth-middleware.js";
+import { cacheMiddleware } from "../middleware/cache-middleware.js";
 import { validate } from "../middleware/validate.js";
 import {
   createMetricLogSchema,
@@ -21,11 +23,23 @@ import {
 
 const router = Router();
 
-// * Apply Authentication Middleware for all metric log routes
+// Apply Authentication Middleware for all metric log routes
 router.use(authMiddleware);
 
-// * Routes
+/**
+ * * Key Generator Function
+ * Generates a cache key based on user ID and log ID
+ */
+const logsCacheKey = (req: any) =>
+  `logs:${req.user?.id}:${req.params.metricId}`;
+const logCacheKey = (req: any) =>
+  `log:${req.user?.id}:${req.params.metricId}:${req.params.id}`;
+const logStatsCacheKey = (req: any) =>
+  `logStats:${req.user?.id}:${req.params.metricId}`;
 
+/**
+ * * Logs Endpoints
+ */
 // CREATE Log
 router.post(
   "/:metricId/logs/",
@@ -37,6 +51,7 @@ router.post(
 router.get(
   "/:metricId/logs/",
   validate(getAllMetricLogsSchema),
+  cacheMiddleware(logsCacheKey, 300),
   getAllLogsByMetric
 );
 
@@ -46,11 +61,17 @@ router.get(
 router.get(
   "/:metricId/logs/stats",
   validate(getAggregatedStatsSchema),
+  cacheMiddleware(logStatsCacheKey, 300),
   getAggregatedStats
 );
 
 // GET Specific Log by Id
-router.get("/:metricId/logs/:id", validate(getMetricLogSchema), getLogById);
+router.get(
+  "/:metricId/logs/:id",
+  validate(getMetricLogSchema),
+  cacheMiddleware(logCacheKey, 300), // Cache a single log entry
+  getLogById
+);
 
 // UPDATE Log
 router.put("/:metricId/logs/:id", validate(updateMetricLogSchema), updateLog);

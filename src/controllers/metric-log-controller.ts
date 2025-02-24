@@ -1,13 +1,15 @@
 //src/controllers/metric-log-controller.ts
 
 import db from "../models/index.js";
+import { env } from "../config/zodEnv.js";
 import { Request, Response, NextFunction } from "express";
+import { redisClient } from "../utils/redis-client.js";
 import AppError from "../utils/AppError.js";
 import { successResponse } from "../utils/response-formatter.js";
 import catchAsync from "../utils/catch-async.js";
 import * as metricLogService from "../services/metric-log-service.js";
 
-const { Metric, MetricLog, MetricSettings, MetricCategory } = db;
+const { Metric } = db;
 
 /**
  * * Metric Log Controller
@@ -33,6 +35,15 @@ export const createMetricLog = catchAsync(
       logValue,
       loggedAt,
     });
+
+    // Invalidate logs list and aggregated stats cache for this metric
+    if (redisClient.isOpen) {
+      await redisClient.del(`logs:${req.user?.id}:${metricId}`);
+      await redisClient.del(`logStats:${req.user?.id}:${metricId}`);
+      console.info(
+        `♻️ Cache invalidated for logs and stats of metric:${metricId}`
+      );
+    }
 
     successResponse(res, 201, { log }, "Metric Log created successfully");
   }
@@ -102,6 +113,16 @@ export const updateLog = catchAsync(
       loggedAt,
     });
 
+    // Invalidate the single log, logs list, and aggregated stats cache
+    if (redisClient.isOpen) {
+      await redisClient.del(`log:${req.user?.id}:${metricId}:${id}`);
+      await redisClient.del(`logs:${req.user?.id}:${metricId}`);
+      await redisClient.del(`logStats:${req.user?.id}:${metricId}`);
+      console.info(
+        `♻️ Cache invalidated for log:${id}, logs, and stats of metric:${metricId}`
+      );
+    }
+
     successResponse(res, 200, { log }, "Log updated successfully");
   }
 );
@@ -115,6 +136,16 @@ export const deleteLog = catchAsync(
     const { id, metricId } = req.params;
 
     const log = await metricLogService.deleteLogService(metricId, id);
+
+    // Invalidate the single log, logs list, and aggregated stats cache
+    if (redisClient.isOpen) {
+      await redisClient.del(`log:${req.user?.id}:${metricId}:${id}`);
+      await redisClient.del(`logs:${req.user?.id}:${metricId}`);
+      await redisClient.del(`logStats:${req.user?.id}:${metricId}`);
+      console.info(
+        `♻️ Cache invalidated for log:${id}, logs, and stats of metric:${metricId}`
+      );
+    }
     successResponse(res, 200, { log }, "Log deleted successfully");
   }
 );
