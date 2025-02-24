@@ -1,12 +1,15 @@
 //src/controllers/metric-category-controller.ts
 
 import db from "../models/index.js";
+import { env } from "../config/zodEnv.js";
 import { Request, Response, NextFunction } from "express";
+import { redisClient } from "../utils/redis-client.js";
 import AppError from "../utils/AppError.js";
-import { successResponse } from "../utils/response-formatter.js";
 import catchAsync from "../utils/catch-async.js";
+import { successResponse } from "../utils/response-formatter.js";
+import logger from "../utils/logger.js";
 
-const { Metric, MetricLog, MetricSettings, MetricCategory } = db;
+const { MetricCategory } = db;
 
 /**
  * * Metric Category Controller
@@ -43,6 +46,16 @@ export const createCategory = catchAsync(
       color,
       icon,
     });
+
+    // Invalidate only the categories list cache (not individual category cache)
+    if (redisClient.isOpen) {
+      await redisClient.del(`categories:${userId}`);
+      logger.info(`♻️ Cache invalidated for categories:${userId}`);
+    } else {
+      logger.warn(
+        `Skipping Redis calls in ${env.NODE_ENV} environment because client is closed.`
+      );
+    }
 
     successResponse(res, 201, { category }, "Category created successfully");
   }
@@ -100,6 +113,19 @@ export const updateCategory = catchAsync(
 
     await category.update({ name, color, icon });
 
+    // Invalidate Redis cache
+    if (redisClient.isOpen) {
+      await redisClient.del(`category:${userId}:${id}`); // Invalidate the single category cache
+      await redisClient.del(`categories:${userId}`); // Invalidate the categories list cache
+      logger.info(
+        `♻️ Cache invalidated for category:${userId}:${id} and categories:${userId}`
+      );
+    } else {
+      logger.warn(
+        `Skipping Redis calls in ${env.NODE_ENV} environment because client is closed.`
+      );
+    }
+
     successResponse(res, 200, { category }, "Category updated successfully");
   }
 );
@@ -120,6 +146,19 @@ export const deleteCategory = catchAsync(
     if (!category) throw new AppError("Category not found", 404);
 
     await category.destroy();
+
+    // Invalidate Redis cache
+    if (redisClient.isOpen) {
+      await redisClient.del(`category:${userId}:${id}`); // Invalidate the single category cache
+      await redisClient.del(`categories:${userId}`); // Invalidate the categories list cache
+      logger.info(
+        `♻️ Cache invalidated for category:${userId}:${id} and categories:${userId}`
+      );
+    } else {
+      logger.warn(
+        `Skipping Redis calls in ${env.NODE_ENV} environment because client is closed.`
+      );
+    }
 
     successResponse(res, 200, { category }, "Category deleted successfully");
   }

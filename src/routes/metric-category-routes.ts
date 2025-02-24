@@ -7,6 +7,7 @@ import {
   deleteCategory,
 } from "../controllers/metric-category-controller.js";
 import { authMiddleware } from "../middleware/auth-middleware.js";
+import { cacheMiddleware } from "../middleware/cache-middleware.js";
 import { validate } from "../middleware/validate.js";
 import {
   createMetricCategorySchema,
@@ -20,16 +21,30 @@ const router = Router();
 // * Apply Authentication Middleware for all category routes
 router.use(authMiddleware);
 
-// * Routes
+/**
+ * * Key Generator Function
+ * Generates a cache key based on user ID and category ID
+ */
+const categoriesCacheKey = (req: any) => `categories:${req.user?.id}`;
+const categoryCacheKey = (req: any) =>
+  `category:${req.user?.id}:${req.params.id}`;
 
+/**
+ * * Category EndpointsF
+ */
 // CREATE Category
 router.post("/", validate(createMetricCategorySchema), createCategory);
 
 // GET All Categories by User Id
-router.get("/", getAllCategories);
+router.get("/", cacheMiddleware(categoriesCacheKey, 300), getAllCategories);
 
 // GET specific Category by Id
-router.get("/:id", validate(getMetricCategorySchema), getCategoryById);
+router.get(
+  "/:id",
+  validate(getMetricCategorySchema),
+  cacheMiddleware(categoryCacheKey, 600),
+  getCategoryById
+);
 
 // UPDATE Category
 router.put("/:id", validate(updateMetricCategorySchema), updateCategory);
