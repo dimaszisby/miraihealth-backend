@@ -1,13 +1,9 @@
 // src/controllers/metric-settings-controller.ts
 
-import db from "../models/index.js";
 import { Request, Response, NextFunction } from "express";
-import { redisClient } from "../utils/redis-client.js";
-import AppError from "../utils/AppError.js";
 import catchAsync from "../utils/catch-async.js";
 import { successResponse } from "../utils/response-formatter.js";
-
-const { Metric, MetricSettings } = db;
+import * as metricSettingsService from "../services/metric-settings-service.js";
 
 /**
  * * Metric Settings Controller
@@ -25,90 +21,16 @@ export interface AuthRequest extends Request {
  */
 export const createMetricSettings = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    const { metricId } = req.params;
-    if (!metricId) throw new AppError("Metric ID is required", 400);
-
-    const {
-      goalEnabled,
-      goalType,
-      goalValue,
-      timeFrameEnabled,
-      startDate,
-      deadlineDate,
-      alertEnabled,
-      alertThresholds,
-      displayOptions,
-    } = req.body;
-
-    console.log(
-      `Received request to create settings for metricId: ${metricId}`
+    const metricSettings = await metricSettingsService.createMetricSettings(
+      req.params.metricId,
+      req.body
     );
-    console.log("Raw Request Body:", req.body);
-
-    // Validate that the parent Metric exists
-    const metric = await Metric.findOne({ where: { id: metricId } });
-    if (!metric) {
-      console.error(`Metric with id ${metricId} not found.`);
-      throw new AppError("Metric not found", 404);
-    }
-    console.log("Found parent metric:", metric.toJSON());
-
-    // Apply default values if optional fields are undefined
-    const finalAlertEnabled = alertEnabled !== undefined ? alertEnabled : false;
-    const finalAlertThresholds =
-      alertThresholds !== undefined ? alertThresholds : 80;
-    const finalDisplayOptions =
-      displayOptions !== undefined
-        ? displayOptions
-        : {
-            showOnDashboard: true,
-            priority: 1,
-            chartType: "line",
-            color: "#E897A3",
-          };
-
-    const creationData = {
-      metricId,
-      goalEnabled,
-      goalType,
-      goalValue,
-      timeFrameEnabled,
-      startDate,
-      deadlineDate,
-      alertEnabled: finalAlertEnabled,
-      alertThresholds: finalAlertThresholds,
-      displayOptions: finalDisplayOptions,
-      isAchieved: false,
-      isActive: true,
-    };
-
-    console.log("Final data for MetricSettings creation:", creationData);
-
-    try {
-      const metricSettings = await MetricSettings.create(creationData);
-      console.log(
-        "Successfully created MetricSettings:",
-        metricSettings.toJSON()
-      );
-
-      // Invalidate cache for metric settings
-      if (redisClient.isOpen) {
-        await redisClient.del(`metricSettings:${req.user?.id}:${metricId}`);
-        console.info(
-          `♻️ Cache invalidated for metric settings of metric:${metricId}`
-        );
-      }
-
-      successResponse(
-        res,
-        201,
-        { metricSettings },
-        "Metric Settings created successfully"
-      );
-    } catch (error) {
-      console.error("Error creating MetricSettings:", (error as Error).stack);
-      throw error;
-    }
+    successResponse(
+      res,
+      201,
+      { metricSettings },
+      "Metric Settings created successfully"
+    );
   }
 );
 
@@ -118,15 +40,9 @@ export const createMetricSettings = catchAsync(
  */
 export const getAllMetricSettings = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    const { metricId } = req.params;
-
-    if (!metricId) throw new AppError("Metric ID is required", 400);
-
-    const settings = await MetricSettings.findAll({ where: { metricId } });
-
-    // Return empty array if no settings found
-    const metricSettings = settings || [];
-
+    const metricSettings = await metricSettingsService.getAllMetricSettings(
+      req.params.metricId
+    );
     successResponse(
       res,
       200,
@@ -142,17 +58,10 @@ export const getAllMetricSettings = catchAsync(
  */
 export const getMetricSettingsById = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    const { metricId, id } = req.params;
-
-    if (!metricId || !id)
-      throw new AppError("Metric ID and Settings ID are required", 400);
-
-    const metricSettings = await MetricSettings.findOne({
-      where: { id, metricId },
-    });
-    if (!metricSettings)
-      throw new AppError("Settings for Metric not found", 404);
-
+    const metricSettings = await metricSettingsService.getMetricSettingsById(
+      req.params.metricId,
+      req.params.id
+    );
     successResponse(
       res,
       200,
@@ -168,29 +77,11 @@ export const getMetricSettingsById = catchAsync(
  */
 export const updateMetricSettings = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    const { metricId, id } = req.params;
-    const updates = req.body;
-
-    if (!metricId || !id)
-      throw new AppError("Metric ID and Settings ID are required", 400);
-
-    const metricSettings = await MetricSettings.findOne({
-      where: { id, metricId },
-    });
-
-    if (!metricSettings) throw new AppError("Metric settings not found", 404);
-
-    await metricSettings.update(updates);
-
-    // Invalidate cache for updated settings
-    if (redisClient.isOpen) {
-      await redisClient.del(`metricSetting:${req.user?.id}:${metricId}:${id}`);
-      await redisClient.del(`metricSettings:${req.user?.id}:${metricId}`);
-      console.info(
-        `♻️ Cache invalidated for metric settings:${id} and all settings of metric:${metricId}`
-      );
-    }
-
+    const metricSettings = await metricSettingsService.updateMetricSettings(
+      req.params.metricId,
+      req.params.id,
+      req.body
+    );
     successResponse(
       res,
       200,
@@ -206,28 +97,10 @@ export const updateMetricSettings = catchAsync(
  */
 export const deleteMetricSettings = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    const { metricId, id } = req.params;
-
-    if (!metricId || !id)
-      throw new AppError("Metric ID and Settings ID are required", 400);
-
-    const metricSettings = await MetricSettings.findOne({
-      where: { id, metricId },
-    });
-    if (!metricSettings)
-      throw new AppError("Settings for Metric not found", 404);
-
-    await metricSettings.destroy();
-
-    // Invalidate cache for deleted settings
-    if (redisClient.isOpen) {
-      await redisClient.del(`metricSetting:${req.user?.id}:${metricId}:${id}`);
-      await redisClient.del(`metricSettings:${req.user?.id}:${metricId}`);
-      console.info(
-        `♻️ Cache invalidated for metric settings:${id} and all settings of metric:${metricId}`
-      );
-    }
-
+    const metricSettings = await metricSettingsService.deleteMetricSettings(
+      req.params.metricId,
+      req.params.id
+    );
     successResponse(
       res,
       200,
@@ -243,23 +116,10 @@ export const deleteMetricSettings = catchAsync(
  */
 export const updateGoalAchievement = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    const { metricId, id } = req.params;
-
-    if (!metricId || !id) {
-      throw new AppError("Metric ID and Settings ID are required", 400);
-    }
-
-    const metricSettings = await MetricSettings.findOne({
-      where: { id, metricId },
-    });
-    if (!metricSettings) {
-      throw new AppError("Metric settings not found", 404);
-    }
-
-    // Update the achievement flag (for example, setting isAchieved to true)
-    metricSettings.isAchieved = true;
-    await metricSettings.save();
-
+    const metricSettings = await metricSettingsService.updateGoalAchievement(
+      req.params.metricId,
+      req.params.id
+    );
     successResponse(
       res,
       200,
@@ -275,27 +135,11 @@ export const updateGoalAchievement = catchAsync(
  */
 export const updateDisplayOptions = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    const { metricId, id } = req.params;
-    const { displayOptions } = req.body;
-
-    if (!metricId || !id) {
-      throw new AppError("Metric ID and Settings ID are required", 400);
-    }
-    if (!displayOptions) {
-      throw new AppError("Display options are required", 400);
-    }
-
-    const metricSettings = await MetricSettings.findOne({
-      where: { id, metricId },
-    });
-    if (!metricSettings) {
-      throw new AppError("Metric settings not found", 404);
-    }
-
-    // Update the display options (this could be a merge instead of a full replace if needed)
-    metricSettings.displayOptions = displayOptions;
-    await metricSettings.save();
-
+    const metricSettings = await metricSettingsService.updateDisplayOptions(
+      req.params.metricId,
+      req.params.id,
+      req.body.displayOptions
+    );
     successResponse(
       res,
       200,
