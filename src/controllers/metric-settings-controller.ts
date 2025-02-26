@@ -1,6 +1,8 @@
 // src/controllers/metric-settings-controller.ts
 
 import { Request, Response, NextFunction } from "express";
+import { AuthRequest } from "../types/requestContext.js";
+import AppError from "../utils/AppError.js";
 import catchAsync from "../utils/catch-async.js";
 import { successResponse } from "../utils/response-formatter.js";
 import * as metricSettingsService from "../services/metric-settings-service.js";
@@ -10,21 +12,20 @@ import * as metricSettingsService from "../services/metric-settings-service.js";
  * Handles CRUD operations for metric settings.
  */
 
-// Extend Express Request to include `user`
-export interface AuthRequest extends Request {
-  user?: { id: string };
-}
-
 /**
  * * Create Metric Settings
  * @route POST /api/metrics/:metricId/settings
  */
 export const createMetricSettings = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    const metricSettings = await metricSettingsService.createMetricSettings(
-      req.params.metricId,
-      req.body
-    );
+    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+
+    const metricSettings =
+      await metricSettingsService.createMetricSettingsService({
+        userId: req.user.id,
+        metricId: req.params.metricId,
+        settingData: req.body,
+      });
     successResponse(
       res,
       201,
@@ -40,9 +41,13 @@ export const createMetricSettings = catchAsync(
  */
 export const getAllMetricSettings = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    const metricSettings = await metricSettingsService.getAllMetricSettings(
-      req.params.metricId
-    );
+    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+
+    const metricSettings =
+      await metricSettingsService.getAllMetricSettingsService(
+        req.user.id,
+        req.params.metricId
+      );
     successResponse(
       res,
       200,
@@ -58,10 +63,14 @@ export const getAllMetricSettings = catchAsync(
  */
 export const getMetricSettingsById = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    const metricSettings = await metricSettingsService.getMetricSettingsById(
-      req.params.metricId,
-      req.params.id
-    );
+    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+
+    const metricSettings =
+      await metricSettingsService.getMetricSettingsByIdService({
+        userId: req.user.id,
+        metricId: req.params.metricId,
+        settingsId: req.params.id,
+      });
     successResponse(
       res,
       200,
@@ -77,11 +86,15 @@ export const getMetricSettingsById = catchAsync(
  */
 export const updateMetricSettings = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    const metricSettings = await metricSettingsService.updateMetricSettings(
-      req.params.metricId,
-      req.params.id,
-      req.body
-    );
+    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+
+    const metricSettings =
+      await metricSettingsService.updateMetricSettingsService({
+        userId: req.user.id,
+        metricId: req.params.metricId,
+        settingsId: req.params.id,
+        updateData: req.body,
+      });
     successResponse(
       res,
       200,
@@ -97,10 +110,14 @@ export const updateMetricSettings = catchAsync(
  */
 export const deleteMetricSettings = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    const metricSettings = await metricSettingsService.deleteMetricSettings(
-      req.params.metricId,
-      req.params.id
-    );
+    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+
+    const metricSettings =
+      await metricSettingsService.deleteMetricSettingsService({
+        userId: req.user.id,
+        metricId: req.params.metricId,
+        settingsId: req.params.id,
+      });
     successResponse(
       res,
       200,
@@ -116,10 +133,14 @@ export const deleteMetricSettings = catchAsync(
  */
 export const updateGoalAchievement = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    const metricSettings = await metricSettingsService.updateGoalAchievement(
-      req.params.metricId,
-      req.params.id
-    );
+    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+
+    const metricSettings =
+      await metricSettingsService.updateGoalAchievementService({
+        userId: req.user.id,
+        metricId: req.params.metricId,
+        settingsId: req.params.id,
+      });
     successResponse(
       res,
       200,
@@ -135,11 +156,15 @@ export const updateGoalAchievement = catchAsync(
  */
 export const updateDisplayOptions = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    const metricSettings = await metricSettingsService.updateDisplayOptions(
-      req.params.metricId,
-      req.params.id,
-      req.body.displayOptions
-    );
+    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+
+    const metricSettings =
+      await metricSettingsService.updateDisplayOptionsService({
+        userId: req.user.id,
+        metricId: req.params.metricId,
+        settingsId: req.params.id,
+        displayOptions: req.body,
+      });
     successResponse(
       res,
       200,

@@ -2,49 +2,58 @@
 
 import db from "../models/index.js";
 import { redisClient } from "../utils/redis-client.js";
+import { MetricSettingsBase } from "@/types/metricSettings.js";
+import { validateMetricAccess } from "../utils/db-validators.js";
 import AppError from "../utils/AppError.js";
-import logger from "../utils/logger.js";
 
-const { Metric, MetricSettings } = db;
+const { MetricSettings } = db;
 
 /**
  * * Metric Settings Service
  * Handles all business logic related to metric settings.
  */
 
-/**
- * Check if a metric exists
- * @param metricId - The ID of the metric
- * @throws {AppError} If metric does not exist
- */
-export const validateMetricExists = async (
-  metricId: string
-): Promise<typeof Metric> => {
-  const metric = await Metric.findOne({ where: { id: metricId } });
-  if (!metric) {
-    logger.error(`Metric with id ${metricId} not found.`);
-    throw new AppError("Metric not found", 404);
-  }
-  return metric;
-};
+interface metricSettingsParamsBase {
+  userId: string;
+  metricId: string;
+  settingsId: string;
+}
+
+interface createSettingsParams {
+  userId: string;
+  metricId: string;
+  settingData: MetricSettingsBase;
+}
+
+interface updateSettingsParams extends metricSettingsParamsBase {
+  updateData: Partial<MetricSettingsBase>;
+}
+
+interface updateDisplayOptionsParams extends metricSettingsParamsBase {
+  displayOptions: MetricSettingsBase["displayOptions"];
+}
 
 /**
  * Create metric settings for a specific metric
+ * @param userId - ID of the user
  * @param metricId - ID of the metric
  * @param data - Metric settings data
  * @returns The created metric settings
  */
-export const createMetricSettings = async (metricId: string, data: any) => {
-  // Ensure the parent metric exists
-  const metric = await Metric.findOne({ where: { id: metricId } });
-  if (!metric) throw new AppError("Metric not found", 404);
+export const createMetricSettingsService = async ({
+  userId,
+  metricId,
+  settingData,
+}: createSettingsParams) => {
+  // Ensure the parent metric exists and enforce ownership.
+  const metric = await validateMetricAccess(userId, metricId);
 
   // Apply default values if optional fields are undefined
   const finalData = {
-    ...data,
-    alertEnabled: data.alertEnabled ?? false,
-    alertThresholds: data.alertThresholds ?? 80,
-    displayOptions: data.displayOptions ?? {
+    ...settingData,
+    alertEnabled: settingData.alertEnabled ?? false,
+    alertThresholds: settingData.alertThresholds ?? 80,
+    displayOptions: settingData.displayOptions ?? {
       showOnDashboard: true,
       priority: 1,
       chartType: "line",
@@ -59,9 +68,9 @@ export const createMetricSettings = async (metricId: string, data: any) => {
 
   // Invalidate cache for metric settings
   if (redisClient.isOpen) {
-    await redisClient.del(`metricSettings:${metric.userId}:${metricId}`);
+    await redisClient.del(`metricSettings:${metric.userId}:${metric.id}`);
     console.info(
-      `♻️ Cache invalidated for metric settings of metric:${metricId}`
+      `♻️ Cache invalidated for metric settings of metric:${metric.id}`
     );
   }
 
@@ -70,13 +79,16 @@ export const createMetricSettings = async (metricId: string, data: any) => {
 
 /**
  * Get all metric settings for a specific metric
+ * @param userId - ID of the user
  * @param metricId - ID of the metric
  * @returns Array of metric settings
  */
-export const getAllMetricSettings = async (metricId: string) => {
-  // Ensure the parent metric exists
-  const metric = await Metric.findOne({ where: { id: metricId } });
-  if (!metric) throw new AppError("Metric not found", 404);
+export const getAllMetricSettingsService = async (
+  userId: string,
+  metricId: string
+) => {
+  // Ensure the parent metric exists and enforce ownership.
+  await validateMetricAccess(userId, metricId);
 
   const settings = await MetricSettings.findAll({ where: { metricId } });
   return settings || [];
@@ -84,20 +96,24 @@ export const getAllMetricSettings = async (metricId: string) => {
 
 /**
  * Get a specific metric setting by ID
+ * @param userId - ID of the user
  * @param metricId - ID of the metric
- * @param id - ID of the settings
+ * @param settingsId - ID of the settings
  * @returns Metric settings object
  * @throws {AppError} If settings not found
  */
-export const getMetricSettingsById = async (metricId: string, id: string) => {
-  // Ensure the parent metric exists
-  const metric = await Metric.findOne({ where: { id: metricId } });
-  if (!metric) throw new AppError("Metric not found", 404);
+export const getMetricSettingsByIdService = async ({
+  userId,
+  metricId,
+  settingsId,
+}: metricSettingsParamsBase) => {
+  // Ensure the parent metric exists and enforce ownership.
+  await validateMetricAccess(userId, metricId);
 
+  // Ensure the metric settings exists
   const metricSettings = await MetricSettings.findOne({
-    where: { id, metricId },
+    where: { id: settingsId, metricId: metricId },
   });
-
   if (!metricSettings) throw new AppError("Settings for Metric not found", 404);
 
   return metricSettings;
@@ -105,28 +121,36 @@ export const getMetricSettingsById = async (metricId: string, id: string) => {
 
 /**
  * Update a metric setting
+ * @param userId - ID of the user
  * @param metricId - ID of the metric
- * @param id - ID of the settings
+ * @param settingsId - ID of the settings
  * @param updates - Updated data
  * @returns Updated metric settings object
  */
-export const updateMetricSettings = async (
-  metricId: string,
-  id: string,
-  updates: any
-) => {
-  const metricSettings = await getMetricSettingsById(metricId, id);
+export const updateMetricSettingsService = async ({
+  userId,
+  metricId,
+  settingsId,
+  updateData,
+}: updateSettingsParams) => {
+  // Ensure the parent metric exists and enforce ownership.
+  const metric = await validateMetricAccess(userId, metricId);
 
-  await metricSettings.update(updates);
+  // Ensure the metric settings exists
+  const metricSettings = await getMetricSettingsByIdService({
+    userId: userId,
+    metricId: metricId,
+    settingsId: settingsId,
+  });
+
+  await metricSettings.update(updateData);
 
   // Invalidate cache if Redis is available
   if (redisClient.isOpen) {
     await redisClient.del(
-      `metricSetting:${metricSettings.userId}:${metricId}:${id}`
+      `metricSetting:${metric.userId}:${metric.id}:${metricSettings.id}`
     );
-    await redisClient.del(
-      `metricSettings:${metricSettings.userId}:${metricId}`
-    );
+    await redisClient.del(`metricSettings:${metric.userId}:${metric.id}`);
   }
 
   return metricSettings;
@@ -134,23 +158,34 @@ export const updateMetricSettings = async (
 
 /**
  * Delete metric settings
+ * @param userId - ID of the user
  * @param metricId - ID of the metric
  * @param id - ID of the settings
  * @returns Deleted metric settings object
  */
-export const deleteMetricSettings = async (metricId: string, id: string) => {
-  const metricSettings = await getMetricSettingsById(metricId, id);
+export const deleteMetricSettingsService = async ({
+  userId,
+  metricId,
+  settingsId,
+}: metricSettingsParamsBase) => {
+  // Ensure the parent metric exists and enforce ownership.
+  const metric = await validateMetricAccess(userId, metricId);
+
+  // Ensure the metric settings exists
+  const metricSettings = await getMetricSettingsByIdService({
+    userId: userId,
+    metricId: metricId,
+    settingsId: settingsId,
+  });
 
   await metricSettings.destroy();
 
   // Invalidate cache if Redis is available
   if (redisClient.isOpen) {
     await redisClient.del(
-      `metricSetting:${metricSettings.userId}:${metricId}:${id}`
+      `metricSetting:${metric.userId}:${metric.id}:${metricSettings.id}`
     );
-    await redisClient.del(
-      `metricSettings:${metricSettings.userId}:${metricId}`
-    );
+    await redisClient.del(`metricSettings:${metric.userId}:${metric.id}`);
   }
 
   return metricSettings;
@@ -158,12 +193,25 @@ export const deleteMetricSettings = async (metricId: string, id: string) => {
 
 /**
  * Update goal achievement status
+ * @param userId - ID of the user
  * @param metricId - ID of the metric
- * @param id - ID of the settings
+ * @param settingsId - ID of the settings
  * @returns Updated metric settings object
  */
-export const updateGoalAchievement = async (metricId: string, id: string) => {
-  const metricSettings = await getMetricSettingsById(metricId, id);
+export const updateGoalAchievementService = async ({
+  userId,
+  metricId,
+  settingsId,
+}: metricSettingsParamsBase) => {
+  // Ensure the parent metric exists and enforce ownership.
+  await validateMetricAccess(userId, metricId);
+
+  // Ensure the metric settings exists
+  const metricSettings = await getMetricSettingsByIdService({
+    userId: userId,
+    metricId: metricId,
+    settingsId: settingsId,
+  });
 
   metricSettings.isAchieved = true;
   await metricSettings.save();
@@ -173,17 +221,27 @@ export const updateGoalAchievement = async (metricId: string, id: string) => {
 
 /**
  * Update display options for a metric setting
+ * @param userId - ID of the user
  * @param metricId - ID of the metric
- * @param id - ID of the settings
+ * @param settingsId - ID of the settings
  * @param displayOptions - Updated display options
  * @returns Updated metric settings object
  */
-export const updateDisplayOptions = async (
-  metricId: string,
-  id: string,
-  displayOptions: any
-) => {
-  const metricSettings = await getMetricSettingsById(metricId, id);
+export const updateDisplayOptionsService = async ({
+  userId,
+  metricId,
+  settingsId,
+  displayOptions,
+}: updateDisplayOptionsParams) => {
+  // Ensure the parent metric exists and enforce ownership.
+  await validateMetricAccess(userId, metricId);
+
+  // Ensure the metric settings exists
+  const metricSettings = await getMetricSettingsByIdService({
+    userId: userId,
+    metricId: metricId,
+    settingsId: settingsId,
+  });
 
   metricSettings.displayOptions = displayOptions;
   await metricSettings.save();
