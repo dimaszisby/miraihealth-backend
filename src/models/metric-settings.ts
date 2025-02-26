@@ -2,32 +2,25 @@
 
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { Metric } from "./metric.js";
+import { MetricSettingsBase } from "@/types/metricSettings.js";
 
 /**
  * * MetricSettings Model
  * Represents customizable settings for health metrics.
  */
 
-// Define attributes
-export interface MetricSettingsAttributes {
+/**
+ * * MetricSettings Attributes
+ * Represents the Model Attributes of Metric Settings
+ * Describe the shape of data specifically for the database
+ */
+
+export interface MetricSettingsAttributes extends MetricSettingsBase {
+  // DB-specifics
   id: string;
   metricId: string;
-  goalEnabled: boolean;
-  goalType?: "cumulative" | "incremental" | null;
-  goalValue?: number | null;
-  timeFrameEnabled: boolean;
-  startDate?: string | null;
-  deadlineDate?: string | null;
-  alertEnabled: boolean;
-  alertThresholds?: number | null;
-  isAchieved: boolean;
-  isActive: boolean;
-  displayOptions: {
-    showOnDashboard: boolean;
-    priority: number | null;
-    chartType: string | null;
-    color: string | null;
-  };
+
+  // Timestamps managed by DB
   createdAt?: Date;
   updatedAt?: Date;
 
