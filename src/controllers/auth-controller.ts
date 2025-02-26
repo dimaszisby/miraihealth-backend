@@ -1,12 +1,13 @@
 // src/controllers/auth-controller.ts
+
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import { env } from "../config/zodEnv.js";
 import { Request, Response, NextFunction } from "express";
 import { User } from "../models/user.js";
 import AppError from "../utils/AppError.js";
-import { successResponse } from "../utils/response-formatter.js";
 import catchAsync from "../utils/catch-async.js";
-import { env } from "../config/zodEnv.js";
+import { successResponse } from "../utils/response-formatter.js";
 
 /**
  * * Authentication Controller
@@ -48,6 +49,7 @@ export const register = catchAsync(
       age,
       sex,
       isPublicProfile,
+      role,
     } = req.body;
 
     if (password !== passwordConfirmation) {
@@ -66,6 +68,7 @@ export const register = catchAsync(
       age,
       sex,
       isPublicProfile,
+      role: "user", // Still hardcoded
     });
 
     const token = generateToken(user);
