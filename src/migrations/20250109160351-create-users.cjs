@@ -39,6 +39,11 @@ module.exports = {
               type: Sequelize.STRING,
               allowNull: false,
             },
+            role: {
+              type: Sequelize.ENUM("user", "admin"),
+              allowNull: false,
+              defaultValue: "user",
+            },
             age: {
               type: Sequelize.INTEGER,
               allowNull: true,
@@ -93,6 +98,10 @@ module.exports = {
         );
         await queryInterface.sequelize.query(
           'DROP TYPE IF EXISTS "enum_users_sex";',
+          { transaction }
+        );
+        await queryInterface.sequelize.query(
+          'DROP TYPE IF EXISTS "enum_users_role";',
           { transaction }
         );
 

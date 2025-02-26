@@ -22,6 +22,22 @@ module.exports = {
         { transaction }
       );
 
+      // Create ENUM for users.role
+      await queryInterface.sequelize.query(
+        `
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_users_role') THEN
+            CREATE TYPE enum_users_role AS ENUM (
+              'user', 'admin'
+            );
+          END IF;
+        END
+        $$;
+      `,
+        { transaction }
+      );
+
       // Create ENUM for metric_settings.goal_type
       await queryInterface.sequelize.query(
         `
@@ -45,6 +61,7 @@ module.exports = {
       if (
         error instanceof Error &&
         !error.message.includes('type "enum_users_sex" already exists') &&
+        !error.message.includes('type "enum_users_role" already exists') &&
         !error.message.includes(
           'type "enum_metric_settings_goal_type" already exists'
         )
@@ -61,6 +78,7 @@ module.exports = {
       await queryInterface.sequelize.query(
         `
         DROP TYPE IF EXISTS enum_users_sex CASCADE;
+        DROP TYPE IF EXISTS enum_users_role CASCADE;
         DROP TYPE IF EXISTS enum_metric_settings_goal_type CASCADE;
       `,
         { transaction }

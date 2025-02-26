@@ -19,6 +19,7 @@ export interface UserAttributes {
   username: string;
   email: string;
   password: string;
+  role: "user" | "admin";
   age?: number;
   sex: "male" | "female" | "other" | "prefer not to specify";
   isPublicProfile: boolean;
@@ -42,6 +43,7 @@ export class User
   declare username: string;
   declare email: string;
   declare password: string;
+  declare role: "user" | "admin";
   declare age?: number;
   declare sex: "male" | "female" | "other" | "prefer not to specify";
   declare isPublicProfile: boolean;
@@ -95,6 +97,11 @@ export default (sequelize: Sequelize) => {
       password: {
         type: DataTypes.STRING,
         allowNull: false,
+      },
+      role: {
+        type: DataTypes.ENUM("user", "admin"),
+        allowNull: false,
+        defaultValue: "user",
       },
       age: {
         type: DataTypes.INTEGER,
