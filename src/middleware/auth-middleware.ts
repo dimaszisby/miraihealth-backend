@@ -6,18 +6,15 @@ import UserModel from "../models/user.js";
 import db from "../models/index.js";
 import AppError from "../utils/AppError.js";
 import { env } from "../config/zodEnv.js";
+import { AuthRequest } from "../types/requestContext.js";
+import { User } from "@/types/user.js";
 
 /**
  * * Auth Middleware
  * Wrapper class for routes that require authentication
  */
 const { sequelize } = db;
-
-export interface AuthRequest extends Request {
-  user?: any; // Use `any` or define a proper User interface if needed
-}
-
-const User = UserModel(sequelize); // ✅ Initialize the User model
+const UserModelInstance = UserModel(sequelize);
 
 /**
  * Middleware to validate authentication using JWT
@@ -43,13 +40,20 @@ export const authMiddleware = async (
     const decoded = jwt.verify(token, env.JWT_SECRET as string) as {
       id: string;
     };
+
     // 4. Check if user exists
-    const user = await User.findByPk(decoded.id);
-    if (!user) {
+    // ✅ Explicitly define the user attributes we need
+    const userRecord = await UserModelInstance.findByPk(decoded.id, {
+      attributes: ["id", "username", "email", "role"], // ✅ Ensure `role` is included
+    });
+
+    if (!userRecord) {
       return next(new AppError("Unauthorized: User not found", 401));
     }
-    // 5. Attach user to request
-    req.user = user;
+
+    // ✅ Manually map the Sequelize object to the defined User type
+    req.user = userRecord.toJSON() as User;
+
     next();
   } catch (error) {
     return next(new AppError("Unauthorized: Invalid token", 401));
