@@ -1,15 +1,10 @@
 //src/controllers/metric-log-controller.ts
 
-import db from "../models/index.js";
-import { env } from "../config/zodEnv.js";
 import { Request, Response, NextFunction } from "express";
-import { redisClient } from "../utils/redis-client.js";
 import AppError from "../utils/AppError.js";
 import { successResponse } from "../utils/response-formatter.js";
 import catchAsync from "../utils/catch-async.js";
 import * as metricLogService from "../services/metric-log-service.js";
-
-const { Metric } = db;
 
 /**
  * * Metric Log Controller
@@ -27,24 +22,22 @@ export interface AuthRequest extends Request {
  */
 export const createMetricLog = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
+    // Ensure userId is always a string
+    // QUESTION: As you can see this patterns of requests variable declaration is repeating for each function, how to optimized this?
+    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+    const userId = req.user.id;
     const { metricId } = req.params;
     const { type, logValue, loggedAt } = req.body;
 
-    const log = await metricLogService.createLog(metricId, {
-      type,
-      logValue,
-      loggedAt,
+    const log = await metricLogService.createLog({
+      userId: userId,
+      metricId: metricId,
+      logData: {
+        type,
+        logValue,
+        loggedAt,
+      },
     });
-
-    // Invalidate logs list and aggregated stats cache for this metric
-    if (redisClient.isOpen) {
-      await redisClient.del(`logs:${req.user?.id}:${metricId}`);
-      await redisClient.del(`logStats:${req.user?.id}:${metricId}`);
-      console.info(
-        `♻️ Cache invalidated for logs and stats of metric:${metricId}`
-      );
-    }
-
     successResponse(res, 201, { log }, "Metric Log created successfully");
   }
 );
@@ -55,28 +48,21 @@ export const createMetricLog = catchAsync(
  */
 export const getAllLogsByMetric = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+    const userId = req.user.id;
     const { metricId } = req.params;
     const { startDate, endDate, sortBy, order } = req.query;
 
-    // 1) Check that the metric exists
-    const metric = await Metric.findOne({ where: { id: metricId } });
-    if (!metric) {
-      throw new AppError("Metric not found", 404);
-    }
-
-    // 2) Enforce ownership or “isPublic”
-    if (!metric.isPublic && metric.userId !== req.user!.id) {
-      throw new AppError("Unauthorized access to logs", 403);
-    }
-
-    // 3) Proceed with fetching logs
-    const logs = await metricLogService.getAllLogsByMetricService(metricId, {
-      startDate: startDate ? new Date(startDate as string) : undefined,
-      endDate: endDate ? new Date(endDate as string) : undefined,
-      sortBy: (sortBy as string) || "loggedAt",
-      order: (order as "asc" | "desc") || "desc",
+    const logs = await metricLogService.getAllLogsByMetricService({
+      userId: userId,
+      metricId: metricId,
+      options: {
+        startDate: startDate ? new Date(startDate as string) : undefined,
+        endDate: endDate ? new Date(endDate as string) : undefined,
+        sortBy: (sortBy as string) || "loggedAt",
+        order: (order as "asc" | "desc") || "desc",
+      },
     });
-
     successResponse(res, 200, { logs });
   }
 );
@@ -87,13 +73,15 @@ export const getAllLogsByMetric = catchAsync(
  */
 export const getLogById = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+    const userId = req.user.id;
     const { id, metricId } = req.params;
 
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
-    const userId = req.user?.id;
-
-    const log = await metricLogService.getLogByIdService(userId, metricId, id);
-
+    const log = await metricLogService.getLogByIdService({
+      metricId: metricId,
+      userId: userId,
+      logId: id,
+    });
     successResponse(res, 200, { log });
   }
 );
@@ -104,25 +92,21 @@ export const getLogById = catchAsync(
  */
 export const updateLog = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+    const userId = req.user.id;
     const { id, metricId } = req.params;
     const { logValue, type, loggedAt } = req.body;
 
-    const log = await metricLogService.updateLogService(metricId, id, {
-      logValue,
-      type,
-      loggedAt,
+    const log = await metricLogService.updateLogService({
+      userId: userId,
+      metricId: metricId,
+      logId: id,
+      updateData: {
+        logValue,
+        type,
+        loggedAt,
+      },
     });
-
-    // Invalidate the single log, logs list, and aggregated stats cache
-    if (redisClient.isOpen) {
-      await redisClient.del(`log:${req.user?.id}:${metricId}:${id}`);
-      await redisClient.del(`logs:${req.user?.id}:${metricId}`);
-      await redisClient.del(`logStats:${req.user?.id}:${metricId}`);
-      console.info(
-        `♻️ Cache invalidated for log:${id}, logs, and stats of metric:${metricId}`
-      );
-    }
-
     successResponse(res, 200, { log }, "Log updated successfully");
   }
 );
@@ -133,19 +117,15 @@ export const updateLog = catchAsync(
  */
 export const deleteLog = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+    const userId = req.user.id;
     const { id, metricId } = req.params;
 
-    const log = await metricLogService.deleteLogService(metricId, id);
-
-    // Invalidate the single log, logs list, and aggregated stats cache
-    if (redisClient.isOpen) {
-      await redisClient.del(`log:${req.user?.id}:${metricId}:${id}`);
-      await redisClient.del(`logs:${req.user?.id}:${metricId}`);
-      await redisClient.del(`logStats:${req.user?.id}:${metricId}`);
-      console.info(
-        `♻️ Cache invalidated for log:${id}, logs, and stats of metric:${metricId}`
-      );
-    }
+    const log = await metricLogService.deleteLogService({
+      userId: userId,
+      metricId: metricId,
+      logId: id,
+    });
     successResponse(res, 200, { log }, "Log deleted successfully");
   }
 );
@@ -157,15 +137,9 @@ export const deleteLog = catchAsync(
 export const getAggregatedStats = catchAsync(
   async (req: AuthRequest, res: Response) => {
     // Extract metricId from request params
-    const { metricId } = req.params;
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
-
-    // Ensure metric exists and belongs to user (or is public)
-    const metric = await Metric.findOne({ where: { id: metricId } });
-    if (!metric) throw new AppError("Metric not found", 404);
-    if (!metric.isPublic && metric.userId !== userId)
-      throw new AppError("Unauthorized access to metric stats", 403);
+    const { metricId } = req.params;
 
     const stats = await metricLogService.getAggregatedStats(userId, metricId);
     successResponse(res, 200, stats);
