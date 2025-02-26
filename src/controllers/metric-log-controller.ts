@@ -4,6 +4,7 @@ import { Request, Response, NextFunction } from "express";
 import AppError from "../utils/AppError.js";
 import { successResponse } from "../utils/response-formatter.js";
 import catchAsync from "../utils/catch-async.js";
+import { AuthRequest } from "../types/requestContext.js";
 import * as metricLogService from "../services/metric-log-service.js";
 
 /**
@@ -11,21 +12,16 @@ import * as metricLogService from "../services/metric-log-service.js";
  * Handles CRUD operations for metric logs.
  */
 
-// Extend Express Request to include `user`
-export interface AuthRequest extends Request {
-  user?: { id: string };
-}
-
 /**
  * * Create a Log for a Metric
  * @route POST /api/metrics/:metricId/logs
  */
 export const createMetricLog = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    // Ensure userId is always a string
     // QUESTION: As you can see this patterns of requests variable declaration is repeating for each function, how to optimized this?
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
+
     const { metricId } = req.params;
     const { type, logValue, loggedAt } = req.body;
 
@@ -50,6 +46,7 @@ export const getAllLogsByMetric = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
+
     const { metricId } = req.params;
     const { startDate, endDate, sortBy, order } = req.query;
 
@@ -75,6 +72,7 @@ export const getLogById = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
+
     const { id, metricId } = req.params;
 
     const log = await metricLogService.getLogByIdService({
@@ -94,6 +92,7 @@ export const updateLog = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
+
     const { id, metricId } = req.params;
     const { logValue, type, loggedAt } = req.body;
 
@@ -119,6 +118,7 @@ export const deleteLog = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
+
     const { id, metricId } = req.params;
 
     const log = await metricLogService.deleteLogService({
@@ -136,9 +136,9 @@ export const deleteLog = catchAsync(
  */
 export const getAggregatedStats = catchAsync(
   async (req: AuthRequest, res: Response) => {
-    // Extract metricId from request params
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
+
     const { metricId } = req.params;
 
     const stats = await metricLogService.getAggregatedStats(userId, metricId);
