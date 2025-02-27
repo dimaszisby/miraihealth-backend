@@ -9,7 +9,7 @@ import {
   deleteMetricSettings,
   updateGoalAchievement,
   updateDisplayOptions,
-} from "../controllers/metric-settings-controller.js";
+} from "../controllers/metric-settings.controller.js";
 import { authMiddleware } from "../middleware/auth-middleware.js";
 import { cacheMiddleware } from "../middleware/cache-middleware.js";
 import { validate } from "../middleware/validate.js";
@@ -19,7 +19,7 @@ import {
   getAllMetricSettingsSchema,
   getMetricSettingsSchema,
   deleteMetricSettingsSchema,
-} from "../validators/metric-settings-validator.js";
+} from "../validators/metric-settings.validator.js";
 
 const router = Router();
 
@@ -30,9 +30,12 @@ router.use(authMiddleware);
  * * Key Generator Function
  * Generates a cache key based on user ID, metric ID, and settings ID
  */
-const metricSettingsCacheKey = (req: any) => `metricSettings:${req.user?.id}:${req.params.metricId}`;
-const metricSettingCacheKey = (req: any) => `metricSetting:${req.user?.id}:${req.params.metricId}:${req.params.id}`;
-const goalStatsCacheKey = (req: any) => `goalStats:${req.user?.id}:${req.params.metricId}`;
+const metricSettingsCacheKey = (req: any) =>
+  `metricSettings:${req.user?.id}:${req.params.metricId}`;
+const metricSettingCacheKey = (req: any) =>
+  `metricSetting:${req.user?.id}:${req.params.metricId}:${req.params.id}`;
+const goalStatsCacheKey = (req: any) =>
+  `goalStats:${req.user?.id}:${req.params.metricId}`;
 
 // CREATE Settings
 router.post(

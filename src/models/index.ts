@@ -14,7 +14,7 @@ import logger from "../utils/logger.js";
  *  3) Call .associate(...) automatically
  */
 
-/** 
+/**
  * 1. Dynamically pick the DB URL based on environment variables
  *    so you don't need to hardcode e.g. env.TEST_DATABASE_URL!
  */
@@ -63,16 +63,14 @@ const db: Record<string, any> = {};
  * This approach is basically what Sequelize "classic" used to do
  * in the default template, but we can replicate it in TypeScript.
  */
-const modelFiles = fs
-  .readdirSync(__dirname)
-  .filter((file) => {
-    // Skip non-model files, index itself, and test files:
-    if (file.indexOf(".") === 0) return false;
-    if (file === basename) return false; // skip index.ts
-    if (file.endsWith(".test.ts") || file.endsWith(".test.js")) return false;
-    // Accept .ts or .js or .mjs:
-    return file.endsWith(".ts") || file.endsWith(".js") || file.endsWith(".mjs");
-  });
+const modelFiles = fs.readdirSync(__dirname).filter((file) => {
+  // Skip non-model files, index itself, and test files:
+  if (file.indexOf(".") === 0) return false;
+  if (file === basename) return false; // skip index.ts
+  if (file.endsWith(".test.ts") || file.endsWith(".test.js")) return false;
+  // Accept .ts or .js or .mjs:
+  return file.endsWith(".ts") || file.endsWith(".js") || file.endsWith(".mjs");
+});
 
 // Import each model definition and initialize it:
 const modelPromises = modelFiles.map(async (file) => {
@@ -108,19 +106,17 @@ Object.keys(db).forEach((modelName) => {
  */
 db.sequelize = sequelize;
 
-
 export default db;
-
 
 // or export them individually as needed:
 
-// export const { 
-//   sequelize: sequelizeInstance, 
-//   User, 
-//   Metric, 
-//   MetricCategory, 
-//   MetricSettings, 
-//   MetricLog 
+// export const {
+//   sequelize: sequelizeInstance,
+//   User,
+//   Metric,
+//   MetricCategory,
+//   MetricSettings,
+//   MetricLog
 // } = db;
 
 /**
@@ -139,4 +135,3 @@ export {
  * That’s it! 
  * Now the code is more dynamic for future expansions.
  */
-

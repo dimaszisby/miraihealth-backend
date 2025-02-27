@@ -4,7 +4,6 @@ import db from "../src/models/index.js";
 import request, { Response } from "supertest";
 import app from "../src/server";
 
-
 const { sequelize, User, Metric, MetricLog } = db;
 
 /**

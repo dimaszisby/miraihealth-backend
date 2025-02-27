@@ -5,7 +5,7 @@ import { AuthRequest } from "../types/requestContext.js";
 import AppError from "../utils/AppError.js";
 import catchAsync from "../utils/catch-async.js";
 import { successResponse } from "../utils/response-formatter.js";
-import * as metricSettingsService from "../services/metric-settings-service.js";
+import * as metricSettingsService from "../services/metric-settings.service.js";
 
 /**
  * * Metric Settings Controller

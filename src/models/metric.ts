@@ -2,7 +2,7 @@
 
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { MetricCategory } from "./metric-category.js";
-import { MetricSettings } from "./metric-settings.js";
+import { MetricSettings } from "./metric-settings.model.js";
 import { MetricLog } from "./metric-log.js";
 
 /**
