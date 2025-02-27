@@ -54,6 +54,22 @@ module.exports = {
         { transaction }
       );
 
+      // Create ENUM for metric_log.type
+      await queryInterface.sequelize.query(
+        `
+          DO $$
+          BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_metric_log_type') THEN
+              CREATE TYPE enum_metric_log_type AS ENUM (
+                'manual', 'automatic'
+              );
+            END IF;
+          END
+          $$;
+        `,
+        { transaction }
+      );
+
       await transaction.commit();
     } catch (error) {
       await transaction.rollback();
@@ -64,7 +80,8 @@ module.exports = {
         !error.message.includes('type "enum_users_role" already exists') &&
         !error.message.includes(
           'type "enum_metric_settings_goal_type" already exists'
-        )
+        ) &&
+        !error.message.includes('type "enum_metric_log_type" already exists')
       ) {
         throw error;
       }
@@ -80,6 +97,7 @@ module.exports = {
         DROP TYPE IF EXISTS enum_users_sex CASCADE;
         DROP TYPE IF EXISTS enum_users_role CASCADE;
         DROP TYPE IF EXISTS enum_metric_settings_goal_type CASCADE;
+        DROP TYPE IF EXISTS enum_metric_log_type CASCADE;
       `,
         { transaction }
       );

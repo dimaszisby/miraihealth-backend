@@ -6,6 +6,7 @@ import AppError from "../utils/AppError.js";
 import { redisClient } from "../utils/redis-client.js";
 import { validateMetricAccess } from "../utils/db-validators.js";
 import logger from "../utils/logger.js";
+import { MetricLogBase } from "@/types/metric-log.types.js";
 
 const { Metric, MetricLog } = db;
 
@@ -14,10 +15,10 @@ const { Metric, MetricLog } = db;
  * Handles all business logic related to metric log.
  */
 
-export interface LogData {
-  type?: "manual" | "automatic";
-  logValue: number;
-  loggedAt?: Date;
+interface MetricLogBaseParams {
+  userId: string;
+  metricId: string;
+  logId: string;
 }
 
 export interface LogQueryOptions {
@@ -27,35 +28,20 @@ export interface LogQueryOptions {
   order?: "asc" | "desc";
 }
 
-interface createLogParams {
+interface CreateLogParams {
   userId: string;
   metricId: string;
-  logData: LogData;
+  logData: MetricLogBase;
 }
 
-interface getLogsParams {
+interface GetLogsParams {
   userId: string;
   metricId: string;
   options?: LogQueryOptions;
 }
 
-interface getLogByIdParams {
-  userId: string;
-  metricId: string;
-  logId: string;
-}
-
-interface updateLogParams {
-  userId: string;
-  metricId: string;
-  logId: string;
-  updateData: Partial<LogData>;
-}
-
-interface deleteLogByIdParams {
-  userId: string;
-  metricId: string;
-  logId: string;
+interface UpdateLogParams extends MetricLogBaseParams {
+  updateData: Partial<MetricLogBase>;
 }
 
 /**
@@ -69,7 +55,7 @@ export const createLog = async ({
   userId,
   metricId,
   logData,
-}: createLogParams) => {
+}: CreateLogParams) => {
   // Ensure the parent metric exists and enforce ownership.
   await validateMetricAccess(userId, metricId);
 
@@ -115,7 +101,7 @@ export const getAllLogsByMetricService = async ({
   userId,
   metricId,
   options,
-}: getLogsParams) => {
+}: GetLogsParams) => {
   // Ensure the parent metric exists and enforce ownership.
   const metric = await validateMetricAccess(userId, metricId);
 
@@ -157,7 +143,7 @@ export const getLogByIdService = async ({
   userId,
   metricId,
   logId,
-}: getLogByIdParams) => {
+}: MetricLogBaseParams) => {
   // Ensure the parent metric exists and enforce ownership.
   await validateMetricAccess(userId, metricId);
 
@@ -184,7 +170,7 @@ export const updateLogService = async ({
   metricId,
   logId,
   updateData,
-}: updateLogParams) => {
+}: UpdateLogParams) => {
   // Ensure the parent metric exists and enforce ownership.
   const metric = await validateMetricAccess(userId, metricId);
 
@@ -229,7 +215,7 @@ export const deleteLogService = async ({
   metricId,
   userId,
   logId,
-}: deleteLogByIdParams) => {
+}: MetricLogBaseParams) => {
   // Ensure the parent metric exists and enforce ownership.
   const metric = await validateMetricAccess(userId, metricId);
 

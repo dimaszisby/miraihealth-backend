@@ -2,6 +2,7 @@
 
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { Metric } from "./metric.model.js";
+import { MetricLogBase } from "@/types/metric-log.types.js";
 
 /**
  * * MetricLog Model
@@ -9,12 +10,12 @@ import { Metric } from "./metric.model.js";
  */
 
 // Define attributes
-export interface MetricLogAttributes {
+export interface MetricLogAttributes extends MetricLogBase {
+  // DB-specifics
   id: string;
   metricId: string;
-  type: string;
-  logValue: number;
-  loggedAt: Date;
+
+  // Timestamps managed by DB
   createdAt?: Date;
   updatedAt?: Date;
 
@@ -32,7 +33,7 @@ export class MetricLog
 {
   declare id: string;
   declare metricId: string;
-  declare type: string;
+  declare type: "manual" | "automatic";
   declare logValue: number;
   declare loggedAt: Date;
   declare createdAt?: Date;
@@ -73,7 +74,7 @@ export default (sequelize: Sequelize) => {
         },
       },
       type: {
-        type: DataTypes.STRING,
+        type: DataTypes.ENUM("manual", "automatic"),
         allowNull: false,
         defaultValue: "manual",
       },
