@@ -5,7 +5,7 @@ import {
   getCategoryById,
   updateCategory,
   deleteCategory,
-} from "../controllers/metric-category-controller.js";
+} from "../controllers/metric-category.controller.js";
 import { authMiddleware } from "../middleware/auth-middleware.js";
 import { cacheMiddleware } from "../middleware/cache-middleware.js";
 import { validate } from "../middleware/validate.js";
@@ -14,7 +14,7 @@ import {
   updateMetricCategorySchema,
   getMetricCategorySchema,
   deleteMetricCategorySchema,
-} from "../validators/metric-category-validator.js";
+} from "../validators/metric-category.validator.js";
 
 const router = Router();
 
