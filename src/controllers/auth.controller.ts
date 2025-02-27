@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { env } from "../config/zodEnv.js";
 import { Request, Response, NextFunction } from "express";
-import { User } from "../models/user.js";
+import { User } from "../models/user.model.js";
 import AppError from "../utils/AppError.js";
 import catchAsync from "../utils/catch-async.js";
 import { successResponse } from "../utils/response-formatter.js";

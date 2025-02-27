@@ -7,13 +7,13 @@ import {
   getProfile,
   updateProfile,
   logout,
-} from "../controllers/auth-controller.js";
+} from "../controllers/auth.controller.js";
 import { authMiddleware } from "../middleware/auth-middleware.js";
 import { validate } from "../middleware/validate.js";
 import {
   createUserSchema,
   updateUserSchema,
-} from "../validators/user-validator.js";
+} from "../validators/user.validator.js";
 
 const router = Router();
 

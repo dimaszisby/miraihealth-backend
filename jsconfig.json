@@ -40,7 +40,7 @@
     "src/utils/catch-async.ts",
     "src/config/db.ts",
     "src/utils/AppError.ts",
-    "src/routes/auth-routes.ts"
+    "src/routes/auth.routes.ts"
 , "__tests__/metric-category.test.ts", "__tests__/metric.test.ts", "__tests__/metric-settings.test.ts", "__tests__/metric-log.test.ts", "__tests__/auth.test.ts"  ],
   "exclude": ["node_modules", "dist", "src/migrations", "seeders"]
 }

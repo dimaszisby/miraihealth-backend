@@ -2,12 +2,12 @@
 
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import UserModel from "../models/user.js";
+import UserModel from "../models/user.model.js";
 import db from "../models/index.js";
 import AppError from "../utils/AppError.js";
 import { env } from "../config/zodEnv.js";
 import { AuthRequest } from "../types/requestContext.js";
-import { User } from "@/types/user.js";
+import { User } from "@/types/user.types.js";
 
 /**
  * * Auth Middleware

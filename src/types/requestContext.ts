@@ -1,7 +1,7 @@
 // src/types/requestContext.ts
 
 import { Request } from "express";
-import { User } from "./user.js";
+import { User } from "./user.types.js";
 
 /**
  * * Extended Request Interface for Authenticated Routes

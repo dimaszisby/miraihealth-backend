@@ -2,7 +2,7 @@
 
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { Metric } from "./metric.js";
-import { User } from "./user.js";
+import { User } from "./user.model.js";
 
 /**
  * * MetricCategory Model
