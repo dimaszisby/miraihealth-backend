@@ -1,4 +1,4 @@
-//src/routes/metric-log-routes.ts
+//src/routes/metric-log.routes.ts
 
 import { Router } from "express";
 import {
@@ -8,7 +8,7 @@ import {
   updateLog,
   deleteLog,
   getAggregatedStats,
-} from "../controllers/metric-log-controller.js";
+} from "../controllers/metric-log.controller.js";
 import { authMiddleware } from "../middleware/auth-middleware.js";
 import { cacheMiddleware } from "../middleware/cache-middleware.js";
 import { validate } from "../middleware/validate.js";
@@ -19,7 +19,7 @@ import {
   getMetricLogSchema,
   deleteMetricLogSchema,
   getAggregatedStatsSchema,
-} from "../validators/metric-log-validator.js";
+} from "../validators/metric-log.validator.js";
 
 const router = Router();
 

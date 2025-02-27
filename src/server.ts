@@ -14,7 +14,7 @@ import authRoutes from "./routes/auth.routes.js";
 import metricRoutes from "./routes/metric-routes.js";
 import metricCategoryRoutes from "./routes/metric-category.routes.js";
 import metricSettingsRoutes from "./routes/metric-settings.routes.js";
-import metricLogRoutes from "./routes/metric-log-routes.js";
+import metricLogRoutes from "./routes/metric-log.routes.js";
 
 // Other Setup
 import { errorHandler } from "./middleware/error-handler.js";

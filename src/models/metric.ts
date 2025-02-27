@@ -3,7 +3,7 @@
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { MetricCategory } from "./metric-category.model.js";
 import { MetricSettings } from "./metric-settings.model.js";
-import { MetricLog } from "./metric-log.js";
+import { MetricLog } from "./metric-log.model.js";
 
 /**
  * * Metric Model

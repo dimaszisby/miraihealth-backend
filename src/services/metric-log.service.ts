@@ -1,4 +1,4 @@
-// src/services/metric-log-service.ts
+// src/services/metric-log.service.ts
 
 import db from "../models/index.js";
 import { Op, Order } from "sequelize";
