@@ -1,4 +1,4 @@
-// src/controllers/auth-controller.ts
+// src/controllers/auth.controller.ts
 
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";

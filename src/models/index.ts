@@ -1,3 +1,5 @@
+// src/models/index.ts
+
 import fs from "fs";
 import path from "path";
 import { Sequelize, DataTypes } from "sequelize";

@@ -1,4 +1,4 @@
-// src/models/user.ts
+// src/models/user.model.ts
 
 import {
   Model,

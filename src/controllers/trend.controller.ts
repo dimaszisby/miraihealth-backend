@@ -1,3 +1,5 @@
+// src/trend-controller.ts
+
 import { Request, Response, NextFunction } from "express";
 import { Op } from "sequelize";
 import { MetricLog } from "../models/metric-log.model.js";

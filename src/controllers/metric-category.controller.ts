@@ -1,4 +1,4 @@
-//src/controllers/metric-category-controller.ts
+// src/controllers/metric-category.controller.ts
 
 import db from "../models/index.js";
 import { env } from "../config/zodEnv.js";

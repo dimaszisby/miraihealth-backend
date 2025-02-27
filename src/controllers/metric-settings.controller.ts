@@ -1,4 +1,4 @@
-// src/controllers/metric-settings-controller.ts
+// src/controllers/metric-settings.controller.ts
 
 import { Request, Response, NextFunction } from "express";
 import { AuthRequest } from "../types/requestContext.js";

@@ -1,4 +1,4 @@
-//src/validators/metric-settings-validator.ts
+// src/validators/metric-settings.validator.ts
 
 import { z } from "zod";
 

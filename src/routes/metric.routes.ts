@@ -1,4 +1,4 @@
-// src/routes/metric-routes.ts
+// src/routes/metric.routes.ts
 
 import { Router } from "express";
 import {
@@ -8,7 +8,7 @@ import {
   updateMetric,
   deleteMetric,
 } from "../controllers/metric.controller.js";
-import { getTrends } from "../controllers/trend-controller.js";
+import { getTrends } from "../controllers/trend.controller.js";
 import { authMiddleware } from "../middleware/auth-middleware.js";
 import { cacheMiddleware } from "../middleware/cache-middleware.js";
 import { validate } from "../middleware/validate.js";

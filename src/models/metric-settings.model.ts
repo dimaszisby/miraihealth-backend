@@ -1,4 +1,4 @@
-//src/models/metric-settings.ts
+// src/models/metric-settings.model.ts
 
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { Metric } from "./metric.model.js";

@@ -1,4 +1,4 @@
-// src/routes/metric-settings-routes.ts
+// src/routes/metric-settings.routes.ts
 
 import { Router } from "express";
 import {
