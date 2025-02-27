@@ -2,7 +2,7 @@
 
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { Metric } from "./metric.js";
-import { MetricSettingsBase } from "@/types/metricSettings.js";
+import { MetricSettingsBase } from "@/types/metric-settings.types.js";
 
 /**
  * * MetricSettings Model

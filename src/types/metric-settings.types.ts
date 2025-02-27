@@ -1,4 +1,4 @@
-// src/types/metricSettings.ts
+// src/types/metric-settings.ts
 
 /**
  * * MetricSettings Types
