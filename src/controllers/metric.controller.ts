@@ -11,7 +11,7 @@ import {
   createMetricData,
   getMetricData,
   getMetricDetailData,
-} from "../services/metric-service.js";
+} from "../services/metric.service.js";
 import logger from "../utils/logger.js";
 
 const { Metric, MetricLog, MetricSettings, MetricCategory } = db;

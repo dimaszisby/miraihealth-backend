@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { Op } from "sequelize";
 import { MetricLog } from "../models/metric-log.model.js";
-import { Metric } from "../models/metric.js";
+import { Metric } from "../models/metric.model.js";
 import AppError from "../utils/AppError.js";
 import catchAsync from "../utils/catch-async.js";
 

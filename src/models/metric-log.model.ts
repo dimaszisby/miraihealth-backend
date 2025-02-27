@@ -1,7 +1,7 @@
 // src/models/metric-log.model.ts
 
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
-import { Metric } from "./metric.js";
+import { Metric } from "./metric.model.js";
 
 /**
  * * MetricLog Model

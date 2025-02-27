@@ -7,7 +7,7 @@ import {
   getMetricById,
   updateMetric,
   deleteMetric,
-} from "../controllers/metric-controller.js";
+} from "../controllers/metric.controller.js";
 import { getTrends } from "../controllers/trend-controller.js";
 import { authMiddleware } from "../middleware/auth-middleware.js";
 import { cacheMiddleware } from "../middleware/cache-middleware.js";
@@ -17,7 +17,7 @@ import {
   updateMetricSchema,
   deleteMetricSchema,
   getMetricSchema,
-} from "../validators/metric-validator.js";
+} from "../validators/metric.validator.js";
 
 const router = Router();
 
