@@ -4,6 +4,7 @@ import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { MetricCategory } from "./metric-category.model.js";
 import { MetricSettings } from "./metric-settings.model.js";
 import { MetricLog } from "./metric-log.model.js";
+import { MetricBase } from "@/types/metric.types.js";
 
 /**
  * * Metric Model
@@ -11,16 +12,16 @@ import { MetricLog } from "./metric-log.model.js";
  */
 
 // Define attributes
-export interface MetricAttributes {
+export interface MetricAttributes extends MetricBase {
+  // DB-specifics
   id: string;
   userId: string;
   categoryId?: string | null;
   originalMetricId?: string | null;
-  name: string;
-  description?: string | null;
-  defaultUnit: string;
-  isPublic: boolean;
-  deletedAt?: Date | null;
+
+  // Timestamps managed by DB
+  createdAt?: Date;
+  updatedAt?: Date;
 
   // Optional associated objects
   MetricCategory?: MetricCategory;
@@ -46,6 +47,10 @@ export class Metric
   declare defaultUnit: string;
   declare isPublic: boolean;
   declare deletedAt?: Date | null;
+
+  // Timestamps managed by DB
+  declare createdAt?: Date;
+  declare updatedAt?: Date;
 
   // Optional associated objects
   declare MetricCategory?: MetricCategory;
