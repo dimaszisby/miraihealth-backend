@@ -1,7 +1,7 @@
 // src/middleware/role-middleware.ts
 import { Response, NextFunction } from "express";
 import AppError from "../utils/AppError.js";
-import { AuthRequest } from "@/types/requestContext.js";
+import { AuthRequest } from "@/types/request.context.js";
 
 /**
  * * Role-Based Access Middleware

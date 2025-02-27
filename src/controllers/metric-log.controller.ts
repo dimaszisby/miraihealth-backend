@@ -4,7 +4,7 @@ import { Request, Response, NextFunction } from "express";
 import AppError from "../utils/AppError.js";
 import { successResponse } from "../utils/response-formatter.js";
 import catchAsync from "../utils/catch-async.js";
-import { AuthRequest } from "../types/requestContext.js";
+import { AuthRequest } from "../types/request.context.js";
 import * as metricLogService from "../services/metric-log.service.js";
 
 /**

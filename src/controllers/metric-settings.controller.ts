@@ -1,7 +1,7 @@
 // src/controllers/metric-settings.controller.ts
 
 import { Request, Response, NextFunction } from "express";
-import { AuthRequest } from "../types/requestContext.js";
+import { AuthRequest } from "../types/request.context.js";
 import AppError from "../utils/AppError.js";
 import catchAsync from "../utils/catch-async.js";
 import { successResponse } from "../utils/response-formatter.js";

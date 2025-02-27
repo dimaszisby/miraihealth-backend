@@ -6,7 +6,7 @@ import UserModel from "../models/user.model.js";
 import db from "../models/index.js";
 import AppError from "../utils/AppError.js";
 import { env } from "../config/zodEnv.js";
-import { AuthRequest } from "../types/requestContext.js";
+import { AuthRequest } from "../types/request.context.js";
 import { User } from "@/types/user.types.js";
 
 /**

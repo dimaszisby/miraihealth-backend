@@ -30,7 +30,7 @@ interface updateSettingsParams extends metricSettingsParamsBase {
 }
 
 interface updateDisplayOptionsParams extends metricSettingsParamsBase {
-  displayOptions: MetricSettingsBase["displayOptions"];
+  displayOptions: typeof MetricSettings.displayOptions;
 }
 
 /**
@@ -106,7 +106,7 @@ export const getMetricSettingsByIdService = async ({
   userId,
   metricId,
   settingsId,
-}: metricSettingsParamsBase) => {
+}: metricSettingsParamsBase): Promise<typeof MetricSettings> => {
   // Ensure the parent metric exists and enforce ownership.
   await validateMetricAccess(userId, metricId);
 

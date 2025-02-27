@@ -2,7 +2,7 @@
 
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { Metric } from "./metric.model.js";
-import { MetricSettingsBase } from "@/types/metric-settings.types.js";
+import { MetricSettingsBase } from "../types/metric-settings.types.js";
 
 /**
  * * MetricSettings Model
@@ -54,6 +54,8 @@ export class MetricSettings
     chartType: string | null;
     color: string | null;
   };
+  declare createdAt?: Date;
+  declare updatedAt?: Date;
 
   // Optional associated objects
   declare Metric?: Metric;
