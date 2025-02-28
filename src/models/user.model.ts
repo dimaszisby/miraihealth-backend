@@ -8,21 +8,16 @@ import {
   DateOnlyDataType,
 } from "sequelize";
 import bcrypt from "bcrypt";
+import { UserBase } from "@/types/user.types";
 
 /**
  * * User Model
  * Defines the schema and associations for the User entity.
  */
 
-export interface UserAttributes {
+export interface UserAttributes extends UserBase {
   id?: string;
-  username: string;
-  email: string;
-  password: string;
-  role: "user" | "admin";
-  age?: number;
-  sex: "male" | "female" | "other" | "prefer not to specify";
-  isPublicProfile: boolean;
+
   createdAt?: Date | null;
   updatedAt?: Date | null;
   deletedAt?: Date | null;
@@ -47,6 +42,7 @@ export class User
   declare age?: number;
   declare sex: "male" | "female" | "other" | "prefer not to specify";
   declare isPublicProfile: boolean;
+  
   declare createdAt?: Date | null;
   declare updatedAt?: Date | null;
   declare deletedAt?: Date | null;
