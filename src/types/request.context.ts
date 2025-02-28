@@ -1,7 +1,8 @@
 // src/types/requestContext.ts
 
 import { Request } from "express";
-import { User } from "./user.types.js";
+import db from "../models/index.js";
+const { User } = db;
 
 /**
  * * Extended Request Interface for Authenticated Routes
@@ -9,5 +10,5 @@ import { User } from "./user.types.js";
  * The user property in AuthRequest is defined as optional (user?: User) because not all routes require authentication
  */
 export interface AuthRequest extends Request {
-  user?: User;
+  user?: typeof User;
 }
