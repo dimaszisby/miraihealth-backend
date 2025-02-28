@@ -3,6 +3,7 @@
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { Metric } from "./metric.model.js";
 import { User } from "./user.model.js";
+import { MetricCategoryBase } from "../types/metric-category.types.js";
 
 /**
  * * MetricCategory Model
@@ -10,13 +11,14 @@ import { User } from "./user.model.js";
  */
 
 // Define attributes
-export interface MetricCategoryAttributes {
+export interface MetricCategoryAttributes extends MetricCategoryBase {
+  // DB-specifics
   id: string;
   userId: string;
-  name: string;
-  color: string;
-  icon: string;
-  deletedAt?: Date | null;
+
+  // Timestamps managed by DB
+  createdAt?: Date;
+  updatedAt?: Date;
 
   // Optional associated objects
   User?: User;
@@ -37,6 +39,10 @@ export class MetricCategory
   declare color: string;
   declare icon: string;
   declare deletedAt?: Date | null;
+
+  // Timestamps managed by DB
+  declare createdAt?: Date;
+  declare updatedAt?: Date;
 
   // Optional associated objects
   declare User?: User;
