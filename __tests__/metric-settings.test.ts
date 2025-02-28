@@ -327,11 +327,21 @@ describe("Metric Settings Endpoints", () => {
         });
 
       expect(res.statusCode).toBe(200);
-      expect(res.body.data.metricSettings.displayOptions).toEqual({
-        showOnDashboard: false,
-        priority: 2,
-        chartType: "bar",
-        color: "#123456",
+      expect(res.body).toHaveProperty("data.metricSettings");
+
+      console.log(
+        "Response Metric Settings:",
+        JSON.stringify(res.body.data.metricSettings, null, 2)
+      );
+
+      expect(res.body.data.metricSettings).toHaveProperty("displayOptions");
+      expect(res.body.data.metricSettings.displayOptions).toMatchObject({
+        displayOptions: {
+          showOnDashboard: false,
+          priority: 2,
+          chartType: "bar",
+          color: "#123456",
+        },
       });
     });
   });

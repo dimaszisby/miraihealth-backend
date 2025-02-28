@@ -13,24 +13,24 @@ const { MetricSettings } = db;
  * Handles all business logic related to metric settings.
  */
 
-interface metricSettingsParamsBase {
+interface MetricSettingsParamsBase {
   userId: string;
   metricId: string;
   settingsId: string;
 }
 
-interface createSettingsParams {
+interface CreateSettingsParams {
   userId: string;
   metricId: string;
   settingData: MetricSettingsBase;
 }
 
-interface updateSettingsParams extends metricSettingsParamsBase {
+interface UpdateSettingsParams extends MetricSettingsParamsBase {
   updateData: Partial<MetricSettingsBase>;
 }
 
-interface updateDisplayOptionsParams extends metricSettingsParamsBase {
-  displayOptions: typeof MetricSettings.displayOptions;
+interface UpdateDisplayOptionsParams extends MetricSettingsParamsBase {
+  displayOptions: MetricSettingsBase["displayOptions"];
 }
 
 /**
@@ -44,7 +44,7 @@ export const createMetricSettingsService = async ({
   userId,
   metricId,
   settingData,
-}: createSettingsParams) => {
+}: CreateSettingsParams) => {
   // Ensure the parent metric exists and enforce ownership.
   const metric = await validateMetricAccess(userId, metricId);
 
@@ -106,7 +106,7 @@ export const getMetricSettingsByIdService = async ({
   userId,
   metricId,
   settingsId,
-}: metricSettingsParamsBase): Promise<typeof MetricSettings> => {
+}: MetricSettingsParamsBase): Promise<typeof MetricSettings> => {
   // Ensure the parent metric exists and enforce ownership.
   await validateMetricAccess(userId, metricId);
 
@@ -132,7 +132,7 @@ export const updateMetricSettingsService = async ({
   metricId,
   settingsId,
   updateData,
-}: updateSettingsParams) => {
+}: UpdateSettingsParams) => {
   // Ensure the parent metric exists and enforce ownership.
   const metric = await validateMetricAccess(userId, metricId);
 
@@ -167,7 +167,7 @@ export const deleteMetricSettingsService = async ({
   userId,
   metricId,
   settingsId,
-}: metricSettingsParamsBase) => {
+}: MetricSettingsParamsBase) => {
   // Ensure the parent metric exists and enforce ownership.
   const metric = await validateMetricAccess(userId, metricId);
 
@@ -192,7 +192,7 @@ export const deleteMetricSettingsService = async ({
 };
 
 /**
- * Update goal achievement status
+ * Update goal achievement status property
  * @param userId - ID of the user
  * @param metricId - ID of the metric
  * @param settingsId - ID of the settings
@@ -202,7 +202,7 @@ export const updateGoalAchievementService = async ({
   userId,
   metricId,
   settingsId,
-}: metricSettingsParamsBase) => {
+}: MetricSettingsParamsBase) => {
   // Ensure the parent metric exists and enforce ownership.
   await validateMetricAccess(userId, metricId);
 
@@ -213,8 +213,9 @@ export const updateGoalAchievementService = async ({
     settingsId: settingsId,
   });
 
-  metricSettings.isAchieved = true;
-  await metricSettings.save();
+  await metricSettings.update({
+    isAchieved: true,
+  });
 
   return metricSettings;
 };
@@ -232,7 +233,7 @@ export const updateDisplayOptionsService = async ({
   metricId,
   settingsId,
   displayOptions,
-}: updateDisplayOptionsParams) => {
+}: UpdateDisplayOptionsParams) => {
   // Ensure the parent metric exists and enforce ownership.
   await validateMetricAccess(userId, metricId);
 
@@ -243,8 +244,14 @@ export const updateDisplayOptionsService = async ({
     settingsId: settingsId,
   });
 
-  metricSettings.displayOptions = displayOptions;
-  await metricSettings.save();
+  console.log(`SERVICE: Fetched Metric Settings: ${metricSettings}`);
 
-  return metricSettings;
+  // Overwrite the displayOptions field directly.
+  metricSettings.setDataValue("displayOptions", displayOptions);
+  await metricSettings.save();
+  await metricSettings.reload();
+
+  console.log(`SERVICE: Updated Metric Settings: ${metricSettings}`);
+
+  return metricSettings.get({ plain: true });
 };
