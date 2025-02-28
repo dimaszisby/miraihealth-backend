@@ -1,36 +1,16 @@
 // src/controllers/auth.controller.ts
 
-import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
-import { env } from "../config/zodEnv.js";
 import { Request, Response, NextFunction } from "express";
-import { User } from "../models/user.model.js";
-import AppError from "../utils/AppError.js";
+// import { User } from "../models/user.model.js";
+import { AuthRequest } from "../types/request.context.js";
 import catchAsync from "../utils/catch-async.js";
 import { successResponse } from "../utils/response-formatter.js";
+import * as AuthService from "../services/auth.service.js";
 
 /**
  * * Authentication Controller
  * Provides user authentication and profile management functions.
  */
-
-// Extend Express Request to include `user`
-export interface AuthRequest extends Request {
-  user?: User;
-}
-
-/**
- * * Generate JWT Token
- * @param {User} user - Authenticated user object
- * @returns {string} JWT token
- */
-const generateToken = (user: User): string => {
-  return jwt.sign(
-    { id: user.id, email: user.email },
-    env.JWT_SECRET as string,
-    { expiresIn: "7d" }
-  );
-};
 
 /**
  * * Register a New User
@@ -38,41 +18,14 @@ const generateToken = (user: User): string => {
  */
 export const register = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    console.log(
-      `Received request to register new user with Body: ${req.body.password}`
+    const authData = await AuthService.registerUserService(req.body);
+
+    successResponse(
+      res,
+      201,
+      { token: authData.token, user: authData.user },
+      "User created successfully"
     );
-    const {
-      username,
-      email,
-      password,
-      passwordConfirmation,
-      age,
-      sex,
-      isPublicProfile,
-      role,
-    } = req.body;
-
-    if (password !== passwordConfirmation) {
-      throw new AppError("Passwords do not match", 400);
-    }
-
-    const existingUser = await User.findOne({ where: { email } });
-    if (existingUser) {
-      throw new AppError("Email already in use", 400);
-    }
-
-    const user = await User.create({
-      username,
-      email,
-      password,
-      age,
-      sex,
-      isPublicProfile,
-      role: "user", // Still hardcoded
-    });
-
-    const token = generateToken(user);
-    successResponse(res, 201, { token, user }, "User created successfully");
   }
 );
 
@@ -84,22 +37,11 @@ export const login = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ where: { email } });
-    if (!user || !(await user.validPassword(password))) {
-      throw new AppError("Invalid email or password", 401);
-    }
+    const authData = await AuthService.loginUserService(email, password);
 
-    const token = generateToken(user);
     successResponse(res, 200, {
-      token,
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        age: user.age,
-        sex: user.sex,
-        isPublicProfile: user.isPublicProfile,
-      },
+      token: authData.token,
+      user: authData.user,
     });
   }
 );
@@ -110,30 +52,16 @@ export const login = catchAsync(
  */
 export const getProfile = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user) {
-      throw new AppError("User not authenticated", 401);
-    }
-
-    const {
-      id,
-      username,
-      email,
-      age,
-      sex,
-      isPublicProfile,
-      createdAt,
-      updatedAt,
-    } = req.user;
-
+    const user = await AuthService.getUserProfileService(req.user);
     return successResponse(res, 200, {
-      id,
-      username,
-      email,
-      age,
-      sex,
-      isPublicProfile,
-      createdAt,
-      updatedAt,
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      age: user.age,
+      sex: user.sex,
+      isPublicProfile: user.isPublicProfile,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     });
   }
 );
@@ -144,34 +72,11 @@ export const getProfile = catchAsync(
  */
 export const updateProfile = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user) {
-      throw new AppError("User not authenticated", 401);
-    }
-
-    const user = req.user;
-    const { username, email, password, age, sex, isPublicProfile } = req.body;
-
-    if (email && email !== user.email) {
-      const existingEmail = await User.findOne({ where: { email } });
-      if (existingEmail) {
-        throw new AppError("Email already in use", 401);
-      }
-    }
-
-    if (username && username !== user.username) {
-      const existingUsername = await User.findOne({ where: { username } });
-      if (existingUsername) {
-        throw new AppError("Username already in use", 401);
-      }
-    }
-
-    if (password) {
-      const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(password, salt);
-    }
-
-    await user.update({ username, email, age, sex, isPublicProfile });
-    successResponse(res, 200, "Profile updated successfully");
+    const user = await AuthService.updateMetricSettingsService(
+      req.user,
+      req.body
+    );
+    successResponse(res, 200, { user }, "Profile updated successfully");
   }
 );
 
