@@ -7,7 +7,7 @@ import db from "../models/index.js";
 import AppError from "../utils/AppError.js";
 import { env } from "../config/zodEnv.js";
 import { AuthRequest } from "../types/request.context.js";
-import { User } from "@/types/user.types.js";
+import { UserBase } from "../types/user.types.js";
 
 /**
  * * Auth Middleware
@@ -52,7 +52,8 @@ export const authMiddleware = async (
     }
 
     // ✅ Manually map the Sequelize object to the defined User type
-    req.user = userRecord.toJSON() as User;
+    // Question: Should I use User (Domain Model) or UserBase (Type) here
+    req.user = userRecord.toJSON() as UserBase;
 
     next();
   } catch (error) {
