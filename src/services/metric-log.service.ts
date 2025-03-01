@@ -5,10 +5,10 @@ import { Op, Order } from "sequelize";
 import AppError from "../utils/AppError.js";
 import { redisClient } from "../utils/redis-client.js";
 import { validateMetricAccess } from "../utils/db-validators.js";
-import logger from "../utils/logger.js";
 import { MetricLogBase } from "@/types/metric-log.types.js";
+import logger from "../utils/logger.js";
 
-const { Metric, MetricLog } = db;
+const { MetricLog } = db;
 
 /**
  * * Metric Log Service
@@ -81,7 +81,7 @@ export const createLog = async ({
   if (redisClient.isOpen) {
     await redisClient.del(`logs:${userId}:${metricId}`);
     await redisClient.del(`logStats:${userId}:${metricId}`);
-    console.info(
+    logger.info(
       `♻️ Cache invalidated for logs and stats of metric:${metricId}`
     );
   }
@@ -150,6 +150,13 @@ export const getLogByIdService = async ({
   // Retrieve and return the log
   const log = await MetricLog.findOne({
     where: { id: logId, metricId: metricId },
+    include: [
+      {
+        model: db.Metric,
+        as: "Metric",
+        attributes: ["id", "userId"], // ✅ Include metric owner information
+      },
+    ],
   });
   if (!log) {
     throw new AppError("Log not found", 404);
@@ -171,9 +178,6 @@ export const updateLogService = async ({
   logId,
   updateData,
 }: UpdateLogParams) => {
-  // Ensure the parent metric exists and enforce ownership.
-  const metric = await validateMetricAccess(userId, metricId);
-
   // Ensure Log Exists
   const log = await getLogByIdService({
     metricId: metricId,
@@ -194,11 +198,13 @@ export const updateLogService = async ({
 
   // Invalidate the single log, logs list, and aggregated stats cache
   if (redisClient.isOpen) {
-    await redisClient.del(`log:${metric.userId}:${metric.id}:${log.id}`);
-    await redisClient.del(`logs:${metric.userId}:${metric.id}`);
-    await redisClient.del(`logStats:${metric.userId}:${metric.id}`);
-    console.info(
-      `♻️ Cache invalidated for log:${log.id}, logs, and stats of metric:${metric.id}`
+    await redisClient.del(
+      `log:${log.metric.userId}:${log.metric.id}:${log.id}`
+    );
+    await redisClient.del(`logs:${log.metric.userId}:${log.metric.id}`);
+    await redisClient.del(`logStats:${log.metric.userId}:${log.metric.id}`);
+    logger.info(
+      `♻️ Cache invalidated for log:${log.id}, logs, and stats of metric:${log.metric.id}`
     );
   }
 
@@ -216,9 +222,6 @@ export const deleteLogService = async ({
   userId,
   logId,
 }: MetricLogBaseParams) => {
-  // Ensure the parent metric exists and enforce ownership.
-  const metric = await validateMetricAccess(userId, metricId);
-
   // Ensure Log Exists
   const log = await getLogByIdService({
     userId: userId,
@@ -228,11 +231,13 @@ export const deleteLogService = async ({
 
   // Invalidate the single log, logs list, and aggregated stats cache
   if (redisClient.isOpen) {
-    await redisClient.del(`log:${metric.userId}:${metric.id}:${log.id}`);
-    await redisClient.del(`logs:${metric.userId}:${metric.id}`);
-    await redisClient.del(`logStats:${metric.userId}:${metric.id}`);
-    console.info(
-      `♻️ Cache invalidated for log:${log.id}, logs, and stats of metric:${metric.id}`
+    await redisClient.del(
+      `log:${log.metric.userId}:${log.metric.id}:${log.id}`
+    );
+    await redisClient.del(`logs:${log.metric.userId}:${log.metric.id}`);
+    await redisClient.del(`logStats:${log.metric.userId}:${log.metric.id}`);
+    logger.info(
+      `♻️ Cache invalidated for log:${log.id}, logs, and stats of metric:${log.metric.id}`
     );
   }
 
@@ -252,7 +257,7 @@ export const getAggregatedStats = async (userId: string, metricId: string) => {
   // Fetch logs for this metric
   const logs = await MetricLog.findAll({ where: { metricId } });
   if (logs.length === 0) {
-    console.warn("⚠️ No logs found, returning default stats.");
+    logger.warn("⚠️ No logs found, returning default stats.");
     return { average: 0, min: 0, max: 0 };
   }
 
