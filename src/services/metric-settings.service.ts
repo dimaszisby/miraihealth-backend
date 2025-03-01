@@ -2,9 +2,10 @@
 
 import db from "../models/index.js";
 import { redisClient } from "../utils/redis-client.js";
-import { MetricSettingsBase } from "@/types/metric-settings.types.js";
+import { MetricSettingsBase } from "../types/metric-settings.types.js";
 import { validateMetricAccess } from "../utils/db-validators.js";
 import AppError from "../utils/AppError.js";
+import logger from "../utils/logger.js";
 
 const { MetricSettings } = db;
 
@@ -69,8 +70,8 @@ export const createMetricSettingsService = async ({
   // Invalidate cache for metric settings
   if (redisClient.isOpen) {
     await redisClient.del(`metricSettings:${metric.userId}:${metric.id}`);
-    console.info(
-      `♻️ Cache invalidated for metric settings of metric:${metric.id}`
+    logger.info(
+      `♻️ Cache invalidated for metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`
     );
   }
 
@@ -106,13 +107,21 @@ export const getMetricSettingsByIdService = async ({
   userId,
   metricId,
   settingsId,
-}: MetricSettingsParamsBase): Promise<typeof MetricSettings> => {
+}: MetricSettingsParamsBase) => {
   // Ensure the parent metric exists and enforce ownership.
   await validateMetricAccess(userId, metricId);
 
   // Ensure the metric settings exists
   const metricSettings = await MetricSettings.findOne({
     where: { id: settingsId, metricId: metricId },
+    // QUESTION: Why this causing the error
+    include: [
+      {
+        model: db.Metric,
+        as: "Metric",
+        attributes: ["id", "userId"], // ✅ Include metric owner information
+      },
+    ],
   });
   if (!metricSettings) throw new AppError("Settings for Metric not found", 404);
 
@@ -133,9 +142,6 @@ export const updateMetricSettingsService = async ({
   settingsId,
   updateData,
 }: UpdateSettingsParams) => {
-  // Ensure the parent metric exists and enforce ownership.
-  const metric = await validateMetricAccess(userId, metricId);
-
   // Ensure the metric settings exists
   const metricSettings = await getMetricSettingsByIdService({
     userId: userId,
@@ -148,9 +154,14 @@ export const updateMetricSettingsService = async ({
   // Invalidate cache if Redis is available
   if (redisClient.isOpen) {
     await redisClient.del(
-      `metricSetting:${metric.userId}:${metric.id}:${metricSettings.id}`
+      `metricSetting:${metricSettings.metric.userId}:${metricSettings.metric.id}:${metricSettings.id}`
     );
-    await redisClient.del(`metricSettings:${metric.userId}:${metric.id}`);
+    await redisClient.del(
+      `metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`
+    );
+    logger.info(
+      `♻️ Cache invalidated for metricSetting:${metricSettings.metric.userId}:${metricSettings.metric.id}:${metricSettings.id} and metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`
+    );
   }
 
   return metricSettings;
@@ -168,9 +179,6 @@ export const deleteMetricSettingsService = async ({
   metricId,
   settingsId,
 }: MetricSettingsParamsBase) => {
-  // Ensure the parent metric exists and enforce ownership.
-  const metric = await validateMetricAccess(userId, metricId);
-
   // Ensure the metric settings exists
   const metricSettings = await getMetricSettingsByIdService({
     userId: userId,
@@ -183,9 +191,14 @@ export const deleteMetricSettingsService = async ({
   // Invalidate cache if Redis is available
   if (redisClient.isOpen) {
     await redisClient.del(
-      `metricSetting:${metric.userId}:${metric.id}:${metricSettings.id}`
+      `metricSetting:${metricSettings.metric.userId}:${metricSettings.metric.id}:${metricSettings.id}`
     );
-    await redisClient.del(`metricSettings:${metric.userId}:${metric.id}`);
+    await redisClient.del(
+      `metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`
+    );
+    logger.info(
+      `♻️ Cache invalidated for metricSetting:${metricSettings.metric.userId}:${metricSettings.metric.id}:${metricSettings.id} and metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`
+    );
   }
 
   return metricSettings;
@@ -203,9 +216,6 @@ export const updateGoalAchievementService = async ({
   metricId,
   settingsId,
 }: MetricSettingsParamsBase) => {
-  // Ensure the parent metric exists and enforce ownership.
-  await validateMetricAccess(userId, metricId);
-
   // Ensure the metric settings exists
   const metricSettings = await getMetricSettingsByIdService({
     userId: userId,
@@ -216,6 +226,19 @@ export const updateGoalAchievementService = async ({
   await metricSettings.update({
     isAchieved: true,
   });
+
+  // Invalidate cache if Redis is available
+  if (redisClient.isOpen) {
+    await redisClient.del(
+      `metricSetting:${metricSettings.metric.userId}:${metricSettings.metric.id}:${metricSettings.id}`
+    );
+    await redisClient.del(
+      `metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`
+    );
+    logger.info(
+      `♻️ Cache invalidated for metricSetting:${metricSettings.metric.userId}:${metricSettings.metric.id}:${metricSettings.id} and metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`
+    );
+  }
 
   return metricSettings;
 };
@@ -234,9 +257,6 @@ export const updateDisplayOptionsService = async ({
   settingsId,
   displayOptions,
 }: UpdateDisplayOptionsParams) => {
-  // Ensure the parent metric exists and enforce ownership.
-  await validateMetricAccess(userId, metricId);
-
   // Ensure the metric settings exists
   const metricSettings = await getMetricSettingsByIdService({
     userId: userId,
@@ -244,14 +264,23 @@ export const updateDisplayOptionsService = async ({
     settingsId: settingsId,
   });
 
-  console.log(`SERVICE: Fetched Metric Settings: ${metricSettings}`);
-
   // Overwrite the displayOptions field directly.
   metricSettings.setDataValue("displayOptions", displayOptions);
   await metricSettings.save();
   await metricSettings.reload();
 
-  console.log(`SERVICE: Updated Metric Settings: ${metricSettings}`);
+  // Invalidate cache if Redis is available
+  if (redisClient.isOpen) {
+    await redisClient.del(
+      `metricSetting:${metricSettings.metric.userId}:${metricSettings.metric.id}:${metricSettings.id}`
+    );
+    await redisClient.del(
+      `metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`
+    );
+    logger.info(
+      `♻️ Cache invalidated for metricSetting:${metricSettings.metric.userId}:${metricSettings.metric.id}:${metricSettings.id} and metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`
+    );
+  }
 
   return metricSettings.get({ plain: true });
 };

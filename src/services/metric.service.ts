@@ -5,7 +5,6 @@ import AppError from "../utils/AppError.js";
 import { MetricBase } from "@/types/metric.types.js";
 import { redisClient } from "../utils/redis-client.js";
 import { validateMetricAccess } from "../utils/db-validators.js";
-
 import logger from "../utils/logger.js";
 
 const { Metric, MetricLog, MetricSettings, MetricCategory } = db;
@@ -62,39 +61,34 @@ export const createMetricService = async (
   userId: string,
   data: MetricParamsBase
 ) => {
-  try {
-    // Check for duplicate metric name for the user
-    const existingMetric = await Metric.findOne({
-      where: { userId, name: data.name },
-    });
-    if (existingMetric) {
-      throw new AppError("Metric already exists", 400);
-    }
-
-    // If categoryId is provided, verify that the category exists for the user
-    if (data.categoryId) {
-      const category = await MetricCategory.findOne({
-        where: { id: data.categoryId, userId },
-      });
-      if (!category) {
-        throw new AppError("Category not found", 404);
-      }
-    }
-
-    // Create the metric
-    const metric = await Metric.create({ userId, ...data });
-
-    // Invalidate only the metrics list cache (not individual metric cache)
-    if (redisClient.isOpen) {
-      await redisClient.del(`metrics:${userId}`);
-      logger.info(`♻️ Cache invalidated for metrics:${userId}`);
-    }
-
-    return metric;
-  } catch (error) {
-    logger.error(`Error in createMetricService: ${(error as Error).stack}`);
-    throw error;
+  // Check for duplicate metric name for the user
+  const existingMetric = await Metric.findOne({
+    where: { userId, name: data.name },
+  });
+  if (existingMetric) {
+    throw new AppError("Metric already exists", 400);
   }
+
+  // If categoryId is provided, verify that the category exists for the user
+  if (data.categoryId) {
+    const category = await MetricCategory.findOne({
+      where: { id: data.categoryId, userId },
+    });
+    if (!category) {
+      throw new AppError("Category not found", 404);
+    }
+  }
+
+  // Create the metric
+  const metric = await Metric.create({ userId, ...data });
+
+  // Invalidate only the metrics list cache (not individual metric cache)
+  if (redisClient.isOpen) {
+    await redisClient.del(`metrics:${userId}`);
+    logger.info(`♻️ Cache invalidated for metrics:${userId}`);
+  }
+
+  return metric;
 };
 
 /**
@@ -105,58 +99,47 @@ export const createMetricService = async (
 export const getMetricsListService = async (
   userId: string
 ): Promise<MetricListData[]> => {
-  try {
-    // Verify that the models are loaded by logging their names.
-    console.log("Inside getMetricData:");
-    console.log("Metric model:", Metric.name);
-    console.log("MetricCategory model:", MetricCategory.name);
-    console.log("MetricSettings model:", MetricSettings.name);
+  // Verify that the models are loaded by logging their names.
 
-    const metrics = await Metric.findAll({
-      where: { userId },
-      include: [
-        {
-          model: MetricCategory,
-          as: "MetricCategory",
-          attributes: ["id", "name", "icon", "color"],
-        },
-        {
-          model: MetricSettings,
-          as: "MetricSettings",
-          attributes: ["goalType"],
-        },
-      ],
-    });
+  const metrics = await Metric.findAll({
+    where: { userId },
+    include: [
+      {
+        model: MetricCategory,
+        as: "MetricCategory",
+        attributes: ["id", "name", "icon", "color"],
+      },
+      {
+        model: MetricSettings,
+        as: "MetricSettings",
+        attributes: ["goalType"],
+      },
+    ],
+  });
 
-    logger.info(`Fetched ${metrics.length} metrics for user ${userId}`);
+  logger.info(`Fetched ${metrics.length} metrics for user ${userId}`);
 
-    // Transform each metric: nest the category data under the property 'category'
-    const transformed: MetricListData[] = metrics.map(
-      (metric: typeof Metric) => {
-        const plainMetric = metric.toJSON();
-        // Extract the category (if any) and remove it from the top level.
-        const { MetricCategory, MetricSettings, ...rest } = plainMetric;
-        return {
-          ...rest,
-          // Nest the category data if it exists.
-          category: MetricCategory
-            ? {
-                id: MetricCategory.id,
-                name: MetricCategory.name,
-                icon: MetricCategory.icon,
-                color: MetricCategory.color,
-              }
-            : undefined,
-          goalType: MetricSettings?.goalType ?? undefined,
-        };
-      }
-    );
+  // Transform each metric: nest the category data under the property 'category'
+  const transformed: MetricListData[] = metrics.map((metric: typeof Metric) => {
+    const plainMetric = metric.toJSON();
+    // Extract the category (if any) and remove it from the top level.
+    const { MetricCategory, MetricSettings, ...rest } = plainMetric;
+    return {
+      ...rest,
+      // Nest the category data if it exists.
+      category: MetricCategory
+        ? {
+            id: MetricCategory.id,
+            name: MetricCategory.name,
+            icon: MetricCategory.icon,
+            color: MetricCategory.color,
+          }
+        : undefined,
+      goalType: MetricSettings?.goalType ?? undefined,
+    };
+  });
 
-    return transformed;
-  } catch (error) {
-    logger.error(`Error in getMetricData: ${(error as Error).stack}`);
-    throw new AppError("Failed to retrieve metrics", 500);
-  }
+  return transformed;
 };
 
 /**
@@ -169,67 +152,78 @@ export const getUserMetricDetailService = async (
   userId: string,
   metricId: string
 ): Promise<UserMetricDetailData | null> => {
-  try {
-    console.log(
-      `Fetching details for metricId: ${metricId} and userId: ${userId}`
-    );
+  logger.info(
+    `Fetching details for metricId: ${metricId} and userId: ${userId}`
+  );
 
-    // Fetch the whole data
-    const metric = await Metric.findOne({
-      where: { id: metricId, userId },
-      include: [
-        {
-          model: MetricCategory,
-          attributes: ["id", "name", "color", "icon"],
-          as: "MetricCategory",
-        },
-        {
-          model: MetricSettings,
-          attributes: [
-            "id",
-            "goalType",
-            "goalValue",
-            "startDate",
-            "deadlineDate",
-            "alertThresholds",
-            "isAchieved",
-            "isActive",
-            "displayOptions",
-          ],
-          as: "MetricSettings",
-        },
-        {
-          model: MetricLog,
-          attributes: ["id", "logValue", "type", "createdAt"],
-          order: [["createdAt", "DESC"]],
-          as: "MetricLogs",
-        },
-      ],
-    });
-    if (!metric) {
-      console.log("No metric found.");
-      return null;
-    }
-
-    // Authorization check if not public or don't owned by requesting user
-    if (!metric.isPublic && metric.userId !== userId) {
-      throw new AppError("Unauthorized access to metric details", 403);
-    }
-
-    return {
-      id: metric.id,
-      name: metric.name,
-      description: metric.description || undefined,
-      defaultUnit: metric.defaultUnit,
-      isPublic: metric.isPublic,
-      category: (metric as any).MetricCategory || undefined,
-      settings: (metric as any).MetricSettings || undefined,
-      logs: (metric as any).MetricLogs || undefined,
-    };
-  } catch (error) {
-    logger.error(`Error in getMetricDetailData: ${(error as Error).stack}`);
-    throw new AppError("Failed to retrieve metric details", 500);
+  // Fetch the whole data
+  const metric = await Metric.findOne({
+    where: { id: metricId, userId },
+    include: [
+      {
+        model: MetricCategory,
+        attributes: ["id", "name", "color", "icon"],
+        as: "MetricCategory",
+      },
+      {
+        model: MetricSettings,
+        attributes: [
+          "id",
+          "goalType",
+          "goalValue",
+          "startDate",
+          "deadlineDate",
+          "alertThresholds",
+          "isAchieved",
+          "isActive",
+          "displayOptions",
+        ],
+        as: "MetricSettings",
+      },
+      {
+        model: MetricLog,
+        attributes: ["id", "logValue", "type", "createdAt"],
+        order: [["createdAt", "DESC"]],
+        as: "MetricLogs",
+      },
+    ],
+  });
+  if (!metric) {
+    logger.info("No metric found.");
+    return null;
   }
+
+  // Authorization check if not public or don't owned by requesting user
+  if (!metric.isPublic && metric.userId !== userId) {
+    throw new AppError("Unauthorized access to metric details", 403);
+  }
+
+  return {
+    id: metric.id,
+    name: metric.name,
+    description: metric.description || undefined,
+    defaultUnit: metric.defaultUnit,
+    isPublic: metric.isPublic,
+    category: (metric as any).MetricCategory || undefined,
+    settings: (metric as any).MetricSettings || undefined,
+    logs: (metric as any).MetricLogs || undefined,
+  };
+};
+
+/**
+ * Fetch specific metric owned by requesting/authenticated user
+ * @param userId - ID of the user requesting the data
+ * @param metricId - ID of the metric to fetch
+ * @returns Metric detail object or null if not found
+ */
+export const getUserMetricByIdService = async (
+  userId: string,
+  metricId: string
+) => {
+  // Ensure the metric exists, check visibility, and  enforce ownership
+  const metric = await validateMetricAccess(userId, metricId);
+
+  return metric;
 };
 
 // * NEW Service func
@@ -237,20 +231,14 @@ export const getUserMetricDetailService = async (
 // Prepared for future development
 // Public
 export const getPublicMetricByIdService = async (metricId: string) => {
-  try {
-    // Check for duplicate metric name for the user
-    const existingMetric = await Metric.findOne({
-      where: { id: metricId },
-    });
-    if (existingMetric) {
-      throw new AppError("Metric not found", 404);
-    }
-  } catch (error) {
-    logger.error(
-      `Error in getPublicMetricByIdService: ${(error as Error).stack}`
-    );
-    throw new AppError("Failed to retrieve public metric", 500);
+  const publicMetric = await Metric.findOne({
+    where: { id: metricId, isPublic: true },
+  });
+  if (publicMetric) {
+    throw new AppError("Metric not found", 404);
   }
+
+  return publicMetric;
 };
 
 /**
@@ -269,40 +257,32 @@ export const updateMetricService = async ({
   defaultUnit,
   isPublic,
 }: UpdateMetricParams) => {
-  try {
-    // Ensure the metric exists and enforce ownership.
-    const metric = await validateMetricAccess(userId, metricId);
+  // Ensure the metric exists, check visibility, and  enforce ownership.
+  const metric = await getUserMetricByIdService(userId, metricId);
 
-    // Update the metric
-    await metric.update({
-      categoryId,
-      originalMetricId,
-      name,
-      description,
-      defaultUnit,
-      isPublic,
-    });
+  // Update the metric
+  await metric.update({
+    categoryId,
+    originalMetricId,
+    name,
+    description,
+    defaultUnit,
+    isPublic,
+  });
 
-    // Re-fetch the metric to ensure data integerity
-    const updatedMetric = await getUserMetricDetailService(
-      metric.userId,
-      metric.id
+  // Re-fetch the metric to ensure data integerity
+  await metric.reload();
+
+  // Invalidate Redis cache
+  if (redisClient.isOpen) {
+    await redisClient.del(`metric:${metric.userId}:${metric.id}`);
+    await redisClient.del(`metrics:${metric.userId}`);
+    logger.info(
+      `♻️ Cache invalidated for metric:${metric.userId}:${metric.id} and metrics:${metric.userId}`
     );
-
-    // Invalidate Redis cache
-    if (redisClient.isOpen) {
-      await redisClient.del(`metric:${metric.userId}:${metric.id}`);
-      await redisClient.del(`metrics:${metric.userId}`);
-      logger.info(
-        `♻️ Cache invalidated for metric:${metric.userId}:${metric.id} and metrics:${metric.userId}`
-      );
-    }
-
-    return updatedMetric;
-  } catch (error) {
-    logger.error(`Error in updateMetricService: ${(error as Error).stack}`);
-    throw new AppError("Failed to update metric data", 500);
   }
+
+  return metric;
 };
 
 /**
@@ -312,25 +292,20 @@ export const updateMetricService = async ({
  * @returns Deleted metric  object
  */
 export const deleteMetricService = async (userId: string, metricId: string) => {
-  try {
-    // Ensure the metric exists and enforce ownership.
-    const metric = await validateMetricAccess(userId, metricId);
+  // Ensure the metric exists, check visibility, and  enforce ownership.
+  const metric = await getUserMetricByIdService(userId, metricId);
 
-    await metric.destroy();
-    logger.info(`Metric deleted successfully from database`);
+  await metric.destroy();
+  logger.info(`Metric deleted successfully from database`);
 
-    // Invalidate Redis cache
-    if (redisClient.isOpen) {
-      await redisClient.del(`metric:${metric.userId}:${metric.id}`);
-      await redisClient.del(`metrics:${metric.userId}`);
-      logger.info(
-        `♻️ Cache invalidated for metric:${metric.userId}:${metric.id} and metrics:${metric.userId}`
-      );
-    }
-
-    return metric;
-  } catch (error) {
-    logger.error(`Error in deleteMetricService: ${(error as Error).stack}`);
-    throw new AppError("Failed to delete metric", 500);
+  // Invalidate Redis cache
+  if (redisClient.isOpen) {
+    await redisClient.del(`metric:${metric.userId}:${metric.id}`);
+    await redisClient.del(`metrics:${metric.userId}`);
+    logger.info(
+      `♻️ Cache invalidated for metric:${metric.userId}:${metric.id} and metrics:${metric.userId}`
+    );
   }
+
+  return metric;
 };
