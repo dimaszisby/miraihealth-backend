@@ -9,6 +9,5 @@ import { UserDTO } from "./dtos/user.dto";
  * The user property in AuthRequest is defined as optional (user?: User) because not all routes require authentication
  */
 export interface AuthRequest extends Request {
-  // Question: Should I use User (Domain Model) or UserBase (Type) here
   user?: UserDTO;
 }

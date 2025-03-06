@@ -18,7 +18,6 @@ import * as metricLogService from "../services/metric-log.service.js";
  */
 export const createMetricLog = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    // QUESTION: As you can see this patterns of requests variable declaration is repeating for each function, how to optimized this?
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
 

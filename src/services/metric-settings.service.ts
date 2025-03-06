@@ -114,12 +114,11 @@ export const getMetricSettingsByIdService = async ({
   // Ensure the metric settings exists
   const metricSettings = await MetricSettings.findOne({
     where: { id: settingsId, metricId: metricId },
-    // QUESTION: Why this causing the error
     include: [
       {
         model: db.Metric,
         as: "Metric",
-        attributes: ["id", "userId"], // ✅ Include metric owner information
+        attributes: ["id", "userId"],
       },
     ],
   });

@@ -52,7 +52,6 @@ export const authMiddleware = async (
     }
 
     // ✅ Manually map the Sequelize object to the defined User type
-    // Question: Should I use User (Domain Model) or UserBase (Type) here
     req.user = userRecord.toJSON() as UserDTO;
 
     next();
