@@ -69,4 +69,16 @@ export default [
       "no-undef": "off",
     },
   },
+  // Override for config.cjs file that used for Sequelize configuration
+  {
+    files: ["src/config/config.cjs"],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+    rules: {
+      "no-console": "off", // Allow console logs in this specific file
+    },
+  },
 ];
