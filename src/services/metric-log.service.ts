@@ -196,15 +196,30 @@ export const updateLogService = async ({
   // Create update instance
   const updatedLog = await log.update(updateData);
 
-  // Invalidate the single log, logs list, and aggregated stats cache
-  if (redisClient.isOpen) {
+  // Reload the updated log to include its associated Metric data
+  await updatedLog.reload({
+    include: [
+      {
+        model: db.Metric,
+        as: "Metric",
+        attributes: ["id", "userId"],
+      },
+    ],
+  });
+
+  // Invalidate caches based on updatedLog.metric data
+  if (redisClient.isOpen && updatedLog.metric) {
     await redisClient.del(
-      `log:${log.metric.userId}:${log.metric.id}:${log.id}`
+      `log:${updatedLog.metric.userId}:${updatedLog.metric.id}:${updatedLog.id}`
     );
-    await redisClient.del(`logs:${log.metric.userId}:${log.metric.id}`);
-    await redisClient.del(`logStats:${log.metric.userId}:${log.metric.id}`);
+    await redisClient.del(
+      `logs:${updatedLog.metric.userId}:${updatedLog.metric.id}`
+    );
+    await redisClient.del(
+      `logStats:${updatedLog.metric.userId}:${updatedLog.metric.id}`
+    );
     logger.info(
-      `♻️ Cache invalidated for log:${log.id}, logs, and stats of metric:${log.metric.id}`
+      `♻️ Cache invalidated for log:${updatedLog.id}, logs, and stats of metric:${updatedLog.metric.id}`
     );
   }
 
@@ -229,8 +244,18 @@ export const deleteLogService = async ({
     logId: logId,
   });
 
-  // Invalidate the single log, logs list, and aggregated stats cache
-  if (redisClient.isOpen) {
+  // Reload to include Metric association (if not already present)
+  await log.reload({
+    include: [
+      {
+        model: db.Metric,
+        as: "Metric",
+        attributes: ["id", "userId"],
+      },
+    ],
+  });
+
+  if (redisClient.isOpen && log.metric) {
     await redisClient.del(
       `log:${log.metric.userId}:${log.metric.id}:${log.id}`
     );
