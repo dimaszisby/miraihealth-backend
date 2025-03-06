@@ -9,6 +9,7 @@ import xssClean from "xss-clean";
 import hpp from "hpp";
 import http from "http";
 
+
 // Routes
 import authRoutes from "./routes/auth.routes.js";
 import metricRoutes from "./routes/metric.routes.js";
@@ -17,6 +18,7 @@ import metricSettingsRoutes from "./routes/metric-settings.routes.js";
 import metricLogRoutes from "./routes/metric-log.routes.js";
 
 // Other Setup
+import { globalRateLimiter } from "./middleware/rate-limiter.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { disconnectRedis } from "./utils/redis-client.js";
 // import { globalRateLimiter } from "./middleware/rate-limiter.js"; // Uncomment when needed
@@ -53,7 +55,7 @@ app.use(
 );
 
 // Global Rate Limiter (Uncomment when needed)
-// app.use(globalRateLimiter);
+app.use(globalRateLimiter);
 
 // * Routes
 // Main Routes
