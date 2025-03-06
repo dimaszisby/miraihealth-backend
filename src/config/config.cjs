@@ -3,6 +3,7 @@
 const path = require("path");
 const dotenv = require("dotenv");
 const { z } = require("zod");
+const logger = require("../utils/logger.js");
 
 /**
  * * Define the configuration for the app.
@@ -48,7 +49,7 @@ const config = {
   development: {
     url: env.DEVELOPMENT_DATABASE_URL,
     dialect: "postgres",
-    logging: console.log,
+    logging: logger,
     dialectOptions: { ssl: false },
   },
   test: {
@@ -65,7 +66,7 @@ const config = {
   production: {
     url: env.PRODUCTION_DATABASE_URL,
     dialect: "postgres",
-    logging: env.DB_LOGGING === "true" ? console.log : false,
+    logging: env.DB_LOGGING === "true" ? logger : false,
     dialectOptions: { ssl: { require: true, rejectUnauthorized: false } },
   },
 };
@@ -74,7 +75,7 @@ const config = {
 const activeEnv = env.NODE_ENV;
 if (!config[activeEnv]) {
   throw new Error(
-    `❌ ERROR: No configuration found for environment: ${activeEnv}`
+    `❌ ERROR: No configuration found for environment: ${activeEnv}`,
   );
 }
 
