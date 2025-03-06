@@ -14,12 +14,17 @@ import {
   createUserSchema,
   updateUserSchema,
 } from "../validators/user.validator.js";
+import { userRateLimiter } from "../middleware/rate-limiter.js";
 
 const router = Router();
 
 /**
  * * Authentication Routes
  * Handles user registration, login, profile management, and logout.
+ *
+ * Use userRateLimiter for writes (Update Profile)
+ * - to limit how many logs a single user can create or update within the given time window (default 15 min).
+ *
  */
 
 // ✅ **Public Routes**
@@ -36,6 +41,7 @@ router.get("/profile", authMiddleware, getProfile);
 // 🔹 Update current user profile
 router.put(
   "/profile",
+  userRateLimiter,
   authMiddleware,
   validate(updateUserSchema),
   updateProfile

@@ -20,6 +20,7 @@ import {
   deleteMetricLogSchema,
   getAggregatedStatsSchema,
 } from "../validators/metric-log.validator.js";
+import { userRateLimiter } from "../middleware/rate-limiter.js";
 
 const router = Router();
 
@@ -39,10 +40,16 @@ const logStatsCacheKey = (req: any) =>
 
 /**
  * * Logs Endpoints
+ *
+ * Use userRateLimiter for writes (POST, PUT, DELETE)
+ * - to limit how many logs a single user can create or update within the given time window (default 15 min).
+ *
  */
+
 // CREATE Log
 router.post(
   "/:metricId/logs/",
+  userRateLimiter,
   validate(createMetricLogSchema),
   createMetricLog
 );
@@ -74,11 +81,17 @@ router.get(
 );
 
 // UPDATE Log
-router.put("/:metricId/logs/:id", validate(updateMetricLogSchema), updateLog);
+router.put(
+  "/:metricId/logs/:id",
+  userRateLimiter,
+  validate(updateMetricLogSchema),
+  updateLog
+);
 
 // DELETE Log
 router.delete(
   "/:metricId/logs/:id",
+  userRateLimiter,
   validate(deleteMetricLogSchema),
   deleteLog
 );

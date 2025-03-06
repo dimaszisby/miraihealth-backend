@@ -18,6 +18,7 @@ import {
   deleteMetricSchema,
   getMetricSchema,
 } from "../validators/metric.validator.js";
+import { userRateLimiter } from "../middleware/rate-limiter.js";
 
 const router = Router();
 
@@ -33,9 +34,13 @@ const metricCacheKey = (req: any) => `metric:${req.user?.id}:${req.params.id}`;
 
 /**
  * * Metrics Endpoints
+ *
+ * Use userRateLimiter for writes (POST, PUT, DELETE)
+ * - to limit how many logs a single user can create or update within the given time window (default 15 min).
  */
+
 // CREATE Metric
-router.post("/", validate(createMetricSchema), createMetric);
+router.post("/", userRateLimiter, validate(createMetricSchema), createMetric);
 
 // GET All Metric by User Id
 router.get("/", cacheMiddleware(metricsCacheKey, 300), getAllMetrics);
@@ -49,10 +54,15 @@ router.get(
 );
 
 // UPDATE Metric
-router.put("/:id", validate(updateMetricSchema), updateMetric);
+router.put("/:id", userRateLimiter, validate(updateMetricSchema), updateMetric);
 
 // DELETE Metric
-router.delete("/:id", validate(deleteMetricSchema), deleteMetric);
+router.delete(
+  "/:id",
+  userRateLimiter,
+  validate(deleteMetricSchema),
+  deleteMetric
+);
 
 /**
  * * Trends Endpoint

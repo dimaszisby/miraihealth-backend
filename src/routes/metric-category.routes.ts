@@ -17,6 +17,7 @@ import {
   getMetricCategorySchema,
   deleteMetricCategorySchema,
 } from "../validators/metric-category.validator.js";
+import { userRateLimiter } from "../middleware/rate-limiter.js";
 
 const router = Router();
 
@@ -32,10 +33,19 @@ const categoryCacheKey = (req: any) =>
   `category:${req.user?.id}:${req.params.id}`;
 
 /**
- * * Category EndpointsF
+ * * Category Endpoints
+ *
+ * Use userRateLimiter for writes (POST, PUT, DELETE)
+ * - to limit how many logs a single user can create or update within the given time window (default 15 min).
  */
+
 // CREATE Category
-router.post("/", validate(createMetricCategorySchema), createCategory);
+router.post(
+  "/",
+  userRateLimiter,
+  validate(createMetricCategorySchema),
+  createCategory
+);
 
 // GET All Categories by User Id
 router.get("/", cacheMiddleware(categoriesCacheKey, 300), getAllCategories);
@@ -49,9 +59,19 @@ router.get(
 );
 
 // UPDATE Category
-router.put("/:id", validate(updateMetricCategorySchema), updateCategory);
+router.put(
+  "/:id",
+  userRateLimiter,
+  validate(updateMetricCategorySchema),
+  updateCategory
+);
 
 // DELETE Category
-router.delete("/:id", validate(deleteMetricCategorySchema), deleteCategory);
+router.delete(
+  "/:id",
+  userRateLimiter,
+  validate(deleteMetricCategorySchema),
+  deleteCategory
+);
 
 export default router;

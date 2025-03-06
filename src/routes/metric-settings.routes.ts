@@ -20,6 +20,7 @@ import {
   getMetricSettingsSchema,
   deleteMetricSettingsSchema,
 } from "../validators/metric-settings.validator.js";
+import { userRateLimiter } from "../middleware/rate-limiter.js";
 
 const router = Router();
 
@@ -37,9 +38,18 @@ const metricSettingCacheKey = (req: any) =>
 const goalStatsCacheKey = (req: any) =>
   `goalStats:${req.user?.id}:${req.params.metricId}`;
 
+/**
+ * * Metric Settings Endpoints
+ *
+ * Use userRateLimiter for writes (POST, PUT, DELETE)
+ * - to limit how many logs a single user can create or update within the given time window (default 15 min).
+ *
+ */
+
 // CREATE Settings
 router.post(
   "/:metricId/settings/",
+  userRateLimiter,
   validate(createMetricSettingsSchema),
   createMetricSettings
 );
@@ -63,6 +73,7 @@ router.get(
 // UPDATE Settings
 router.put(
   "/:metricId/settings/:id",
+  userRateLimiter,
   validate(updateMetricSettingsSchema),
   updateMetricSettings
 );
@@ -70,12 +81,21 @@ router.put(
 // DELETE Settings
 router.delete(
   "/:metricId/settings/:id",
+  userRateLimiter,
   validate(deleteMetricSettingsSchema),
   deleteMetricSettings
 );
 
 // New PATCH endpoints
-router.patch("/:metricId/settings/:id/achieve", updateGoalAchievement);
-router.patch("/:metricId/settings/:id/display", updateDisplayOptions);
+router.patch(
+  "/:metricId/settings/:id/achieve",
+  userRateLimiter,
+  updateGoalAchievement
+);
+router.patch(
+  "/:metricId/settings/:id/display",
+  userRateLimiter,
+  updateDisplayOptions
+);
 
 export default router;
