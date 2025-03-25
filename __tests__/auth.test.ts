@@ -19,8 +19,6 @@ const generateUniqueUserData = () => {
     email: `testuser_${timestamp}@example.com`,
     password: "Password123!",
     passwordConfirmation: "Password123!",
-    age: 25,
-    sex: "male",
   };
 };
 

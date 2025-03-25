@@ -57,8 +57,6 @@ export const getProfile = catchAsync(
       id: user.id,
       username: user.username,
       email: user.email,
-      age: user.age,
-      sex: user.sex,
       isPublicProfile: user.isPublicProfile,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,

@@ -47,8 +47,6 @@ export const registerUserService = async (
   // Apply default values if optional fields are undefined
   const finalData = {
     ...registerData,
-    age: registerData.age || null,
-    sex: registerData.sex || "prefer not to specify",
     isPublicProfile: registerData.isPublicProfile || true,
     role: registerData.role || "user",
   };
@@ -140,8 +138,6 @@ export const updateMetricSettingsService = async (
   const updatedUser = await user.update({
     username: updateData.username,
     email: updateData.email,
-    age: updateData.age,
-    sex: updateData.sex,
     isPublicProfile: updateData.isPublicProfile,
   });
   await updatedUser.reload();
