@@ -44,20 +44,6 @@ module.exports = {
               allowNull: false,
               defaultValue: "user",
             },
-            age: {
-              type: Sequelize.INTEGER,
-              allowNull: true,
-            },
-            sex: {
-              type: Sequelize.ENUM(
-                "male",
-                "female",
-                "other",
-                "prefer not to specify"
-              ),
-              allowNull: false,
-              defaultValue: "prefer not to specify",
-            },
             is_public_profile: {
               type: Sequelize.BOOLEAN,
               allowNull: false,
@@ -94,10 +80,6 @@ module.exports = {
       try {
         await queryInterface.dropTable(
           { schema: "public", tableName: "users" },
-          { transaction }
-        );
-        await queryInterface.sequelize.query(
-          'DROP TYPE IF EXISTS "enum_users_sex";',
           { transaction }
         );
         await queryInterface.sequelize.query(

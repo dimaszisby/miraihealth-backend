@@ -39,10 +39,8 @@ export class User
   declare email: string;
   declare password: string;
   declare role: "user" | "admin";
-  declare age?: number;
-  declare sex: "male" | "female" | "other" | "prefer not to specify";
   declare isPublicProfile: boolean;
-  
+
   declare createdAt?: Date | null;
   declare updatedAt?: Date | null;
   declare deletedAt?: Date | null;
@@ -98,20 +96,6 @@ export default (sequelize: Sequelize) => {
         type: DataTypes.ENUM("user", "admin"),
         allowNull: false,
         defaultValue: "user",
-      },
-      age: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-      },
-      sex: {
-        type: DataTypes.ENUM(
-          "male",
-          "female",
-          "other",
-          "prefer not to specify"
-        ),
-        allowNull: false,
-        defaultValue: "prefer not to specify",
       },
       isPublicProfile: {
         type: DataTypes.BOOLEAN,

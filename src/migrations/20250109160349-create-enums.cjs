@@ -6,22 +6,6 @@ module.exports = {
     const transaction = await queryInterface.sequelize.transaction();
 
     try {
-      // Create ENUM for users.sex
-      await queryInterface.sequelize.query(
-        `
-        DO $$
-        BEGIN
-          IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_users_sex') THEN
-            CREATE TYPE enum_users_sex AS ENUM (
-              'male', 'female', 'other', 'prefer not to specify'
-            );
-          END IF;
-        END
-        $$;
-      `,
-        { transaction }
-      );
-
       // Create ENUM for users.role
       await queryInterface.sequelize.query(
         `
@@ -76,7 +60,6 @@ module.exports = {
       // Type guard to check if error is an object with message property
       if (
         error instanceof Error &&
-        !error.message.includes('type "enum_users_sex" already exists') &&
         !error.message.includes('type "enum_users_role" already exists') &&
         !error.message.includes(
           'type "enum_metric_settings_goal_type" already exists'
