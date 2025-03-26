@@ -1,10 +1,15 @@
 // src/services/user.service.ts
 
-import db from "../models/index.js";
-import { tokenGenerator } from "../utils/token-generator.js";
+import db from "@/models/index";
 import bcrypt from "bcrypt";
-import { UserBase } from "../types/user.types.js";
-import AppError from "../utils/AppError.js";
+import AppError from "@/utils/AppError";
+import { tokenGenerator } from "@/utils/token-generator";
+import { UserDomain } from "@/types/domain/user.domain";
+import {
+  CreateUserRequestDTO,
+  UpdateUserRequestDTO,
+} from "@/types/api/zod-user.schema";
+import { toDomainUser } from "@/utils/mappers/user.mapper";
 
 const { User } = db;
 
@@ -15,11 +20,7 @@ const { User } = db;
 
 interface AuthData {
   token: string;
-  user: typeof User;
-}
-
-interface UserDataParams extends UserBase {
-  passwordConfirmation: string;
+  user: UserDomain;
 }
 
 /**
@@ -29,7 +30,7 @@ interface UserDataParams extends UserBase {
  * @throws {AppError}  If error happened or user credential have been used
  */
 export const registerUserService = async (
-  registerData: UserDataParams
+  registerData: CreateUserRequestDTO
 ): Promise<AuthData> => {
   // Ensure that password and password confirmation is equal
   if (registerData.password !== registerData.passwordConfirmation) {
@@ -44,17 +45,10 @@ export const registerUserService = async (
     throw new AppError("Email already in use", 400);
   }
 
-  // Apply default values if optional fields are undefined
-  const finalData = {
-    ...registerData,
-    isPublicProfile: registerData.isPublicProfile || true,
-    role: registerData.role || "user",
-  };
-
-  const user = await User.create(finalData);
+  const user = await User.create(registerData);
   const token = tokenGenerator(user);
 
-  const authData: AuthData = { token, user };
+  const authData: AuthData = { token, user: toDomainUser(user) };
 
   return authData;
 };
@@ -65,7 +59,10 @@ export const registerUserService = async (
  * @param password - ID of the metric
  * @returns The auth data consists of token and user data
  */
-export const loginUserService = async (email: string, password: string) => {
+export const loginUserService = async (
+  email: string,
+  password: string
+): Promise<AuthData> => {
   // Ensure email is registered on the db
   const user = await User.findOne({ where: { email } });
   // Ensure user and password is valid
@@ -74,7 +71,7 @@ export const loginUserService = async (email: string, password: string) => {
   }
 
   const token = tokenGenerator(user);
-  const authData: AuthData = { token, user };
+  const authData: AuthData = { token, user: toDomainUser(user) };
 
   return authData;
 };
@@ -85,7 +82,9 @@ export const loginUserService = async (email: string, password: string) => {
  * @returns The user credentials to pass on token generation
  * @throws {AppError}  If error happened
  */
-export const getUserProfileService = async (user: typeof User) => {
+export const getUserProfileService = async (
+  user: typeof User
+): Promise<UserDomain> => {
   if (!user) throw new AppError("User not authenticated", 401);
 
   const userProfile = await User.findOne({ where: { id: user.id } });
@@ -103,10 +102,10 @@ export const getUserProfileService = async (user: typeof User) => {
  * @returns Updated user object
  * @throws {AppError}  If error happened or requested data is already used
  */
-export const updateMetricSettingsService = async (
+export const updateUserProfileService = async (
   user: typeof User,
-  updateData: UserBase
-) => {
+  updateData: UpdateUserRequestDTO
+): Promise<UserDomain> => {
   if (!user) throw new AppError("User not authenticated", 401);
 
   // Ensure update email is not taken
