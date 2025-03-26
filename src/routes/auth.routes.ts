@@ -1,20 +1,20 @@
 // src/routes/auth.routes.ts
 
 import { Router } from "express";
+import { authMiddleware } from "@/middleware/auth-middleware";
 import {
   register,
   login,
   getProfile,
   updateProfile,
   logout,
-} from "../controllers/auth.controller.js";
-import { authMiddleware } from "../middleware/auth-middleware.js";
-import { validate } from "../middleware/validate.js";
+} from "@/controllers/auth.controller";
+import { validate } from "@/middleware/validate";
+import { userRateLimiter } from "@/middleware/rate-limiter";
 import {
   createUserSchema,
   updateUserSchema,
-} from "../validators/user.validator.js";
-import { userRateLimiter } from "../middleware/rate-limiter.js";
+} from "@/types/api/zod-user.schema";
 
 const router = Router();
 
