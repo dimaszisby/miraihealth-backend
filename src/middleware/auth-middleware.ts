@@ -1,13 +1,13 @@
 // src/middleware/auth-middleware.ts
 
+import { env } from "@/config/zodEnv";
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import UserModel from "../models/user.model.js";
-import db from "../models/index.js";
-import AppError from "../utils/AppError.js";
-import { env } from "../config/zodEnv.js";
-import { AuthRequest } from "../types/request.context.js";
-import { UserDTO } from "../types/dtos/user.dto.js";
+import UserModel from "@/models/user.model";
+import db from "@/models/index";
+import AppError from "@/utils/AppError";
+import { toDomainUser } from "@/utils/mappers/user.mapper";
+import { AuthRequest } from "@/types/request.context";
 
 /**
  * * Auth Middleware
@@ -52,7 +52,8 @@ export const authMiddleware = async (
     }
 
     // ✅ Manually map the Sequelize object to the defined User type
-    req.user = userRecord.toJSON() as UserDTO;
+    // req.user = userRecord.toJSON() as UserDomain;
+    req.user = toDomainUser(userRecord);
 
     next();
   } catch (error) {
