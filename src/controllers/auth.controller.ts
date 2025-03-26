@@ -1,11 +1,11 @@
 // src/controllers/auth.controller.ts
 
 import { Request, Response, NextFunction } from "express";
-// import { User } from "../models/user.model.js";
-import { AuthRequest } from "../types/request.context.js";
-import catchAsync from "../utils/catch-async.js";
-import { successResponse } from "../utils/response-formatter.js";
-import * as AuthService from "../services/auth.service.js";
+import * as AuthService from "@/services/auth.service";
+import catchAsync from "@/utils/catch-async";
+import { successResponse } from "@/utils/response-formatter";
+import { toUserResponseDTO } from "@/utils/mappers/user.mapper";
+import { AuthRequest } from "@/types/request.context";
 
 /**
  * * Authentication Controller
@@ -23,7 +23,7 @@ export const register = catchAsync(
     successResponse(
       res,
       201,
-      { token: authData.token, user: authData.user },
+      { token: authData.token, user: toUserResponseDTO(authData.user) },
       "User created successfully"
     );
   }
@@ -41,7 +41,7 @@ export const login = catchAsync(
 
     successResponse(res, 200, {
       token: authData.token,
-      user: authData.user,
+      user: toUserResponseDTO(authData.user),
     });
   }
 );
@@ -53,6 +53,7 @@ export const login = catchAsync(
 export const getProfile = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     const user = await AuthService.getUserProfileService(req.user);
+
     return successResponse(res, 200, {
       id: user.id,
       username: user.username,
@@ -70,10 +71,7 @@ export const getProfile = catchAsync(
  */
 export const updateProfile = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    const user = await AuthService.updateMetricSettingsService(
-      req.user,
-      req.body
-    );
+    const user = await AuthService.updateUserProfileService(req.user, req.body);
     successResponse(res, 200, { user }, "Profile updated successfully");
   }
 );
