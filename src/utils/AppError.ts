@@ -1,3 +1,5 @@
+// src/utils/AppError.ts
+
 /**
  * Custom error class for handling application-specific errors.
  */

@@ -1,3 +1,5 @@
+// src/migrations/20250109160351-create-users.cjs
+
 "use strict";
 
 /**
