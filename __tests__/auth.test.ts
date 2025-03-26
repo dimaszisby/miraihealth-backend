@@ -1,7 +1,7 @@
 // auth.test.ts
 
 import request from "supertest";
-import app from "../src/server.js";
+import app from "@/server";
 
 /**
  * * Auth Tests
@@ -150,7 +150,7 @@ describe("🔒 Auth Endpoints", () => {
       expect(res.statusCode).toBe(400);
       expect(res.body.status).toBe("fail");
       expect(res.body.errors).toContainEqual({
-        field: "body.passwordConfirmation",
+        field: "passwordConfirmation",
         message: "Required",
       });
     });
