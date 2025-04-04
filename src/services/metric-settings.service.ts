@@ -3,7 +3,7 @@
 import db from "../models/index.js";
 import { redisClient } from "../utils/redis-client.js";
 import { MetricSettingsBase } from "../types/metric-settings.types.js";
-import { validateMetricAccess } from "../utils/db-validators.js";
+import { validateMetricAccess } from "../utils/db-helper.js";
 import AppError from "../utils/AppError.js";
 import logger from "../utils/logger.js";
 

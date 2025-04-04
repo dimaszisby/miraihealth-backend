@@ -4,7 +4,7 @@ import db from "../models/index.js";
 import { Op, Order } from "sequelize";
 import AppError from "../utils/AppError.js";
 import { redisClient } from "../utils/redis-client.js";
-import { validateMetricAccess } from "../utils/db-validators.js";
+import { validateMetricAccess } from "../utils/db-helper.js";
 import { MetricLogBase } from "@/types/metric-log.types.js";
 import logger from "../utils/logger.js";
 

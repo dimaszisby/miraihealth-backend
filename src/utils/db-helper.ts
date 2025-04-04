@@ -1,7 +1,7 @@
 // src/utils/db-validators.ts
 
 import db from "../models/index.js";
-import AppError from "../utils/AppError.js";
+import AppError from "./AppError.js";
 
 const { Metric, MetricCategory } = db;
 
@@ -30,6 +30,8 @@ export const validateMetricAccess = async (
   return metric;
 };
 
+// TODO: Create helper func for FindOwnedMetric
+
 /**
  * * Utility function to validate if a metric category exists and owned by the requesting user
  * @param userId - The ID of the user who owns the metric
@@ -53,4 +55,24 @@ export const validateMetricCategoryAccess = async (
     throw new AppError("Unauthorized access to metric category", 403);
   }
   return metricCategory;
+};
+
+/**
+ * * Helper function to find a metric category owned by the user
+ * @param userId - The ID of the usr who owns the metric category
+ * @param categoryId - The ID of the metric category
+ * @returns category sequelize instance
+ */
+export const findOwnedCategory = async (
+  userId: string,
+  categoryId: string
+): Promise<typeof MetricCategory | null> => {
+  await validateMetricCategoryAccess(userId, categoryId);
+
+  const category = await MetricCategory.findOne({
+    where: { id: categoryId, userId },
+  });
+  if (!category) throw new AppError("Category not found", 404);
+
+  return category;
 };

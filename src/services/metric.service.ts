@@ -4,7 +4,7 @@ import db from "../models/index.js";
 import AppError from "../utils/AppError.js";
 import { MetricBase } from "@/types/metric.types.js";
 import { redisClient } from "../utils/redis-client.js";
-import { validateMetricAccess } from "../utils/db-validators.js";
+import { validateMetricAccess } from "../utils/db-helper.js";
 import logger from "../utils/logger.js";
 
 const { Metric, MetricLog, MetricSettings, MetricCategory } = db;
@@ -61,6 +61,9 @@ export const createMetricService = async (
   userId: string,
   data: MetricParamsBase
 ) => {
+  logger.info(`Create metric service triggered for user ${userId}`);
+  console.log("Create metric service triggered for user", userId);
+
   // Check for duplicate metric name for the user
   const existingMetric = await Metric.findOne({
     where: { userId, name: data.name },
