@@ -7,6 +7,7 @@ import { ZodMessages } from "@/constants/zod-messages"; // centralized error mes
  * - These base validators can be composed into full schemas
  */
 
+// * User
 export const zUsername = z
   .string()
   .min(3, { message: ZodMessages.user.usernameMin });
@@ -26,3 +27,16 @@ export const zPasswordConfirmation = z
 export const zPublicProfile = z.boolean().optional().default(true);
 
 export const zRole = z.enum(["user", "admin"]).optional().default("user");
+
+// * Metric Category
+export const zMetricCategoryName = z
+  .string()
+  .min(1, { message: ZodMessages.metricCategory.nameRequired });
+
+export const zMetricCategoryColor = z
+  .string()
+  .min(1)
+  .optional()
+  .default("#E897A3");
+
+export const zMetricCategoryIcon = z.string().min(1).optional().default("📁");
