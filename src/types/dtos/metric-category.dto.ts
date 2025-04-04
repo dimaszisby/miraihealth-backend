@@ -4,7 +4,7 @@ import { z } from "zod";
 import {
   createMetricCategorySchema,
   updateMetricCategorySchema,
-} from "@/types/api/zod-metricCategory.schema.js";
+} from "@/types/api/zod-metric-category.schema.js";
 
 /**
  * * Data Transfer Objects (DTO) for MetricCategory
