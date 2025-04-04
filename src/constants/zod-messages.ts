@@ -6,4 +6,8 @@ export const ZodMessages = {
     passwordConfirmMin: "Password confirmation must be at least 6 characters",
     passwordMismatch: "Passwords do not match",
   },
+  metricCategory: {
+    invalidId: "Invalid Metric Category ID",
+    nameRequired: "Name is required",
+  },
 };
