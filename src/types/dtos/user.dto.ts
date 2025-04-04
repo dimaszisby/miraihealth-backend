@@ -1,7 +1,7 @@
 // src/types/user.dto.ts
 
 /**
- * * Data Transfer Objects (DTO)
+ * * Data Transfer Objects (DTO) for User
  * For incoming/outgoing API contract.
  */
 
