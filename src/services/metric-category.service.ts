@@ -9,8 +9,8 @@ import {
 import AppError from "@/utils/AppError";
 import logger from "@/utils/logger";
 import { redisClient } from "@/utils/redis-client";
-import { findOwnedCategory } from "@/utils/db-helper.js";
-import { toDomainMetricCategory } from "@/utils/mappers/metric-category.mapper.js";
+import { findOwnedCategory } from "@/utils/db-helper";
+import { toDomainMetricCategory } from "@/utils/mappers/metric-category.mapper";
 
 const { MetricCategory } = db;
 
