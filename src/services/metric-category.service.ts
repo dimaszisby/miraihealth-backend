@@ -1,11 +1,16 @@
 // src/services/metric-category.service.ts
 
 import db from "../models/index.js";
-import { redisClient } from "../utils/redis-client.js";
-import { MetricCategoryBase } from "../types/metric-category.types.js";
-import { validateMetricCategoryAccess } from "../utils/db-validators.js";
-import AppError from "../utils/AppError.js";
-import logger from "../utils/logger.js";
+import { MetricCategoryDomain } from "@/types/domain/metric-category.domain";
+import {
+  CreateMetricCategoryRequestDTO,
+  UpdateMetricCategoryRequestDTO,
+} from "@/types/dtos/metric-category.dto";
+import AppError from "@/utils/AppError";
+import logger from "@/utils/logger";
+import { redisClient } from "@/utils/redis-client";
+import { findOwnedCategory } from "@/utils/db-validators";
+import { toDomainMetricCategory } from "@/utils/mappers/metric-category.mapper.js";
 
 const { MetricCategory } = db;
 
@@ -14,22 +19,17 @@ const { MetricCategory } = db;
  * Handles all business logic related to metric category.
  */
 
-interface UpdateCategoryParams {
-  userId: string;
-  categoryId: string;
-  updateData: Partial<MetricCategoryBase>;
-}
-
 /**
  * Create metric category for user
  * @param userId - ID of the user
  * @param data - Metric category data
  * @returns The created metric category
  */
+// Question: How to use CreateMetricCategoryRequestDTO instead of MetricCategoryBase?
 export const createMetricCategoryService = async (
   userId: string,
-  data: MetricCategoryBase
-) => {
+  data: CreateMetricCategoryRequestDTO
+): Promise<MetricCategoryDomain> => {
   if (!userId) throw new AppError("User not authenticated", 403);
 
   // Check for duplicate category name for the same user:
@@ -45,7 +45,6 @@ export const createMetricCategoryService = async (
     ...data,
     color: data.color ?? "#E897A3",
     icon: data.icon ?? "📁",
-    deletedAt: data.deletedAt || null,
     userId,
   };
 
@@ -57,7 +56,7 @@ export const createMetricCategoryService = async (
     logger.info(`♻️ Cache invalidated for categories:${category.userId}`);
   }
 
-  return category;
+  return toDomainMetricCategory(category);
 };
 
 /**
@@ -65,11 +64,35 @@ export const createMetricCategoryService = async (
  * @param userId - ID of the user
  * @returns Array of metric category
  */
-export const getAllUserMetricCategoryService = async (userId: string) => {
+export const getAllUserMetricCategoryService = async (
+  userId: string
+): Promise<MetricCategoryDomain[]> => {
   if (!userId) throw new AppError("User not authenticated", 403);
 
+  const redisKey = `categories:${userId}`;
+
+  // Check Redis Cache if chache exists
+  if (redisClient.isOpen) {
+    const cached = await redisClient.get(redisKey);
+    if (cached) {
+      logger.debug(`✅ Categories fetched from cache for user: ${userId}`);
+      return JSON.parse(cached);
+    }
+  }
+
+  // If chache not exists, Fallback to DB
   const categories = await MetricCategory.findAll({ where: { userId } });
-  return categories || [];
+
+  const result = categories.map(toDomainMetricCategory);
+
+  // Cache Result in Redis with TTL
+  // Currently being set to 10 minutes (600 seconds)
+  if (redisClient.isOpen) {
+    await redisClient.setEx(redisKey, 600, JSON.stringify(result));
+    logger.info(`📦 Categories cached for user: ${userId}`);
+  }
+
+  return result;
 };
 
 /**
@@ -82,17 +105,9 @@ export const getAllUserMetricCategoryService = async (userId: string) => {
 export const getUserMetricCategoryByIdService = async (
   userId: string,
   categoryId: string
-) => {
-  // Ensure the metric category exists and enforce ownership.
-  await validateMetricCategoryAccess(userId, categoryId);
-
-  // Ensure the metric category exists
-  const category = await MetricCategory.findOne({
-    where: { id: categoryId, userId: userId },
-  });
-  if (!category) throw new AppError("Category not found", 404);
-
-  return category;
+): Promise<MetricCategoryDomain> => {
+  const category = await findOwnedCategory(userId, categoryId);
+  return toDomainMetricCategory(category);
 };
 
 /**
@@ -102,15 +117,16 @@ export const getUserMetricCategoryByIdService = async (
  * @param updateData - Updated data
  * @returns Updated metric category object
  */
-export const updateMetricCategoryService = async ({
-  userId,
-  categoryId,
-  updateData,
-}: UpdateCategoryParams) => {
+// Question: How to use UpdateMetricCategoryRequestDTO instead of UpdateCategoryParams? especially this requires userId and categoryId?
+export const updateMetricCategoryService = async (
+  userId: string,
+  categoryId: string,
+  updateData: UpdateMetricCategoryRequestDTO
+): Promise<MetricCategoryDomain> => {
   // Ensure the metric category exists and enforce ownership.
-  const category = await getUserMetricCategoryByIdService(userId, categoryId);
+  const category = await findOwnedCategory(userId, categoryId);
 
-  await category.update(updateData);
+  const updatedCategory = await category.update(updateData);
 
   // Invalidate Redis cache
   if (redisClient.isOpen) {
@@ -120,7 +136,8 @@ export const updateMetricCategoryService = async ({
       `♻️ Cache invalidated for category:${category.userId}:${category.id} and categories:${category.userId}`
     );
   }
-  return category;
+
+  return toDomainMetricCategory(updatedCategory);
 };
 
 /**
@@ -132,9 +149,9 @@ export const updateMetricCategoryService = async ({
 export const deleteMetricCategoryService = async (
   userId: string,
   categoryId: string
-) => {
+): Promise<MetricCategoryDomain> => {
   // Ensure the metric category exists and enforce ownership.
-  const category = await getUserMetricCategoryByIdService(userId, categoryId);
+  const category = await findOwnedCategory(userId, categoryId);
 
   await category.destroy();
   logger.info(`Metric category deleted successfully from database`);
@@ -148,5 +165,5 @@ export const deleteMetricCategoryService = async (
     );
   }
 
-  return category;
+  return toDomainMetricCategory(category);
 };

@@ -1,11 +1,13 @@
 // src/controllers/metric-category.controller.ts
 
 import { Request, Response, NextFunction } from "express";
-import { AuthRequest } from "../types/request.context.js";
-import AppError from "../utils/AppError.js";
-import catchAsync from "../utils/catch-async.js";
-import { successResponse } from "../utils/response-formatter.js";
-import * as MetricCategoryService from "../services/metric-category.service.js";
+import * as MetricCategoryService from "@/services/metric-category.service";
+import { MetricCategoryDomain } from "@/types/domain/metric-category.domain";
+import { AuthRequest } from "@/types/request.context";
+import AppError from "@/utils/AppError";
+import catchAsync from "@/utils/catch-async";
+import { successResponse } from "@/utils/response-formatter";
+import { toMetricCategoryResponseDTO } from "@/utils/mappers/metric-category.mapper";
 
 /**
  * * Metric Category Controller
@@ -20,11 +22,17 @@ export const createCategory = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
 
-    const category = await MetricCategoryService.createMetricCategoryService(
-      req.user.id,
-      req.body
+    const category: MetricCategoryDomain =
+      await MetricCategoryService.createMetricCategoryService(
+        req.user.id,
+        req.body
+      );
+    successResponse(
+      res,
+      201,
+      { category: toMetricCategoryResponseDTO(category) },
+      "Category created successfully"
     );
-    successResponse(res, 201, { category }, "Category created successfully");
   }
 );
 
@@ -36,9 +44,12 @@ export const getAllCategories = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
 
-    const categories =
+    const categories: MetricCategoryDomain[] =
       await MetricCategoryService.getAllUserMetricCategoryService(req.user.id);
-    successResponse(res, 200, { categories });
+
+    const categoriesRespose = categories.map(toMetricCategoryResponseDTO);
+
+    successResponse(res, 200, { categories: categoriesRespose });
   }
 );
 
@@ -50,12 +61,14 @@ export const getCategoryById = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
 
-    const category =
+    const category: MetricCategoryDomain =
       await MetricCategoryService.getUserMetricCategoryByIdService(
         req.user.id,
         req.params.id
       );
-    successResponse(res, 200, { category });
+    successResponse(res, 200, {
+      category: toMetricCategoryResponseDTO(category),
+    });
   }
 );
 
@@ -67,12 +80,18 @@ export const updateCategory = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
 
-    const category = await MetricCategoryService.updateMetricCategoryService({
-      userId: req.user.id,
-      categoryId: req.params.id,
-      updateData: req.body,
-    });
-    successResponse(res, 200, { category }, "Category updated successfully");
+    const category: MetricCategoryDomain =
+      await MetricCategoryService.updateMetricCategoryService(
+        req.user.id,
+        req.params.id,
+        req.body
+      );
+    successResponse(
+      res,
+      200,
+      { category: toMetricCategoryResponseDTO(category) },
+      "Category updated successfully"
+    );
   }
 );
 
@@ -84,10 +103,16 @@ export const deleteCategory = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
 
-    const category = await MetricCategoryService.deleteMetricCategoryService(
-      req.user.id,
-      req.params.id
+    const category: MetricCategoryDomain =
+      await MetricCategoryService.deleteMetricCategoryService(
+        req.user.id,
+        req.params.id
+      );
+    successResponse(
+      res,
+      200,
+      { category: toMetricCategoryResponseDTO(category) },
+      "Category deleted successfully"
     );
-    successResponse(res, 200, { category }, "Category deleted successfully");
   }
 );
