@@ -170,8 +170,14 @@ describe("Metric Settings Endpoints", () => {
       .put(`/api/v1/metrics/${metricParent.id}/settings/${settingsId}`)
       .set("Authorization", `Bearer ${token}`)
       .send({
+        goalEnabled: true,
         goalValue: 20,
       });
+
+    console.log(
+      "Response Metric Settings:",
+      JSON.stringify(res.body.data.metricSettings, null, 2)
+    );
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty(
@@ -327,15 +333,12 @@ describe("Metric Settings Endpoints", () => {
         });
 
       expect(res.statusCode).toBe(200);
-      expect(res.body).toHaveProperty("data.metricSettings");
+      expect(res.body).toHaveProperty("data.displayOptions");
 
-      console.log(
-        "Response Metric Settings:",
-        JSON.stringify(res.body.data.metricSettings, null, 2)
-      );
+      console.info(res.body);
 
-      expect(res.body.data.metricSettings).toHaveProperty("displayOptions");
-      expect(res.body.data.metricSettings.displayOptions).toMatchObject({
+      expect(res.body.data).toHaveProperty("displayOptions");
+      expect(res.body.data).toMatchObject({
         displayOptions: {
           showOnDashboard: false,
           priority: 2,
