@@ -7,36 +7,91 @@ import { ZodMessages } from "@/constants/zod-messages"; // centralized error mes
  * - These base validators can be composed into full schemas
  */
 
-// * User
+// Reuse base rules
+export const zUUID = z
+  .string()
+  .uuid({ message: ZodMessages.common.invalidUUID });
+export const zOptionalDate = z.date({
+  required_error: ZodMessages.common.invalidDate,
+});
+
+/**
+ * export const zMetricCategoryId = zUUID.optional().nullable();
+ */
 export const zUsername = z
   .string()
   .min(3, { message: ZodMessages.user.usernameMin });
-
 export const zEmail = z
   .string()
   .email({ message: ZodMessages.user.emailInvalid });
-
 export const zPassword = z
   .string()
   .min(6, { message: ZodMessages.user.passwordMin });
-
 export const zPasswordConfirmation = z
   .string()
   .min(6, { message: ZodMessages.user.passwordConfirmMin });
-
 export const zPublicProfile = z.boolean().optional().default(true);
-
 export const zRole = z.enum(["user", "admin"]).optional().default("user");
 
-// * Metric Category
+/**
+ * * * Metric Category
+ */
 export const zMetricCategoryName = z
   .string()
   .min(1, { message: ZodMessages.metricCategory.nameRequired });
-
 export const zMetricCategoryColor = z
   .string()
   .min(1)
   .optional()
   .default("#E897A3");
-
 export const zMetricCategoryIcon = z.string().min(1).optional().default("📁");
+export const zMetricCategoryDeletedAt = zOptionalDate.optional().nullable();
+
+/**
+ * * * Metric
+ */
+export const zMetricName = z
+  .string()
+  .min(1, { message: ZodMessages.metric.nameRequired });
+export const zMetricDescription = z.string();
+export const zMetricDefaultUnit = z
+  .string()
+  .min(1, { message: ZodMessages.metric.unitRequired });
+export const zMetricIsPublic = z.boolean();
+
+/**
+ * * * * Metric Settings
+ */
+export const zGoalEnabled = z.boolean().optional().default(false);
+export const zGoalType = z
+  .enum(["cumulative", "incremental"])
+  .optional()
+  .nullable();
+export const zGoalValue = z
+  .number()
+  .positive(ZodMessages.metricSettings.goalValuePositive)
+  .optional()
+  .nullable();
+export const zTimeFrameEnabled = z.boolean().optional().default(false);
+export const zStartDate = zOptionalDate.optional().nullable();
+export const zDeadlineDate = zOptionalDate.optional().nullable();
+export const zAlertEnabled = z.boolean().optional().default(false);
+export const zAlertThresholds = z
+  .number()
+  .int({ message: ZodMessages.metricSettings.invalidAlertThreshold })
+  .min(0, { message: ZodMessages.metricSettings.alertThresholdMin })
+  .max(100, { message: ZodMessages.metricSettings.alertThresholdMax })
+  .optional()
+  .default(80);
+export const zDisplayOptions = z
+  .object({
+    priority: z.number().optional().default(1),
+    chartType: z.string().optional().default("line"),
+    color: z.string().optional().default("#E897A3"),
+  })
+  .optional()
+  .default({
+    priority: 1,
+    chartType: "line",
+    color: "#E897A3",
+  });
