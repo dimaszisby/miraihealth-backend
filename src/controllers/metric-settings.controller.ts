@@ -1,11 +1,15 @@
 // src/controllers/metric-settings.controller.ts
 
 import { Request, Response, NextFunction } from "express";
-import { AuthRequest } from "../types/request.context.js";
-import AppError from "../utils/AppError.js";
-import catchAsync from "../utils/catch-async.js";
-import { successResponse } from "../utils/response-formatter.js";
-import * as metricSettingsService from "../services/metric-settings.service.js";
+import { AuthRequest } from "@/types/request.context";
+import AppError from "@/utils/AppError";
+import catchAsync from "@/utils/catch-async";
+import { successResponse } from "@/utils/response-formatter";
+import * as metricSettingsService from "@/services/metric-settings.service";
+import {
+  toDisplayOptionsResponseDTO,
+  toMetricSettingsResponseDTO,
+} from "@/utils/mappers/metric-settings.mapper";
 
 /**
  * * Metric Settings Controller
@@ -21,15 +25,15 @@ export const createMetricSettings = catchAsync(
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
 
     const metricSettings =
-      await metricSettingsService.createMetricSettingsService({
-        userId: req.user.id,
-        metricId: req.params.metricId,
-        settingData: req.body,
-      });
+      await metricSettingsService.createMetricSettingsService(
+        req.user.id,
+        req.params.metricId,
+        req.body
+      );
     successResponse(
       res,
       201,
-      { metricSettings },
+      { metricSettings: toMetricSettingsResponseDTO(metricSettings) },
       "Metric Settings created successfully"
     );
   }
@@ -48,10 +52,14 @@ export const getAllMetricSettings = catchAsync(
         req.user.id,
         req.params.metricId
       );
+
+    const metricSettingsResponse = metricSettings.map(
+      toMetricSettingsResponseDTO
+    );
     successResponse(
       res,
       200,
-      { metricSettings },
+      { metricSettings: metricSettingsResponse },
       "Metric Settings retrieved successfully"
     );
   }
@@ -74,7 +82,7 @@ export const getMetricSettingsById = catchAsync(
     successResponse(
       res,
       200,
-      { metricSettings },
+      { metricSettings: metricSettings },
       "Metric Settings retrieved successfully"
     );
   }
@@ -89,16 +97,17 @@ export const updateMetricSettings = catchAsync(
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
 
     const metricSettings =
-      await metricSettingsService.updateMetricSettingsService({
-        userId: req.user.id,
-        metricId: req.params.metricId,
-        settingsId: req.params.id,
-        updateData: req.body,
-      });
+      await metricSettingsService.updateMetricSettingsService(
+        req.user.id,
+        req.params.metricId,
+        req.params.id,
+        req.body
+      );
+
     successResponse(
       res,
       200,
-      { metricSettings },
+      { metricSettings: toMetricSettingsResponseDTO(metricSettings) },
       "Metric settings updated successfully"
     );
   }
@@ -121,7 +130,7 @@ export const deleteMetricSettings = catchAsync(
     successResponse(
       res,
       200,
-      { metricSettings },
+      { metricSettings: toMetricSettingsResponseDTO(metricSettings) },
       "Metric Settings deleted successfully"
     );
   }
@@ -144,7 +153,7 @@ export const updateGoalAchievement = catchAsync(
     successResponse(
       res,
       200,
-      { metricSettings },
+      { metricSettings: toMetricSettingsResponseDTO(metricSettings) },
       "Goal achievement updated successfully"
     );
   }
@@ -158,17 +167,17 @@ export const updateDisplayOptions = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
 
-    const metricSettings =
+    const displayOptions =
       await metricSettingsService.updateDisplayOptionsService({
         userId: req.user.id,
         metricId: req.params.metricId,
         settingsId: req.params.id,
-        displayOptions: req.body,
+        displayOptions: req.body.displayOptions,
       });
     successResponse(
       res,
       200,
-      { metricSettings },
+      { displayOptions: toDisplayOptionsResponseDTO(displayOptions) },
       "Display options updated successfully"
     );
   }

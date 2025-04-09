@@ -1,11 +1,22 @@
 // src/services/metric-settings-service.ts
 
-import db from "../models/index.js";
-import { redisClient } from "../utils/redis-client.js";
-import { MetricSettingsBase } from "../types/metric-settings.types.js";
-import { validateMetricAccess } from "../utils/db-helper.js";
-import AppError from "../utils/AppError.js";
-import logger from "../utils/logger.js";
+import db from "@/models/index";
+import {
+  CreateMetricSettingsRequestDTO,
+  UpdateMetricSettingsRequestDTO,
+} from "@/types/dtos/metric-settings.dto";
+import { MetricSettingsDomain } from "@/types/domain/metric-settings.domain";
+import { UpdateMetricCategoryRequestDTO } from "@/types/dtos/metric-category.dto";
+import { redisClient } from "@/utils/redis-client";
+import {
+  findOwnedMetricSettings,
+  validateMetricAccess,
+} from "@/utils/db-helper";
+import logger from "@/utils/logger";
+import {
+  toDomainDisplayOptions,
+  toDomainMetricSettings,
+} from "@/utils/mappers/metric-settings.mapper";
 
 const { MetricSettings } = db;
 
@@ -20,20 +31,6 @@ interface MetricSettingsParamsBase {
   settingsId: string;
 }
 
-interface CreateSettingsParams {
-  userId: string;
-  metricId: string;
-  settingData: MetricSettingsBase;
-}
-
-interface UpdateSettingsParams extends MetricSettingsParamsBase {
-  updateData: Partial<MetricSettingsBase>;
-}
-
-interface UpdateDisplayOptionsParams extends MetricSettingsParamsBase {
-  displayOptions: MetricSettingsBase["displayOptions"];
-}
-
 /**
  * Create metric settings for a specific metric
  * @param userId - ID of the user
@@ -41,11 +38,11 @@ interface UpdateDisplayOptionsParams extends MetricSettingsParamsBase {
  * @param data - Metric settings data
  * @returns The created metric settings
  */
-export const createMetricSettingsService = async ({
-  userId,
-  metricId,
-  settingData,
-}: CreateSettingsParams) => {
+export const createMetricSettingsService = async (
+  userId: string,
+  metricId: string,
+  settingData: CreateMetricSettingsRequestDTO
+): Promise<MetricSettingsDomain> => {
   // Ensure the parent metric exists and enforce ownership.
   const metric = await validateMetricAccess(userId, metricId);
 
@@ -86,7 +83,7 @@ export const createMetricSettingsService = async ({
       `♻️ Cache invalidated for metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`
     );
   }
-  return metricSettings;
+  return toDomainMetricSettings(metricSettings);
 };
 
 /**
@@ -98,12 +95,14 @@ export const createMetricSettingsService = async ({
 export const getAllMetricSettingsService = async (
   userId: string,
   metricId: string
-) => {
+): Promise<MetricSettingsDomain[]> => {
   // Ensure the parent metric exists and enforce ownership.
   await validateMetricAccess(userId, metricId);
 
   const settings = await MetricSettings.findAll({ where: { metricId } });
-  return settings || [];
+  return settings.map((setting: typeof MetricSettings) =>
+    toDomainMetricSettings(setting)
+  );
 };
 
 /**
@@ -114,26 +113,18 @@ export const getAllMetricSettingsService = async (
  * @returns Metric settings object
  * @throws {AppError} If settings not found
  */
+// TODO: Create a service to fetch sequelize model by ID
 export const getMetricSettingsByIdService = async ({
   userId,
   metricId,
   settingsId,
 }: MetricSettingsParamsBase) => {
-  // Ensure the parent metric exists and enforce ownership.
-  await validateMetricAccess(userId, metricId);
-
-  // Ensure the metric settings exists
-  const metricSettings = await MetricSettings.findOne({
-    where: { id: settingsId, metricId: metricId },
-    include: [
-      {
-        model: db.Metric,
-        as: "Metric",
-        attributes: ["id", "userId"],
-      },
-    ],
-  });
-  if (!metricSettings) throw new AppError("Settings for Metric not found", 404);
+  // Ensure the metric settings exists and owned by the requesting user
+  const metricSettings = await findOwnedMetricSettings(
+    userId,
+    metricId,
+    settingsId
+  );
 
   return metricSettings;
 };
@@ -146,18 +137,18 @@ export const getMetricSettingsByIdService = async ({
  * @param updates - Updated data
  * @returns Updated metric settings object
  */
-export const updateMetricSettingsService = async ({
-  userId,
-  metricId,
-  settingsId,
-  updateData,
-}: UpdateSettingsParams) => {
-  // Ensure the metric settings exists
-  const metricSettings = await getMetricSettingsByIdService({
-    userId: userId,
-    metricId: metricId,
-    settingsId: settingsId,
-  });
+export const updateMetricSettingsService = async (
+  userId: string,
+  metricId: string,
+  settingsId: string,
+  updateData: Partial<UpdateMetricCategoryRequestDTO>
+): Promise<MetricSettingsDomain> => {
+  // Ensure the metric settings exists and owned by the requesting user
+  const metricSettings = await findOwnedMetricSettings(
+    userId,
+    metricId,
+    settingsId
+  );
 
   await metricSettings.update(updateData);
 
@@ -184,7 +175,7 @@ export const updateMetricSettingsService = async ({
     );
   }
 
-  return metricSettings;
+  return toDomainMetricSettings(metricSettings);
 };
 
 /**
@@ -198,13 +189,13 @@ export const deleteMetricSettingsService = async ({
   userId,
   metricId,
   settingsId,
-}: MetricSettingsParamsBase) => {
-  // Ensure the metric settings exists along with its associated Metric.
-  const metricSettings = await getMetricSettingsByIdService({
+}: MetricSettingsParamsBase): Promise<MetricSettingsDomain> => {
+  // Ensure the metric settings exists and owned by the requesting user
+  const metricSettings = await findOwnedMetricSettings(
     userId,
     metricId,
-    settingsId,
-  });
+    settingsId
+  );
 
   // Store associated Metric info before deletion.
   const associatedMetric = metricSettings.metric;
@@ -224,7 +215,7 @@ export const deleteMetricSettingsService = async ({
       `♻️ Cache invalidated for metricSetting:${associatedMetric.userId}:${associatedMetric.id}:${metricSettings.id} and metricSettings:${associatedMetric.userId}:${associatedMetric.id}`
     );
   }
-  return metricSettings;
+  return toDomainMetricSettings(metricSettings);
 };
 
 /**
@@ -238,13 +229,13 @@ export const updateGoalAchievementService = async ({
   userId,
   metricId,
   settingsId,
-}: MetricSettingsParamsBase) => {
-  // Ensure the metric settings exists
-  const metricSettings = await getMetricSettingsByIdService({
+}: MetricSettingsParamsBase): Promise<MetricSettingsDomain> => {
+  // Ensure the metric settings exists and owned by the requesting user
+  const metricSettings = await findOwnedMetricSettings(
     userId,
     metricId,
-    settingsId,
-  });
+    settingsId
+  );
 
   await metricSettings.update({
     isAchieved: true,
@@ -273,33 +264,38 @@ export const updateGoalAchievementService = async ({
     );
   }
 
-  return metricSettings;
+  return toDomainMetricSettings(metricSettings);
 };
 
 /**
- * Update display options for a metric setting
+ * Partial Update only for display options for a metric setting
  * @param userId - ID of the user
  * @param metricId - ID of the metric
  * @param settingsId - ID of the settings
  * @param displayOptions - Updated display options
  * @returns Updated metric settings object
  */
+interface UpdateDisplayOptionsParams extends MetricSettingsParamsBase {
+  displayOptions: UpdateMetricSettingsRequestDTO["displayOptions"];
+}
+
 export const updateDisplayOptionsService = async ({
   userId,
   metricId,
   settingsId,
   displayOptions,
-}: UpdateDisplayOptionsParams) => {
-  // Ensure the metric settings exists
-  const metricSettings = await getMetricSettingsByIdService({
-    userId: userId,
-    metricId: metricId,
-    settingsId: settingsId,
-  });
+}: UpdateDisplayOptionsParams): Promise<
+  MetricSettingsDomain["displayOptions"]
+> => {
+  // Ensure the metric settings exists and owned by the requesting user
+  const metricSettings = await findOwnedMetricSettings(
+    userId,
+    metricId,
+    settingsId
+  );
 
-  // Overwrite the displayOptions field directly.
-  metricSettings.setDataValue("displayOptions", displayOptions);
-  await metricSettings.save();
+  await metricSettings.update({ displayOptions });
+
   await metricSettings.reload({
     include: [
       {
@@ -322,5 +318,5 @@ export const updateDisplayOptionsService = async ({
     );
   }
 
-  return metricSettings.get({ plain: true });
+  return toDomainDisplayOptions(metricSettings);
 };
