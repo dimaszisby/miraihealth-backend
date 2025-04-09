@@ -194,17 +194,33 @@ export default (sequelize: Sequelize) => {
       timestamps: true,
       hooks: {
         beforeUpdate: async (metricSettings: MetricSettings) => {
-          if (!metricSettings.goalEnabled) {
+          const changed = metricSettings.changed();
+
+          if (
+            Array.isArray(changed) &&
+            changed.includes("goalEnabled") &&
+            !metricSettings.goalEnabled
+          ) {
             metricSettings.goalType = null;
             metricSettings.goalValue = null;
             metricSettings.startDate = null;
             metricSettings.deadlineDate = null;
           }
-          if (!metricSettings.timeFrameEnabled) {
+
+          if (
+            Array.isArray(changed) &&
+            changed?.includes("timeFrameEnabled") &&
+            !metricSettings.timeFrameEnabled
+          ) {
             metricSettings.startDate = null;
             metricSettings.deadlineDate = null;
           }
-          if (!metricSettings.alertEnabled) {
+
+          if (
+            Array.isArray(changed) &&
+            changed?.includes("alertEnabled") &&
+            !metricSettings.alertEnabled
+          ) {
             metricSettings.alertThresholds = null;
           }
         },
