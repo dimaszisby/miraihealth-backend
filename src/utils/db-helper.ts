@@ -1,9 +1,9 @@
 // src/utils/db-validators.ts
 
-import db from "../models/index.js";
+import db from "@/models/index";
 import AppError from "./AppError.js";
 
-const { Metric, MetricCategory } = db;
+const { Metric, MetricCategory, MetricSettings } = db;
 
 /**
  * * Utility function to validate if a metric exists and owned by the requesting user
@@ -15,7 +15,7 @@ export const validateMetricAccess = async (
   userId: string,
   metricId: string
 ) => {
-  // First, fetch the metric regardless of the userId.
+  // 1. Fetch the metric regardless of the userId.
   const metric = await Metric.findOne({
     where: { id: metricId },
     attributes: ["id", "userId", "isPublic"],
@@ -23,14 +23,12 @@ export const validateMetricAccess = async (
   if (!metric) {
     throw new AppError("Metric not found", 404);
   }
-  // Then, if the metric is not public and does not belong to the user, throw unauthorized.
+  // 2. If the metric is not public and does not belong to the user, throw unauthorized.
   if (!metric.isPublic && metric.userId !== userId) {
     throw new AppError("Unauthorized access to metric stats", 403);
   }
   return metric;
 };
-
-// TODO: Create helper func for FindOwnedMetric
 
 /**
  * * Utility function to validate if a metric category exists and owned by the requesting user
@@ -42,7 +40,7 @@ export const validateMetricCategoryAccess = async (
   userId: string,
   categoryId: string
 ) => {
-  // First, fetch the metric regardless of the userId.
+  // 1. Fetch the metric category regardless of the userId.
   const metricCategory = await MetricCategory.findOne({
     where: { id: categoryId },
     attributes: ["id", "userId"],
@@ -50,7 +48,7 @@ export const validateMetricCategoryAccess = async (
   if (!metricCategory) {
     throw new AppError("Metric Category not found", 404);
   }
-  // Then, if the metric is does not belong to the user, throw unauthorized.
+  // 2. If the metric is does not belong to the user, throw unauthorized.
   if (metricCategory.userId !== userId) {
     throw new AppError("Unauthorized access to metric category", 403);
   }
@@ -58,7 +56,15 @@ export const validateMetricCategoryAccess = async (
 };
 
 /**
- * * Helper function to find a metric category owned by the user
+ * * Helpers for finding owned entities
+ * Includes: Metric, Category, Settings, and Log
+ */
+
+// TODO: Create Helper function to find a metric by ID
+
+/**
+ * * Metric Category
+ * Helper function to find a metric category owned by the user
  * @param userId - The ID of the usr who owns the metric category
  * @param categoryId - The ID of the metric category
  * @returns category sequelize instance
@@ -75,4 +81,27 @@ export const findOwnedCategory = async (
   if (!category) throw new AppError("Category not found", 404);
 
   return category;
+};
+
+/**
+ * * Metric Settings
+ * Helper function to find a metric settings owned by the user
+ * @param userId - The ID of the user who owns the metric
+ * @param metricId - The ID of the metric
+ * @param settingsId - the ID of the settings
+ * @returns metric settings sequelize instance
+ */
+export const findOwnedMetricSettings = async (
+  userId: string,
+  metricId: string,
+  settingsId: string
+): Promise<typeof MetricSettings | null> => {
+  await validateMetricAccess(userId, metricId);
+
+  const settings = await MetricSettings.findOne({
+    where: { id: settingsId, metricId },
+  });
+  if (!settings) throw new AppError("Metric Settings not found", 404);
+
+  return settings;
 };
