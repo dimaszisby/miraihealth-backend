@@ -6,6 +6,10 @@ import { successResponse } from "../utils/response-formatter.js";
 import catchAsync from "../utils/catch-async.js";
 import { AuthRequest } from "../types/request.context.js";
 import * as metricLogService from "../services/metric-log.service.js";
+import {
+  toMetricLogListResponseDTO,
+  toMetricLogResponseDTO,
+} from "@/utils/mappers/metric-log.mapper";
 
 /**
  * * Metric Log Controller
@@ -24,7 +28,7 @@ export const createMetricLog = catchAsync(
     const { metricId } = req.params;
     const { type, logValue, loggedAt } = req.body;
 
-    const log = await metricLogService.createLog({
+    const logDomain = await metricLogService.createLog({
       userId: userId,
       metricId: metricId,
       logData: {
@@ -33,7 +37,12 @@ export const createMetricLog = catchAsync(
         loggedAt,
       },
     });
-    successResponse(res, 201, { log }, "Metric Log created successfully");
+    successResponse(
+      res,
+      201,
+      { log: toMetricLogResponseDTO(logDomain) },
+      "Metric Log created successfully"
+    );
   }
 );
 
@@ -49,7 +58,7 @@ export const getAllLogsByMetric = catchAsync(
     const { metricId } = req.params;
     const { startDate, endDate, sortBy, order } = req.query;
 
-    const logs = await metricLogService.getAllLogsByMetricService({
+    const logsDomain = await metricLogService.getAllLogsByMetricService({
       userId: userId,
       metricId: metricId,
       options: {
@@ -59,7 +68,7 @@ export const getAllLogsByMetric = catchAsync(
         order: (order as "asc" | "desc") || "desc",
       },
     });
-    successResponse(res, 200, { logs });
+    successResponse(res, 200, { logs: toMetricLogListResponseDTO(logsDomain) });
   }
 );
 
@@ -74,12 +83,12 @@ export const getLogById = catchAsync(
 
     const { id, metricId } = req.params;
 
-    const log = await metricLogService.getLogByIdService({
+    const logDomain = await metricLogService.getLogByIdService({
       metricId: metricId,
       userId: userId,
       logId: id,
     });
-    successResponse(res, 200, { log });
+    successResponse(res, 200, { log: toMetricLogResponseDTO(logDomain) });
   }
 );
 
@@ -95,7 +104,7 @@ export const updateLog = catchAsync(
     const { id, metricId } = req.params;
     const { logValue, type, loggedAt } = req.body;
 
-    const log = await metricLogService.updateLogService({
+    const logDomain = await metricLogService.updateLogService({
       userId: userId,
       metricId: metricId,
       logId: id,
@@ -105,7 +114,12 @@ export const updateLog = catchAsync(
         loggedAt,
       },
     });
-    successResponse(res, 200, { log }, "Log updated successfully");
+    successResponse(
+      res,
+      200,
+      { log: toMetricLogResponseDTO(logDomain) },
+      "Log updated successfully"
+    );
   }
 );
 
@@ -120,12 +134,17 @@ export const deleteLog = catchAsync(
 
     const { id, metricId } = req.params;
 
-    const log = await metricLogService.deleteLogService({
+    const logDomain = await metricLogService.deleteLogService({
       userId: userId,
       metricId: metricId,
       logId: id,
     });
-    successResponse(res, 200, { log }, "Log deleted successfully");
+    successResponse(
+      res,
+      200,
+      { log: toMetricLogResponseDTO(logDomain) },
+      "Log deleted successfully"
+    );
   }
 );
 

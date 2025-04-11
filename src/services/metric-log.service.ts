@@ -1,12 +1,20 @@
 // src/services/metric-log.service.ts
 
-import db from "../models/index.js";
+import db from "@/models/index";
 import { Op, Order } from "sequelize";
-import AppError from "../utils/AppError.js";
-import { redisClient } from "../utils/redis-client.js";
-import { validateMetricAccess } from "../utils/db-helper.js";
-import { MetricLogBase } from "@/types/metric-log.types.js";
-import logger from "../utils/logger.js";
+import {
+  CreateMetricLogRequestDTO,
+  UpdateMetricLogRequestDTO,
+} from "@/types/dtos/metric-log.dto";
+import { MetricLogDomain } from "@/types/domain/metric-log.domain";
+import AppError from "@/utils/AppError";
+import { redisClient } from "@/utils/redis-client";
+import { findOwnedMetricLog, validateMetricAccess } from "@/utils/db-helper";
+import logger from "@/utils/logger";
+import {
+  toDomainMetricLog,
+  toDomainMetricLogs,
+} from "@/utils/mappers/metric-log.mapper";
 
 const { MetricLog } = db;
 
@@ -28,22 +36,6 @@ export interface LogQueryOptions {
   order?: "asc" | "desc";
 }
 
-interface CreateLogParams {
-  userId: string;
-  metricId: string;
-  logData: MetricLogBase;
-}
-
-interface GetLogsParams {
-  userId: string;
-  metricId: string;
-  options?: LogQueryOptions;
-}
-
-interface UpdateLogParams extends MetricLogBaseParams {
-  updateData: Partial<MetricLogBase>;
-}
-
 /**
  * * Create a new log for a given metric.
  * @param userId - ID of the user
@@ -55,27 +47,29 @@ export const createLog = async ({
   userId,
   metricId,
   logData,
-}: CreateLogParams) => {
+}: {
+  userId: string;
+  metricId: string;
+  logData: CreateMetricLogRequestDTO;
+}): Promise<MetricLogDomain> => {
   // Ensure the parent metric exists and enforce ownership.
   await validateMetricAccess(userId, metricId);
 
-  // Ensure `loggedAt` is set (fallback to current timestamp)
-  logData.loggedAt = logData.loggedAt ? new Date(logData.loggedAt) : new Date();
+  const finalLogData = {
+    ...logData,
+    loggedAt: logData.loggedAt ?? new Date(), // fallback to current timestamp
+    type: logData.type ?? "manual",
+  };
 
   // Prevent duplicate logs for the exact same timestamp
-  const existingLog = await MetricLog.findOne({
-    where: { metricId, loggedAt: logData.loggedAt },
+  const existing = await MetricLog.findOne({
+    where: { metricId, loggedAt: finalLogData.loggedAt },
   });
-  if (existingLog) {
+  if (existing) {
     throw new AppError("A log entry already exists for this timestamp", 400);
   }
 
-  const log = await MetricLog.create({
-    metricId,
-    type: logData.type || "manual",
-    logValue: logData.logValue,
-    loggedAt: logData.loggedAt,
-  });
+  const created = await MetricLog.create({ metricId, ...finalLogData });
 
   // Invalidate logs list and aggregated stats cache for this metric
   if (redisClient.isOpen) {
@@ -86,7 +80,7 @@ export const createLog = async ({
     );
   }
 
-  return log;
+  return toDomainMetricLog(created);
 };
 
 /**
@@ -101,9 +95,13 @@ export const getAllLogsByMetricService = async ({
   userId,
   metricId,
   options,
-}: GetLogsParams) => {
+}: {
+  userId: string;
+  metricId: string;
+  options?: LogQueryOptions;
+}): Promise<MetricLogDomain[]> => {
   // Ensure the parent metric exists and enforce ownership.
-  const metric = await validateMetricAccess(userId, metricId);
+  await validateMetricAccess(userId, metricId);
 
   // Processing the Query
   const whereClause: any = { metricId };
@@ -129,7 +127,7 @@ export const getAllLogsByMetricService = async ({
     order: orderClause,
   });
 
-  return logs;
+  return toDomainMetricLogs(logs);
 };
 
 /**
@@ -143,9 +141,9 @@ export const getLogByIdService = async ({
   userId,
   metricId,
   logId,
-}: MetricLogBaseParams) => {
+}: MetricLogBaseParams): Promise<MetricLogDomain> => {
   // Ensure the parent metric exists and enforce ownership.
-  await validateMetricAccess(userId, metricId);
+  await findOwnedMetricLog(userId, metricId, logId);
 
   // Retrieve and return the log
   const log = await MetricLog.findOne({
@@ -162,7 +160,7 @@ export const getLogByIdService = async ({
     throw new AppError("Log not found", 404);
   }
 
-  return log;
+  return toDomainMetricLog(log);
 };
 
 /**
@@ -172,18 +170,18 @@ export const getLogByIdService = async ({
  * @param id - ID of the specific log
  * @returns Updated metric log object
  */
+interface UpdateLogParams extends MetricLogBaseParams {
+  updateData: Partial<UpdateMetricLogRequestDTO>;
+}
+
 export const updateLogService = async ({
   userId,
   metricId,
   logId,
   updateData,
-}: UpdateLogParams) => {
+}: UpdateLogParams): Promise<MetricLogDomain> => {
   // Ensure Log Exists
-  const log = await getLogByIdService({
-    metricId: metricId,
-    userId: userId,
-    logId: logId,
-  });
+  const log = await findOwnedMetricLog(userId, metricId, logId);
 
   if (updateData.loggedAt) {
     const existingLog = await MetricLog.findOne({
@@ -223,7 +221,7 @@ export const updateLogService = async ({
     );
   }
 
-  return updatedLog;
+  return toDomainMetricLog(updatedLog);
 };
 
 /**s
@@ -236,13 +234,9 @@ export const deleteLogService = async ({
   metricId,
   userId,
   logId,
-}: MetricLogBaseParams) => {
+}: MetricLogBaseParams): Promise<MetricLogDomain> => {
   // Ensure Log Exists
-  const log = await getLogByIdService({
-    userId: userId,
-    metricId: metricId,
-    logId: logId,
-  });
+  const log = await findOwnedMetricLog(userId, metricId, logId);
 
   // Reload to include Metric association (if not already present)
   await log.reload({
@@ -267,6 +261,8 @@ export const deleteLogService = async ({
   }
 
   await log.destroy();
+
+  return toDomainMetricLog(log);
 };
 
 /**
@@ -275,6 +271,7 @@ export const deleteLogService = async ({
  * @param userId - ID of the user
  * @returns Numbers of average, min, max of aggregated stats
  */
+// TODO: Here are unfinished implementation, in the future this will be implemented into end-to-end pipeline for data visualization
 export const getAggregatedStats = async (userId: string, metricId: string) => {
   // Ensure the parent metric exists and enforce ownership.
   await validateMetricAccess(userId, metricId);
