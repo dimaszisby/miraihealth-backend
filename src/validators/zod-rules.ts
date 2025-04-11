@@ -11,7 +11,7 @@ import { ZodMessages } from "@/constants/zod-messages"; // centralized error mes
 export const zUUID = z
   .string()
   .uuid({ message: ZodMessages.common.invalidUUID });
-export const zOptionalDate = z.date({
+export const zDateOptional = z.date({
   required_error: ZodMessages.common.invalidDate,
 });
 
@@ -34,7 +34,7 @@ export const zPublicProfile = z.boolean().optional().default(true);
 export const zRole = z.enum(["user", "admin"]).optional().default("user");
 
 /**
- * * * Metric Category
+ * * Metric Category
  */
 export const zMetricCategoryName = z
   .string()
@@ -45,10 +45,10 @@ export const zMetricCategoryColor = z
   .optional()
   .default("#E897A3");
 export const zMetricCategoryIcon = z.string().min(1).optional().default("📁");
-export const zMetricCategoryDeletedAt = zOptionalDate.optional().nullable();
+export const zMetricCategoryDeletedAt = zDateOptional.optional().nullable();
 
 /**
- * * * Metric
+ * * Metric
  */
 export const zMetricName = z
   .string()
@@ -60,7 +60,7 @@ export const zMetricDefaultUnit = z
 export const zMetricIsPublic = z.boolean();
 
 /**
- * * * * Metric Settings
+ * * Metric Settings
  */
 export const zGoalEnabled = z.boolean().optional().default(false);
 export const zGoalType = z
@@ -73,8 +73,8 @@ export const zGoalValue = z
   .optional()
   .nullable();
 export const zTimeFrameEnabled = z.boolean().optional().default(false);
-export const zStartDate = zOptionalDate.optional().nullable();
-export const zDeadlineDate = zOptionalDate.optional().nullable();
+export const zStartDate = zDateOptional.optional().nullable();
+export const zDeadlineDate = zDateOptional.optional().nullable();
 export const zAlertEnabled = z.boolean().optional().default(false);
 export const zAlertThresholds = z
   .number()
@@ -95,3 +95,14 @@ export const zDisplayOptions = z
     chartType: "line",
     color: "#E897A3",
   });
+
+/**
+ * * * Metric Log
+ */
+export const zPositiveFloat = z
+  .number({ required_error: ZodMessages.metricLog.logValueRequired })
+  .positive({ message: ZodMessages.metricLog.logValueNonNegative });
+
+export const zLogType = z.enum(["manual", "automatic"], {
+  required_error: ZodMessages.metricLog.logTypeInvalid,
+});

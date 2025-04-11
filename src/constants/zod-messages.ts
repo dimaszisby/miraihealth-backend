@@ -2,6 +2,7 @@ export const ZodMessages = {
   common: {
     invalidUUID: "Invalid UUID",
     invalidDate: "Invalid date format",
+    positiveNumber: "Must be a positive number",
   },
   user: {
     usernameMin: "Username must be at least 3 characters",
@@ -30,5 +31,13 @@ export const ZodMessages = {
     alertThresholdMax: "Alert threshold must be at most 100",
     invalidMetricId: "Invalid metric ID",
     invalidMetricSettingsId: "Invalid metric settings ID",
+  },
+  metricLog: {
+    invalidId: "Invalid Metric Log ID",
+    invalidMetricId: "Invalid Metric ID",
+    logValueRequired: "Log value is required",
+    logValueNonNegative: "Log value must be non-negative",
+    logTypeInvalid: "Invalid log type",
+    logDateInvalid: "Invalid date format",
   },
 };
