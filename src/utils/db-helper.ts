@@ -105,3 +105,24 @@ export const findOwnedMetricSettings = async (
 
   return settings;
 };
+
+/**
+ * * Metric Log
+ * Helper function to find a metric log owned by the user
+ * @param userId - The ID of the user who owns the metric
+ * @param metricId - The ID of the metric
+ * @param logId - the ID of the log
+ * @returns metric log sequelize instance
+ */
+export const findOwnedMetricLog = async (
+  userId: string,
+  metricId: string,
+  logId: string
+): Promise<typeof db.MetricLog | null> => {
+  await validateMetricAccess(userId, metricId);
+  const log = await db.MetricLog.findOne({
+    where: { id: logId, metricId },
+  });
+  if (!log) throw new AppError("Metric Log not found", 404);
+  return log;
+};
