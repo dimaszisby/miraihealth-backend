@@ -61,6 +61,26 @@ export const validateMetricCategoryAccess = async (
  */
 
 // TODO: Create Helper function to find a metric by ID
+/**
+ * * Metric
+ * Helper function to find a metric owned by the user
+ * @param userId - The ID of the user who owns the metric
+ * @param metricId - The ID of the metric
+ * @returns metric sequelize instance
+ */
+export const findOwnedMetric = async (
+  userId: string,
+  metricId: string
+): Promise<typeof Metric | null> => {
+  await validateMetricAccess(userId, metricId);
+
+  const metric = await Metric.findOne({
+    where: { id: metricId, userId },
+  });
+  if (!metric) throw new AppError("Metric not found", 404);
+
+  return metric;
+}
 
 /**
  * * Metric Category
