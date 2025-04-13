@@ -3,7 +3,7 @@
 import { z } from "zod";
 import {
   zUUID,
-  zOptionalDate,
+  zDateOptional,
   zGoalValue,
   zGoalType,
   zAlertThresholds,
@@ -20,8 +20,8 @@ export const createMetricSettingsSchema = z.object({
       goalType: zGoalType,
       goalValue: zGoalValue,
       timeFrameEnabled: z.boolean().optional().default(false),
-      startDate: zOptionalDate.optional().nullable(),
-      deadlineDate: zOptionalDate.optional().nullable(),
+      startDate: zDateOptional.optional().nullable(),
+      deadlineDate: zDateOptional.optional().nullable(),
       alertEnabled: z.boolean().optional().default(false),
       alertThresholds: zAlertThresholds,
       displayOptions: zDisplayOptions,
