@@ -1,12 +1,21 @@
 // src/controllers/metric.controller.ts
 
 import { Request, Response, NextFunction } from "express";
-import { AuthRequest } from "../types/request.context.js";
-import AppError from "../utils/AppError.js";
-import { successResponse } from "../utils/response-formatter.js";
-import catchAsync from "../utils/catch-async.js";
-import * as MetricService from "../services/metric.service.js";
 
+// Internal Types
+import { AuthRequest } from "@/types/request.context";
+
+// Services
+import * as MetricService from "@/services/metric.service";
+
+// Utils
+import AppError from "@/utils/AppError";
+import { successResponse } from "@/utils/response-formatter";
+import catchAsync from "@/utils/catch-async";
+import {
+  toMetricResponseDTO,
+  toUserMetricDetailResponseDTO,
+} from "@/utils/mappers/metric.mapper";
 
 /**
  * * Metric Controller
@@ -38,7 +47,12 @@ export const createMetric = catchAsync(
       defaultUnit,
       isPublic,
     });
-    successResponse(res, 201, { metric }, "Metric created successfully.");
+    successResponse(
+      res,
+      201,
+      { metric: toMetricResponseDTO(metric) },
+      "Metric created successfully."
+    );
   }
 );
 
@@ -60,7 +74,7 @@ export const getAllMetrics = catchAsync(
  * * Get specific User Metric by Id
  * @route GET /api/metrics/:id
  */
-export const getUserMetricById = catchAsync(
+export const getUserDetailMetricById = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
@@ -70,7 +84,9 @@ export const getUserMetricById = catchAsync(
     if (!metric) {
       throw new AppError("Metric not found", 404);
     }
-    successResponse(res, 200, { metric });
+    successResponse(res, 200, {
+      metric: toUserMetricDetailResponseDTO(metric),
+    });
   }
 );
 
@@ -87,8 +103,7 @@ export const getPublicMetricById = catchAsync(
     const { id } = req.params;
 
     const metric = await MetricService.getPublicMetricByIdService(id);
-
-    successResponse(res, 200, { metric });
+    successResponse(res, 200, { metric: toMetricResponseDTO(metric) });
   }
 );
 
@@ -101,29 +116,16 @@ export const updateMetric = catchAsync(
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
     const { id } = req.params;
-    const {
-      categoryId,
-      originalMetricId,
-      name,
-      description,
-      defaultUnit,
-      isPublic,
-    } = req.body;
 
-    const updatedMetric = await MetricService.updateMetricService({
-      metricId: id,
-      userId: userId,
-      categoryId: categoryId,
-      originalMetricId: originalMetricId,
-      name: name,
-      description: description,
-      defaultUnit: defaultUnit,
-      isPublic: isPublic,
-    });
+    const updatedMetric = await MetricService.updateMetricService(
+      id,
+      userId,
+      req.body
+    );
     successResponse(
       res,
       200,
-      { metric: updatedMetric },
+      { metric: toMetricResponseDTO(updatedMetric) },
       "Metric updated successfully"
     );
   }
@@ -140,6 +142,11 @@ export const deleteMetric = catchAsync(
     const { id } = req.params;
 
     const metric = await MetricService.deleteMetricService(userId, id);
-    successResponse(res, 200, { metric }, "Metric deleted successfully");
+    successResponse(
+      res,
+      200,
+      { metric: toMetricResponseDTO(metric) },
+      "Metric deleted successfully"
+    );
   }
 );

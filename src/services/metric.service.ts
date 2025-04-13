@@ -1,11 +1,23 @@
 // src/services/metric-service.ts
 
-import db from "../models/index.js";
-import AppError from "../utils/AppError.js";
-import { MetricBase } from "@/types/metric.types.js";
-import { redisClient } from "../utils/redis-client.js";
-import { validateMetricAccess } from "../utils/db-helper.js";
-import logger from "../utils/logger.js";
+import db from "@/models/index";
+import {
+  MetricDomain,
+  MetricDomainExtended,
+  MetricLibraryListDomain,
+} from "@/types/domain/metric.domain";
+import {
+  CreateMetricRequestDTO,
+  UpdateMetricRequestDTO,
+} from "@/types/dtos/metric.dto";
+import AppError from "@/utils/AppError";
+import { redisClient } from "@/utils/redis-client";
+import { findOwnedMetric, validateMetricAccess } from "@/utils/db-helper";
+import logger from "@/utils/logger";
+import {
+  toDomainMetric,
+  toExtendedMetricDomain,
+} from "@/utils/mappers/metric.mapper";
 
 const { Metric, MetricLog, MetricSettings, MetricCategory } = db;
 
@@ -13,39 +25,6 @@ const { Metric, MetricLog, MetricSettings, MetricCategory } = db;
  * * Metric Service
  * Handles all business logic related to metric.
  */
-
-// * Custom Return Data
-export interface UserMetricDetailData extends MetricBase {
-  id: string;
-  category?: object;
-  settings?: object;
-  logs?: object[];
-}
-
-export interface MetricListData {
-  id: string;
-  name: string;
-  category?: {
-    id: string;
-    name: string;
-    icon: string;
-    color: string;
-  };
-  goalType?: string;
-}
-
-// * Parameters
-interface MetricParamsBase extends MetricBase {
-  categoryId: string;
-  originalMetricId: string;
-}
-
-interface UpdateMetricParams extends MetricBase {
-  metricId: string;
-  userId: string;
-  categoryId?: string | null;
-  originalMetricId?: string | null;
-}
 
 /**
  * Create a new metric for a user.
@@ -59,8 +38,8 @@ interface UpdateMetricParams extends MetricBase {
  */
 export const createMetricService = async (
   userId: string,
-  data: MetricParamsBase
-) => {
+  data: CreateMetricRequestDTO
+): Promise<MetricDomain> => {
   logger.info(`Create metric service triggered for user ${userId}`);
   console.log("Create metric service triggered for user", userId);
 
@@ -101,7 +80,7 @@ export const createMetricService = async (
  */
 export const getMetricsListService = async (
   userId: string
-): Promise<MetricListData[]> => {
+): Promise<MetricLibraryListDomain[]> => {
   // Verify that the models are loaded by logging their names.
 
   const metrics = await Metric.findAll({
@@ -123,24 +102,26 @@ export const getMetricsListService = async (
   logger.info(`Fetched ${metrics.length} metrics for user ${userId}`);
 
   // Transform each metric: nest the category data under the property 'category'
-  const transformed: MetricListData[] = metrics.map((metric: typeof Metric) => {
-    const plainMetric = metric.toJSON();
-    // Extract the category (if any) and remove it from the top level.
-    const { MetricCategory, MetricSettings, ...rest } = plainMetric;
-    return {
-      ...rest,
-      // Nest the category data if it exists.
-      category: MetricCategory
-        ? {
-            id: MetricCategory.id,
-            name: MetricCategory.name,
-            icon: MetricCategory.icon,
-            color: MetricCategory.color,
-          }
-        : undefined,
-      goalType: MetricSettings?.goalType ?? undefined,
-    };
-  });
+  const transformed: MetricLibraryListDomain[] = metrics.map(
+    (metric: typeof Metric) => {
+      const plainMetric = metric.toJSON();
+      // Extract the category (if any) and remove it from the top level.
+      const { MetricCategory, MetricSettings, ...rest } = plainMetric;
+      return {
+        ...rest,
+        // Nest the category data if it exists.
+        category: MetricCategory
+          ? {
+              id: MetricCategory.id,
+              name: MetricCategory.name,
+              icon: MetricCategory.icon,
+              color: MetricCategory.color,
+            }
+          : undefined,
+        goalType: MetricSettings?.goalType ?? undefined,
+      };
+    }
+  );
 
   return transformed;
 };
@@ -154,7 +135,7 @@ export const getMetricsListService = async (
 export const getUserMetricDetailService = async (
   userId: string,
   metricId: string
-): Promise<UserMetricDetailData | null> => {
+): Promise<MetricDomainExtended | null> => {
   logger.info(
     `Fetching details for metricId: ${metricId} and userId: ${userId}`
   );
@@ -201,16 +182,7 @@ export const getUserMetricDetailService = async (
     throw new AppError("Unauthorized access to metric details", 403);
   }
 
-  return {
-    id: metric.id,
-    name: metric.name,
-    description: metric.description || undefined,
-    defaultUnit: metric.defaultUnit,
-    isPublic: metric.isPublic,
-    category: (metric as any).MetricCategory || undefined,
-    settings: (metric as any).MetricSettings || undefined,
-    logs: (metric as any).MetricLogs || undefined,
-  };
+  return toExtendedMetricDomain(metric);
 };
 
 /**
@@ -222,9 +194,11 @@ export const getUserMetricDetailService = async (
 export const getUserMetricByIdService = async (
   userId: string,
   metricId: string
-) => {
+): Promise<MetricDomain> => {
   // Ensure the metric exists, check visibility, and  enforce ownership
   const metric = await validateMetricAccess(userId, metricId);
+
+  console.info("Metric Domain on Service", metric);
 
   return metric;
 };
@@ -233,7 +207,9 @@ export const getUserMetricByIdService = async (
 // Currently not being used
 // Prepared for future development
 // Public
-export const getPublicMetricByIdService = async (metricId: string) => {
+export const getPublicMetricByIdService = async (
+  metricId: string
+): Promise<MetricDomain> => {
   const publicMetric = await Metric.findOne({
     where: { id: metricId, isPublic: true },
   });
@@ -241,7 +217,7 @@ export const getPublicMetricByIdService = async (metricId: string) => {
     throw new AppError("Metric not found", 404);
   }
 
-  return publicMetric;
+  return toDomainMetric(publicMetric);
 };
 
 /**
@@ -250,28 +226,16 @@ export const getPublicMetricByIdService = async (metricId: string) => {
  * @param metricId - ID of the metric
  * @returns Updated metric  object
  */
-export const updateMetricService = async ({
-  metricId,
-  userId,
-  categoryId,
-  originalMetricId,
-  name,
-  description,
-  defaultUnit,
-  isPublic,
-}: UpdateMetricParams) => {
+export const updateMetricService = async (
+  metricId: string,
+  userId: string,
+  data: UpdateMetricRequestDTO
+): Promise<MetricDomain> => {
   // Ensure the metric exists, check visibility, and  enforce ownership.
-  const metric = await getUserMetricByIdService(userId, metricId);
+  const metric = await findOwnedMetric(userId, metricId);
 
   // Update the metric
-  await metric.update({
-    categoryId,
-    originalMetricId,
-    name,
-    description,
-    defaultUnit,
-    isPublic,
-  });
+  await metric.update(data);
 
   // Re-fetch the metric to ensure data integerity
   await metric.reload();
@@ -285,7 +249,7 @@ export const updateMetricService = async ({
     );
   }
 
-  return metric;
+  return toDomainMetric(metric);
 };
 
 /**
@@ -294,9 +258,12 @@ export const updateMetricService = async ({
  * @param metricId - ID of the metric
  * @returns Deleted metric  object
  */
-export const deleteMetricService = async (userId: string, metricId: string) => {
+export const deleteMetricService = async (
+  userId: string,
+  metricId: string
+): Promise<MetricDomain> => {
   // Ensure the metric exists, check visibility, and  enforce ownership.
-  const metric = await getUserMetricByIdService(userId, metricId);
+  const metric: typeof Metric = await findOwnedMetric(userId, metricId);
 
   await metric.destroy();
   logger.info(`Metric deleted successfully from database`);
@@ -310,5 +277,5 @@ export const deleteMetricService = async (userId: string, metricId: string) => {
     );
   }
 
-  return metric;
+  return toDomainMetric(metric);
 };

@@ -4,21 +4,25 @@ import { Router } from "express";
 import {
   createMetric,
   getAllMetrics,
-  getUserMetricById,
+  getUserDetailMetricById,
   updateMetric,
   deleteMetric,
-} from "../controllers/metric.controller.js";
-import { getTrends } from "../controllers/trend.controller.js";
-import { authMiddleware } from "../middleware/auth-middleware.js";
-import { cacheMiddleware } from "../middleware/cache-middleware.js";
-import { validate } from "../middleware/validate.js";
+} from "@/controllers/metric.controller";
+import { getTrends } from "@/controllers/trend.controller";
+
+// Middleware
+import { authMiddleware } from "@/middleware/auth-middleware";
+import { cacheMiddleware } from "@/middleware/cache-middleware";
+import { validate } from "@/middleware/validate";
+import { userRateLimiter } from "@/middleware/rate-limiter";
+
+// Schema validation
 import {
   createMetricSchema,
   updateMetricSchema,
   deleteMetricSchema,
   getMetricSchema,
-} from "../validators/metric.validator.js";
-import { userRateLimiter } from "../middleware/rate-limiter.js";
+} from "@/validators/metric.validator";
 
 const router = Router();
 
@@ -50,7 +54,7 @@ router.get(
   "/:id",
   validate(getMetricSchema),
   cacheMiddleware(metricCacheKey, 300),
-  getUserMetricById
+  getUserDetailMetricById
 );
 
 // UPDATE Metric
