@@ -16,11 +16,11 @@ export const ZodMessages = {
     nameRequired: "Name is required",
   },
   metric: {
-    categoryId: "Invalid categoryId",
-    originalMetricId: "Invalid originalMetricId",
-    invalidId: "Invalid Metric ID",
     nameRequired: "Name is required",
     unitRequired: "Unit is required",
+    invalidCategoryId: "Invalid categoryId",
+    invalidOriginalMetricId: "Invalid originalMetricId",
+    invalidMetricId: "Invalid Metric ID",
   },
   metricSettings: {
     invalidGoalValue: "Goal value must be a valid number",

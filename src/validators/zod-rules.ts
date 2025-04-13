@@ -50,14 +50,30 @@ export const zMetricCategoryDeletedAt = zDateOptional.optional().nullable();
 /**
  * * Metric
  */
+export const zMetricNameRule = {
+  min: 1,
+};
+
+export const zMetricUnitRule = {
+  min: 1,
+};
 export const zMetricName = z
   .string()
-  .min(1, { message: ZodMessages.metric.nameRequired });
+  .min(zMetricNameRule.min, { message: ZodMessages.metric.nameRequired });
+export const zMetricCategoryId = z
+  .string()
+  .uuid({ message: ZodMessages.metric.invalidCategoryId })
+  .optional();
+export const zMetricOriginalId = z
+  .string()
+  .uuid({ message: ZodMessages.metric.invalidOriginalMetricId })
+  .optional();
 export const zMetricDescription = z.string();
 export const zMetricDefaultUnit = z
   .string()
-  .min(1, { message: ZodMessages.metric.unitRequired });
-export const zMetricIsPublic = z.boolean();
+  .min(zMetricUnitRule.min, { message: ZodMessages.metric.unitRequired });
+export const zMetricIsPublic = z.boolean().optional().default(true);
+export const zMetricDeletedAt = z.date().optional();
 
 /**
  * * Metric Settings
