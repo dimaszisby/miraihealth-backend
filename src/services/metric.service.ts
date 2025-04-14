@@ -11,7 +11,7 @@ import {
   UpdateMetricRequestDTO,
 } from "@/types/dtos/metric.dto";
 import AppError from "@/utils/AppError";
-import { redisClient } from "@/utils/redis-client";
+import { redisClient, invalidateCache } from "@/utils/redis-client";
 import { findOwnedMetric, validateMetricAccess } from "@/utils/db-helper";
 import logger from "@/utils/logger";
 import {
@@ -66,7 +66,7 @@ export const createMetricService = async (
 
   // Invalidate only the metrics list cache (not individual metric cache)
   if (redisClient.isOpen) {
-    await redisClient.del(`metrics:${userId}`);
+    await invalidateCache(`metrics:${userId}`);
     logger.info(`♻️ Cache invalidated for metrics:${userId}`);
   }
 
@@ -78,6 +78,27 @@ export const createMetricService = async (
  * @param userId - ID of the user requesting the data
  * @returns Array of formatted metrics
  */
+/**
+ * Transforms a Metric instance to MetricLibraryListDomain, nesting the category data.
+ * @param metric - Metric instance
+ * @returns MetricLibraryListDomain
+ */
+const transformMetric = (metric: any): MetricLibraryListDomain => {
+  const { MetricCategory, MetricSettings, ...metricData } = metric.toJSON();
+  return {
+    ...metricData,
+    category: MetricCategory
+      ? {
+          id: MetricCategory.id,
+          name: MetricCategory.name,
+          icon: MetricCategory.icon,
+          color: MetricCategory.color,
+        }
+      : undefined,
+    goalType: MetricSettings?.goalType ?? undefined,
+  };
+};
+
 export const getMetricsListService = async (
   userId: string
 ): Promise<MetricLibraryListDomain[]> => {
@@ -101,27 +122,7 @@ export const getMetricsListService = async (
 
   logger.info(`Fetched ${metrics.length} metrics for user ${userId}`);
 
-  // Transform each metric: nest the category data under the property 'category'
-  const transformed: MetricLibraryListDomain[] = metrics.map(
-    (metric: typeof Metric) => {
-      const plainMetric = metric.toJSON();
-      // Extract the category (if any) and remove it from the top level.
-      const { MetricCategory, MetricSettings, ...rest } = plainMetric;
-      return {
-        ...rest,
-        // Nest the category data if it exists.
-        category: MetricCategory
-          ? {
-              id: MetricCategory.id,
-              name: MetricCategory.name,
-              icon: MetricCategory.icon,
-              color: MetricCategory.color,
-            }
-          : undefined,
-        goalType: MetricSettings?.goalType ?? undefined,
-      };
-    }
-  );
+  const transformed: MetricLibraryListDomain[] = metrics.map(transformMetric);
 
   return transformed;
 };
@@ -242,8 +243,8 @@ export const updateMetricService = async (
 
   // Invalidate Redis cache
   if (redisClient.isOpen) {
-    await redisClient.del(`metric:${metric.userId}:${metric.id}`);
-    await redisClient.del(`metrics:${metric.userId}`);
+    await invalidateCache(`metric:${metric.userId}:${metric.id}`);
+    await invalidateCache(`metrics:${metric.userId}`);
     logger.info(
       `♻️ Cache invalidated for metric:${metric.userId}:${metric.id} and metrics:${metric.userId}`
     );
@@ -270,8 +271,8 @@ export const deleteMetricService = async (
 
   // Invalidate Redis cache
   if (redisClient.isOpen) {
-    await redisClient.del(`metric:${metric.userId}:${metric.id}`);
-    await redisClient.del(`metrics:${metric.userId}`);
+    await invalidateCache(`metric:${metric.userId}:${metric.id}`);
+    await invalidateCache(`metrics:${metric.userId}`);
     logger.info(
       `♻️ Cache invalidated for metric:${metric.userId}:${metric.id} and metrics:${metric.userId}`
     );

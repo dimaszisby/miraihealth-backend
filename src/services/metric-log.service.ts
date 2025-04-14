@@ -1,5 +1,18 @@
 // src/services/metric-log.service.ts
 
+/**
+ * Creates a date range filter for the Sequelize query.
+ * @param startDate - Start date for the filter
+ * @param endDate - End date for the filter
+ * @returns An object containing the date range filter
+ */
+const createDateRangeFilter = (startDate?: Date, endDate?: Date) => {
+  const dateRangeFilter: any = {};
+  if (startDate) dateRangeFilter[Op.gte] = new Date(startDate);
+  if (endDate) dateRangeFilter[Op.lte] = new Date(endDate);
+  return dateRangeFilter;
+};
+
 import db from "@/models/index";
 import { Op, Order } from "sequelize";
 import {
@@ -8,7 +21,7 @@ import {
 } from "@/types/dtos/metric-log.dto";
 import { MetricLogDomain } from "@/types/domain/metric-log.domain";
 import AppError from "@/utils/AppError";
-import { redisClient } from "@/utils/redis-client";
+import { redisClient, invalidateCache } from "@/utils/redis-client";
 import { findOwnedMetricLog, validateMetricAccess } from "@/utils/db-helper";
 import logger from "@/utils/logger";
 import {
@@ -73,8 +86,8 @@ export const createLog = async ({
 
   // Invalidate logs list and aggregated stats cache for this metric
   if (redisClient.isOpen) {
-    await redisClient.del(`logs:${userId}:${metricId}`);
-    await redisClient.del(`logStats:${userId}:${metricId}`);
+    await invalidateCache(`logs:${userId}:${metricId}`);
+    await invalidateCache(`logStats:${userId}:${metricId}`);
     logger.info(
       `♻️ Cache invalidated for logs and stats of metric:${metricId}`
     );
@@ -103,29 +116,20 @@ export const getAllLogsByMetricService = async ({
   // Ensure the parent metric exists and enforce ownership.
   await validateMetricAccess(userId, metricId);
 
-  // Processing the Query
-  const whereClause: any = { metricId };
+  // Build the query
+  const queryOptions: any = {
+    where: { metricId },
+  };
 
   // filtering by date range
   if (options?.startDate || options?.endDate) {
-    whereClause.loggedAt = {};
-    if (options.startDate)
-      whereClause.loggedAt[Op.gte] = new Date(options.startDate);
-    if (options.endDate)
-      whereClause.loggedAt[Op.lte] = new Date(options.endDate);
+    queryOptions.where.loggedAt = createDateRangeFilter(options.startDate, options.endDate);
   }
 
-  const orderClause: Order = [
-    [
-      options?.sortBy || "loggedAt",
-      options?.order?.toUpperCase() === "ASC" ? "ASC" : "DESC",
-    ],
-  ];
+  // sorting
+  queryOptions.order = [[options?.sortBy || "loggedAt", options?.order?.toUpperCase() === "ASC" ? "ASC" : "DESC"]];
 
-  const logs = await MetricLog.findAll({
-    where: whereClause,
-    order: orderClause,
-  });
+  const logs = await MetricLog.findAll(queryOptions);
 
   return toDomainMetricLogs(logs);
 };
@@ -207,13 +211,13 @@ export const updateLogService = async ({
 
   // Invalidate caches based on updatedLog.metric data
   if (redisClient.isOpen && updatedLog.metric) {
-    await redisClient.del(
+    await invalidateCache(
       `log:${updatedLog.metric.userId}:${updatedLog.metric.id}:${updatedLog.id}`
     );
-    await redisClient.del(
+    await invalidateCache(
       `logs:${updatedLog.metric.userId}:${updatedLog.metric.id}`
     );
-    await redisClient.del(
+    await invalidateCache(
       `logStats:${updatedLog.metric.userId}:${updatedLog.metric.id}`
     );
     logger.info(
@@ -250,11 +254,9 @@ export const deleteLogService = async ({
   });
 
   if (redisClient.isOpen && log.metric) {
-    await redisClient.del(
-      `log:${log.metric.userId}:${log.metric.id}:${log.id}`
-    );
-    await redisClient.del(`logs:${log.metric.userId}:${log.metric.id}`);
-    await redisClient.del(`logStats:${log.metric.userId}:${log.metric.id}`);
+    await invalidateCache(`log:${log.metric.userId}:${log.metric.id}:${log.id}`);
+    await invalidateCache(`logs:${log.metric.userId}:${log.metric.id}`);
+    await invalidateCache(`logStats:${log.metric.userId}:${log.metric.id}`);
     logger.info(
       `♻️ Cache invalidated for log:${log.id}, logs, and stats of metric:${log.metric.id}`
     );

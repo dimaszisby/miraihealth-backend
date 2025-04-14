@@ -8,7 +8,7 @@ import {
 } from "@/types/dtos/metric-category.dto";
 import AppError from "@/utils/AppError";
 import logger from "@/utils/logger";
-import { redisClient } from "@/utils/redis-client";
+import { redisClient, invalidateCache } from "@/utils/redis-client";
 import { findOwnedCategory } from "@/utils/db-helper";
 import { toDomainMetricCategory } from "@/utils/mappers/metric-category.mapper";
 
@@ -52,7 +52,7 @@ export const createMetricCategoryService = async (
 
   // Invalidate only the categories list cache (not individual category cache)
   if (redisClient.isOpen) {
-    await redisClient.del(`categories:${category.userId}`);
+    await invalidateCache(`categories:${category.userId}`);
     logger.info(`♻️ Cache invalidated for categories:${category.userId}`);
   }
 
@@ -130,8 +130,8 @@ export const updateMetricCategoryService = async (
 
   // Invalidate Redis cache
   if (redisClient.isOpen) {
-    await redisClient.del(`category:${category.userId}:${category.id}`); // Invalidate the single category cache
-    await redisClient.del(`categories:${category.userId}`); // Invalidate the categories list cache
+    await invalidateCache(`category:${category.userId}:${category.id}`);
+    await invalidateCache(`categories:${category.userId}`);
     logger.info(
       `♻️ Cache invalidated for category:${category.userId}:${category.id} and categories:${category.userId}`
     );
@@ -158,8 +158,8 @@ export const deleteMetricCategoryService = async (
 
   // Invalidate Redis cache
   if (redisClient.isOpen) {
-    await redisClient.del(`category:${category.userId}:${category.id}`);
-    await redisClient.del(`categories:${category.userId}`);
+    await invalidateCache(`category:${category.userId}:${category.id}`);
+    await invalidateCache(`categories:${category.userId}`);
     logger.info(
       `♻️ Cache invalidated for category:${category.userId}:${category.id} and categories:${category.userId}`
     );

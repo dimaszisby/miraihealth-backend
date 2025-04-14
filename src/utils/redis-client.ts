@@ -63,7 +63,18 @@ const disconnectRedis = async () => {
   }
 };
 
+/**
+ * Invalidates the Redis cache for the given key.
+ * @param key - The cache key to invalidate.
+ */
+const invalidateCache = async (key: string) => {
+  if (redisClient.isOpen) {
+    await invalidateCache(key);
+    logger.info(`♻️ Cache invalidated for ${key}`);
+  }
+};
+
 // Auto-connect on import
 connectRedis();
 
-export { redisClient, disconnectRedis };
+export { redisClient, disconnectRedis, invalidateCache };

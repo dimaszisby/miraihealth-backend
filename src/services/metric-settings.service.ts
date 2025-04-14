@@ -7,7 +7,7 @@ import {
 } from "@/types/dtos/metric-settings.dto";
 import { MetricSettingsDomain } from "@/types/domain/metric-settings.domain";
 import { UpdateMetricCategoryRequestDTO } from "@/types/dtos/metric-category.dto";
-import { redisClient } from "@/utils/redis-client";
+import { redisClient, invalidateCache } from "@/utils/redis-client";
 import {
   findOwnedMetricSettings,
   validateMetricAccess,
@@ -78,7 +78,7 @@ export const createMetricSettingsService = async (
 
   // Invalidate cache for metric settings
   if (redisClient.isOpen && metricSettings.metric) {
-    await redisClient.del(`metricSettings:${metric.userId}:${metric.id}`);
+    await invalidateCache(`metricSettings:${metric.userId}:${metric.id}`);
     logger.info(
       `♻️ Cache invalidated for metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`
     );
@@ -164,12 +164,8 @@ export const updateMetricSettingsService = async (
   });
 
   if (redisClient.isOpen && metricSettings.metric) {
-    await redisClient.del(
-      `metricSetting:${metricSettings.metric.userId}:${metricSettings.metric.id}:${metricSettings.id}`
-    );
-    await redisClient.del(
-      `metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`
-    );
+    await invalidateCache(`metricSetting:${metricSettings.metric.userId}:${metricSettings.metric.id}:${metricSettings.id}`);
+    await invalidateCache(`metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`);
     logger.info(
       `♻️ Cache invalidated for metricSetting:${metricSettings.metric.userId}:${metricSettings.metric.id}:${metricSettings.id} and metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`
     );
@@ -205,12 +201,8 @@ export const deleteMetricSettingsService = async ({
 
   // Invalidate cache using stored associated Metric data.
   if (redisClient.isOpen && associatedMetric) {
-    await redisClient.del(
-      `metricSetting:${associatedMetric.userId}:${associatedMetric.id}:${metricSettings.id}`
-    );
-    await redisClient.del(
-      `metricSettings:${associatedMetric.userId}:${associatedMetric.id}`
-    );
+    await invalidateCache(`metricSetting:${associatedMetric.userId}:${associatedMetric.id}:${settingsId}`);
+    await invalidateCache(`metricSettings:${associatedMetric.userId}:${associatedMetric.id}`);
     logger.info(
       `♻️ Cache invalidated for metricSetting:${associatedMetric.userId}:${associatedMetric.id}:${metricSettings.id} and metricSettings:${associatedMetric.userId}:${associatedMetric.id}`
     );
@@ -253,14 +245,10 @@ export const updateGoalAchievementService = async ({
   });
 
   if (redisClient.isOpen && metricSettings.metric) {
-    await redisClient.del(
-      `metricSetting:${metricSettings.metric.userId}:${metricSettings.metric.id}:${metricSettings.id}`
-    );
-    await redisClient.del(
-      `metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`
-    );
+    await invalidateCache(`metricSetting:${metricSettings.metric.userId}:${metricSettings.metric.id}:${settingsId}`);
+    await invalidateCache(`metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`);
     logger.info(
-      `♻️ Cache invalidated for metricSetting:${metricSettings.metric.userId}:${metricSettings.metric.id}:${metricSettings.id} and metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`
+      `♻️ Cache invalidated for metricSetting:${metricSettings.metric.userId}:${metricSettings.metric.id}:${settingsId} and metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`
     );
   }
 
@@ -307,14 +295,10 @@ export const updateDisplayOptionsService = async ({
   });
 
   if (redisClient.isOpen && metricSettings.metric) {
-    await redisClient.del(
-      `metricSetting:${metricSettings.metric.userId}:${metricSettings.metric.id}:${metricSettings.id}`
-    );
-    await redisClient.del(
-      `metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`
-    );
+    await invalidateCache(`metricSetting:${metricSettings.metric.userId}:${metricSettings.metric.id}:${settingsId}`);
+    await invalidateCache(`metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`);
     logger.info(
-      `♻️ Cache invalidated for metricSetting:${metricSettings.metric.userId}:${metricSettings.metric.id}:${metricSettings.id} and metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`
+      `♻️ Cache invalidated for metricSetting:${metricSettings.metric.userId}:${metricSettings.metric.id}:${settingsId} and metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`
     );
   }
 
