@@ -4,7 +4,7 @@ import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { MetricCategory } from "./metric-category.model.js";
 import { MetricSettings } from "./metric-settings.model.js";
 import { MetricLog } from "./metric-log.model.js";
-import { MetricBase } from "@/types/metric.types.js";
+import { MetricAttributesBase } from "@/types/db/metric.types";
 
 /**
  * * Metric Model
@@ -12,7 +12,7 @@ import { MetricBase } from "@/types/metric.types.js";
  */
 
 // Define attributes
-export interface MetricAttributes extends MetricBase {
+export interface MetricAttributes extends MetricAttributesBase {
   // DB-specifics
   id: string;
   userId: string;

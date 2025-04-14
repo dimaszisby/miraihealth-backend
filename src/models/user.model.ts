@@ -8,14 +8,14 @@ import {
   DateOnlyDataType,
 } from "sequelize";
 import bcrypt from "bcrypt";
-import { UserBase } from "@/types/user.types";
+import { UserAttributesBase } from "@/types/db/user.types";
 
 /**
  * * User Model
  * Defines the schema and associations for the User entity.
  */
 
-export interface UserAttributes extends UserBase {
+export interface UserAttributes extends UserAttributesBase {
   id?: string;
 
   createdAt?: Date | null;

@@ -2,7 +2,7 @@
 
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { Metric } from "./metric.model.js";
-import { MetricLogBase } from "@/types/metric-log.types.js";
+import { MetricLogAttributesBase } from "@/types/db/metric-log.types";
 
 /**
  * * MetricLog Model
@@ -10,7 +10,7 @@ import { MetricLogBase } from "@/types/metric-log.types.js";
  */
 
 // Define attributes
-export interface MetricLogAttributes extends MetricLogBase {
+export interface MetricLogAttributes extends MetricLogAttributesBase {
   // DB-specifics
   id: string;
   metricId: string;

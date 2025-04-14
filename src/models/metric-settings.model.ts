@@ -2,7 +2,7 @@
 
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { Metric } from "./metric.model.js";
-import { MetricSettingsBase } from "../types/metric-settings.types.js";
+import { MetricSettingsAttributesBase } from "@/types/db/metric-settings.types";
 
 /**
  * * MetricSettings Model
@@ -15,7 +15,7 @@ import { MetricSettingsBase } from "../types/metric-settings.types.js";
  * Describe the shape of data specifically for the database
  */
 
-export interface MetricSettingsAttributes extends MetricSettingsBase {
+export interface MetricSettingsAttributes extends MetricSettingsAttributesBase {
   // DB-specifics
   id: string;
   metricId: string;
@@ -42,8 +42,8 @@ export class MetricSettings
   declare goalType?: "cumulative" | "incremental" | null;
   declare goalValue?: number | null;
   declare timeFrameEnabled: boolean;
-  declare startDate?: string | null;
-  declare deadlineDate?: string | null;
+  declare startDate?: Date | null;
+  declare deadlineDate?: Date | null;
   declare alertEnabled: boolean;
   declare alertThresholds?: number | null;
   declare isAchieved: boolean;
