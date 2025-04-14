@@ -1,40 +1,172 @@
-// src/types/domain/metric.domain.ts\
+/**
+ * @file src/types/domain/metric.domain.ts
+ * @description Defines the domain model interfaces related to Metrics.
+ * These represent metrics, library views of metrics, and extended metric details
+ * within the core business logic, decoupled from database or API specifics.
+ * Domain models are often immutable.
+ */
 
 import { MetricCategoryDomain } from "./metric-category.domain";
 import { MetricLogDomain } from "./metric-log.domain";
 import { MetricSettingsDomain } from "./metric-settings.domain";
 
+/**
+ * @interface MetricDomain
+ * @description Represents a core metric entity within the application's domain logic.
+ * Contains essential metric information retrieved from the persistence layer.
+ */
 export interface MetricDomain {
-  id: string;
-  userId: string;
-  categoryId?: string | null;
-  originalMetricId?: string | null;
-  name: string;
-  description?: string | null;
-  defaultUnit: string;
-  isPublic: boolean;
-  deletedAt?: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
+  /**
+   * @property {string} id - The unique identifier for the metric (typically a UUID).
+   * @readonly
+   */
+  readonly id: string;
+
+  /**
+   * @property {string} userId - The identifier of the user who owns this metric instance.
+   * @readonly
+   */
+  readonly userId: string;
+
+  /**
+   * @property {string | null} [categoryId] - The identifier of the category this metric belongs to, if any.
+   * @readonly
+   */
+  readonly categoryId?: string | null;
+
+  /**
+   * @property {string | null} [originalMetricId] - If this metric was created from a public template, this is the ID of the original template metric. Null otherwise.
+   * @readonly
+   */
+  readonly originalMetricId?: string | null;
+
+  /**
+   * @property {string} name - The user-defined name for the metric.
+   * @readonly
+   */
+  readonly name: string;
+
+  /**
+   * @property {string | null} [description] - An optional description providing more details about the metric.
+   * @readonly
+   */
+  readonly description?: string | null;
+
+  /**
+   * @property {string} defaultUnit - The default unit of measurement for this metric (e.g., 'kg', 'steps', 'ml').
+   * @readonly
+   */
+  readonly defaultUnit: string;
+
+  /**
+   * @property {boolean} isPublic - Flag indicating if this metric definition can be publicly discovered or used as a template.
+   * @readonly
+   */
+  readonly isPublic: boolean;
+
+  /**
+   * @property {Date | null} [deletedAt] - The timestamp when the metric was soft-deleted. Null if active.
+   * @readonly
+   */
+  readonly deletedAt?: Date | null;
+
+  /**
+   * @property {Date} createdAt - The timestamp when the metric was created.
+   * @readonly
+   */
+  readonly createdAt: Date;
+
+  /**
+   * @property {Date} updatedAt - The timestamp when the metric was last updated.
+   * @readonly
+   */
+  readonly updatedAt: Date;
 }
 
+/**
+ * @interface MetricLibraryCategoryInfo
+ * @description Represents summarized category information used within the metric library view.
+ */
+interface MetricLibraryCategoryInfo {
+    /**
+     * @property {string} id - The unique identifier of the category.
+     * @readonly
+     */
+    readonly id: string;
+    /**
+     * @property {string} name - The name of the category.
+     * @readonly
+     */
+    readonly name: string;
+    /**
+     * @property {string} icon - The icon identifier of the category.
+     * @readonly
+     */
+    readonly icon: string;
+    /**
+     * @property {string} color - The color code of the category.
+     * @readonly
+     */
+    readonly color: string;
+}
+
+/**
+ * @interface MetricLibraryDomain
+ * @description Represents a simplified view of a metric, typically for display in a public library or template list.
+ */
 export interface MetricLibraryDomain {
-  id: string;
-  name: string;
-  category?: {
-    id: string;
-    name: string;
-    icon: string;
-    color: string;
-  };
-  goalType?: string;
+  /**
+   * @property {string} id - The unique identifier of the metric.
+   * @readonly
+   */
+  readonly id: string;
+
+  /**
+   * @property {string} name - The name of the metric.
+   * @readonly
+   */
+  readonly name: string;
+
+  /**
+   * @property {MetricLibraryCategoryInfo} [category] - Optional summarized information about the metric's category.
+   * @readonly
+   */
+  readonly category?: MetricLibraryCategoryInfo;
+
+  /**
+   * @property {string} [goalType] - Optional goal type associated with the metric's settings (e.g., 'cumulative', 'incremental').
+   * @readonly
+   */
+  readonly goalType?: string; // Consider using the specific ENUM type if available/stable
 }
 
+/**
+ * @type MetricLibraryListDomain
+ * @description Represents a list (array) of metrics formatted for the library view.
+ */
 export type MetricLibraryListDomain = MetricLibraryDomain[];
 
-// Extended type for Metric with relations using imported Domain types
+/**
+ * @interface MetricDomainExtended
+ * @description Extends the core MetricDomain with potentially loaded relational data (category, settings, logs).
+ * Useful for scenarios where related entities are needed alongside the metric itself.
+ */
 export interface MetricDomainExtended extends MetricDomain {
-  category?: MetricCategoryDomain;
-  settings?: MetricSettingsDomain;
-  logs?: MetricLogDomain[];
+  /**
+   * @property {MetricCategoryDomain} [category] - The associated metric category domain object, if loaded.
+   * @readonly
+   */
+  readonly category?: MetricCategoryDomain;
+
+  /**
+   * @property {MetricSettingsDomain} [settings] - The associated metric settings domain object, if loaded.
+   * @readonly
+   */
+  readonly settings?: MetricSettingsDomain;
+
+  /**
+   * @property {MetricLogDomain[]} [logs] - An array of associated metric log domain objects, if loaded.
+   * @readonly
+   */
+  readonly logs?: MetricLogDomain[];
 }
