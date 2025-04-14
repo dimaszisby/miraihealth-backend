@@ -46,9 +46,16 @@ export const toMetricSettingsResponseDTO = (
   startDate: domain.startDate?.toISOString() ?? null,
   deadlineDate: domain.deadlineDate?.toISOString() ?? null,
   alertEnabled: domain.alertEnabled,
-  alertThresholds: domain.alertThresholds,
+  alertThresholds: domain.alertThresholds ?? undefined,
   isAchieved: domain.isAchieved,
-  displayOptions: domain.displayOptions,
+  displayOptions: domain.displayOptions
+    ? {
+        showOnDashboard: domain.displayOptions.showOnDashboard,
+        priority: domain.displayOptions.priority ?? undefined,
+        chartType: domain.displayOptions.chartType ?? undefined,
+        color: domain.displayOptions.color ?? undefined,
+      }
+    : undefined,
   createdAt: domain.createdAt.toISOString(),
   updatedAt: domain.updatedAt.toISOString(),
 });
@@ -67,7 +74,7 @@ export const toDomainDisplayOptions = (
 export const toDisplayOptionsResponseDTO = (
   displayOptions: MetricSettingsDomain["displayOptions"]
 ): DisplayOptionsDTO => ({
-  showOnDashboard: displayOptions?.showOnDashboard ?? true,
+  showOnDashboard: displayOptions?.showOnDashboard ?? false,
   priority: displayOptions?.priority ?? 1,
   chartType: displayOptions?.chartType ?? "line",
   color: displayOptions?.color ?? "#E897A3",
@@ -85,7 +92,7 @@ export const toDisplayOptionsResponseDTO = (
 const normalizeDisplayOptions = (
   opts: any = {}
 ): MetricSettingsDomain["displayOptions"] => ({
-  showOnDashboard: opts.showOnDashboard ?? true,
+  showOnDashboard: opts.showOnDashboard ?? false,
   priority: opts.priority ?? 1,
   chartType: opts.chartType ?? "line",
   color: opts.color ?? "#E897A3",
