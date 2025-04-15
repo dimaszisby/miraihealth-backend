@@ -15,6 +15,6 @@ export const tokenGenerator = (user: typeof User): string => {
   return jwt.sign(
     { id: user.id, email: user.email },
     env.JWT_SECRET as string,
-    { expiresIn: "7d" }
+    { expiresIn: "7d" },
   );
 };

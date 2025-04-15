@@ -44,7 +44,7 @@ router.put(
   userRateLimiter,
   authMiddleware,
   validate(updateUserSchema),
-  updateProfile
+  updateProfile,
 );
 
 // 🔹 Logout user (Handled client-side for JWT)

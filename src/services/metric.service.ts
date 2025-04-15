@@ -38,7 +38,7 @@ const { Metric, MetricLog, MetricSettings, MetricCategory } = db;
  */
 export const createMetricService = async (
   userId: string,
-  data: CreateMetricRequestDTO
+  data: CreateMetricRequestDTO,
 ): Promise<MetricDomain> => {
   logger.info(`Create metric service triggered for user ${userId}`);
   console.log("Create metric service triggered for user", userId);
@@ -99,12 +99,15 @@ const transformMetric = (metric: any): MetricLibraryListDomain => {
   };
 };
 
-export const getMetricsListService = async (
-  userId: string
-): Promise<MetricLibraryListDomain[]> => {
-  // Verify that the models are loaded by logging their names.
-
-  const metrics = await Metric.findAll({
+/**
+ * Fetches all metrics for a given user from the database.
+ * Includes associated MetricCategory and MetricSettings data.
+ *
+ * @param userId - ID of the user.
+ * @returns A promise that resolves to an array of metric data.
+ */
+const fetchMetrics = async (userId: string): Promise<any[]> => {
+  return Metric.findAll({
     where: { userId },
     include: [
       {
@@ -119,6 +122,18 @@ export const getMetricsListService = async (
       },
     ],
   });
+};
+
+/**
+ * Fetches all metrics for a user and transforms them into MetricLibraryListDomain format.
+ *
+ * @param userId - ID of the user.
+ * @returns A promise that resolves to an array of transformed metrics.
+ */
+export const getMetricsListService = async (
+  userId: string,
+): Promise<MetricLibraryListDomain[]> => {
+  const metrics = await fetchMetrics(userId);
 
   logger.info(`Fetched ${metrics.length} metrics for user ${userId}`);
 
@@ -135,10 +150,10 @@ export const getMetricsListService = async (
  */
 export const getUserMetricDetailService = async (
   userId: string,
-  metricId: string
+  metricId: string,
 ): Promise<MetricDomainExtended | null> => {
   logger.info(
-    `Fetching details for metricId: ${metricId} and userId: ${userId}`
+    `Fetching details for metricId: ${metricId} and userId: ${userId}`,
   );
 
   // Fetch the whole data
@@ -194,7 +209,7 @@ export const getUserMetricDetailService = async (
  */
 export const getUserMetricByIdService = async (
   userId: string,
-  metricId: string
+  metricId: string,
 ): Promise<MetricDomain> => {
   // Ensure the metric exists, check visibility, and  enforce ownership
   const metric = await validateMetricAccess(userId, metricId);
@@ -209,16 +224,14 @@ export const getUserMetricByIdService = async (
 // Prepared for future development
 // Public
 export const getPublicMetricByIdService = async (
-  metricId: string
+  metricId: string,
 ): Promise<MetricDomain> => {
-  const publicMetric = await Metric.findOne({
-    where: { id: metricId, isPublic: true },
-  });
-  if (publicMetric) {
-    throw new AppError("Metric not found", 404);
+  try {
+    const publicMetric = await validateMetricAccess(null, metricId);
+    return toDomainMetric(publicMetric);
+  } catch (error) {
+    throw error;
   }
-
-  return toDomainMetric(publicMetric);
 };
 
 /**
@@ -230,7 +243,7 @@ export const getPublicMetricByIdService = async (
 export const updateMetricService = async (
   metricId: string,
   userId: string,
-  data: UpdateMetricRequestDTO
+  data: UpdateMetricRequestDTO,
 ): Promise<MetricDomain> => {
   // Ensure the metric exists, check visibility, and  enforce ownership.
   const metric = await findOwnedMetric(userId, metricId);
@@ -246,7 +259,7 @@ export const updateMetricService = async (
     await invalidateCache(`metric:${metric.userId}:${metric.id}`);
     await invalidateCache(`metrics:${metric.userId}`);
     logger.info(
-      `♻️ Cache invalidated for metric:${metric.userId}:${metric.id} and metrics:${metric.userId}`
+      `♻️ Cache invalidated for metric:${metric.userId}:${metric.id} and metrics:${metric.userId}`,
     );
   }
 
@@ -261,10 +274,10 @@ export const updateMetricService = async (
  */
 export const deleteMetricService = async (
   userId: string,
-  metricId: string
+  metricId: string,
 ): Promise<MetricDomain> => {
   // Ensure the metric exists, check visibility, and  enforce ownership.
-  const metric: typeof Metric = await findOwnedMetric(userId, metricId);
+  const metric = await findOwnedMetric(userId, metricId);
 
   await metric.destroy();
   logger.info(`Metric deleted successfully from database`);
@@ -274,7 +287,7 @@ export const deleteMetricService = async (
     await invalidateCache(`metric:${metric.userId}:${metric.id}`);
     await invalidateCache(`metrics:${metric.userId}`);
     logger.info(
-      `♻️ Cache invalidated for metric:${metric.userId}:${metric.id} and metrics:${metric.userId}`
+      `♻️ Cache invalidated for metric:${metric.userId}:${metric.id} and metrics:${metric.userId}`,
     );
   }
 

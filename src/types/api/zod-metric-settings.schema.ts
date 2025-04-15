@@ -36,7 +36,7 @@ export const createMetricSettingsSchema = z.object({
       {
         message:
           "goalType and goalValue are required when goalEnabled is true.",
-      }
+      },
     )
     .refine(
       (data) => {
@@ -52,7 +52,7 @@ export const createMetricSettingsSchema = z.object({
       {
         message:
           "startDate and deadlineDate are required, and deadlineDate must be after startDate when timeFrameEnabled is true.",
-      }
+      },
     ),
 });
 

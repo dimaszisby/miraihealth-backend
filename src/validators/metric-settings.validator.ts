@@ -33,12 +33,12 @@ export const createMetricSettingsSchema = z.object({
       startDate: z.preprocess(
         (arg) =>
           typeof arg === "string" || arg instanceof Date ? new Date(arg) : arg,
-        z.date().optional().nullable()
+        z.date().optional().nullable(),
       ),
       deadlineDate: z.preprocess(
         (arg) =>
           typeof arg === "string" || arg instanceof Date ? new Date(arg) : arg,
-        z.date().optional().nullable()
+        z.date().optional().nullable(),
       ),
       alertEnabled: z.boolean().optional().default(false),
       alertThresholds: z
@@ -60,7 +60,7 @@ export const createMetricSettingsSchema = z.object({
       {
         message:
           "goalType and goalValue are required when goalEnabled is true.",
-      }
+      },
     )
     .refine(
       (data) => {
@@ -76,7 +76,7 @@ export const createMetricSettingsSchema = z.object({
       {
         message:
           "startDate and deadlineDate are required, and deadlineDate must be after startDate when timeFrameEnabled is true.",
-      }
+      },
     ),
 });
 

@@ -88,26 +88,26 @@ export interface MetricDomain {
  * @description Represents summarized category information used within the metric library view.
  */
 interface MetricLibraryCategoryInfo {
-    /**
-     * @property {string} id - The unique identifier of the category.
-     * @readonly
-     */
-    readonly id: string;
-    /**
-     * @property {string} name - The name of the category.
-     * @readonly
-     */
-    readonly name: string;
-    /**
-     * @property {string} icon - The icon identifier of the category.
-     * @readonly
-     */
-    readonly icon: string;
-    /**
-     * @property {string} color - The color code of the category.
-     * @readonly
-     */
-    readonly color: string;
+  /**
+   * @property {string} id - The unique identifier of the category.
+   * @readonly
+   */
+  readonly id: string;
+  /**
+   * @property {string} name - The name of the category.
+   * @readonly
+   */
+  readonly name: string;
+  /**
+   * @property {string} icon - The icon identifier of the category.
+   * @readonly
+   */
+  readonly icon: string;
+  /**
+   * @property {string} color - The color code of the category.
+   * @readonly
+   */
+  readonly color: string;
 }
 
 /**

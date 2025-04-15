@@ -28,15 +28,15 @@ export const createMetricSettings = catchAsync(
       await metricSettingsService.createMetricSettingsService(
         req.user.id,
         req.params.metricId,
-        req.body
+        req.body,
       );
     successResponse(
       res,
       201,
       { metricSettings: toMetricSettingsResponseDTO(metricSettings) },
-      "Metric Settings created successfully"
+      "Metric Settings created successfully",
     );
-  }
+  },
 );
 
 /**
@@ -50,19 +50,19 @@ export const getAllMetricSettings = catchAsync(
     const metricSettings =
       await metricSettingsService.getAllMetricSettingsService(
         req.user.id,
-        req.params.metricId
+        req.params.metricId,
       );
 
     const metricSettingsResponse = metricSettings.map(
-      toMetricSettingsResponseDTO
+      toMetricSettingsResponseDTO,
     );
     successResponse(
       res,
       200,
       { metricSettings: metricSettingsResponse },
-      "Metric Settings retrieved successfully"
+      "Metric Settings retrieved successfully",
     );
-  }
+  },
 );
 
 /**
@@ -83,9 +83,9 @@ export const getMetricSettingsById = catchAsync(
       res,
       200,
       { metricSettings: metricSettings },
-      "Metric Settings retrieved successfully"
+      "Metric Settings retrieved successfully",
     );
-  }
+  },
 );
 
 /**
@@ -101,16 +101,16 @@ export const updateMetricSettings = catchAsync(
         req.user.id,
         req.params.metricId,
         req.params.id,
-        req.body
+        req.body,
       );
 
     successResponse(
       res,
       200,
       { metricSettings: toMetricSettingsResponseDTO(metricSettings) },
-      "Metric settings updated successfully"
+      "Metric settings updated successfully",
     );
-  }
+  },
 );
 
 /**
@@ -131,9 +131,9 @@ export const deleteMetricSettings = catchAsync(
       res,
       200,
       { metricSettings: toMetricSettingsResponseDTO(metricSettings) },
-      "Metric Settings deleted successfully"
+      "Metric Settings deleted successfully",
     );
-  }
+  },
 );
 
 /**
@@ -154,9 +154,9 @@ export const updateGoalAchievement = catchAsync(
       res,
       200,
       { metricSettings: toMetricSettingsResponseDTO(metricSettings) },
-      "Goal achievement updated successfully"
+      "Goal achievement updated successfully",
     );
-  }
+  },
 );
 
 /**
@@ -178,7 +178,7 @@ export const updateDisplayOptions = catchAsync(
       res,
       200,
       { displayOptions: toDisplayOptionsResponseDTO(displayOptions) },
-      "Display options updated successfully"
+      "Display options updated successfully",
     );
-  }
+  },
 );

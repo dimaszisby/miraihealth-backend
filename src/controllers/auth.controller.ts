@@ -24,9 +24,9 @@ export const register = catchAsync(
       res,
       201,
       { token: authData.token, user: toUserResponseDTO(authData.user) },
-      "User created successfully"
+      "User created successfully",
     );
-  }
+  },
 );
 
 /**
@@ -43,7 +43,7 @@ export const login = catchAsync(
       token: authData.token,
       user: toUserResponseDTO(authData.user),
     });
-  }
+  },
 );
 
 /**
@@ -62,7 +62,7 @@ export const getProfile = catchAsync(
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     });
-  }
+  },
 );
 
 /**
@@ -73,7 +73,7 @@ export const updateProfile = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     const user = await AuthService.updateUserProfileService(req.user, req.body);
     successResponse(res, 200, { user }, "Profile updated successfully");
-  }
+  },
 );
 
 /**
@@ -83,7 +83,7 @@ export const updateProfile = catchAsync(
 export const logout = (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void => {
   res.status(200).json({ message: "Logged out successfully" });
 };

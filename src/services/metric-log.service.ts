@@ -89,7 +89,7 @@ export const createLog = async ({
     await invalidateCache(`logs:${userId}:${metricId}`);
     await invalidateCache(`logStats:${userId}:${metricId}`);
     logger.info(
-      `♻️ Cache invalidated for logs and stats of metric:${metricId}`
+      `♻️ Cache invalidated for logs and stats of metric:${metricId}`,
     );
   }
 
@@ -104,6 +104,46 @@ export const createLog = async ({
  * @param options - Metric log query options
  * @returns All metric log object
  */
+/**
+ * Builds the query options for retrieving metric logs.
+ *
+ * @param metricId - ID of the metric.
+ * @param options - Optional query options for filtering and sorting.
+ * @returns An object containing the query options.
+ */
+const buildQueryOptions = (
+  metricId: string,
+  options?: LogQueryOptions,
+): any => {
+  const queryOptions: any = {
+    where: { metricId },
+  };
+
+  if (options?.startDate || options?.endDate) {
+    queryOptions.where.loggedAt = createDateRangeFilter(
+      options.startDate,
+      options.endDate,
+    );
+  }
+
+  queryOptions.order = [
+    [
+      options?.sortBy || "loggedAt",
+      options?.order?.toUpperCase() === "ASC" ? "ASC" : "DESC",
+    ],
+  ];
+
+  return queryOptions;
+};
+
+/**
+ * Retrieves all logs for a given metric, with optional filtering and sorting.
+ *
+ * @param userId - ID of the user.
+ * @param metricId - ID of the metric.
+ * @param options - Optional query options for filtering and sorting.
+ * @returns A promise that resolves to an array of metric logs.
+ */
 export const getAllLogsByMetricService = async ({
   userId,
   metricId,
@@ -116,18 +156,7 @@ export const getAllLogsByMetricService = async ({
   // Ensure the parent metric exists and enforce ownership.
   await validateMetricAccess(userId, metricId);
 
-  // Build the query
-  const queryOptions: any = {
-    where: { metricId },
-  };
-
-  // filtering by date range
-  if (options?.startDate || options?.endDate) {
-    queryOptions.where.loggedAt = createDateRangeFilter(options.startDate, options.endDate);
-  }
-
-  // sorting
-  queryOptions.order = [[options?.sortBy || "loggedAt", options?.order?.toUpperCase() === "ASC" ? "ASC" : "DESC"]];
+  const queryOptions = buildQueryOptions(metricId, options);
 
   const logs = await MetricLog.findAll(queryOptions);
 
@@ -212,16 +241,16 @@ export const updateLogService = async ({
   // Invalidate caches based on updatedLog.metric data
   if (redisClient.isOpen && updatedLog.metric) {
     await invalidateCache(
-      `log:${updatedLog.metric.userId}:${updatedLog.metric.id}:${updatedLog.id}`
+      `log:${updatedLog.metric.userId}:${updatedLog.metric.id}:${updatedLog.id}`,
     );
     await invalidateCache(
-      `logs:${updatedLog.metric.userId}:${updatedLog.metric.id}`
+      `logs:${updatedLog.metric.userId}:${updatedLog.metric.id}`,
     );
     await invalidateCache(
-      `logStats:${updatedLog.metric.userId}:${updatedLog.metric.id}`
+      `logStats:${updatedLog.metric.userId}:${updatedLog.metric.id}`,
     );
     logger.info(
-      `♻️ Cache invalidated for log:${updatedLog.id}, logs, and stats of metric:${updatedLog.metric.id}`
+      `♻️ Cache invalidated for log:${updatedLog.id}, logs, and stats of metric:${updatedLog.metric.id}`,
     );
   }
 
@@ -254,11 +283,13 @@ export const deleteLogService = async ({
   });
 
   if (redisClient.isOpen && log.metric) {
-    await invalidateCache(`log:${log.metric.userId}:${log.metric.id}:${log.id}`);
+    await invalidateCache(
+      `log:${log.metric.userId}:${log.metric.id}:${log.id}`,
+    );
     await invalidateCache(`logs:${log.metric.userId}:${log.metric.id}`);
     await invalidateCache(`logStats:${log.metric.userId}:${log.metric.id}`);
     logger.info(
-      `♻️ Cache invalidated for log:${log.id}, logs, and stats of metric:${log.metric.id}`
+      `♻️ Cache invalidated for log:${log.id}, logs, and stats of metric:${log.metric.id}`,
     );
   }
 

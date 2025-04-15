@@ -6,6 +6,7 @@ import { MetricLog } from "../models/metric-log.model.js";
 import { Metric } from "../models/metric.model.js";
 import AppError from "../utils/AppError.js";
 import catchAsync from "../utils/catch-async.js";
+import { validateMetricAccess } from "@/utils/db-helper";
 
 /**
  * * Metric Trends Controller
@@ -29,33 +30,30 @@ export const getTrends = catchAsync(
       throw new AppError("Metric ID is required", 400);
     }
 
-    // Validate if the user owns the metric
-    const metric = await Metric.findOne({
-      where: { id: metricId, userId: req.user?.id },
-    });
+    try {
+      const metric = await validateMetricAccess(req.user?.id || null, metricId);
 
-    if (!metric) {
-      throw new AppError("Metric not found", 404);
+      // Get logs for the past 30 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const logs = await MetricLog.findAll({
+        where: {
+          metricId,
+          createdAt: { [Op.gte]: thirtyDaysAgo },
+        },
+        order: [["createdAt", "ASC"]],
+      });
+
+      // Prepare trend data
+      const trendData = logs.map((log) => ({
+        date: log.createdAt,
+        value: log.logValue,
+      }));
+
+      res.status(200).json(trendData);
+    } catch (error) {
+      next(error);
     }
-
-    // Get logs for the past 30 days
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const logs = await MetricLog.findAll({
-      where: {
-        metricId,
-        createdAt: { [Op.gte]: thirtyDaysAgo },
-      },
-      order: [["createdAt", "ASC"]],
-    });
-
-    // Prepare trend data
-    const trendData = logs.map((log) => ({
-      date: log.createdAt,
-      value: log.logValue, // ✅ Fixed incorrect property name (should be `logValue`)
-    }));
-
-    res.status(200).json(trendData);
-  }
+  },
 );

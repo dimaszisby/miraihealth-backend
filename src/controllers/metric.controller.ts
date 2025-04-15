@@ -51,9 +51,9 @@ export const createMetric = catchAsync(
       res,
       201,
       { metric: toMetricResponseDTO(metric) },
-      "Metric created successfully."
+      "Metric created successfully.",
     );
-  }
+  },
 );
 
 /**
@@ -67,7 +67,7 @@ export const getAllMetrics = catchAsync(
 
     const metrics = await MetricService.getMetricsListService(userId);
     successResponse(res, 200, { metrics });
-  }
+  },
 );
 
 /**
@@ -87,7 +87,7 @@ export const getUserDetailMetricById = catchAsync(
     successResponse(res, 200, {
       metric: toUserMetricDetailResponseDTO(metric),
     });
-  }
+  },
 );
 
 // * NEW Controller func
@@ -104,7 +104,7 @@ export const getPublicMetricById = catchAsync(
 
     const metric = await MetricService.getPublicMetricByIdService(id);
     successResponse(res, 200, { metric: toMetricResponseDTO(metric) });
-  }
+  },
 );
 
 /**
@@ -120,15 +120,15 @@ export const updateMetric = catchAsync(
     const updatedMetric = await MetricService.updateMetricService(
       id,
       userId,
-      req.body
+      req.body,
     );
     successResponse(
       res,
       200,
       { metric: toMetricResponseDTO(updatedMetric) },
-      "Metric updated successfully"
+      "Metric updated successfully",
     );
-  }
+  },
 );
 
 /**
@@ -146,7 +146,7 @@ export const deleteMetric = catchAsync(
       res,
       200,
       { metric: toMetricResponseDTO(metric) },
-      "Metric deleted successfully"
+      "Metric deleted successfully",
     );
-  }
+  },
 );

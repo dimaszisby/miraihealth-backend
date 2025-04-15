@@ -30,7 +30,7 @@ interface AuthData {
  * @throws {AppError}  If error happened or user credential have been used
  */
 export const registerUserService = async (
-  registerData: CreateUserRequestDTO
+  registerData: CreateUserRequestDTO,
 ): Promise<AuthData> => {
   // Ensure that password and password confirmation is equal
   if (registerData.password !== registerData.passwordConfirmation) {
@@ -61,7 +61,7 @@ export const registerUserService = async (
  */
 export const loginUserService = async (
   email: string,
-  password: string
+  password: string,
 ): Promise<AuthData> => {
   // Ensure email is registered on the db
   const user = await User.findOne({ where: { email } });
@@ -83,7 +83,7 @@ export const loginUserService = async (
  * @throws {AppError}  If error happened
  */
 export const getUserProfileService = async (
-  user: typeof User
+  user: typeof User,
 ): Promise<UserDomain> => {
   if (!user) throw new AppError("User not authenticated", 401);
 
@@ -104,7 +104,7 @@ export const getUserProfileService = async (
  */
 export const updateUserProfileService = async (
   user: typeof User,
-  updateData: UpdateUserRequestDTO
+  updateData: UpdateUserRequestDTO,
 ): Promise<UserDomain> => {
   if (!user) throw new AppError("User not authenticated", 401);
 

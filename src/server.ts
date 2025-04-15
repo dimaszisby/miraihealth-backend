@@ -9,7 +9,6 @@ import xssClean from "xss-clean";
 import hpp from "hpp";
 import http from "http";
 
-
 // Routes
 import authRoutes from "./routes/auth.routes.js";
 import metricRoutes from "./routes/metric.routes.js";
@@ -51,7 +50,7 @@ app.use(
     origin: env.CORS_ORIGIN || "http://localhost:3000", // Fallback if env variable is missing
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true, // Allow cookies and auth headers
-  })
+  }),
 );
 
 // Global Rate Limiter (Uncomment when needed)
@@ -93,7 +92,7 @@ const startServer = async () => {
     // Start HTTP Server
     const PORT = env.PORT || 5000;
     server = app.listen(PORT, () => {
-      console.log(`🚀 MiraiHealth backend running on port ${PORT}`);
+      console.log(`🚀 Lakira backend running on port ${PORT}`);
     });
   } catch (error) {
     console.error("❌ Server initialization failed:", error);
@@ -138,7 +137,7 @@ const shutdown = async (signal: string) => {
 
 // Handle termination signals
 ["SIGTERM", "SIGINT"].forEach((signal) =>
-  process.on(signal, () => shutdown(signal))
+  process.on(signal, () => shutdown(signal)),
 );
 
 // Handle uncaught exceptions and promise rejections
@@ -152,7 +151,7 @@ process.on("unhandledRejection", (reason, promise) => {
     "🔥 Unhandled Promise Rejection at:",
     promise,
     "reason:",
-    reason
+    reason,
   );
   shutdown("Unhandled Rejection");
 });

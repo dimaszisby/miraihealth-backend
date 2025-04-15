@@ -11,7 +11,7 @@ import {
  * * Sequelize → Domain Mapper
  */
 export const toDomainMetricSettings = (
-  settings: MetricSettings
+  settings: MetricSettings,
 ): MetricSettingsDomain => ({
   id: settings.id,
   metricId: settings.metricId,
@@ -34,7 +34,7 @@ export const toDomainMetricSettings = (
  * * Domain → Response DTO
  */
 export const toMetricSettingsResponseDTO = (
-  domain: MetricSettingsDomain
+  domain: MetricSettingsDomain,
 ): MetricSettingsResponseDTO => ({
   id: domain.id,
   metricId: domain.metricId,
@@ -64,7 +64,7 @@ export const toMetricSettingsResponseDTO = (
  * * Sequelize → Domain Mapper
  */
 export const toDomainDisplayOptions = (
-  settings: MetricSettings
+  settings: MetricSettings,
 ): MetricSettingsDomain["displayOptions"] =>
   normalizeDisplayOptions(settings.displayOptions);
 
@@ -72,7 +72,7 @@ export const toDomainDisplayOptions = (
  * * Domain → Request DTO
  */
 export const toDisplayOptionsResponseDTO = (
-  displayOptions: MetricSettingsDomain["displayOptions"]
+  displayOptions: MetricSettingsDomain["displayOptions"],
 ): DisplayOptionsDTO => ({
   showOnDashboard: displayOptions?.showOnDashboard ?? false,
   priority: displayOptions?.priority ?? 1,
@@ -90,7 +90,7 @@ export const toDisplayOptionsResponseDTO = (
  * @returns
  */
 const normalizeDisplayOptions = (
-  opts: any = {}
+  opts: any = {},
 ): MetricSettingsDomain["displayOptions"] => ({
   showOnDashboard: opts.showOnDashboard ?? false,
   priority: opts.priority ?? 1,

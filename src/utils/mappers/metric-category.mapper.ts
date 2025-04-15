@@ -8,7 +8,7 @@ import { MetricCategoryResponseDTO } from "@/types/dtos/metric-category.dto";
  * * Mapper: Sequelize → Domain
  */
 export const toDomainMetricCategory = (
-  metricCategory: MetricCategory
+  metricCategory: MetricCategory,
 ): MetricCategoryDomain => ({
   id: metricCategory.id,
   name: metricCategory.name,
@@ -23,7 +23,7 @@ export const toDomainMetricCategory = (
  * * Mapper: Domain → DTO (for responses)
  */
 export const toMetricCategoryResponseDTO = (
-  metricCategory: MetricCategoryDomain
+  metricCategory: MetricCategoryDomain,
 ): MetricCategoryResponseDTO => ({
   id: metricCategory.id,
   name: metricCategory.name,

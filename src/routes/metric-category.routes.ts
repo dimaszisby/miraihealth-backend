@@ -44,7 +44,7 @@ router.post(
   "/",
   userRateLimiter,
   validate(createMetricCategorySchema),
-  createCategory
+  createCategory,
 );
 
 // GET All Categories by User Id
@@ -55,7 +55,7 @@ router.get(
   "/:id",
   validate(getMetricCategorySchema),
   cacheMiddleware(categoryCacheKey, 600),
-  getCategoryById
+  getCategoryById,
 );
 
 // UPDATE Category
@@ -63,7 +63,7 @@ router.put(
   "/:id",
   userRateLimiter,
   validate(updateMetricCategorySchema),
-  updateCategory
+  updateCategory,
 );
 
 // DELETE Category
@@ -71,7 +71,7 @@ router.delete(
   "/:id",
   userRateLimiter,
   validate(deleteMetricCategorySchema),
-  deleteCategory
+  deleteCategory,
 );
 
 export default router;

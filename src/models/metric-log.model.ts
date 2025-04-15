@@ -101,7 +101,7 @@ export default (sequelize: Sequelize) => {
       tableName: "metric_logs",
       underscored: true,
       schema: "public",
-    }
+    },
   );
 
   return MetricLog;

@@ -14,7 +14,7 @@ export const errorHandler = (
   err: Error,
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void => {
   // Debugging: Check if err is an instance of AppError
   logger.error(`Error Occurred: ${err.message}`, err);

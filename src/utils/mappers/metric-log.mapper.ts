@@ -2,7 +2,10 @@
 
 import { MetricLog } from "@/models/metric-log.model";
 import { MetricLogDomain } from "@/types/domain/metric-log.domain";
-import { MetricLogListResponseDTO, MetricLogResponseDTO } from "@/types/dtos/metric-log.dto";
+import {
+  MetricLogListResponseDTO,
+  MetricLogResponseDTO,
+} from "@/types/dtos/metric-log.dto";
 
 /**
  * * Sequelize → Domain Mapper
@@ -27,7 +30,7 @@ export const toDomainMetricLogs = (logs: MetricLog[]): MetricLogDomain[] =>
  * * Domain → Response DTO
  */
 export const toMetricLogResponseDTO = (
-  domain: MetricLogDomain
+  domain: MetricLogDomain,
 ): MetricLogResponseDTO => ({
   id: domain.id,
   metricId: domain.metricId,
@@ -42,5 +45,5 @@ export const toMetricLogResponseDTO = (
  * * Domain[] → Response DTO[]
  */
 export const toMetricLogListResponseDTO = (
-  logs: MetricLogDomain[]
+  logs: MetricLogDomain[],
 ): MetricLogListResponseDTO => logs.map(toMetricLogResponseDTO);

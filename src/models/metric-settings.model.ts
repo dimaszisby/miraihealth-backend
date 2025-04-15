@@ -225,7 +225,7 @@ export default (sequelize: Sequelize) => {
           }
         },
       },
-    }
+    },
   );
 
   return MetricSettings;

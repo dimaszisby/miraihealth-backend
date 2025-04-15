@@ -51,7 +51,7 @@ router.post(
   "/:metricId/logs/",
   userRateLimiter,
   validate(createMetricLogSchema),
-  createMetricLog
+  createMetricLog,
 );
 
 // GET All Logs by Metric Id
@@ -59,7 +59,7 @@ router.get(
   "/:metricId/logs/",
   validate(getAllMetricLogsSchema),
   cacheMiddleware(logsCacheKey, 300),
-  getAllLogsByMetric
+  getAllLogsByMetric,
 );
 
 // GET Aggregated Stats for logs
@@ -69,7 +69,7 @@ router.get(
   "/:metricId/logs/stats",
   validate(getAggregatedStatsSchema),
   cacheMiddleware(logStatsCacheKey, 300),
-  getAggregatedStats
+  getAggregatedStats,
 );
 
 // GET Specific Log by Id
@@ -77,7 +77,7 @@ router.get(
   "/:metricId/logs/:id",
   validate(getMetricLogSchema),
   cacheMiddleware(logCacheKey, 300), // Cache a single log entry
-  getLogById
+  getLogById,
 );
 
 // UPDATE Log
@@ -85,7 +85,7 @@ router.put(
   "/:metricId/logs/:id",
   userRateLimiter,
   validate(updateMetricLogSchema),
-  updateLog
+  updateLog,
 );
 
 // DELETE Log
@@ -93,7 +93,7 @@ router.delete(
   "/:metricId/logs/:id",
   userRateLimiter,
   validate(deleteMetricLogSchema),
-  deleteLog
+  deleteLog,
 );
 
 export default router;

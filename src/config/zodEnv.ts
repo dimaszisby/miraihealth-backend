@@ -18,7 +18,7 @@ const envSchema = z.object({
   NODE_ENV: z
     .preprocess(
       (val) => (typeof val === "string" ? val.toLowerCase() : val),
-      z.enum(["development", "test", "staging", "production"])
+      z.enum(["development", "test", "staging", "production"]),
     )
     .default("development"),
 

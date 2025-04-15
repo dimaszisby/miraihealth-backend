@@ -21,9 +21,9 @@ const logger: Logger = createLogger({
     timestamp(),
     errors({ stack: true }), // Capture stack trace
     splat(),
-    json()
+    json(),
   ),
-  defaultMeta: { service: "miraihealth-backend" },
+  defaultMeta: { service: "lakira-backend" },
   transports: [
     new transports.File({ filename: "logs/error.log", level: "error" }), // Error logs
     new transports.File({ filename: "logs/combined.log" }), // All logs
@@ -36,7 +36,7 @@ if (env.NODE_ENV !== "production") {
   logger.add(
     new transports.Console({
       format: combine(colorize(), logFormat),
-    })
+    }),
   );
 }
 

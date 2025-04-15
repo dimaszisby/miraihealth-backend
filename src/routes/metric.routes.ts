@@ -54,7 +54,7 @@ router.get(
   "/:id",
   validate(getMetricSchema),
   cacheMiddleware(metricCacheKey, 300),
-  getUserDetailMetricById
+  getUserDetailMetricById,
 );
 
 // UPDATE Metric
@@ -65,7 +65,7 @@ router.delete(
   "/:id",
   userRateLimiter,
   validate(deleteMetricSchema),
-  deleteMetric
+  deleteMetric,
 );
 
 /**

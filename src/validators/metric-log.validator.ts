@@ -24,7 +24,7 @@ export const createMetricLogSchema = z.object({
     loggedAt: z
       .preprocess(
         preprocessDate,
-        z.date({ required_error: "Invalid date format" })
+        z.date({ required_error: "Invalid date format" }),
       )
       .optional(),
   }),
@@ -45,7 +45,7 @@ export const updateMetricLogSchema = z.object({
     loggedAt: z
       .preprocess(
         preprocessDate,
-        z.date({ required_error: "Invalid date format" })
+        z.date({ required_error: "Invalid date format" }),
       )
       .optional(),
   }),

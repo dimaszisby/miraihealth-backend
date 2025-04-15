@@ -25,7 +25,7 @@ const UserModelInstance = UserModel(sequelize);
 export const authMiddleware = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   // 1. Check if Authorization header is present
   const authHeader = req.headers.authorization;

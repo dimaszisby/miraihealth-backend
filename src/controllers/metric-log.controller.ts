@@ -41,9 +41,9 @@ export const createMetricLog = catchAsync(
       res,
       201,
       { log: toMetricLogResponseDTO(logDomain) },
-      "Metric Log created successfully"
+      "Metric Log created successfully",
     );
-  }
+  },
 );
 
 /**
@@ -69,7 +69,7 @@ export const getAllLogsByMetric = catchAsync(
       },
     });
     successResponse(res, 200, { logs: toMetricLogListResponseDTO(logsDomain) });
-  }
+  },
 );
 
 /**
@@ -89,7 +89,7 @@ export const getLogById = catchAsync(
       logId: id,
     });
     successResponse(res, 200, { log: toMetricLogResponseDTO(logDomain) });
-  }
+  },
 );
 
 /**
@@ -118,9 +118,9 @@ export const updateLog = catchAsync(
       res,
       200,
       { log: toMetricLogResponseDTO(logDomain) },
-      "Log updated successfully"
+      "Log updated successfully",
     );
-  }
+  },
 );
 
 /**
@@ -143,9 +143,9 @@ export const deleteLog = catchAsync(
       res,
       200,
       { log: toMetricLogResponseDTO(logDomain) },
-      "Log deleted successfully"
+      "Log deleted successfully",
     );
-  }
+  },
 );
 
 /**
@@ -161,5 +161,5 @@ export const getAggregatedStats = catchAsync(
 
     const stats = await metricLogService.getAggregatedStats(userId, metricId);
     successResponse(res, 200, stats);
-  }
+  },
 );

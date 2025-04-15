@@ -51,7 +51,7 @@ router.post(
   "/:metricId/settings/",
   userRateLimiter,
   validate(createMetricSettingsSchema),
-  createMetricSettings
+  createMetricSettings,
 );
 
 // GET All Settings by Metric Id
@@ -59,7 +59,7 @@ router.get(
   "/:metricId/settings/",
   validate(getAllMetricSettingsSchema),
   cacheMiddleware(metricSettingsCacheKey, 300),
-  getAllMetricSettings
+  getAllMetricSettings,
 );
 
 // GET Specific Settings by Id
@@ -67,7 +67,7 @@ router.get(
   "/:metricId/settings/:id",
   validate(getMetricSettingsSchema),
   cacheMiddleware(metricSettingCacheKey, 300),
-  getMetricSettingsById
+  getMetricSettingsById,
 );
 
 // UPDATE Settings
@@ -75,7 +75,7 @@ router.put(
   "/:metricId/settings/:id",
   userRateLimiter,
   validate(updateMetricSettingsSchema),
-  updateMetricSettings
+  updateMetricSettings,
 );
 
 // DELETE Settings
@@ -83,19 +83,19 @@ router.delete(
   "/:metricId/settings/:id",
   userRateLimiter,
   validate(deleteMetricSettingsSchema),
-  deleteMetricSettings
+  deleteMetricSettings,
 );
 
 // New PATCH endpoints
 router.patch(
   "/:metricId/settings/:id/achieve",
   userRateLimiter,
-  updateGoalAchievement
+  updateGoalAchievement,
 );
 router.patch(
   "/:metricId/settings/:id/display",
   userRateLimiter,
-  updateDisplayOptions
+  updateDisplayOptions,
 );
 
 export default router;

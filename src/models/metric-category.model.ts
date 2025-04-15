@@ -108,7 +108,7 @@ export default (sequelize: Sequelize) => {
       paranoid: true,
       underscored: true,
       schema: "public",
-    }
+    },
   );
 
   return MetricCategory;

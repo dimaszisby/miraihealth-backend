@@ -25,15 +25,15 @@ export const createCategory = catchAsync(
     const category: MetricCategoryDomain =
       await MetricCategoryService.createMetricCategoryService(
         req.user.id,
-        req.body
+        req.body,
       );
     successResponse(
       res,
       201,
       { category: toMetricCategoryResponseDTO(category) },
-      "Category created successfully"
+      "Category created successfully",
     );
-  }
+  },
 );
 
 /**
@@ -50,7 +50,7 @@ export const getAllCategories = catchAsync(
     const categoriesRespose = categories.map(toMetricCategoryResponseDTO);
 
     successResponse(res, 200, { categories: categoriesRespose });
-  }
+  },
 );
 
 /**
@@ -64,12 +64,12 @@ export const getCategoryById = catchAsync(
     const category: MetricCategoryDomain =
       await MetricCategoryService.getUserMetricCategoryByIdService(
         req.user.id,
-        req.params.id
+        req.params.id,
       );
     successResponse(res, 200, {
       category: toMetricCategoryResponseDTO(category),
     });
-  }
+  },
 );
 
 /**
@@ -84,15 +84,15 @@ export const updateCategory = catchAsync(
       await MetricCategoryService.updateMetricCategoryService(
         req.user.id,
         req.params.id,
-        req.body
+        req.body,
       );
     successResponse(
       res,
       200,
       { category: toMetricCategoryResponseDTO(category) },
-      "Category updated successfully"
+      "Category updated successfully",
     );
-  }
+  },
 );
 
 /**
@@ -106,13 +106,13 @@ export const deleteCategory = catchAsync(
     const category: MetricCategoryDomain =
       await MetricCategoryService.deleteMetricCategoryService(
         req.user.id,
-        req.params.id
+        req.params.id,
       );
     successResponse(
       res,
       200,
       { category: toMetricCategoryResponseDTO(category) },
-      "Category deleted successfully"
+      "Category deleted successfully",
     );
-  }
+  },
 );

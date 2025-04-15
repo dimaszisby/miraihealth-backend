@@ -12,8 +12,8 @@ const { Metric, MetricCategory, MetricSettings } = db;
  * @throws {AppError} If metric does not exist
  */
 export const validateMetricAccess = async (
-  userId: string,
-  metricId: string
+  userId: string | null,
+  metricId: string,
 ) => {
   // 1. Fetch the metric regardless of the userId.
   const metric = await Metric.findOne({
@@ -24,7 +24,7 @@ export const validateMetricAccess = async (
     throw new AppError("Metric not found", 404);
   }
   // 2. If the metric is not public and does not belong to the user, throw unauthorized.
-  if (!metric.isPublic && metric.userId !== userId) {
+  if (userId !== null && !metric.isPublic && metric.userId !== userId) {
     throw new AppError("Unauthorized access to metric stats", 403);
   }
   return metric;
@@ -38,7 +38,7 @@ export const validateMetricAccess = async (
  */
 export const validateMetricCategoryAccess = async (
   userId: string,
-  categoryId: string
+  categoryId: string,
 ) => {
   // 1. Fetch the metric category regardless of the userId.
   const metricCategory = await MetricCategory.findOne({
@@ -70,7 +70,7 @@ export const validateMetricCategoryAccess = async (
  */
 export const findOwnedMetric = async (
   userId: string,
-  metricId: string
+  metricId: string,
 ): Promise<typeof Metric | null> => {
   await validateMetricAccess(userId, metricId);
 
@@ -80,7 +80,7 @@ export const findOwnedMetric = async (
   if (!metric) throw new AppError("Metric not found", 404);
 
   return metric;
-}
+};
 
 /**
  * * Metric Category
@@ -91,7 +91,7 @@ export const findOwnedMetric = async (
  */
 export const findOwnedCategory = async (
   userId: string,
-  categoryId: string
+  categoryId: string,
 ): Promise<typeof MetricCategory | null> => {
   await validateMetricCategoryAccess(userId, categoryId);
 
@@ -114,7 +114,7 @@ export const findOwnedCategory = async (
 export const findOwnedMetricSettings = async (
   userId: string,
   metricId: string,
-  settingsId: string
+  settingsId: string,
 ): Promise<typeof MetricSettings | null> => {
   await validateMetricAccess(userId, metricId);
 
@@ -137,7 +137,7 @@ export const findOwnedMetricSettings = async (
 export const findOwnedMetricLog = async (
   userId: string,
   metricId: string,
-  logId: string
+  logId: string,
 ): Promise<typeof db.MetricLog | null> => {
   await validateMetricAccess(userId, metricId);
   const log = await db.MetricLog.findOne({

@@ -26,12 +26,12 @@ const redisClient: RedisClientType = createClient(redisConfig);
 // Gracefully handle Redis errors
 redisClient.on("error", (err: Error) => {
   logger.error("❌ Redis Connection Error:", err);
-    process.exit(1); // Exit in production if Redis is critical
+  process.exit(1); // Exit in production if Redis is critical
 });
 
 redisClient.on("connect", () => logger.info("✅ Connected to Redis"));
 redisClient.on("reconnecting", () =>
-  logger.warn("♻️ Reconnecting to Redis...")
+  logger.warn("♻️ Reconnecting to Redis..."),
 );
 redisClient.on("end", () => logger.warn("🚨 Redis connection closed."));
 

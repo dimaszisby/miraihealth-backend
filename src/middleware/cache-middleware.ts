@@ -46,10 +46,10 @@ export const cacheMiddleware =
         redisClient
           .setEx(key, duration, JSON.stringify(data))
           .then(() =>
-            logger.info(`✅ Cached response: ${key} (TTL: ${duration}s)`)
+            logger.info(`✅ Cached response: ${key} (TTL: ${duration}s)`),
           )
           .catch((cacheError) =>
-            logger.error(`❌ Cache write failed: ${key}`, cacheError)
+            logger.error(`❌ Cache write failed: ${key}`, cacheError),
           );
 
         return originalJson(data); // Ensure normal response flow
