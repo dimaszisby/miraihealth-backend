@@ -69,7 +69,7 @@ const disconnectRedis = async () => {
  */
 const invalidateCache = async (key: string) => {
   if (redisClient.isOpen) {
-    await invalidateCache(key);
+    await redisClient.del(key);
     logger.info(`♻️ Cache invalidated for ${key}`);
   }
 };
