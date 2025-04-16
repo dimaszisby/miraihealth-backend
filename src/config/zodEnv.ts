@@ -74,6 +74,11 @@ const envSchema = z.object({
 
   // Jest
   JEST_TIMEOUT: z.string().transform(Number).default("30000"),
+
+  // Database
+  DB_USER: z.string().default("postgres"),
+  DB_PASSWORD: z.string().default("password"),
+  DB_NAME: z.string().default("database"),
 });
 
 /**
