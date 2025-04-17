@@ -75,6 +75,7 @@ export const createMetricService = async (
 
 /**
  * Fetch all metrics for a user including category and settings.
+ * 
  * @param userId - ID of the user requesting the data
  * @returns Array of formatted metrics
  */
@@ -106,21 +107,38 @@ const transformMetric = (metric: any): MetricLibraryListDomain => {
  * @param userId - ID of the user.
  * @returns A promise that resolves to an array of metric data.
  */
-const fetchMetrics = async (userId: string): Promise<any[]> => {
+const fetchMetrics = async (userId: string, options: any): Promise<any[]> => {
+  const { offset, limit, sortBy, sortOrder, filters, include } = options;
+
+  const whereClause: any = { userId };
+
+  // Apply filters to the where clause
+  Object.keys(filters).forEach((key) => {
+    whereClause[key] = filters[key];
+  });
+
+  const includeOptions: any[] = [];
+
+  if (include === 'category') {
+    includeOptions.push({
+      model: MetricCategory,
+      as: "MetricCategory",
+      attributes: ["id", "name", "icon", "color"],
+    });
+  }
+
+  includeOptions.push({
+    model: MetricSettings,
+    as: "MetricSettings",
+    attributes: ["goalType"],
+  });
+
   return Metric.findAll({
-    where: { userId },
-    include: [
-      {
-        model: MetricCategory,
-        as: "MetricCategory",
-        attributes: ["id", "name", "icon", "color"],
-      },
-      {
-        model: MetricSettings,
-        as: "MetricSettings",
-        attributes: ["goalType"],
-      },
-    ],
+    where: whereClause,
+    include: includeOptions,
+    order: [[sortBy, sortOrder]],
+    offset: Number(offset),
+    limit: Number(limit),
   });
 };
 
@@ -132,10 +150,15 @@ const fetchMetrics = async (userId: string): Promise<any[]> => {
  */
 export const getMetricsListService = async (
   userId: string,
+  queryParams: any,
 ): Promise<MetricLibraryListDomain[]> => {
-  const metrics = await fetchMetrics(userId);
+  const { page = 1, limit = 10, sortBy = "createdAt", sortOrder = "DESC", include, ...filters } = queryParams;
 
-  logger.info(`Fetched ${metrics.length} metrics for user ${userId}`);
+  const offset = (page - 1) * limit;
+
+  const metrics = await fetchMetrics(userId, { offset, limit, sortBy, sortOrder, filters, include });
+
+  logger.info(`Fetched ${metrics.length} metrics for user ${userId} with pagination and filtering. Query Params: ${JSON.stringify(queryParams)}, Filters: ${JSON.stringify(filters)}, Metrics: ${JSON.stringify(metrics)}`);
 
   const transformed: MetricLibraryListDomain[] = metrics.map(transformMetric);
 
@@ -144,6 +167,7 @@ export const getMetricsListService = async (
 
 /**
  * Fetch metric details including related category, settings, and logs.
+ * 
  * @param userId - ID of the user requesting the data
  * @param metricId - ID of the metric to fetch
  * @returns Metric detail object or null if not found
@@ -203,6 +227,7 @@ export const getUserMetricDetailService = async (
 
 /**
  * Fetch specific metric owned by requesting/authenticated user
+ * 
  * @param userId - ID of the user requesting the data
  * @param metricId - ID of the metric to fetch
  * @returns Metric detail object or null if not found
@@ -235,7 +260,8 @@ export const getPublicMetricByIdService = async (
 };
 
 /**
- * Delete metric
+ * Update metric metric service
+ * 
  * @param userId - ID of the user
  * @param metricId - ID of the metric
  * @returns Updated metric  object
@@ -267,7 +293,8 @@ export const updateMetricService = async (
 };
 
 /**
- * Delete metric
+ * Delete metric service
+ * 
  * @param userId - ID of the user
  * @param metricId - ID of the metric
  * @returns Deleted metric  object

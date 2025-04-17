@@ -316,15 +316,18 @@ describe("Metric Endpoints", () => {
           categoryId: dummyCategory.id,
         });
 
+      // Add a small delay to avoid race conditions
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       const res: Response = await request(app)
         .get("/api/v1/metrics")
         .set("Authorization", `Bearer ${token}`)
-        .query({ includeCategory: true });
+        .query({ include: 'category' });
 
       expect(res.statusCode).toBe(200);
       expect(res.body.data.metrics[0]).toHaveProperty("category");
-      expect(res.body.data.metrics[0].category).toHaveProperty("id");
-      expect(res.body.data.metrics[0].category).toHaveProperty("name");
+      expect(res.body.data.metrics[0].category).toHaveProperty("id", dummyCategory.id);
+      expect(res.body.data.metrics[0].category).toHaveProperty("name", dummyCategory.name);
     });
 
     it("should handle metric creation with non-existent category", async () => {
@@ -362,9 +365,10 @@ describe("Metric Endpoints", () => {
       const res: Response = await request(app)
         .get("/api/v1/metrics")
         .set("Authorization", `Bearer ${token}`)
-        .query({ search: searchTerm });
+        .query({ name: searchTerm });
 
       expect(res.statusCode).toBe(200);
+      expect(Array.isArray(res.body.data.metrics)).toBe(true);
       res.body.data.metrics.forEach((metric: any) => {
         expect(metric.name.toLowerCase()).toContain(searchTerm.toLowerCase());
       });

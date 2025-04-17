@@ -65,7 +65,7 @@ export const getAllMetrics = catchAsync(
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
 
-    const metrics = await MetricService.getMetricsListService(userId);
+    const metrics = await MetricService.getMetricsListService(userId, req.query);
     successResponse(res, 200, { metrics });
   },
 );
