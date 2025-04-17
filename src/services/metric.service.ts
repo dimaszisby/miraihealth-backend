@@ -41,7 +41,7 @@ export const createMetricService = async (
   data: CreateMetricRequestDTO,
 ): Promise<MetricDomain> => {
   logger.info(`Create metric service triggered for user ${userId}`);
-  console.log("Create metric service triggered for user", userId);
+  // console.log("Create metric service triggered for user", userId);
 
   // Check for duplicate metric name for the user
   const existingMetric = await Metric.findOne({
@@ -84,7 +84,10 @@ export const createMetricService = async (
  * @param metric - Metric instance
  * @returns MetricLibraryListDomain
  */
-const transformMetric = (metric: any): MetricLibraryListDomain => {
+const transformMetric = (metric: any): MetricLibraryListDomain | null => {
+  if (!metric) {
+    return null; // Or throw an error, depending on the desired behavior
+  }
   const { MetricCategory, MetricSettings, ...metricData } = metric.toJSON();
   return {
     ...metricData,
@@ -160,7 +163,7 @@ export const getMetricsListService = async (
 
   logger.info(`Fetched ${metrics.length} metrics for user ${userId} with pagination and filtering. Query Params: ${JSON.stringify(queryParams)}, Filters: ${JSON.stringify(filters)}, Metrics: ${JSON.stringify(metrics)}`);
 
-  const transformed: MetricLibraryListDomain[] = metrics.map(transformMetric);
+  const transformed = metrics.map(transformMetric).filter(Boolean) as MetricLibraryListDomain[];
 
   return transformed;
 };
@@ -248,16 +251,16 @@ export const getUserMetricByIdService = async (
 // Currently not being used
 // Prepared for future development
 // Public
-export const getPublicMetricByIdService = async (
-  metricId: string,
-): Promise<MetricDomain> => {
-  try {
-    const publicMetric = await validateMetricAccess(null, metricId);
-    return toDomainMetric(publicMetric);
-  } catch (error) {
-    throw error;
-  }
-};
+// export const getPublicMetricByIdService = async (
+  // metricId: string,
+  // ): Promise<MetricDomain> => {
+  // try {
+  //   const publicMetric = await validateMetricAccess(null, metricId);
+  //   return toDomainMetric(publicMetric);
+  // } catch (error) {
+  //   throw error;
+  // }
+  // };
 
 /**
  * Update metric metric service
@@ -281,12 +284,16 @@ export const updateMetricService = async (
   await metric.reload();
 
   // Invalidate Redis cache
-  if (redisClient.isOpen) {
-    await invalidateCache(`metric:${metric.userId}:${metric.id}`);
-    await invalidateCache(`metrics:${metric.userId}`);
-    logger.info(
-      `♻️ Cache invalidated for metric:${metric.userId}:${metric.id} and metrics:${metric.userId}`,
-    );
+  try {
+    if (redisClient.isOpen) {
+      await invalidateCache(`metric:${metric.userId}:${metric.id}`);
+      await invalidateCache(`metrics:${metric.userId}`);
+      logger.info(
+        `♻️ Cache invalidated for metric:${metric.userId}:${metric.id} and metrics:${metric.userId}`,
+      );
+    }
+  } catch (error: any) {
+    logger.error(`Error invalidating cache: ${error.message}`, error);
   }
 
   return toDomainMetric(metric);
@@ -310,12 +317,16 @@ export const deleteMetricService = async (
   logger.info(`Metric deleted successfully from database`);
 
   // Invalidate Redis cache
-  if (redisClient.isOpen) {
-    await invalidateCache(`metric:${metric.userId}:${metric.id}`);
-    await invalidateCache(`metrics:${metric.userId}`);
-    logger.info(
-      `♻️ Cache invalidated for metric:${metric.userId}:${metric.id} and metrics:${metric.userId}`,
-    );
+  try {
+    if (redisClient.isOpen) {
+      await invalidateCache(`metric:${metric.userId}:${metric.id}`);
+      await invalidateCache(`metrics:${metric.userId}`);
+      logger.info(
+        `♻️ Cache invalidated for metric:${metric.userId}:${metric.id} and metrics:${metric.userId}`,
+      );
+    }
+  } catch (error: any) {
+    logger.error(`Error invalidating cache: ${error.message}`, error);
   }
 
   return toDomainMetric(metric);

@@ -97,15 +97,15 @@ export const getUserDetailMetricById = catchAsync(
  * * Get specific Public Metric by Id
  * @route GET /api/metrics/:id
  */
-export const getPublicMetricById = catchAsync(
-  async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
-    const { id } = req.params;
+// export const getPublicMetricById = catchAsync(
+//   async (req: AuthRequest, res: Response, next: NextFunction) => {
+//     if (!req.user?.id) throw new AppError("User not authenticated", 401);
+//     const { id } = req.params;
 
-    const metric = await MetricService.getPublicMetricByIdService(id);
-    successResponse(res, 200, { metric: toMetricResponseDTO(metric) });
-  },
-);
+//     const metric = await MetricService.getPublicMetricByIdService(id);
+//     successResponse(res, 200, { metric: toMetricResponseDTO(metric) });
+//   },
+// );
 
 /**
  * * Update Metric
