@@ -4,6 +4,7 @@ import db from "@/models/index";
 import {
   MetricDomain,
   MetricDomainExtended,
+  MetricLibraryDomain,
   MetricLibraryListDomain,
 } from "@/types/domain/metric.domain";
 import {
@@ -84,20 +85,21 @@ export const createMetricService = async (
  * @param metric - Metric instance
  * @returns MetricLibraryListDomain
  */
-const transformMetric = (metric: any): MetricLibraryListDomain | null => {
+const transformMetric = (metric: any): MetricLibraryDomain | null => {
   if (!metric) {
     return null; // Or throw an error, depending on the desired behavior
   }
-  const { MetricCategory, MetricSettings, ...metricData } = metric.toJSON();
+  const { MetricCategory: category, MetricSettings, ...metricData } = metric.toJSON();
+
   return {
     ...metricData,
-    category: MetricCategory
+    category: category
       ? {
-          id: MetricCategory.id,
-          name: MetricCategory.name,
-          icon: MetricCategory.icon,
-          color: MetricCategory.color,
-        }
+        id: category.id,
+        name: category.name,
+        icon: category.icon,
+        color: category.color,
+      }
       : undefined,
     goalType: MetricSettings?.goalType ?? undefined,
   };
@@ -154,7 +156,7 @@ const fetchMetrics = async (userId: string, options: any): Promise<any[]> => {
 export const getMetricsListService = async (
   userId: string,
   queryParams: any,
-): Promise<MetricLibraryListDomain[]> => {
+): Promise<MetricLibraryDomain[]> => {
   const { page = 1, limit = 10, sortBy = "createdAt", sortOrder = "DESC", include, ...filters } = queryParams;
 
   const offset = (page - 1) * limit;
@@ -163,7 +165,7 @@ export const getMetricsListService = async (
 
   logger.info(`Fetched ${metrics.length} metrics for user ${userId} with pagination and filtering. Query Params: ${JSON.stringify(queryParams)}, Filters: ${JSON.stringify(filters)}, Metrics: ${JSON.stringify(metrics)}`);
 
-  const transformed = metrics.map(transformMetric).filter(Boolean) as MetricLibraryListDomain[];
+  const transformed = metrics.map(transformMetric).filter(Boolean) as MetricLibraryDomain[];
 
   return transformed;
 };
@@ -240,11 +242,11 @@ export const getUserMetricByIdService = async (
   metricId: string,
 ): Promise<MetricDomain> => {
   // Ensure the metric exists, check visibility, and  enforce ownership
-  const metric = await validateMetricAccess(userId, metricId);
+  const metric = await findOwnedMetric(userId, metricId);
 
   console.info("Metric Domain on Service", metric);
 
-  return metric;
+  return toDomainMetric(metric);
 };
 
 // * NEW Service func

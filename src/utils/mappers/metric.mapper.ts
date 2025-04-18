@@ -2,6 +2,7 @@
 
 // Sequelize models
 import { Metric } from "@/models/metric.model";
+import { MetricLibraryDomain, MetricLibraryListDomain } from "@/types/domain/metric.domain";
 import { MetricCategory } from "@/models/metric-category.model";
 import { MetricSettings } from "@/models/metric-settings.model";
 import { MetricLog } from "@/models/metric-log.model";
@@ -14,6 +15,7 @@ import {
 
 // DTO types
 import {
+  MetricPreviewResponseDTO,
   MetricResponseDTO,
   UserMetricDetailResponseDTO,
 } from "@/types/dtos/metric.dto"; // Added UserMetricDetailResponseDTO
@@ -143,4 +145,19 @@ export const toUserMetricDetailResponseDTO = (
     ? toMetricSettingsResponseDTO(metric.settings)
     : null,
   logs: metric.logs ? metric.logs.map(toMetricLogResponseDTO) : null,
+});
+
+/**
+ * * Mapper: Domain → DTO (for Metric Library Response)
+ */
+// This is a simplified version of the metric, typically used in public libraries or templates
+// It may not include all fields from the full MetricDomain
+// and is designed for quick display or selection
+export const toMetricLibraryResponseDTO = (
+  metric: MetricLibraryDomain,
+): MetricPreviewResponseDTO => ({
+  id: metric.id,
+  name: metric.name,
+  category: metric.category,
+  goalType: metric.goalType,
 });
