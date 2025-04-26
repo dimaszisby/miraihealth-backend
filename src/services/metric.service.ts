@@ -19,6 +19,7 @@ import {
   toDomainMetric,
   toExtendedMetricDomain,
 } from "@/utils/mappers/metric.mapper";
+import { Op, fn, col, literal, Sequelize } from "sequelize";
 
 const { Metric, MetricLog, MetricSettings, MetricCategory } = db;
 
@@ -39,7 +40,7 @@ const { Metric, MetricLog, MetricSettings, MetricCategory } = db;
  */
 export const createMetricService = async (
   userId: string,
-  data: CreateMetricRequestDTO,
+  data: CreateMetricRequestDTO
 ): Promise<MetricDomain> => {
   logger.info(`Create metric service triggered for user ${userId}`);
   // console.log("Create metric service triggered for user", userId);
@@ -76,7 +77,7 @@ export const createMetricService = async (
 
 /**
  * Fetch all metrics for a user including category and settings.
- * 
+ *
  * @param userId - ID of the user requesting the data
  * @returns Array of formatted metrics
  */
@@ -85,23 +86,31 @@ export const createMetricService = async (
  * @param metric - Metric instance
  * @returns MetricLibraryListDomain
  */
-const transformMetric = (metric: any): MetricLibraryDomain | null => {
-  if (!metric) {
-    return null; // Or throw an error, depending on the desired behavior
-  }
-  const { MetricCategory: category, MetricSettings, ...metricData } = metric.toJSON();
+const transformMetric = (
+  metric: typeof Metric & { logCount?: number } // 👈 add optional prop for TS
+): MetricLibraryDomain | null => {
+  if (!metric) return null;
+
+  // we only call toJSON **once**
+  const {
+    MetricCategory: category,
+    MetricSettings,
+    logCount, // ⬅ already present
+    ...metricData
+  } = metric.toJSON() as any; // cast is fine at the edge
 
   return {
     ...metricData,
     category: category
       ? {
-        id: category.id,
-        name: category.name,
-        icon: category.icon,
-        color: category.color,
-      }
+          id: category.id,
+          name: category.name,
+          icon: category.icon,
+          color: category.color,
+        }
       : undefined,
     goalType: MetricSettings?.goalType ?? undefined,
+    logCount: logCount ?? 0, // default 0 for metrics without logs
   };
 };
 
@@ -112,34 +121,44 @@ const transformMetric = (metric: any): MetricLibraryDomain | null => {
  * @param userId - ID of the user.
  * @returns A promise that resolves to an array of metric data.
  */
-const fetchMetrics = async (userId: string, options: any): Promise<any[]> => {
+const fetchMetrics = async (userId: string, options: any) => {
   const { offset, limit, sortBy, sortOrder, filters, include } = options;
 
-  const whereClause: any = { userId };
+  const whereClause: any = { userId, ...filters };
 
-  // Apply filters to the where clause
-  Object.keys(filters).forEach((key) => {
-    whereClause[key] = filters[key];
-  });
+  const includeOptions: any[] = [
+    {
+      model: MetricSettings,
+      as: "MetricSettings",
+      attributes: ["goalType"],
+    },
+  ];
 
-  const includeOptions: any[] = [];
-
-  if (include === 'category') {
-    includeOptions.push({
+  if (include === "category") {
+    includeOptions.unshift({
       model: MetricCategory,
       as: "MetricCategory",
       attributes: ["id", "name", "icon", "color"],
     });
   }
 
-  includeOptions.push({
-    model: MetricSettings,
-    as: "MetricSettings",
-    attributes: ["goalType"],
-  });
-
   return Metric.findAll({
     where: whereClause,
+    attributes: {
+      include: [
+        // 👇 inline sub-query – runs once for the whole result set
+        [
+          literal(`
+            (
+              SELECT COUNT(*)
+              FROM metric_logs AS ml
+              WHERE ml.metric_id = "Metric"."id"
+            )
+          `),
+          "logCount",
+        ],
+      ],
+    },
     include: includeOptions,
     order: [[sortBy, sortOrder]],
     offset: Number(offset),
@@ -153,36 +172,54 @@ const fetchMetrics = async (userId: string, options: any): Promise<any[]> => {
  * @param userId - ID of the user.
  * @returns A promise that resolves to an array of transformed metrics.
  */
-export const getMetricsListService = async (
+export const getUserMetricLibrariesService = async (
   userId: string,
-  queryParams: any,
+  queryParams: any
 ): Promise<MetricLibraryDomain[]> => {
-  const { page = 1, limit = 10, sortBy = "createdAt", sortOrder = "DESC", include, ...filters } = queryParams;
+  const {
+    page = 1,
+    limit = 10,
+    sortBy = "createdAt",
+    sortOrder = "DESC",
+    include,
+    ...filters
+  } = queryParams;
 
   const offset = (page - 1) * limit;
 
-  const metrics = await fetchMetrics(userId, { offset, limit, sortBy, sortOrder, filters, include });
+  const metrics = await fetchMetrics(userId, {
+    offset,
+    limit,
+    sortBy,
+    sortOrder,
+    filters,
+    include,
+  });
 
-  logger.info(`Fetched ${metrics.length} metrics for user ${userId} with pagination and filtering. Query Params: ${JSON.stringify(queryParams)}, Filters: ${JSON.stringify(filters)}, Metrics: ${JSON.stringify(metrics)}`);
+  logger.info(
+    `Fetched ${metrics.length} metrics for user ${userId} with pagination and filtering. Query Params: ${JSON.stringify(queryParams)}, Filters: ${JSON.stringify(filters)}, Metrics: ${JSON.stringify(metrics)}`
+  );
 
-  const transformed = metrics.map(transformMetric).filter(Boolean) as MetricLibraryDomain[];
+  const transformed: MetricLibraryDomain[] = metrics
+    .map(transformMetric)
+    .filter(Boolean);
 
   return transformed;
 };
 
 /**
  * Fetch metric details including related category, settings, and logs.
- * 
+ *
  * @param userId - ID of the user requesting the data
  * @param metricId - ID of the metric to fetch
  * @returns Metric detail object or null if not found
  */
 export const getUserMetricDetailService = async (
   userId: string,
-  metricId: string,
+  metricId: string
 ): Promise<MetricDomainExtended | null> => {
   logger.info(
-    `Fetching details for metricId: ${metricId} and userId: ${userId}`,
+    `Fetching details for metricId: ${metricId} and userId: ${userId}`
   );
 
   // Fetch the whole data
@@ -232,14 +269,14 @@ export const getUserMetricDetailService = async (
 
 /**
  * Fetch specific metric owned by requesting/authenticated user
- * 
+ *
  * @param userId - ID of the user requesting the data
  * @param metricId - ID of the metric to fetch
  * @returns Metric detail object or null if not found
  */
 export const getUserMetricByIdService = async (
   userId: string,
-  metricId: string,
+  metricId: string
 ): Promise<MetricDomain> => {
   // Ensure the metric exists, check visibility, and  enforce ownership
   const metric = await findOwnedMetric(userId, metricId);
@@ -254,19 +291,19 @@ export const getUserMetricByIdService = async (
 // Prepared for future development
 // Public
 // export const getPublicMetricByIdService = async (
-  // metricId: string,
-  // ): Promise<MetricDomain> => {
-  // try {
-  //   const publicMetric = await validateMetricAccess(null, metricId);
-  //   return toDomainMetric(publicMetric);
-  // } catch (error) {
-  //   throw error;
-  // }
-  // };
+// metricId: string,
+// ): Promise<MetricDomain> => {
+// try {
+//   const publicMetric = await validateMetricAccess(null, metricId);
+//   return toDomainMetric(publicMetric);
+// } catch (error) {
+//   throw error;
+// }
+// };
 
 /**
  * Update metric metric service
- * 
+ *
  * @param userId - ID of the user
  * @param metricId - ID of the metric
  * @returns Updated metric  object
@@ -274,7 +311,7 @@ export const getUserMetricByIdService = async (
 export const updateMetricService = async (
   metricId: string,
   userId: string,
-  data: UpdateMetricRequestDTO,
+  data: UpdateMetricRequestDTO
 ): Promise<MetricDomain> => {
   // Ensure the metric exists, check visibility, and  enforce ownership.
   const metric = await findOwnedMetric(userId, metricId);
@@ -291,7 +328,7 @@ export const updateMetricService = async (
       await invalidateCache(`metric:${metric.userId}:${metric.id}`);
       await invalidateCache(`metrics:${metric.userId}`);
       logger.info(
-        `♻️ Cache invalidated for metric:${metric.userId}:${metric.id} and metrics:${metric.userId}`,
+        `♻️ Cache invalidated for metric:${metric.userId}:${metric.id} and metrics:${metric.userId}`
       );
     }
   } catch (error: any) {
@@ -303,14 +340,14 @@ export const updateMetricService = async (
 
 /**
  * Delete metric service
- * 
+ *
  * @param userId - ID of the user
  * @param metricId - ID of the metric
  * @returns Deleted metric  object
  */
 export const deleteMetricService = async (
   userId: string,
-  metricId: string,
+  metricId: string
 ): Promise<MetricDomain> => {
   // Ensure the metric exists, check visibility, and  enforce ownership.
   const metric = await findOwnedMetric(userId, metricId);
@@ -324,7 +361,7 @@ export const deleteMetricService = async (
       await invalidateCache(`metric:${metric.userId}:${metric.id}`);
       await invalidateCache(`metrics:${metric.userId}`);
       logger.info(
-        `♻️ Cache invalidated for metric:${metric.userId}:${metric.id} and metrics:${metric.userId}`,
+        `♻️ Cache invalidated for metric:${metric.userId}:${metric.id} and metrics:${metric.userId}`
       );
     }
   } catch (error: any) {
