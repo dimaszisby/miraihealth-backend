@@ -160,4 +160,8 @@ export const toMetricLibraryResponseDTO = (
   name: metric.name,
   category: metric.category,
   goalType: metric.goalType,
+  defaultUnit: metric.defaultUnit,
+  description: metric.description ?? null,
+  isPublic: metric.isPublic,
+  logCount: metric.logCount,
 });
