@@ -68,13 +68,13 @@ export const createMetric = catchAsync(
  * * Get All Metrics owned by User
  * @route GET /api/metrics
  */
-export const getAllMetrics = catchAsync(
+export const getUserMetricLibraries = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
 
     const metricsDomain: MetricLibraryDomain[] =
-      await MetricService.getMetricsListService(userId, req.query);
+      await MetricService.getUserMetricLibrariesService(userId, req.query);
     const metricsResponseDTO = metricsDomain.map((metric) =>
       toMetricLibraryResponseDTO(metric)
     );

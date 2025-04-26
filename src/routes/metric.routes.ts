@@ -3,7 +3,7 @@
 import { Router } from "express";
 import {
   createMetric,
-  getAllMetrics,
+  getUserMetricLibraries,
   getUserDetailMetricById,
   updateMetric,
   deleteMetric,
@@ -47,7 +47,7 @@ const metricCacheKey = (req: any) => `metric:${req.user?.id}:${req.params.id}`;
 router.post("/", userRateLimiter, validate(createMetricSchema), createMetric);
 
 // GET All Metric by User Id
-router.get("/", cacheMiddleware(metricsCacheKey, 300), getAllMetrics);
+router.get("/", cacheMiddleware(metricsCacheKey, 300), getUserMetricLibraries);
 
 // GET specific User owned Metric by ID with caching
 router.get(
