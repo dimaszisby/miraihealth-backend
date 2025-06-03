@@ -1,0 +1,94 @@
+version: "3.9"
+
+services:
+  db: # PostgreSQL database service
+    image: postgres:17-alpine # Use a stable, actively maintained PostgreSQL version
+    container_name: postgres_db
+    restart: always # Restart the container automatically if it fails
+    environment: # Set environment variables from .env file
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes: # Persist data across container restarts
+      - db_data:/var/lib/postgresql/data
+      - ./docker/db/init:/docker-entrypoint-initdb.d # Initialize database with scripts
+    ports: # Expose the standard PostgreSQL port
+      - "5432:5432"
+    healthcheck: # Verify PostgreSQL readiness before Node.js app connects
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: # Connect to the backend network
+      - backend
+    deploy: # Resource limits
+      resources:
+        limits:
+          memory: 2048m
+          cpus: "1"
+    logging: # Configure logging to stdout
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis: # Redis service
+    image: redis:alpine # Use a lightweight Alpine-based Redis image
+    container_name: redis_cache
+    restart: always # Restart the container automatically if it fails
+    environment: # Set environment variables from .env file
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    # command: redis-server --requirepass ${REDIS_PASSWORD} # Set password for Redis
+    volumes: # Persist data across container restarts
+      - redis_data:/data # Default Redis data directory
+    ports: # Expose the default Redis port
+      - "6379:6379"
+    networks: # Connect to the backend network
+      - backend
+    logging: # Configure logging to stdout
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  app: # Node.js backend application service
+    build: # Define build context and Dockerfile
+      context: .
+      dockerfile: Dockerfile
+    container_name: node_app
+    restart: always # Restart the container automatically if it fails
+    environment: # Set environment variables
+      NODE_ENV: development # Run in development mode
+      DB_HOST: db # Use the service name as the hostname
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      PORT: 8001 # Set port to match development environment
+      REDIS_HOST: redis # Use the service name as the hostname
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    depends_on: # Ensure dependencies are running before starting the app
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started # Redis doesn't have a built-in healthcheck like postgres
+    ports: # Expose the application port
+      - "8001:8001" # Map host port 8001 to container port 8001
+    networks: # Connect to the backend network
+      - backend
+    logging: # Configure logging to stdout
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks: # Define a dedicated Docker network
+  backend:
+    name: backend_network # Name the network
+
+volumes: # Define named volumes for data persistence
+  db_data:
+    name: db_data_volume # Name the volume
+  redis_data:
+    name: redis_data_volume # Name the volume
