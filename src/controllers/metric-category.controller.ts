@@ -7,7 +7,11 @@ import { AuthRequest } from "@/types/request.context";
 import AppError from "@/utils/AppError";
 import catchAsync from "@/utils/catch-async";
 import { successResponse } from "@/utils/response-formatter";
-import { toMetricCategoryResponseDTO } from "@/utils/mappers/metric-category.mapper";
+import {
+  toMetricCategoryResponseDTO,
+  toMetricCategoryListResponseDTO,
+} from "@/utils/mappers/metric-category.mapper";
+import { GenerateDummyMetricCategoriesRequestDTO } from "@/types/dtos/metric-category.dto";
 
 /**
  * * Metric Category Controller
@@ -25,15 +29,15 @@ export const createCategory = catchAsync(
     const category: MetricCategoryDomain =
       await MetricCategoryService.createMetricCategoryService(
         req.user.id,
-        req.body,
+        req.body
       );
     successResponse(
       res,
       201,
       { category: toMetricCategoryResponseDTO(category) },
-      "Category created successfully",
+      "Category created successfully"
     );
-  },
+  }
 );
 
 /**
@@ -50,7 +54,7 @@ export const getAllCategories = catchAsync(
     const categoriesRespose = categories.map(toMetricCategoryResponseDTO);
 
     successResponse(res, 200, { categories: categoriesRespose });
-  },
+  }
 );
 
 /**
@@ -64,12 +68,12 @@ export const getCategoryById = catchAsync(
     const category: MetricCategoryDomain =
       await MetricCategoryService.getUserMetricCategoryByIdService(
         req.user.id,
-        req.params.id,
+        req.params.id
       );
     successResponse(res, 200, {
       category: toMetricCategoryResponseDTO(category),
     });
-  },
+  }
 );
 
 /**
@@ -84,15 +88,15 @@ export const updateCategory = catchAsync(
       await MetricCategoryService.updateMetricCategoryService(
         req.user.id,
         req.params.id,
-        req.body,
+        req.body
       );
     successResponse(
       res,
       200,
       { category: toMetricCategoryResponseDTO(category) },
-      "Category updated successfully",
+      "Category updated successfully"
     );
-  },
+  }
 );
 
 /**
@@ -106,13 +110,39 @@ export const deleteCategory = catchAsync(
     const category: MetricCategoryDomain =
       await MetricCategoryService.deleteMetricCategoryService(
         req.user.id,
-        req.params.id,
+        req.params.id
       );
     successResponse(
       res,
       200,
       { category: toMetricCategoryResponseDTO(category) },
-      "Category deleted successfully",
+      "Category deleted successfully"
     );
-  },
+  }
+);
+
+/**
+ * * ===== Controllers for Testing Purposes =====
+ */
+
+/**
+ * * Generate Dummy Metric Categories
+ * @route POST /api/categories/dummy
+ */
+export const generateDummyCategories = catchAsync(
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+    const userId = req.user.id;
+    const { count } = req.body as GenerateDummyMetricCategoriesRequestDTO;
+
+    const dummyCategories =
+      await MetricCategoryService.generateDummyCategoriesService(userId, count);
+
+    successResponse(
+      res,
+      201,
+      { categories: toMetricCategoryListResponseDTO(dummyCategories) },
+      `${count} dummy metric categories generated successfully`
+    );
+  }
 );

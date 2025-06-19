@@ -32,3 +32,9 @@ export const toMetricCategoryResponseDTO = (
   createdAt: metricCategory.createdAt.toISOString(),
   updatedAt: metricCategory.updatedAt.toISOString(),
 });
+
+export const toMetricCategoryListResponseDTO = (
+  metricCategories: MetricCategoryDomain[],
+): MetricCategoryResponseDTO[] => {
+  return metricCategories.map(toMetricCategoryResponseDTO);
+};

@@ -47,3 +47,9 @@ export const deleteMetricCategorySchema = z.object({
     id: z.string().uuid({ message: ZodMessages.metricCategory.invalidId }),
   }),
 });
+
+export const generateDummyMetricCategoriesSchema = z.object({
+  body: z.object({
+    count: z.number().int().min(1).max(1000).default(50), // Default to 50, max 1000
+  }),
+});

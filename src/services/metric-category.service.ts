@@ -28,7 +28,7 @@ const { MetricCategory } = db;
 // Question: How to use CreateMetricCategoryRequestDTO instead of MetricCategoryBase?
 export const createMetricCategoryService = async (
   userId: string,
-  data: CreateMetricCategoryRequestDTO,
+  data: CreateMetricCategoryRequestDTO
 ): Promise<MetricCategoryDomain> => {
   if (!userId) throw new AppError("User not authenticated", 403);
 
@@ -65,7 +65,7 @@ export const createMetricCategoryService = async (
  * @returns Array of metric category
  */
 export const getAllUserMetricCategoryService = async (
-  userId: string,
+  userId: string
 ): Promise<MetricCategoryDomain[]> => {
   if (!userId) throw new AppError("User not authenticated", 403);
 
@@ -104,7 +104,7 @@ export const getAllUserMetricCategoryService = async (
  */
 export const getUserMetricCategoryByIdService = async (
   userId: string,
-  categoryId: string,
+  categoryId: string
 ): Promise<MetricCategoryDomain> => {
   const category = await findOwnedCategory(userId, categoryId);
   return toDomainMetricCategory(category);
@@ -121,7 +121,7 @@ export const getUserMetricCategoryByIdService = async (
 export const updateMetricCategoryService = async (
   userId: string,
   categoryId: string,
-  updateData: UpdateMetricCategoryRequestDTO,
+  updateData: UpdateMetricCategoryRequestDTO
 ): Promise<MetricCategoryDomain> => {
   // Ensure the metric category exists and enforce ownership.
   const category = await findOwnedCategory(userId, categoryId);
@@ -133,7 +133,7 @@ export const updateMetricCategoryService = async (
     await invalidateCache(`category:${category.userId}:${category.id}`);
     await invalidateCache(`categories:${category.userId}`);
     logger.info(
-      `♻️ Cache invalidated for category:${category.userId}:${category.id} and categories:${category.userId}`,
+      `♻️ Cache invalidated for category:${category.userId}:${category.id} and categories:${category.userId}`
     );
   }
 
@@ -148,7 +148,7 @@ export const updateMetricCategoryService = async (
  */
 export const deleteMetricCategoryService = async (
   userId: string,
-  categoryId: string,
+  categoryId: string
 ): Promise<MetricCategoryDomain> => {
   // Ensure the metric category exists and enforce ownership.
   const category = await findOwnedCategory(userId, categoryId);
@@ -161,9 +161,52 @@ export const deleteMetricCategoryService = async (
     await invalidateCache(`category:${category.userId}:${category.id}`);
     await invalidateCache(`categories:${category.userId}`);
     logger.info(
-      `♻️ Cache invalidated for category:${category.userId}:${category.id} and categories:${category.userId}`,
+      `♻️ Cache invalidated for category:${category.userId}:${category.id} and categories:${category.userId}`
     );
   }
 
   return toDomainMetricCategory(category);
+};
+
+/**
+ * * ===== Services for Testing Purposes =====
+ */
+
+/**
+ * * Generate Dummy Metric Categories
+ * Generates a specified number of dummy metric category entries for a given user.
+ * @param userId - ID of the user
+ * @param count - Number of dummy categories to generate
+ * @returns Array of created metric category objects
+ */
+export const generateDummyCategoriesService = async (
+  userId: string,
+  count: number
+): Promise<MetricCategoryDomain[]> => {
+  const dummyCategories: MetricCategoryDomain[] = [];
+  const colors = ["#FF6347", "#FFD700", "#ADFF2F", "#6495ED", "#DA70D6"]; // Example colors
+  const icons = ["📚", "💡", "💪", "🌱", "🌟"]; // Example icons
+
+  for (let i = 0; i < count; i++) {
+    const name = `Dummy Category ${Date.now()}-${i}`;
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const icon = icons[Math.floor(Math.random() * icons.length)];
+
+    const category = await MetricCategory.create({
+      userId,
+      name,
+      color,
+      icon,
+    });
+    dummyCategories.push(toDomainMetricCategory(category));
+  }
+
+  if (redisClient.isOpen) {
+    await invalidateCache(`categories:${userId}`);
+    logger.info(
+      `♻️ Cache invalidated for categories:${userId} after dummy generation`
+    );
+  }
+
+  return dummyCategories;
 };

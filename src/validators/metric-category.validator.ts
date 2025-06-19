@@ -1,6 +1,13 @@
 // src/metric-category.validator.ts
 
 import { z } from "zod";
+import {
+  createMetricCategorySchema as createMetricCategorySchemaApi,
+  updateMetricCategorySchema as updateMetricCategorySchemaApi,
+  getMetricCategorySchema as getMetricCategorySchemaApi,
+  deleteMetricCategorySchema as deleteMetricCategorySchemaApi,
+  generateDummyMetricCategoriesSchema as generateDummyMetricCategoriesSchemaApi,
+} from "@/types/api/zod-metric-category.schema";
 
 /**
  * * Metric Category Schema Validator
@@ -8,36 +15,17 @@ import { z } from "zod";
  */
 
 // ✅ CREATE MetricCategory Schema
-export const createMetricCategorySchema = z.object({
-  body: z.object({
-    name: z.string().min(1, { message: "Name is required" }),
-    color: z.string().min(1).optional().default("#E897A3"),
-    icon: z.string().min(1).optional().default("📁"),
-  }),
-});
+export const createMetricCategorySchema = createMetricCategorySchemaApi;
 
 // ✅ UPDATE MetricCategory Schema
-export const updateMetricCategorySchema = z.object({
-  params: z.object({
-    id: z.string().uuid({ message: "Invalid MetricCategory ID" }),
-  }),
-  body: z.object({
-    name: z.string().min(1).optional(),
-    color: z.string().min(1).optional(),
-    icon: z.string().min(1).optional(),
-  }),
-});
+export const updateMetricCategorySchema = updateMetricCategorySchemaApi;
 
 // ✅ GET MetricCategory Schema
-export const getMetricCategorySchema = z.object({
-  params: z.object({
-    id: z.string().uuid({ message: "Invalid MetricCategory ID" }),
-  }),
-});
+export const getMetricCategorySchema = getMetricCategorySchemaApi;
 
 // ✅ DELETE MetricCategory Schema
-export const deleteMetricCategorySchema = z.object({
-  params: z.object({
-    id: z.string().uuid({ message: "Invalid MetricCategory ID" }),
-  }),
-});
+export const deleteMetricCategorySchema = deleteMetricCategorySchemaApi;
+
+// ✅ Generate Dummy Metric Categories Schema
+export const generateDummyMetricCategoriesSchema =
+  generateDummyMetricCategoriesSchemaApi;

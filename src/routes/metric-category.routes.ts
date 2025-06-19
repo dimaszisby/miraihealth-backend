@@ -7,6 +7,7 @@ import {
   getCategoryById,
   updateCategory,
   deleteCategory,
+  generateDummyCategories,
 } from "../controllers/metric-category.controller.js";
 import { authMiddleware } from "../middleware/auth-middleware.js";
 import { cacheMiddleware } from "../middleware/cache-middleware.js";
@@ -16,6 +17,7 @@ import {
   updateMetricCategorySchema,
   getMetricCategorySchema,
   deleteMetricCategorySchema,
+  generateDummyMetricCategoriesSchema,
 } from "../validators/metric-category.validator.js";
 import { userRateLimiter } from "../middleware/rate-limiter.js";
 
@@ -44,7 +46,7 @@ router.post(
   "/",
   userRateLimiter,
   validate(createMetricCategorySchema),
-  createCategory,
+  createCategory
 );
 
 // GET All Categories by User Id
@@ -55,7 +57,7 @@ router.get(
   "/:id",
   validate(getMetricCategorySchema),
   cacheMiddleware(categoryCacheKey, 600),
-  getCategoryById,
+  getCategoryById
 );
 
 // UPDATE Category
@@ -63,7 +65,7 @@ router.put(
   "/:id",
   userRateLimiter,
   validate(updateMetricCategorySchema),
-  updateCategory,
+  updateCategory
 );
 
 // DELETE Category
@@ -71,7 +73,19 @@ router.delete(
   "/:id",
   userRateLimiter,
   validate(deleteMetricCategorySchema),
-  deleteCategory,
+  deleteCategory
+);
+
+/**
+ * * ===== Endpoints for Testing Purposes =====
+ */
+
+// Generate Dummy Categories
+router.post(
+  "/dummy",
+  userRateLimiter,
+  validate(generateDummyMetricCategoriesSchema),
+  generateDummyCategories
 );
 
 export default router;

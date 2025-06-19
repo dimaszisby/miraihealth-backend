@@ -6,6 +6,7 @@ import { z } from "zod";
 import {
   createMetricCategorySchema,
   updateMetricCategorySchema,
+  generateDummyMetricCategoriesSchema,
 } from "@/types/api/zod-metric-category.schema.js";
 
 /**
@@ -80,4 +81,17 @@ export type CreateMetricCategoryRequestDTO = z.infer<
  */
 export type UpdateMetricCategoryRequestDTO = z.infer<
   typeof updateMetricCategorySchema.shape.body
+>;
+
+/**
+ * * ===== DTOs for Testing Purposes =====
+ */
+
+/**
+ * @typedef GenerateDummyMetricCategoriesRequestDTO
+ * @description Represents the expected structure of the request body when generating dummy metric category entries.
+ * Inferred from the Zod schema for validation.
+ */
+export type GenerateDummyMetricCategoriesRequestDTO = z.infer<
+  typeof generateDummyMetricCategoriesSchema.shape.body
 >;
