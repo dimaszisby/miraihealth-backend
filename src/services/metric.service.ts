@@ -160,7 +160,10 @@ const fetchMetrics = async (userId: string, options: any) => {
       ],
     },
     include: includeOptions,
-    order: [[sortBy, sortOrder]],
+    order: [
+      [sortBy, sortOrder],
+      ["id", "ASC"],
+    ],
     offset: Number(offset),
     limit: Number(limit),
   });
@@ -175,7 +178,7 @@ const fetchMetrics = async (userId: string, options: any) => {
 export const getUserMetricLibrariesService = async (
   userId: string,
   queryParams: any
-): Promise<MetricLibraryDomain[]> => {
+): Promise<{ metricsDomain: MetricLibraryDomain[]; total: number }> => {
   const {
     page = 1,
     limit = 10,
@@ -186,7 +189,9 @@ export const getUserMetricLibrariesService = async (
   } = queryParams;
 
   const offset = (page - 1) * limit;
+  const whereClause: any = { userId, ...filters };
 
+  // Fetch paginated metrics
   const metrics = await fetchMetrics(userId, {
     offset,
     limit,
@@ -200,11 +205,14 @@ export const getUserMetricLibrariesService = async (
     `Fetched ${metrics.length} metrics for user ${userId} with pagination and filtering. Query Params: ${JSON.stringify(queryParams)}, Filters: ${JSON.stringify(filters)}, Metrics: ${JSON.stringify(metrics)}`
   );
 
+  // Fetch total count for all metrics matching this user/filters
+  const total = await Metric.count({ where: whereClause });
+
   const transformed: MetricLibraryDomain[] = metrics
     .map(transformMetric)
     .filter(Boolean);
 
-  return transformed;
+  return { metricsDomain: transformed, total };
 };
 
 /**
@@ -369,4 +377,48 @@ export const deleteMetricService = async (
   }
 
   return toDomainMetric(metric);
+};
+
+/**
+ * * ===== Services for Testing Purposes =====
+ */
+
+/**
+ * * Generate Dummy Metrics
+ * Generates a specified number of dummy metric entries for a given user.
+ * @param userId - ID of the user
+ * @param count - Number of dummy metrics to generate
+ * @returns Array of created metric objects
+ */
+export const generateDummyMetricsService = async (
+  userId: string,
+  count: number
+): Promise<MetricDomain[]> => {
+  const dummyMetrics: MetricDomain[] = [];
+  for (let i = 0; i < count; i++) {
+    const name = `Dummy Metric ${Date.now()}-${i}`;
+    const description = `This is a dummy metric generated for testing pagination.`;
+    const defaultUnit = ["kg", "steps", "ml", "units"][
+      Math.floor(Math.random() * 4)
+    ];
+    const isPublic = Math.random() > 0.5;
+
+    const metric = await Metric.create({
+      userId,
+      name,
+      description,
+      defaultUnit,
+      isPublic,
+    });
+    dummyMetrics.push(toDomainMetric(metric));
+  }
+
+  if (redisClient.isOpen) {
+    await invalidateCache(`metrics:${userId}`);
+    logger.info(
+      `♻️ Cache invalidated for metrics:${userId} after dummy generation`
+    );
+  }
+
+  return dummyMetrics;
 };

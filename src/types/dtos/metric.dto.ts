@@ -6,6 +6,7 @@ import { z } from "zod";
 import {
   createMetricSchema,
   updateMetricSchema,
+  generateDummyMetricsSchema,
 } from "@/types/api/zod-metric.schema";
 
 // Internal DTOs for associations
@@ -274,4 +275,17 @@ export type CreateMetricRequestDTO = z.infer<
  */
 export type UpdateMetricRequestDTO = z.infer<
   typeof updateMetricSchema.shape.body
+>;
+
+/**
+ * * ===== DTOs for Testing Purposes =====
+ */
+
+/**
+ * @typedef GenerateDummyMetricsRequestDTO
+ * @description Represents the expected structure of the request body when generating dummy metric entries.
+ * Inferred from the Zod schema for validation.
+ */
+export type GenerateDummyMetricsRequestDTO = z.infer<
+  typeof generateDummyMetricsSchema.shape.body
 >;

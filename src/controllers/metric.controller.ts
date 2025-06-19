@@ -21,6 +21,7 @@ import {
   MetricDomain,
   MetricLibraryDomain,
 } from "@/types/domain/metric.domain";
+import { GenerateDummyMetricsRequestDTO } from "@/types/dtos/metric.dto";
 
 /**
  * * Metric Controller
@@ -73,13 +74,27 @@ export const getUserMetricLibraries = catchAsync(
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
 
-    const metricsDomain: MetricLibraryDomain[] =
-      await MetricService.getUserMetricLibrariesService(userId, req.query);
+    // Sanitize and validate pagination params
+    let { page = 1, limit = 20 } = req.query;
+    page = Number(page);
+    limit = Number(limit);
+
+    if (isNaN(page) || page < 1) page = 1;
+    if (isNaN(limit) || limit < 1 || limit > 100) limit = 20; // cap limit to prevent abuse
+
+    // Forward all params, including sanitized pagination
+    const { metricsDomain, total } =
+      await MetricService.getUserMetricLibrariesService(userId, {
+        ...req.query,
+        page,
+        limit,
+      });
+
     const metricsResponseDTO = metricsDomain.map((metric) =>
       toMetricLibraryResponseDTO(metric)
     );
 
-    successResponse(res, 200, { metrics: metricsResponseDTO });
+    successResponse(res, 200, { metrics: metricsResponseDTO, total: total });
   }
 );
 
@@ -97,9 +112,12 @@ export const getUserDetailMetricById = catchAsync(
     if (!metric) {
       throw new AppError("Metric not found", 404);
     }
-    successResponse(res, 200, {
-      metric: toUserMetricDetailResponseDTO(metric),
-    });
+    successResponse(
+      res,
+      200,
+      toUserMetricDetailResponseDTO(metric),
+      "Metric retrieved successfully"
+    );
   }
 );
 
@@ -143,6 +161,34 @@ export const deleteMetric = catchAsync(
       200,
       { metric: toMetricResponseDTO(metricDomain) },
       "Metric deleted successfully"
+    );
+  }
+);
+
+/**
+ * * ===== Controllers for Testing Purposes =====
+ */
+
+/**
+ * * Generate Dummy Metrics
+ * @route POST /api/metrics/dummy
+ */
+export const generateDummyMetrics = catchAsync(
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+    const userId = req.user.id;
+    const { count } = req.body as GenerateDummyMetricsRequestDTO;
+
+    const dummyMetrics = await MetricService.generateDummyMetricsService(
+      userId,
+      count
+    );
+
+    successResponse(
+      res,
+      201,
+      { metrics: dummyMetrics.map(toMetricResponseDTO) },
+      `${count} dummy metrics generated successfully`
     );
   }
 );

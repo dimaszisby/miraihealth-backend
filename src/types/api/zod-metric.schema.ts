@@ -55,3 +55,13 @@ export type CreateMetricInput = z.infer<typeof createMetricSchema>["body"];
 export type UpdateMetricInput = z.infer<typeof updateMetricSchema>; // Includes params and body
 export type GetMetricInput = z.infer<typeof getMetricSchema>["params"];
 export type DeleteMetricInput = z.infer<typeof deleteMetricSchema>["params"];
+
+/**
+ * * ===== Schemas for Testing Purposes =====
+ */
+
+export const generateDummyMetricsSchema = z.object({
+  body: z.object({
+    count: z.number().int().min(1).max(1000).default(50), // Default to 50, max 1000
+  }),
+});

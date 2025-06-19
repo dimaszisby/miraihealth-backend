@@ -9,6 +9,7 @@ import {
   deleteMetric,
 } from "@/controllers/metric.controller";
 import { getTrends } from "@/controllers/trend.controller";
+import { generateDummyMetrics } from "@/controllers/metric.controller";
 
 // Middleware
 import { authMiddleware } from "@/middleware/auth-middleware";
@@ -22,6 +23,7 @@ import {
   updateMetricSchema,
   deleteMetricSchema,
   getMetricSchema,
+  generateDummyMetricsSchema,
 } from "@/validators/metric.validator";
 
 const router = Router();
@@ -33,7 +35,11 @@ router.use(authMiddleware);
  * * Key Generator Function
  * Generates a cache key based on user ID
  */
-const metricsCacheKey = (req: any) => `metrics:${req.user?.id}`;
+const metricsCacheKey = (req: any) => {
+  const page = req.query.page || 1;
+  const limit = req.query.limit || 20;
+  return `metrics:${req.user?.id}:page:${page}:limit:${limit}`;
+};
 const metricCacheKey = (req: any) => `metric:${req.user?.id}:${req.params.id}`;
 
 /**
@@ -54,7 +60,7 @@ router.get(
   "/:id",
   validate(getMetricSchema),
   cacheMiddleware(metricCacheKey, 300),
-  getUserDetailMetricById,
+  getUserDetailMetricById
 );
 
 // UPDATE Metric
@@ -65,7 +71,7 @@ router.delete(
   "/:id",
   userRateLimiter,
   validate(deleteMetricSchema),
-  deleteMetric,
+  deleteMetric
 );
 
 /**
@@ -73,5 +79,17 @@ router.delete(
  */
 
 router.get("/:metricId/trends", getTrends);
+
+/**
+ * * ===== Endpoints for Testing Purposes =====
+ */
+
+// Generate Dummy Metrics
+router.post(
+  "/dummy",
+  userRateLimiter,
+  validate(generateDummyMetricsSchema),
+  generateDummyMetrics
+);
 
 export default router;
