@@ -1,6 +1,15 @@
 // src/validators/metric-log.validator.ts
 
 import { z } from "zod";
+import {
+  createMetricLogSchema as createMetricLogSchemaApi,
+  updateMetricLogSchema as updateMetricLogSchemaApi,
+  getAllMetricLogsSchema as getAllMetricLogsSchemaApi,
+  getMetricLogSchema as getMetricLogSchemaApi,
+  deleteMetricLogSchema as deleteMetricLogSchemaApi,
+  getAggregatedStatsSchema as getAggregatedStatsSchemaApi,
+  generateDummyMetricLogsSchema as generateDummyMetricLogsSchemaApi,
+} from "@/types/api/zod-metric-log.schema";
 
 /**
  * * Metric Log Schema Validator
@@ -12,71 +21,22 @@ const preprocessDate = (arg: unknown) =>
   typeof arg === "string" || arg instanceof Date ? new Date(arg) : arg;
 
 // ✅ CREATE MetricLog Schema
-export const createMetricLogSchema = z.object({
-  params: z.object({
-    metricId: z.string().uuid({ message: "Invalid metric ID" }),
-  }),
-  body: z.object({
-    logValue: z
-      .number()
-      .nonnegative({ message: "logValue must be non-negative" }),
-    type: z.enum(["manual", "automatic"]).optional().default("manual"),
-    loggedAt: z
-      .preprocess(
-        preprocessDate,
-        z.date({ required_error: "Invalid date format" }),
-      )
-      .optional(),
-  }),
-});
+export const createMetricLogSchema = createMetricLogSchemaApi;
 
 // ✅ UPDATE MetricLog Schema
-export const updateMetricLogSchema = z.object({
-  params: z.object({
-    metricId: z.string().uuid({ message: "Invalid metric ID" }),
-    id: z.string().uuid({ message: "Invalid metric log ID" }),
-  }),
-  body: z.object({
-    logValue: z
-      .number()
-      .nonnegative({ message: "logValue must be non-negative" })
-      .optional(),
-    type: z.enum(["manual", "automatic"]).optional().default("manual"),
-    loggedAt: z
-      .preprocess(
-        preprocessDate,
-        z.date({ required_error: "Invalid date format" }),
-      )
-      .optional(),
-  }),
-});
+export const updateMetricLogSchema = updateMetricLogSchemaApi;
 
 // ✅ GET All MetricLogs Schema
-export const getAllMetricLogsSchema = z.object({
-  params: z.object({
-    metricId: z.string().uuid({ message: "Invalid metric ID" }),
-  }),
-});
+export const getAllMetricLogsSchema = getAllMetricLogsSchemaApi;
 
 // ✅ GET MetricLog Schema
-export const getMetricLogSchema = z.object({
-  params: z.object({
-    metricId: z.string().uuid({ message: "Invalid metric ID" }),
-    id: z.string().uuid({ message: "Invalid metric log ID" }),
-  }),
-});
+export const getMetricLogSchema = getMetricLogSchemaApi;
 
 // ✅ DELETE MetricLog Schema
-export const deleteMetricLogSchema = z.object({
-  params: z.object({
-    metricId: z.string().uuid({ message: "Invalid metric ID" }),
-    id: z.string().uuid({ message: "Invalid metric log ID" }),
-  }),
-});
+export const deleteMetricLogSchema = deleteMetricLogSchemaApi;
 
 // ✅ GET Aggregated Stats Schema
-export const getAggregatedStatsSchema = z.object({
-  params: z.object({
-    metricId: z.string().uuid({ message: "Invalid metric ID" }),
-  }),
-});
+export const getAggregatedStatsSchema = getAggregatedStatsSchemaApi;
+
+// ✅ Generate Dummy Metric Logs Schema
+export const generateDummyMetricLogsSchema = generateDummyMetricLogsSchemaApi;

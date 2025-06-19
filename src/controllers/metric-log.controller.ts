@@ -10,6 +10,7 @@ import {
   toMetricLogListResponseDTO,
   toMetricLogResponseDTO,
 } from "@/utils/mappers/metric-log.mapper";
+import { GenerateDummyMetricLogsRequestDTO } from "@/types/dtos/metric-log.dto";
 
 /**
  * * Metric Log Controller
@@ -41,9 +42,9 @@ export const createMetricLog = catchAsync(
       res,
       201,
       { log: toMetricLogResponseDTO(logDomain) },
-      "Metric Log created successfully",
+      "Metric Log created successfully"
     );
-  },
+  }
 );
 
 /**
@@ -56,20 +57,28 @@ export const getAllLogsByMetric = catchAsync(
     const userId = req.user.id;
 
     const { metricId } = req.params;
-    const { startDate, endDate, sortBy, order } = req.query;
+    const { startDate, endDate, sortBy, order, page, limit } = req.query;
 
-    const logsDomain = await metricLogService.getAllLogsByMetricService({
-      userId: userId,
-      metricId: metricId,
-      options: {
-        startDate: startDate ? new Date(startDate as string) : undefined,
-        endDate: endDate ? new Date(endDate as string) : undefined,
-        sortBy: (sortBy as string) || "loggedAt",
-        order: (order as "asc" | "desc") || "desc",
-      },
-    });
-    successResponse(res, 200, { logs: toMetricLogListResponseDTO(logsDomain) });
-  },
+    const { logs, totalCount } =
+      await metricLogService.getAllLogsByMetricService({
+        userId: userId,
+        metricId: metricId,
+        options: {
+          startDate: startDate ? new Date(startDate as string) : undefined,
+          endDate: endDate ? new Date(endDate as string) : undefined,
+          sortBy: (sortBy as string) || "loggedAt",
+          order: (order as "asc" | "desc") || "desc",
+          page: page ? parseInt(page as string) : undefined,
+          limit: limit ? parseInt(limit as string) : undefined,
+        },
+      });
+    successResponse(
+      res,
+      200,
+      { logs: toMetricLogListResponseDTO(logs), total: totalCount },
+      "Metric logs retrieved successfully"
+    );
+  }
 );
 
 /**
@@ -89,7 +98,7 @@ export const getLogById = catchAsync(
       logId: id,
     });
     successResponse(res, 200, { log: toMetricLogResponseDTO(logDomain) });
-  },
+  }
 );
 
 /**
@@ -118,9 +127,9 @@ export const updateLog = catchAsync(
       res,
       200,
       { log: toMetricLogResponseDTO(logDomain) },
-      "Log updated successfully",
+      "Log updated successfully"
     );
-  },
+  }
 );
 
 /**
@@ -143,9 +152,9 @@ export const deleteLog = catchAsync(
       res,
       200,
       { log: toMetricLogResponseDTO(logDomain) },
-      "Log deleted successfully",
+      "Log deleted successfully"
     );
-  },
+  }
 );
 
 /**
@@ -161,5 +170,36 @@ export const getAggregatedStats = catchAsync(
 
     const stats = await metricLogService.getAggregatedStats(userId, metricId);
     successResponse(res, 200, stats);
-  },
+  }
+);
+
+/**
+ * * ===== Controllers for Testing Purposes =====
+ */
+
+/**
+ * * Generate Dummy Metric Logs for a Metric
+ * @route POST /api/metrics/:metricId/logs/dummy
+ */
+export const generateDummyMetricLogs = catchAsync(
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+    const userId = req.user.id;
+
+    const { metricId } = req.params;
+    const { count } = req.body as GenerateDummyMetricLogsRequestDTO;
+
+    const dummyLogs = await metricLogService.generateDummyLogsService({
+      userId,
+      metricId,
+      count,
+    });
+
+    successResponse(
+      res,
+      201,
+      { logs: toMetricLogListResponseDTO(dummyLogs) },
+      `${count} dummy metric logs generated successfully`
+    );
+  }
 );

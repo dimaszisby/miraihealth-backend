@@ -42,6 +42,14 @@ export const getAllMetricLogsSchema = z.object({
   params: z.object({
     metricId: zUUID,
   }),
+  query: z.object({
+    startDate: zDateOptional,
+    endDate: zDateOptional,
+    sortBy: z.string().optional(),
+    order: z.enum(["asc", "desc"]).optional(),
+    page: z.preprocess(Number, z.number().int().min(1)).optional().default(1),
+    limit: z.preprocess(Number, z.number().int().min(1)).optional().default(10),
+  }).optional(),
 });
 
 export const deleteMetricLogSchema = z.object({
@@ -54,5 +62,18 @@ export const deleteMetricLogSchema = z.object({
 export const getAggregatedStatsSchema = z.object({
   params: z.object({
     metricId: zUUID,
+  }),
+});
+
+/**
+ * * ===== Schemas for Testing Purposes =====
+ */
+
+export const generateDummyMetricLogsSchema = z.object({
+  params: z.object({
+    metricId: zUUID,
+  }),
+  body: z.object({
+    count: z.number().int().min(1).max(1000).default(50), // Default to 50, max 1000 to prevent abuse
   }),
 });

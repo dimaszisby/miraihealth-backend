@@ -8,6 +8,7 @@ import {
   updateLog,
   deleteLog,
   getAggregatedStats,
+  generateDummyMetricLogs,
 } from "../controllers/metric-log.controller.js";
 import { authMiddleware } from "../middleware/auth-middleware.js";
 import { cacheMiddleware } from "../middleware/cache-middleware.js";
@@ -19,6 +20,7 @@ import {
   getMetricLogSchema,
   deleteMetricLogSchema,
   getAggregatedStatsSchema,
+  generateDummyMetricLogsSchema,
 } from "../validators/metric-log.validator.js";
 import { userRateLimiter } from "../middleware/rate-limiter.js";
 
@@ -31,8 +33,11 @@ router.use(authMiddleware);
  * * Key Generator Function
  * Generates a cache key based on user ID and log ID
  */
-const logsCacheKey = (req: any) =>
-  `logs:${req.user?.id}:${req.params.metricId}`;
+const logsCacheKey = (req: any) => {
+  const { metricId } = req.params;
+  const { page = 1, limit = 10, startDate, endDate, sortBy, order } = req.query;
+  return `logs:${req.user?.id}:${metricId}:${page}:${limit}:${startDate}:${endDate}:${sortBy}:${order}`;
+};
 const logCacheKey = (req: any) =>
   `log:${req.user?.id}:${req.params.metricId}:${req.params.id}`;
 const logStatsCacheKey = (req: any) =>
@@ -51,7 +56,7 @@ router.post(
   "/:metricId/logs/",
   userRateLimiter,
   validate(createMetricLogSchema),
-  createMetricLog,
+  createMetricLog
 );
 
 // GET All Logs by Metric Id
@@ -59,7 +64,7 @@ router.get(
   "/:metricId/logs/",
   validate(getAllMetricLogsSchema),
   cacheMiddleware(logsCacheKey, 300),
-  getAllLogsByMetric,
+  getAllLogsByMetric
 );
 
 // GET Aggregated Stats for logs
@@ -69,7 +74,7 @@ router.get(
   "/:metricId/logs/stats",
   validate(getAggregatedStatsSchema),
   cacheMiddleware(logStatsCacheKey, 300),
-  getAggregatedStats,
+  getAggregatedStats
 );
 
 // GET Specific Log by Id
@@ -77,7 +82,7 @@ router.get(
   "/:metricId/logs/:id",
   validate(getMetricLogSchema),
   cacheMiddleware(logCacheKey, 300), // Cache a single log entry
-  getLogById,
+  getLogById
 );
 
 // UPDATE Log
@@ -85,7 +90,7 @@ router.put(
   "/:metricId/logs/:id",
   userRateLimiter,
   validate(updateMetricLogSchema),
-  updateLog,
+  updateLog
 );
 
 // DELETE Log
@@ -93,7 +98,19 @@ router.delete(
   "/:metricId/logs/:id",
   userRateLimiter,
   validate(deleteMetricLogSchema),
-  deleteLog,
+  deleteLog
+);
+
+/**
+ * * ===== Endpoints for Testing Purposes =====
+ */
+
+// Generate Dummy Logs
+router.post(
+  "/:metricId/logs/dummy",
+  userRateLimiter,
+  validate(generateDummyMetricLogsSchema),
+  generateDummyMetricLogs
 );
 
 export default router;

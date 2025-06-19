@@ -6,6 +6,7 @@ import { z } from "zod";
 import {
   createMetricLogSchema,
   updateMetricLogSchema,
+  generateDummyMetricLogsSchema,
 } from "@/types/api/zod-metric-log.schema";
 
 /**
@@ -85,4 +86,17 @@ export type CreateMetricLogRequestDTO = z.infer<
  */
 export type UpdateMetricLogRequestDTO = z.infer<
   typeof updateMetricLogSchema.shape.body
+>;
+
+/**
+ * * ===== DTOs for Testing Purposes =====
+ */
+
+/**
+ * @typedef GenerateDummyMetricLogsRequestDTO
+ * @description Represents the expected structure of the request body when generating dummy metric log entries.
+ * Inferred from the Zod schema for validation.
+ */
+export type GenerateDummyMetricLogsRequestDTO = z.infer<
+  typeof generateDummyMetricLogsSchema.shape.body
 >;
