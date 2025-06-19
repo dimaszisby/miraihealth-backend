@@ -10,13 +10,19 @@ import { Response } from "express";
 interface SuccessResponse<T> {
   status: "success";
   message: string;
-  data: T;
+  code?: number | string;
+  data: T | null;
+  success?: true;
 }
 
 interface ErrorResponse {
   status: "error";
   message: string;
+  code?: number | string;
   error?: unknown;
+  errors?: string[];
+  data: null;
+  success?: false;
 }
 
 /**
@@ -24,19 +30,23 @@ interface ErrorResponse {
  *
  * @param res - Express response object
  * @param statusCode - HTTP status code
- * @param data - Data to be sent in the response
- * @param message - Optional success message (default: "Success")
+ * @param data - Data to be sent in the response (default: null)
+ * @param message - Success message (default: "Success")
+ * @param code - Optional custom code for the response
  */
 const successResponse = <T>(
   res: Response,
   statusCode: number,
-  data: T,
+  data: T | null,
   message = "Success",
+  code?: number | string
 ): Response<SuccessResponse<T>> => {
   return res.status(statusCode).json({
     status: "success",
     message,
     data,
+    code,
+    success: true,
   });
 };
 
@@ -46,19 +56,26 @@ const successResponse = <T>(
  * @param res - Express response object
  * @param statusCode - HTTP status code
  * @param message - Error message
- * @param error - Optional error object (default: null)
+ * @param error - Optional error object or message
+ * @param code - Optional custom code for the response
+ * @param errors - Optional array of error messages
  */
 const errorResponse = (
   res: Response,
   statusCode: number,
   message: string,
   error: unknown = null,
+  code?: number | string,
+  errors?: string[]
 ): Response<ErrorResponse> => {
   return res.status(statusCode).json({
     status: "error",
     message,
     error,
+    code,
+    errors,
+    data: null,
+    success: false,
   });
 };
-
 export { successResponse, errorResponse };
