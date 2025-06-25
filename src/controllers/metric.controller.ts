@@ -98,7 +98,9 @@ export const getUserMetricLibraries = catchAsync(
   }
 );
 
+// TODO: This function is deprecated due to API endpoint changes (from nested to flat structure).
 /**
+ * @deprecated This function is deprecated due to API endpoint changes (from nested to flat structure).
  * * Get specific User Metric by Id
  * @route GET /api/metrics/:id
  */
@@ -116,6 +118,29 @@ export const getUserDetailMetricById = catchAsync(
       res,
       200,
       toUserMetricDetailResponseDTO(metric),
+      "Metric retrieved successfully"
+    );
+  }
+);
+
+/**
+ * * Get specific Metric by Id
+ * @route GET /api/metrics/:id
+ */
+export const getMetricById = catchAsync(
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const metric = await MetricService.getUserMetricByIdService(userId, id);
+    if (!metric) {
+      throw new AppError("Metric not found", 404);
+    }
+    successResponse(
+      res,
+      200,
+      toMetricResponseDTO(metric),
       "Metric retrieved successfully"
     );
   }

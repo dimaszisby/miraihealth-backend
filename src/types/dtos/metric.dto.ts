@@ -175,6 +175,7 @@ export interface MetricPreviewResponseDTO {
  */
 export type MetricListResponseDTO = MetricPreviewResponseDTO[];
 
+// TODO: This should be a deprecated interface, as it is not used in the current API.
 /**
  * @interface UserMetricDetailResponseDTO
  * @description Represents a detailed view of a metric, including associated category, settings, and logs.

@@ -4,7 +4,8 @@ import { Router } from "express";
 import {
   createMetric,
   getUserMetricLibraries,
-  getUserDetailMetricById,
+  getUserDetailMetricById, // Deprecated
+  getMetricById,
   updateMetric,
   deleteMetric,
 } from "@/controllers/metric.controller";
@@ -55,12 +56,12 @@ router.post("/", userRateLimiter, validate(createMetricSchema), createMetric);
 // GET All Metric by User Id
 router.get("/", cacheMiddleware(metricsCacheKey, 300), getUserMetricLibraries);
 
-// GET specific User owned Metric by ID with caching
+// GET specific Metric by ID with caching (new flat structure)
 router.get(
   "/:id",
   validate(getMetricSchema),
   cacheMiddleware(metricCacheKey, 300),
-  getUserDetailMetricById
+  getMetricById
 );
 
 // UPDATE Metric

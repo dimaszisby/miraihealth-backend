@@ -176,6 +176,7 @@ export type MetricLibraryListDomain = MetricLibraryDomain[];
  * @description Extends the core MetricDomain with potentially loaded relational data (category, settings, logs).
  * Useful for scenarios where related entities are needed alongside the metric itself.
  */
+// TODO: This might be deprecated in favor of using MetricDomain directly with relations loaded as needed.
 export interface MetricDomainExtended extends MetricDomain {
   /**
    * @property {MetricCategoryDomain} [category] - The associated metric category domain object, if loaded.
