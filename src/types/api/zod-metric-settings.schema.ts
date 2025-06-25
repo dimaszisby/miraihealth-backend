@@ -11,11 +11,9 @@ import {
 } from "@/validators/zod-rules";
 
 export const createMetricSettingsSchema = z.object({
-  params: z.object({
-    metricId: zUUID,
-  }),
   body: z
     .object({
+      metricId: zUUID,
       goalEnabled: z.boolean().optional().default(false),
       goalType: zGoalType,
       goalValue: zGoalValue,
@@ -56,23 +54,37 @@ export const createMetricSettingsSchema = z.object({
     ),
 });
 
-export const updateMetricSettingsSchema = createMetricSettingsSchema.extend({
+export const updateMetricSettingsSchema = z.object({
   params: z.object({
-    metricId: zUUID,
     id: zUUID,
+  }),
+  body: z.object({
+    goalEnabled: z.boolean().optional(),
+    goalType: zGoalType.optional(),
+    goalValue: zGoalValue.optional(),
+    timeFrameEnabled: z.boolean().optional(),
+    startDate: zDateOptional.optional().nullable(),
+    deadlineDate: zDateOptional.optional().nullable(),
+    alertEnabled: z.boolean().optional(),
+    alertThresholds: zAlertThresholds.optional(),
+    displayOptions: zDisplayOptions.optional(),
   }),
 });
 
 export const getMetricSettingsSchema = z.object({
   params: z.object({
-    metricId: zUUID,
     id: zUUID,
   }),
 });
 
+export const getAllMetricSettingsSchema = z.object({
+  query: z.object({
+    metricId: zUUID.optional(),
+  }).optional(),
+});
+
 export const deleteMetricSettingsSchema = z.object({
   params: z.object({
-    metricId: zUUID,
     id: zUUID,
   }),
 });

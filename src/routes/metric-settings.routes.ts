@@ -24,19 +24,87 @@ import { userRateLimiter } from "../middleware/rate-limiter.js";
 
 const router = Router();
 
+const metricSettingsCacheKey = (req: any) =>
+  `metricSettings:${req.user?.id}:${req.query.metricId || "all"}`;
+const metricSettingCacheKey = (req: any) =>
+  `metricSetting:${req.user?.id}:${req.params.id}`;
+const goalStatsCacheKey = (req: any) =>
+  `goalStats:${req.user?.id}:${req.query.metricId || "all"}`;
+
+// Middleware to add deprecation warning
+const deprecateMetricSettingsRoute = (req: any, res: any, next: any) => {
+  res.setHeader('X-Deprecated-Endpoint', 'true');
+  res.setHeader('Link', '</api/v1/metric-settings>; rel="successor-version"; title="Use /api/v1/metric-settings instead"');
+  console.warn(`DEPRECATED ACCESS: User ${req.user?.id} accessed deprecated metric settings endpoint: ${req.originalUrl}`);
+  next();
+};
+
 // Apply Authentication Middleware Globally
 router.use(authMiddleware);
 
 /**
- * * Key Generator Function
- * Generates a cache key based on user ID, metric ID, and settings ID
+ * * Deprecated Nested Routes (for backward compatibility)
+ * These routes will be removed after a migration period.
  */
-const metricSettingsCacheKey = (req: any) =>
-  `metricSettings:${req.user?.id}:${req.params.metricId}`;
-const metricSettingCacheKey = (req: any) =>
-  `metricSetting:${req.user?.id}:${req.params.metricId}:${req.params.id}`;
-const goalStatsCacheKey = (req: any) =>
-  `goalStats:${req.user?.id}:${req.params.metricId}`;
+
+// DEPRECATED: CREATE Settings
+router.post(
+  "/metrics/:metricId/settings/",
+  deprecateMetricSettingsRoute,
+  userRateLimiter,
+  validate(createMetricSettingsSchema),
+  createMetricSettings,
+);
+
+// DEPRECATED: GET All Settings by Metric Id
+router.get(
+  "/metrics/:metricId/settings/",
+  deprecateMetricSettingsRoute,
+  validate(getAllMetricSettingsSchema),
+  cacheMiddleware(metricSettingsCacheKey, 300),
+  getAllMetricSettings,
+);
+
+// DEPRECATED: GET Specific Settings by Id
+router.get(
+  "/metrics/:metricId/settings/:id",
+  deprecateMetricSettingsRoute,
+  validate(getMetricSettingsSchema),
+  cacheMiddleware(metricSettingCacheKey, 300),
+  getMetricSettingsById,
+);
+
+// DEPRECATED: UPDATE Settings
+router.put(
+  "/metrics/:metricId/settings/:id",
+  deprecateMetricSettingsRoute,
+  userRateLimiter,
+  validate(updateMetricSettingsSchema),
+  updateMetricSettings,
+);
+
+// DEPRECATED: DELETE Settings
+router.delete(
+  "/metrics/:metricId/settings/:id",
+  deprecateMetricSettingsRoute,
+  userRateLimiter,
+  validate(deleteMetricSettingsSchema),
+  deleteMetricSettings,
+);
+
+// DEPRECATED: New PATCH endpoints
+router.patch(
+  "/metrics/:metricId/settings/:id/achieve",
+  deprecateMetricSettingsRoute,
+  userRateLimiter,
+  updateGoalAchievement,
+);
+router.patch(
+  "/metrics/:metricId/settings/:id/display",
+  deprecateMetricSettingsRoute,
+  userRateLimiter,
+  updateDisplayOptions,
+);
 
 /**
  * * Metric Settings Endpoints
@@ -48,15 +116,15 @@ const goalStatsCacheKey = (req: any) =>
 
 // CREATE Settings
 router.post(
-  "/:metricId/settings/",
+  "/",
   userRateLimiter,
   validate(createMetricSettingsSchema),
   createMetricSettings,
 );
 
-// GET All Settings by Metric Id
+// GET All Settings (with optional metricId filter)
 router.get(
-  "/:metricId/settings/",
+  "/",
   validate(getAllMetricSettingsSchema),
   cacheMiddleware(metricSettingsCacheKey, 300),
   getAllMetricSettings,
@@ -64,7 +132,7 @@ router.get(
 
 // GET Specific Settings by Id
 router.get(
-  "/:metricId/settings/:id",
+  "/:id",
   validate(getMetricSettingsSchema),
   cacheMiddleware(metricSettingCacheKey, 300),
   getMetricSettingsById,
@@ -72,7 +140,7 @@ router.get(
 
 // UPDATE Settings
 router.put(
-  "/:metricId/settings/:id",
+  "/:id",
   userRateLimiter,
   validate(updateMetricSettingsSchema),
   updateMetricSettings,
@@ -80,7 +148,7 @@ router.put(
 
 // DELETE Settings
 router.delete(
-  "/:metricId/settings/:id",
+  "/:id",
   userRateLimiter,
   validate(deleteMetricSettingsSchema),
   deleteMetricSettings,
@@ -88,12 +156,12 @@ router.delete(
 
 // New PATCH endpoints
 router.patch(
-  "/:metricId/settings/:id/achieve",
+  "/:id/achieve",
   userRateLimiter,
   updateGoalAchievement,
 );
 router.patch(
-  "/:metricId/settings/:id/display",
+  "/:id/display",
   userRateLimiter,
   updateDisplayOptions,
 );
