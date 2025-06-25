@@ -38,11 +38,11 @@ const { MetricLog } = db;
 
 interface MetricLogBaseParams {
   userId: string;
-  metricId: string;
   logId: string;
 }
 
 export interface LogQueryOptions {
+  metricId?: string; // Make metricId optional for filtering
   startDate?: Date;
   endDate?: Date;
   sortBy?: string;
@@ -50,6 +50,7 @@ export interface LogQueryOptions {
   page?: number;
   limit?: number;
 }
+
 
 /**
  * * Create a new log for a given metric.
@@ -60,13 +61,14 @@ export interface LogQueryOptions {
  */
 export const createLog = async ({
   userId,
-  metricId,
   logData,
 }: {
   userId: string;
-  metricId: string;
   logData: CreateMetricLogRequestDTO;
 }): Promise<MetricLogDomain> => {
+  const { metricId } = logData; // Extract metricId from logData
+  if (!metricId) throw new AppError("metricId is required", 400); // Should be caught by Zod, but good for type safety
+
   // Ensure the parent metric exists and enforce ownership.
   await validateMetricAccess(userId, metricId);
 
@@ -76,22 +78,24 @@ export const createLog = async ({
     type: logData.type ?? "manual",
   };
 
-  // Prevent duplicate logs for the exact same timestamp
+  // Prevent duplicate logs for the exact same timestamp for a given metric
   const existing = await MetricLog.findOne({
     where: { metricId, loggedAt: finalLogData.loggedAt },
   });
   if (existing) {
-    throw new AppError("A log entry already exists for this timestamp", 400);
+    throw new AppError("A log entry already exists for this timestamp for this metric", 400);
   }
 
-  const created = await MetricLog.create({ metricId, ...finalLogData });
+  const created = await MetricLog.create(finalLogData);
 
-  // Invalidate logs list and aggregated stats cache for this metric
+  // Invalidate caches
   if (redisClient.isOpen) {
-    await invalidateCache(`logs:${userId}:${metricId}`);
-    await invalidateCache(`logStats:${userId}:${metricId}`);
+    await invalidateCache(`logs:${userId}`); // Invalidate general logs list for the user
+    await invalidateCache(`logStats:${userId}`); // Invalidate general stats for the user
+    await invalidateCache(`logs:${userId}:${metricId}`); // Invalidate logs list for this specific metric
+    await invalidateCache(`logStats:${userId}:${metricId}`); // Invalidate stats for this specific metric
     logger.info(
-      `♻️ Cache invalidated for logs and stats of metric:${metricId}`
+      `♻️ Cache invalidated for logs and stats of user:${userId} and metric:${metricId}`
     );
   }
 
@@ -113,13 +117,14 @@ export const createLog = async ({
  * @param options - Optional query options for filtering and sorting.
  * @returns An object containing the query options.
  */
-const buildQueryOptions = (
-  metricId: string,
-  options?: LogQueryOptions
-): any => {
+const buildQueryOptions = (options?: LogQueryOptions): any => {
   const queryOptions: any = {
-    where: { metricId },
+    where: {},
   };
+
+  if (options?.metricId) {
+    queryOptions.where.metricId = options.metricId;
+  }
 
   if (options?.startDate || options?.endDate) {
     queryOptions.where.loggedAt = createDateRangeFilter(
@@ -153,17 +158,28 @@ const buildQueryOptions = (
  */
 export const getAllLogsByMetricService = async ({
   userId,
-  metricId,
   options,
 }: {
   userId: string;
-  metricId: string;
   options?: LogQueryOptions;
 }): Promise<{ logs: MetricLogDomain[]; totalCount: number }> => {
-  // Ensure the parent metric exists and enforce ownership.
-  await validateMetricAccess(userId, metricId);
+  const queryOptions = buildQueryOptions(options);
 
-  const queryOptions = buildQueryOptions(metricId, options);
+  // If metricId is provided, ensure the user has access to it.
+  if (options?.metricId) {
+    await validateMetricAccess(userId, options.metricId);
+  } else {
+    // If no metricId is provided, fetch all logs for metrics owned by the user
+    // This requires joining with the Metric model to filter by userId
+    queryOptions.include = [
+      {
+        model: db.Metric,
+        as: "Metric",
+        where: { userId },
+        attributes: [], // Don't fetch metric attributes, just use for filtering
+      },
+    ];
+  }
 
   const { count, rows } = await MetricLog.findAndCountAll(queryOptions);
 
@@ -179,23 +195,10 @@ export const getAllLogsByMetricService = async ({
  */
 export const getLogByIdService = async ({
   userId,
-  metricId,
   logId,
 }: MetricLogBaseParams): Promise<MetricLogDomain> => {
-  // Ensure the parent metric exists and enforce ownership.
-  await findOwnedMetricLog(userId, metricId, logId);
-
-  // Retrieve and return the log
-  const log = await MetricLog.findOne({
-    where: { id: logId, metricId: metricId },
-    include: [
-      {
-        model: db.Metric,
-        as: "Metric",
-        attributes: ["id", "userId"], // ✅ Include metric owner information
-      },
-    ],
-  });
+  // Find the log and ensure ownership. The db-helper function now handles metricId validation.
+  const log = await findOwnedMetricLog(userId, logId);
   if (!log) {
     throw new AppError("Log not found", 404);
   }
@@ -216,19 +219,21 @@ interface UpdateLogParams extends MetricLogBaseParams {
 
 export const updateLogService = async ({
   userId,
-  metricId,
   logId,
   updateData,
 }: UpdateLogParams): Promise<MetricLogDomain> => {
-  // Ensure Log Exists
-  const log = await findOwnedMetricLog(userId, metricId, logId);
+  // Ensure Log Exists and is owned by the user. The db-helper function now handles metricId validation.
+  const log = await findOwnedMetricLog(userId, logId);
+  if (!log) {
+    throw new AppError("Log not found", 404);
+  }
 
   if (updateData.loggedAt) {
     const existingLog = await MetricLog.findOne({
-      where: { metricId, loggedAt: updateData.loggedAt },
+      where: { metricId: log.metricId, loggedAt: updateData.loggedAt },
     });
-    if (existingLog)
-      throw new AppError("A log already exists for this date", 400);
+    if (existingLog && existingLog.id !== logId)
+      throw new AppError("A log already exists for this date for this metric", 400);
   }
 
   // Create update instance
@@ -247,17 +252,16 @@ export const updateLogService = async ({
 
   // Invalidate caches based on updatedLog.metric data
   if (redisClient.isOpen && updatedLog.metric) {
-    await invalidateCache(
-      `log:${updatedLog.metric.userId}:${updatedLog.metric.id}:${updatedLog.id}`
-    );
-    await invalidateCache(
-      `logs:${updatedLog.metric.userId}:${updatedLog.metric.id}`
-    );
-    await invalidateCache(
-      `logStats:${updatedLog.metric.userId}:${updatedLog.metric.id}`
-    );
+    await invalidateCache(`log:${updatedLog.metric.userId}:${updatedLog.id}`);
+    await invalidateCache(`logs:${updatedLog.metric.userId}`);
+    await invalidateCache(`logStats:${updatedLog.metric.userId}`);
+    // Invalidate specific metric logs/stats if metricId was present
+    if (updatedLog.metric.id) {
+      await invalidateCache(`logs:${updatedLog.metric.userId}:${updatedLog.metric.id}`);
+      await invalidateCache(`logStats:${updatedLog.metric.userId}:${updatedLog.metric.id}`);
+    }
     logger.info(
-      `♻️ Cache invalidated for log:${updatedLog.id}, logs, and stats of metric:${updatedLog.metric.id}`
+      `♻️ Cache invalidated for log:${updatedLog.id}, logs, and stats of user:${updatedLog.metric.userId} and metric:${updatedLog.metric.id}`
     );
   }
 
@@ -271,12 +275,14 @@ export const updateLogService = async ({
  * @param id - ID of the specific log
  */
 export const deleteLogService = async ({
-  metricId,
   userId,
   logId,
 }: MetricLogBaseParams): Promise<MetricLogDomain> => {
-  // Ensure Log Exists
-  const log = await findOwnedMetricLog(userId, metricId, logId);
+  // Ensure Log Exists and is owned by the user. The db-helper function now handles metricId validation.
+  const log = await findOwnedMetricLog(userId, logId);
+  if (!log) {
+    throw new AppError("Log not found", 404);
+  }
 
   // Reload to include Metric association (if not already present)
   await log.reload({
@@ -290,13 +296,16 @@ export const deleteLogService = async ({
   });
 
   if (redisClient.isOpen && log.metric) {
-    await invalidateCache(
-      `log:${log.metric.userId}:${log.metric.id}:${log.id}`
-    );
-    await invalidateCache(`logs:${log.metric.userId}:${log.metric.id}`);
-    await invalidateCache(`logStats:${log.metric.userId}:${log.metric.id}`);
+    await invalidateCache(`log:${log.metric.userId}:${log.id}`);
+    await invalidateCache(`logs:${log.metric.userId}`);
+    await invalidateCache(`logStats:${log.metric.userId}`);
+    // Invalidate specific metric logs/stats if metricId was present
+    if (log.metric.id) {
+      await invalidateCache(`logs:${log.metric.userId}:${log.metric.id}`);
+      await invalidateCache(`logStats:${log.metric.userId}:${log.metric.id}`);
+    }
     logger.info(
-      `♻️ Cache invalidated for log:${log.id}, logs, and stats of metric:${log.metric.id}`
+      `♻️ Cache invalidated for log:${log.id}, logs, and stats of user:${log.metric.userId} and metric:${log.metric.id}`
     );
   }
 
@@ -312,12 +321,27 @@ export const deleteLogService = async ({
  * @returns Numbers of average, min, max of aggregated stats
  */
 // TODO: Here are unfinished implementation, in the future this will be implemented into end-to-end pipeline for data visualization
-export const getAggregatedStats = async (userId: string, metricId: string) => {
-  // Ensure the parent metric exists and enforce ownership.
-  await validateMetricAccess(userId, metricId);
+export const getAggregatedStats = async (userId: string, metricId?: string) => {
+  const whereClause: any = {};
+  const queryOptions: any = { where: whereClause };
 
-  // Fetch logs for this metric
-  const logs = await MetricLog.findAll({ where: { metricId } });
+  // If metricId is provided, ensure the parent metric exists and enforce ownership.
+  if (metricId) {
+    await validateMetricAccess(userId, metricId);
+    whereClause.metricId = metricId;
+  } else {
+    // If no metricId, fetch all logs for metrics owned by the user
+    // This requires joining with the Metric model to filter by userId
+    queryOptions.include = [
+      {
+        model: db.Metric,
+        as: "Metric",
+        where: { userId },
+        attributes: [],
+      },
+    ];
+  }
+  const logs = await MetricLog.findAll(queryOptions);
   if (logs.length === 0) {
     logger.warn("⚠️ No logs found, returning default stats.");
     return { average: 0, min: 0, max: 0 };
@@ -351,7 +375,7 @@ export const generateDummyLogsService = async ({
   count,
 }: {
   userId: string;
-  metricId: string;
+  metricId: string; // metricId is still required for dummy log generation
   count: number;
 }): Promise<MetricLogDomain[]> => {
   await validateMetricAccess(userId, metricId);
@@ -373,16 +397,15 @@ export const generateDummyLogsService = async ({
   }
 
   if (redisClient.isOpen) {
+    await invalidateCache(`logs:${userId}`);
+    await invalidateCache(`logStats:${userId}`);
+    // Invalidate specific metric logs/stats
     await invalidateCache(`logs:${userId}:${metricId}`);
     await invalidateCache(`logStats:${userId}:${metricId}`);
     logger.info(
-      `♻️ Cache invalidated for logs and stats of metric:${metricId} after dummy generation`
+      `♻️ Cache invalidated for logs and stats of user:${userId} and metric:${metricId} after dummy generation`
     );
   }
 
   return dummyLogs;
 };
-
-/**
- * * ===== Services for Testing Purposes =====
- */

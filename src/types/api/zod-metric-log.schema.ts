@@ -1,18 +1,16 @@
 // src/types/api/zod-metric-log.schema.ts
 
-import { z } from "zod";
 import {
-  zUUID,
+  zDateOptional,
   zLogType,
   zPositiveFloat,
-  zDateOptional,
+  zUUID,
 } from "@/validators/zod-rules";
+import { z } from "zod";
 
 export const createMetricLogSchema = z.object({
-  params: z.object({
-    metricId: zUUID,
-  }),
   body: z.object({
+    metricId: zUUID,
     type: zLogType.optional().default("manual"),
     logValue: zPositiveFloat,
     loggedAt: zDateOptional,
@@ -21,7 +19,6 @@ export const createMetricLogSchema = z.object({
 
 export const updateMetricLogSchema = z.object({
   params: z.object({
-    metricId: zUUID,
     id: zUUID,
   }),
   body: z.object({
@@ -33,16 +30,13 @@ export const updateMetricLogSchema = z.object({
 
 export const getMetricLogSchema = z.object({
   params: z.object({
-    metricId: zUUID,
     id: zUUID,
   }),
 });
 
 export const getAllMetricLogsSchema = z.object({
-  params: z.object({
-    metricId: zUUID,
-  }),
   query: z.object({
+    metricId: zUUID.optional(),
     startDate: zDateOptional,
     endDate: zDateOptional,
     sortBy: z.string().optional(),
@@ -54,14 +48,13 @@ export const getAllMetricLogsSchema = z.object({
 
 export const deleteMetricLogSchema = z.object({
   params: z.object({
-    metricId: zUUID,
     id: zUUID,
   }),
 });
 
 export const getAggregatedStatsSchema = z.object({
-  params: z.object({
-    metricId: zUUID,
+  query: z.object({
+    metricId: zUUID.optional(),
   }),
 });
 
@@ -70,10 +63,8 @@ export const getAggregatedStatsSchema = z.object({
  */
 
 export const generateDummyMetricLogsSchema = z.object({
-  params: z.object({
-    metricId: zUUID,
-  }),
   body: z.object({
+    metricId: zUUID,
     count: z.number().int().min(1).max(1000).default(50), // Default to 50, max 1000 to prevent abuse
   }),
 });

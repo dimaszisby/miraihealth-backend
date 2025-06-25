@@ -26,13 +26,12 @@ export const createMetricLog = catchAsync(
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
 
-    const { metricId } = req.params;
-    const { type, logValue, loggedAt } = req.body;
+    const { metricId, type, logValue, loggedAt } = req.body;
 
     const logDomain = await metricLogService.createLog({
       userId: userId,
-      metricId: metricId,
       logData: {
+        metricId,
         type,
         logValue,
         loggedAt,
@@ -56,14 +55,13 @@ export const getAllLogsByMetric = catchAsync(
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
 
-    const { metricId } = req.params;
-    const { startDate, endDate, sortBy, order, page, limit } = req.query;
+    const { metricId, startDate, endDate, sortBy, order, page, limit } = req.query;
 
     const { logs, totalCount } =
       await metricLogService.getAllLogsByMetricService({
         userId: userId,
-        metricId: metricId,
         options: {
+          metricId: metricId as string,
           startDate: startDate ? new Date(startDate as string) : undefined,
           endDate: endDate ? new Date(endDate as string) : undefined,
           sortBy: (sortBy as string) || "loggedAt",
@@ -90,13 +88,18 @@ export const getLogById = catchAsync(
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
 
-    const { id, metricId } = req.params;
+    const { id } = req.params;
+    const { metricId } = req.query; // metricId is now an optional query parameter for GET by ID
 
+    if (!metricId) throw new AppError("metricId is required as a query parameter", 400); // Still require metricId for validation
     const logDomain = await metricLogService.getLogByIdService({
-      metricId: metricId,
       userId: userId,
       logId: id,
     });
+    // After fetching, verify that the log belongs to the specified metricId
+    if (logDomain.metricId !== metricId) {
+      throw new AppError("Log not found for the specified metric", 404);
+    }
     successResponse(res, 200, { log: toMetricLogResponseDTO(logDomain) });
   }
 );
@@ -110,12 +113,13 @@ export const updateLog = catchAsync(
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
 
-    const { id, metricId } = req.params;
+    const { id } = req.params;
+    const { metricId } = req.query; // metricId is now an optional query parameter for PUT
     const { logValue, type, loggedAt } = req.body;
 
+    if (!metricId) throw new AppError("metricId is required as a query parameter", 400); // Still require metricId for validation
     const logDomain = await metricLogService.updateLogService({
       userId: userId,
-      metricId: metricId,
       logId: id,
       updateData: {
         logValue,
@@ -123,6 +127,10 @@ export const updateLog = catchAsync(
         loggedAt,
       },
     });
+    // After updating, verify that the log belongs to the specified metricId
+    if (logDomain.metricId !== metricId) {
+      throw new AppError("Log not found for the specified metric", 404);
+    }
     successResponse(
       res,
       200,
@@ -141,13 +149,18 @@ export const deleteLog = catchAsync(
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
 
-    const { id, metricId } = req.params;
+    const { id } = req.params;
+    const { metricId } = req.query; // metricId is now an optional query parameter for DELETE
 
+    if (!metricId) throw new AppError("metricId is required as a query parameter", 400); // Still require metricId for validation
     const logDomain = await metricLogService.deleteLogService({
       userId: userId,
-      metricId: metricId,
       logId: id,
     });
+    // After deleting, verify that the log belonged to the specified metricId
+    if (logDomain.metricId !== metricId) {
+      throw new AppError("Log not found for the specified metric", 404);
+    }
     successResponse(
       res,
       200,
@@ -166,9 +179,9 @@ export const getAggregatedStats = catchAsync(
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
 
-    const { metricId } = req.params;
+    const { metricId } = req.query;
 
-    const stats = await metricLogService.getAggregatedStats(userId, metricId);
+    const stats = await metricLogService.getAggregatedStats(userId, metricId as string);
     successResponse(res, 200, stats);
   }
 );
@@ -186,8 +199,11 @@ export const generateDummyMetricLogs = catchAsync(
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
 
-    const { metricId } = req.params;
-    const { count } = req.body as GenerateDummyMetricLogsRequestDTO;
+    const { metricId, count } = req.body as GenerateDummyMetricLogsRequestDTO;
+
+    console.log(
+      `Generating ${count} dummy logs for metric ${metricId} for user ${userId}`
+    );
 
     const dummyLogs = await metricLogService.generateDummyLogsService({
       userId,
