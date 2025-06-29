@@ -48,6 +48,10 @@ export const deleteMetricCategorySchema = z.object({
   }),
 });
 
+/**
+ * * ===== Schemas for Testing Purposes =====
+ */
+
 export const generateDummyMetricCategoriesSchema = z.object({
   body: z.object({
     count: z.number().int().min(1).max(1000).default(50), // Default to 50, max 1000
