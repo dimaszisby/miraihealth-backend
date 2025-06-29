@@ -12,14 +12,14 @@ import {
   UpdateMetricRequestDTO,
 } from "@/types/dtos/metric.dto";
 import AppError from "@/utils/AppError";
-import { redisClient, invalidateCache } from "@/utils/redis-client";
+import { redisClient, invalidateCache, invalidateCacheByPattern } from "@/utils/redis-client";
 import { findOwnedMetric, validateMetricAccess } from "@/utils/db-helper";
 import logger from "@/utils/logger";
 import {
   toDomainMetric,
   toExtendedMetricDomain,
 } from "@/utils/mappers/metric.mapper";
-import { Op, fn, col, literal, Sequelize } from "sequelize";
+import { Op, fn, col, literal, Sequelize, Transaction } from "sequelize";
 
 const { Metric, MetricLog, MetricSettings, MetricCategory } = db;
 
@@ -64,15 +64,46 @@ export const createMetricService = async (
   }
 
   // Create the metric
-  const metric = await Metric.create({ userId, ...data });
+  // const metric = await Metric.create({ userId, ...data });
 
-  // Invalidate only the metrics list cache (not individual metric cache)
-  if (redisClient.isOpen) {
-    await invalidateCache(`metrics:${userId}`);
-    logger.info(`♻️ Cache invalidated for metrics:${userId}`);
-  }
+  return db.sequelize.transaction(async (t: Transaction) => {
+    // Create the metric
+    const metric = await Metric.create({ userId, ...data }, { transaction: t });
 
-  return metric;
+    // Eagerly create the default settings row
+    await MetricSettings.create(
+      {
+        metricId: metric.id,
+        // All default fields for your settings model:
+        goalEnabled: false,
+        goalType: null,
+        goalValue: null,
+        timeFrameEnabled: false,
+        startDate: null,
+        deadlineDate: null,
+        alertEnabled: false,
+        alertThresholds: 80,
+        isAchieved: false,
+        isActive: true,
+        displayOptions: {
+          showOnDashboard: true,
+          priority: 1,
+          chartType: "line",
+          color: "#E897A3",
+        },
+      },
+      { transaction: t }
+    );
+
+    // Invalidate only the metrics list cache (not individual metric cache)
+    if (redisClient.isOpen) {
+      await invalidateCacheByPattern(`metrics:${userId}:*`);
+      logger.info(`♻️ Cache invalidated for metrics:${userId}:*`);
+    }
+
+    // Optionally: reload the metric with settings for immediate DTO return
+    return metric;
+  });
 };
 
 /**
@@ -215,6 +246,9 @@ export const getUserMetricLibrariesService = async (
   return { metricsDomain: transformed, total };
 };
 
+// Development Note: This funciton is not currently used in the application.
+// Development Note: This function is WAS deprecated due to API endpoint changes (from nested to flat structure), but will be reimplemented for metric details retrieval.
+// TODO: Activate a new endpoint for this pipeline that functioned to get user's owned metrics details with it's related domain types (objects): metric-settings, metric-logs, etc.
 /**
  * Fetch metric details including related category, settings, and logs.
  *
