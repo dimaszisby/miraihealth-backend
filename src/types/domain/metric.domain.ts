@@ -68,7 +68,7 @@ export interface MetricDomain {
    * @property {Date | null} [deletedAt] - The timestamp when the metric was soft-deleted. Null if active.
    * @readonly
    */
-  readonly deletedAt: Date | null;
+  readonly deletedAt?: Date | null;
 
   /**
    * @property {Date} createdAt - The timestamp when the metric was created.

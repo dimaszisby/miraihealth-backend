@@ -51,5 +51,5 @@ export interface MetricCategoryDomain {
    * @property {Date | null} [deletedAt] - The timestamp when the category was soft-deleted. Null if active.
    * @readonly
    */
-  readonly deletedAt: Date | null;
+  readonly deletedAt?: Date | null;
 }
