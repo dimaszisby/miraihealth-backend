@@ -1,5 +1,6 @@
 // src/middleware/validate.ts
 
+import { AuthRequest } from "@/types/request.context";
 import { Request, Response, NextFunction } from "express";
 import { ZodSchema, ZodError, AnyZodObject } from "zod";
 
@@ -20,7 +21,7 @@ const handleError = (res: Response, error: ZodError) => {
 
 export const validate =
   (schema?: AnyZodObject) =>
-  (req: Request, res: Response, next: NextFunction): void => {
+  (req: AuthRequest, res: Response, next: NextFunction): void => {
     if (!schema) {
       console.warn("No validation schema provided for this route.");
       return next();

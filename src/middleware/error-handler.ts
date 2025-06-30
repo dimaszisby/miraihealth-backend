@@ -4,6 +4,7 @@ import { Request, Response, NextFunction } from "express";
 import AppError from "../utils/AppError.js";
 import logger from "../utils/logger.js";
 import { env } from "../config/zodEnv.js";
+import { AuthRequest } from "@/types/request.context.js";
 
 /**
  * * Centralized Error Handling Middleware
@@ -12,9 +13,9 @@ import { env } from "../config/zodEnv.js";
 
 export const errorHandler = (
   err: Error,
-  req: Request,
+  req: AuthRequest,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): void => {
   // Debugging: Check if err is an instance of AppError
   logger.error(`Error Occurred: ${err.message}`, err);
@@ -28,12 +29,12 @@ export const errorHandler = (
       status: "error",
       message: "Something went wrong!",
     });
+  } else {
+    // Send detailed error response in development
+    res.status(appError.statusCode).json({
+      status: appError.status,
+      message: appError.message,
+      ...(env.NODE_ENV === "development" && { stack: appError.stack }),
+    });
   }
-
-  // Send detailed error response in development
-  res.status(appError.statusCode).json({
-    status: appError.status,
-    message: appError.message,
-    ...(env.NODE_ENV === "development" && { stack: appError.stack }),
-  });
 };

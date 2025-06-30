@@ -45,7 +45,7 @@ export const globalRateLimiter = rateLimit({
     status: 429,
     message: "Too many requests, please try again later.",
   },
-  handler: (req: Request, res: Response, next: NextFunction, options) => {
+  handler: (req: AuthRequest, res: Response, next: NextFunction, options) => {
     logger.warn(`Rate limit exceeded for IP: ${req.ip}`);
     res.status(options.statusCode).json(options.message);
   },
