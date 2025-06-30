@@ -32,13 +32,13 @@ export interface MetricDomain {
    * @property {string | null} [categoryId] - The identifier of the category this metric belongs to, if any.
    * @readonly
    */
-  readonly categoryId?: string | null;
+  readonly categoryId: string | null;
 
   /**
    * @property {string | null} [originalMetricId] - If this metric was created from a public template, this is the ID of the original template metric. Null otherwise.
    * @readonly
    */
-  readonly originalMetricId?: string | null;
+  readonly originalMetricId: string | null;
 
   /**
    * @property {string} name - The user-defined name for the metric.
@@ -50,7 +50,7 @@ export interface MetricDomain {
    * @property {string | null} [description] - An optional description providing more details about the metric.
    * @readonly
    */
-  readonly description?: string | null;
+  readonly description: string | null;
 
   /**
    * @property {string} defaultUnit - The default unit of measurement for this metric (e.g., 'kg', 'steps', 'ml').
@@ -68,7 +68,7 @@ export interface MetricDomain {
    * @property {Date | null} [deletedAt] - The timestamp when the metric was soft-deleted. Null if active.
    * @readonly
    */
-  readonly deletedAt?: Date | null;
+  readonly deletedAt: Date | null;
 
   /**
    * @property {Date} createdAt - The timestamp when the metric was created.
@@ -137,7 +137,7 @@ export interface MetricLibraryDomain {
    * @property {string | null} [description] - An optional description providing more details about the metric.
    * @readonly
    */
-  readonly description?: string | null;
+  readonly description: string | null;
 
   /**
    * @property {isPublic} - Flag indicating if this metric definition can be publicly discovered or used as a template.
@@ -149,13 +149,13 @@ export interface MetricLibraryDomain {
    * @property {MetricLibraryCategoryInfo} [category] - Optional summarized information about the metric's category.
    * @readonly
    */
-  readonly category?: MetricLibraryCategoryInfo;
+  readonly category: MetricLibraryCategoryInfo;
 
   /**
    * @property {string} [goalType] - Optional goal type associated with the metric's settings (e.g., 'cumulative', 'incremental').
    * @readonly
    */
-  readonly goalType?: string; // Consider using the specific ENUM type if available/stable
+  readonly goalType: string; // Consider using the specific ENUM type if available/stable
 
   /**
    * @property {number} logCount - The number of logs associated with the metric.
@@ -176,23 +176,22 @@ export type MetricLibraryListDomain = MetricLibraryDomain[];
  * @description Extends the core MetricDomain with potentially loaded relational data (category, settings, logs).
  * Useful for scenarios where related entities are needed alongside the metric itself.
  */
-// TODO: This might be deprecated in favor of using MetricDomain directly with relations loaded as needed.
 export interface MetricDomainExtended extends MetricDomain {
   /**
    * @property {MetricCategoryDomain} [category] - The associated metric category domain object, if loaded.
    * @readonly
    */
-  readonly category?: MetricCategoryDomain;
+  readonly category?: MetricCategoryDomain | null;
 
   /**
    * @property {MetricSettingsDomain} [settings] - The associated metric settings domain object, if loaded.
    * @readonly
    */
-  readonly settings?: MetricSettingsDomain;
+  readonly settings?: MetricSettingsDomain | null;
 
   /**
    * @property {MetricLogDomain[]} [logs] - An array of associated metric log domain objects, if loaded.
    * @readonly
    */
-  readonly logs?: MetricLogDomain[];
+  readonly logs?: MetricLogDomain[] | null;
 }

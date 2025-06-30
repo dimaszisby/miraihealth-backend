@@ -1,3 +1,5 @@
+// types/domain/user.domain.ts
+
 /**
  * @file src/types/domain/user.domain.ts
  * @description Defines the domain model interface for a User.
@@ -57,5 +59,5 @@ export interface UserDomain {
    * @property {Date | null} [deletedAt] - The timestamp when the user account was soft-deleted. Null if active.
    * @readonly
    */
-  readonly deletedAt?: Date | null;
+  readonly deletedAt: Date | null;
 }

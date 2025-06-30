@@ -153,13 +153,13 @@ export interface MetricPreviewResponseDTO {
    * @property {MetricPreviewCategoryDTO} [category] - Optional summarized information about the metric's category.
    * @readonly
    */
-  readonly category?: MetricPreviewCategoryDTO;
+  readonly category: MetricPreviewCategoryDTO |null;
 
   /**
    * @property {string} [goalType] - Optional goal type associated with the metric's settings (e.g., 'cumulative', 'incremental').
    * @readonly
    */
-  readonly goalType?: string;
+  readonly goalType: string | null;
 
   /**
    * @property {number} logCount - The number of logs associated with the metric.
@@ -245,19 +245,19 @@ export interface UserMetricDetailResponseDTO {
    * @property {MetricCategoryResponseDTO | null} [category] - The associated metric category DTO, if loaded. Null if uncategorized.
    * @readonly
    */
-  readonly category?: MetricCategoryResponseDTO | null;
+  readonly category: MetricCategoryResponseDTO | null;
 
   /**
    * @property {MetricSettingsResponseDTO | null} [settings] - The associated metric settings DTO, if loaded.
    * @readonly
    */
-  readonly settings?: MetricSettingsResponseDTO | null;
+  readonly settings: MetricSettingsResponseDTO | null;
 
   /**
    * @property {MetricLogResponseDTO[] | null} [logs] - An array of associated metric log DTOs, if loaded.
    * @readonly
    */
-  readonly logs?: MetricLogResponseDTO[] | null;
+  readonly logs: MetricLogResponseDTO[] | null;
 }
 
 /**
