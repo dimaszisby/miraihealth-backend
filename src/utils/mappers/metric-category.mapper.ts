@@ -16,7 +16,7 @@ export const toDomainMetricCategory = (
   icon: metricCategory.icon,
   createdAt: metricCategory.createdAt!,
   updatedAt: metricCategory.updatedAt!,
-  deletedAt: metricCategory.deletedAt ?? null,
+  deletedAt: metricCategory.deletedAt,
 });
 
 /**

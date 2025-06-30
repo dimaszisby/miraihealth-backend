@@ -11,7 +11,7 @@ import {
  * * Sequelize → Domain Mapper
  */
 export const toDomainMetricSettings = (
-  settings: MetricSettings,
+  settings: MetricSettings
 ): MetricSettingsDomain => ({
   id: settings.id,
   metricId: settings.metricId,
@@ -23,7 +23,7 @@ export const toDomainMetricSettings = (
   startDate: settings.startDate ? new Date(settings.startDate) : null,
   deadlineDate: settings.deadlineDate ? new Date(settings.deadlineDate) : null,
   alertEnabled: settings.alertEnabled,
-  alertThresholds: settings.alertThresholds ?? undefined,
+  alertThresholds: settings.alertThresholds,
   isAchieved: settings.isAchieved,
   displayOptions: normalizeDisplayOptions(settings.displayOptions),
   createdAt: settings.createdAt!,
@@ -34,37 +34,36 @@ export const toDomainMetricSettings = (
  * * Domain → Response DTO
  */
 export const toMetricSettingsResponseDTO = (
-  domain: MetricSettingsDomain,
-): MetricSettingsResponseDTO => ({
-  id: domain.id,
-  metricId: domain.metricId,
-  isActive: domain.isActive,
-  goalEnabled: domain.goalEnabled,
-  goalType: domain.goalType,
-  goalValue: domain.goalValue,
-  timeFrameEnabled: domain.timeFrameEnabled,
-  startDate: domain.startDate?.toISOString() ?? null,
-  deadlineDate: domain.deadlineDate?.toISOString() ?? null,
-  alertEnabled: domain.alertEnabled,
-  alertThresholds: domain.alertThresholds ?? undefined,
-  isAchieved: domain.isAchieved,
-  displayOptions: domain.displayOptions
-    ? {
-        showOnDashboard: domain.displayOptions.showOnDashboard,
-        priority: domain.displayOptions.priority ?? undefined,
-        chartType: domain.displayOptions.chartType ?? undefined,
-        color: domain.displayOptions.color ?? undefined,
-      }
-    : undefined,
-  createdAt: domain.createdAt.toISOString(),
-  updatedAt: domain.updatedAt.toISOString(),
-});
+  domain: MetricSettingsDomain
+): MetricSettingsResponseDTO => {
+  // Null checking guard for date optionals
+  const startDateString = domain.startDate?.toISOString() ?? null;
+  const deadlineDateString = domain.deadlineDate?.toISOString() ?? null;
+
+  return {
+    id: domain.id,
+    metricId: domain.metricId,
+    isActive: domain.isActive,
+    goalEnabled: domain.goalEnabled,
+    goalType: domain.goalType,
+    goalValue: domain.goalValue,
+    timeFrameEnabled: domain.timeFrameEnabled,
+    startDate: startDateString,
+    deadlineDate: deadlineDateString,
+    alertEnabled: domain.alertEnabled,
+    alertThresholds: domain.alertThresholds,
+    isAchieved: domain.isAchieved,
+    displayOptions: domain.displayOptions,
+    createdAt: domain.createdAt.toISOString(),
+    updatedAt: domain.updatedAt.toISOString(),
+  };
+};
 
 /**
  * * Sequelize → Domain Mapper
  */
 export const toDomainDisplayOptions = (
-  settings: MetricSettings,
+  settings: MetricSettings
 ): MetricSettingsDomain["displayOptions"] =>
   normalizeDisplayOptions(settings.displayOptions);
 
@@ -72,7 +71,7 @@ export const toDomainDisplayOptions = (
  * * Domain → Request DTO
  */
 export const toDisplayOptionsResponseDTO = (
-  displayOptions: MetricSettingsDomain["displayOptions"],
+  displayOptions: MetricSettingsDomain["displayOptions"]
 ): DisplayOptionsDTO => ({
   showOnDashboard: displayOptions?.showOnDashboard ?? false,
   priority: displayOptions?.priority ?? 1,
@@ -90,7 +89,7 @@ export const toDisplayOptionsResponseDTO = (
  * @returns
  */
 const normalizeDisplayOptions = (
-  opts: any = {},
+  opts: any = {}
 ): MetricSettingsDomain["displayOptions"] => ({
   showOnDashboard: opts.showOnDashboard ?? false,
   priority: opts.priority ?? 1,

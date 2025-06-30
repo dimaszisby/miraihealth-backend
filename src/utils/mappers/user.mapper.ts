@@ -15,7 +15,7 @@ export const toDomainUser = (user: User): UserDomain => ({
   isPublicProfile: user.isPublicProfile,
   createdAt: user.createdAt!,
   updatedAt: user.updatedAt!,
-  deletedAt: user.deletedAt ?? null,
+  deletedAt: user.deletedAt,
 });
 
 /**

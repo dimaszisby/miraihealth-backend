@@ -2,7 +2,7 @@
 
 // Sequelize models
 import { Metric } from "@/models/metric.model";
-import { MetricLibraryDomain, MetricLibraryListDomain } from "@/types/domain/metric.domain";
+import { MetricLibraryDomain } from "@/types/domain/metric.domain";
 import { MetricCategory } from "@/models/metric-category.model";
 import { MetricSettings } from "@/models/metric-settings.model";
 import { MetricLog } from "@/models/metric-log.model";
@@ -20,12 +20,13 @@ import {
   UserMetricDetailResponseDTO,
 } from "@/types/dtos/metric.dto"; // Added UserMetricDetailResponseDTO
 import logger from "../logger"; // Import logger for error logging
+import AppError from "@/utils/AppError";
 
-// Import mappers for associated entities (assuming they exist)
 // DTO Mappers (Domain -> DTO)
 import { toMetricCategoryResponseDTO } from "./metric-category.mapper";
 import { toMetricSettingsResponseDTO } from "./metric-settings.mapper";
 import { toMetricLogResponseDTO } from "./metric-log.mapper";
+
 // Domain Mappers (Model -> Domain)
 import { toDomainMetricCategory } from "./metric-category.mapper";
 import { toDomainMetricSettings } from "./metric-settings.mapper";
@@ -39,17 +40,18 @@ export const toDomainMetric = (metric: Metric): MetricDomain => {
   if (!metric.userId) {
     logger.error("Metric object missing userId:", { metricId: metric.id }); // Log error
     // Throw an error as userId is required for the domain model
-    throw new Error(
-      `Metric with id ${metric.id} is missing the required userId.`,
+    throw new AppError(
+      `Metric with id ${metric.id} is missing the required userId. This indicates a data integrity issue.`,
+      500
     );
   }
   return {
     id: metric.id,
-    userId: metric.userId, // Now guaranteed to be string
-    categoryId: metric.categoryId ?? null,
-    originalMetricId: metric.originalMetricId ?? null,
+    userId: metric.userId,
+    categoryId: metric.categoryId,
+    originalMetricId: metric.originalMetricId,
     name: metric.name,
-    description: metric.description ?? null, // Use null to match Domain type (string | null)
+    description: metric.description,
     defaultUnit: metric.defaultUnit,
     isPublic: metric.isPublic,
     deletedAt: metric.deletedAt ?? null,
@@ -72,24 +74,24 @@ type MetricWithAssociations = Metric & {
  */
 // TODO: Refactor this mapper to use the base mapper first for each association for better readability
 export const toExtendedMetricDomain = (
-  metric: MetricWithAssociations,
+  metric: MetricWithAssociations
 ): MetricDomainExtended => {
-  const domain = toDomainMetric(metric); // Use the base mapper first
+  const domain = toDomainMetric(metric);
 
   // Use the dedicated mapper for category
   const categoryDomain = metric.MetricCategory
     ? toDomainMetricCategory(metric.MetricCategory)
-    : undefined;
+    : null;
 
   // Use the dedicated mapper for settings
   const settingsDomain = metric.MetricSettings
     ? toDomainMetricSettings(metric.MetricSettings)
-    : undefined;
+    : null;
 
   // Use the dedicated mapper for logs
   const logsDomain = metric.MetricLogs
-    ? metric.MetricLogs.map(toDomainMetricLog) // Map each log using its mapper
-    : undefined;
+    ? metric.MetricLogs.map(toDomainMetricLog)
+    : null;
 
   return {
     ...domain,
@@ -103,17 +105,16 @@ export const toExtendedMetricDomain = (
  * * Mapper: Domain → DTO (for API Response - Base Metric)
  */
 export const toMetricResponseDTO = (
-  metric: MetricDomain, // Takes the base domain object
+  metric: MetricDomain // Takes the base domain object
 ): MetricResponseDTO => ({
   id: metric.id,
   userId: metric.userId,
-  categoryId: metric.categoryId ?? null,
-  originalMetricId: metric.originalMetricId ?? null,
+  categoryId: metric.categoryId,
+  originalMetricId: metric.originalMetricId,
   name: metric.name,
-  description: metric.description ?? null,
+  description: metric.description,
   defaultUnit: metric.defaultUnit,
   isPublic: metric.isPublic,
-  // DTOs typically use ISO strings for dates
   createdAt: metric.createdAt.toISOString(),
   updatedAt: metric.updatedAt.toISOString(),
   // deletedAt is usually not included in success responses unless specifically needed
@@ -123,28 +124,28 @@ export const toMetricResponseDTO = (
  * * Mapper: Domain (Extended) → DTO (for Detailed Metric API Response)
  */
 export const toUserMetricDetailResponseDTO = (
-  metric: MetricDomainExtended, // Takes the extended domain object
+  metric: MetricDomainExtended // Takes the extended domain object
 ): UserMetricDetailResponseDTO => ({
   // Map base metric fields
   id: metric.id,
   userId: metric.userId,
-  categoryId: metric.categoryId ?? null,
-  originalMetricId: metric.originalMetricId ?? null,
+  categoryId: metric.categoryId,
+  originalMetricId: metric.originalMetricId,
   name: metric.name,
-  description: metric.description ?? null,
+  description: metric.description,
   defaultUnit: metric.defaultUnit,
   isPublic: metric.isPublic,
   createdAt: metric.createdAt.toISOString(),
   updatedAt: metric.updatedAt.toISOString(),
 
-  // Map associated data using their respective DTO mappers
+  // Map associated entities
   category: metric.category
     ? toMetricCategoryResponseDTO(metric.category)
     : null,
   settings: metric.settings
     ? toMetricSettingsResponseDTO(metric.settings)
     : null,
-  logs: metric.logs ? metric.logs.map(toMetricLogResponseDTO) : null,
+  logs: metric.logs ? metric.logs?.map(toMetricLogResponseDTO) : null,
 });
 
 /**
@@ -154,14 +155,14 @@ export const toUserMetricDetailResponseDTO = (
 // It may not include all fields from the full MetricDomain
 // and is designed for quick display or selection
 export const toMetricLibraryResponseDTO = (
-  metric: MetricLibraryDomain,
+  metric: MetricLibraryDomain
 ): MetricPreviewResponseDTO => ({
   id: metric.id,
   name: metric.name,
   category: metric.category,
   goalType: metric.goalType,
   defaultUnit: metric.defaultUnit,
-  description: metric.description ?? null,
+  description: metric.description,
   isPublic: metric.isPublic,
   logCount: metric.logCount,
 });
