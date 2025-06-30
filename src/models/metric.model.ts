@@ -13,11 +13,12 @@ import { MetricAttributesBase } from "@/types/db/metric.types";
 
 // Define attributes
 export interface MetricAttributes extends MetricAttributesBase {
+  // Exhibit A
   // DB-specifics
   id: string;
   userId: string;
-  categoryId?: string | null;
-  originalMetricId?: string | null;
+  categoryId: string | null;
+  originalMetricId: string | null;
 
   // Timestamps managed by DB
   createdAt?: Date;
@@ -38,14 +39,17 @@ export class Metric
   extends Model<MetricAttributes, MetricCreationAttributes>
   implements MetricAttributes
 {
+  // Exhibit B
   declare id: string;
   declare userId: string;
-  declare categoryId?: string | null;
-  declare originalMetricId?: string | null;
+  declare categoryId: string | null;
+  declare originalMetricId: string | null;
   declare name: string;
-  declare description?: string | null;
+  declare description: string | null;
   declare defaultUnit: string;
   declare isPublic: boolean;
+
+  // Soft delete support
   declare deletedAt?: Date | null;
 
   // Timestamps managed by DB
@@ -152,7 +156,7 @@ export default (sequelize: Sequelize) => {
       paranoid: true,
       underscored: true,
       schema: "public",
-    },
+    }
   );
 
   return Metric;

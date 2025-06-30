@@ -39,13 +39,13 @@ export class MetricSettings
   declare id: string;
   declare metricId: string;
   declare goalEnabled: boolean;
-  declare goalType?: "cumulative" | "incremental" | null;
-  declare goalValue?: number | null;
+  declare goalType: "cumulative" | "incremental" | null;
+  declare goalValue: number | null;
   declare timeFrameEnabled: boolean;
-  declare startDate?: Date | null;
-  declare deadlineDate?: Date | null;
+  declare startDate: Date | null;
+  declare deadlineDate: Date | null;
   declare alertEnabled: boolean;
-  declare alertThresholds?: number | null;
+  declare alertThresholds: number | null;
   declare isAchieved: boolean;
   declare isActive: boolean;
   declare displayOptions: {
@@ -141,7 +141,7 @@ export default (sequelize: Sequelize) => {
         type: DataTypes.DATEONLY,
         allowNull: true,
         validate: {
-          isAfterStart(this: { startDate?: string | null }, value: unknown) {
+          isAfterStart(this: { startDate: string | null }, value: unknown) {
             if (this.startDate && value) {
               const startDate = new Date(this.startDate);
               const deadline = new Date(value as string);

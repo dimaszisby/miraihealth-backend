@@ -16,7 +16,7 @@ export interface MetricAttributesBase {
   /**
    * @property {string | null} [description] - An optional description providing more details about the metric.
    */
-  description?: string | null;
+  description: string | null;
 
   /**
    * @property {string} defaultUnit - The default unit of measurement for this metric (e.g., 'kg', 'steps', 'ml').
