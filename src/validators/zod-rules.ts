@@ -11,9 +11,14 @@ import { ZodMessages } from "@/constants/zod-messages"; // centralized error mes
 export const zUUID = z
   .string()
   .uuid({ message: ZodMessages.common.invalidUUID });
-export const zDateOptional = z.date({
-  required_error: ZodMessages.common.invalidDate,
-});
+export const zDateOptional = z
+  .preprocess(
+    (val) => (typeof val === "string" && val.trim() === "" ? undefined : val),
+    z.coerce.date().optional()
+  )
+  .refine((date) => date === undefined || !isNaN(date.getTime()), {
+    message: ZodMessages.common.invalidDate,
+  });
 
 /**
  * export const zMetricCategoryId = zUUID.optional().nullable();
