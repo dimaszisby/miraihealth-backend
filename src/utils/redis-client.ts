@@ -74,7 +74,31 @@ const invalidateCache = async (key: string) => {
   }
 };
 
+/**
+ * Invalidates Redis cache keys matching a given pattern.
+ * Uses SCAN to avoid blocking the server on large datasets.
+ * @param pattern - The pattern to match cache keys (e.g., 'metrics:user123:*').
+ */
+const invalidateCacheByPattern = async (pattern: string) => {
+  if (redisClient.isOpen) {
+    let cursor = 0;
+    do {
+      const scanResult = await redisClient.scan(cursor, {
+        MATCH: pattern,
+        COUNT: 100, // Process 100 keys at a time
+      });
+      cursor = Number(scanResult.cursor);
+      const keys = scanResult.keys;
+
+      if (keys.length > 0) {
+        await redisClient.del(keys);
+        logger.info(`♻️ Cache invalidated for pattern ${pattern}. Deleted keys: ${keys.join(', ')}`);
+      }
+    } while (cursor !== 0);
+  }
+};
+
 // Auto-connect on import
 connectRedis();
 
-export { redisClient, disconnectRedis, invalidateCache };
+export { redisClient, disconnectRedis, invalidateCache, invalidateCacheByPattern };
