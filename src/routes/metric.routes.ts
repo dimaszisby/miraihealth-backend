@@ -4,8 +4,8 @@ import { Router } from "express";
 import {
   createMetric,
   getUserMetricLibraries,
-  getUserDetailMetricById, // Deprecated
-  getMetricById,
+  getUserDetailMetricById, 
+  getMetricById,// Deprecated
   updateMetric,
   deleteMetric,
 } from "@/controllers/metric.controller";
@@ -17,6 +17,7 @@ import { authMiddleware } from "@/middleware/auth-middleware";
 import { cacheMiddleware } from "@/middleware/cache-middleware";
 import { validate } from "@/middleware/validate";
 import { userRateLimiter } from "@/middleware/rate-limiter";
+import { AuthRequest } from "@/types/request.context";
 
 // Schema validation
 import {
@@ -25,7 +26,7 @@ import {
   deleteMetricSchema,
   getMetricSchema,
   generateDummyMetricsSchema,
-} from "@/validators/metric.validator";
+} from "@/types/api/zod-metric.schema";
 
 const router = Router();
 
@@ -41,8 +42,8 @@ const metricsCacheKey = (req: any) => {
   const limit = req.query.limit || 20;
   return `metrics:${req.user?.id}:page:${page}:limit:${limit}`;
 };
-const metricCacheKey = (req: any) => `metric:${req.user?.id}:${req.params.id}`;
-
+const metricCacheKey = (req: AuthRequest) =>
+  `metric:${req.user?.id}:${req.params.id}:${req.query.include || "flat"}`;
 /**
  * * Metrics Endpoints
  *
@@ -61,12 +62,11 @@ router.get(
   "/:id",
   validate(getMetricSchema),
   cacheMiddleware(metricCacheKey, 300),
-  getMetricById
+  getUserDetailMetricById,
 );
 
-// Development Note: This funciton is not currently used in the application.
-// Development Note: This function is WAS deprecated due to API endpoint changes (from nested to flat structure), but will be reimplemented for metric details retrieval.
-// TODO: Activate a new endpoint for this pipeline that functioned to get user's owned metrics details with it's related domain types (objects): metric-settings, metric-logs, etc.
+// Developer Note: This function is WAS deprecated due to API endpoint changes (from flat to query params structure), but will be reimplemented for metric details retrieval.
+// Proposal for future development: getPublicMetricId -> Public metrics retrieval that could be used for public templates or shared metrics.
 // { Code Here ...}
 
 // UPDATE Metric

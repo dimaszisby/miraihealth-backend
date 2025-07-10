@@ -22,6 +22,7 @@ import {
   MetricLibraryDomain,
 } from "@/types/domain/metric.domain";
 import { GenerateDummyMetricsRequestDTO } from "@/types/dtos/metric.dto";
+import logger from "@/utils/logger";
 
 /**
  * * Metric Controller
@@ -98,11 +99,8 @@ export const getUserMetricLibraries = catchAsync(
   }
 );
 
-// Development Note: This funciton is not currently used in the application.
-// Development Note: This function is WAS deprecated due to API endpoint changes (from nested to flat structure), but will be reimplemented for metric details retrieval.
-// TODO: Activate a new endpoint for this pipeline that functioned to get user's owned metrics details with it's related domain types (objects): metric-settings, metric-logs, etc.
 /**
- * @deprecated This function is deprecated due to API endpoint changes (from nested to flat structure).
+ *
  * * Get specific User Metric by Id
  * @route GET /api/metrics/:id
  */
@@ -112,20 +110,52 @@ export const getUserDetailMetricById = catchAsync(
     const userId = req.user.id;
     const { id } = req.params;
 
-    const metric = await MetricService.getUserMetricDetailService(userId, id);
+    // Parse and whitelist includes
+    const includeRaw = (req.query.include as String) || "";
+    const allowedIncludes = ["settings", "category", "logs"];
+    const includes = includeRaw
+      .split(",")
+      .map((inc) => inc.trim())
+      .filter((inc) => allowedIncludes.includes(inc));
+
+    // Metric Log pagination: Parsing limit/page
+    const logsLimit = req.query.logsLimit ? Number(req.query.logsLimit) : 20;
+
+    // Service
+    const metric = await MetricService.getUserMetricDetailService(userId, id, {
+      includes,
+      logsLimit,
+    });
     if (!metric) {
       throw new AppError("Metric not found", 404);
     }
-    successResponse(
-      res,
-      200,
-      toUserMetricDetailResponseDTO(metric),
-      "Metric retrieved successfully"
+
+    logger.debug(
+      "Fetched metric before DTO mapping:",
+      JSON.stringify(metric, null, 2)
     );
+
+    logger.info(
+      "Fetched metric before DTO mapping:",
+      JSON.stringify(metric, null, 2)
+    );
+    // Defensive: wrap mapping in try/catch for diagnostics
+    let dto;
+    try {
+      dto = toUserMetricDetailResponseDTO(metric);
+    } catch (err) {
+      logger.error("Error mapping metric to DTO:", err, metric);
+      throw new AppError("Internal Server Error: mapping failed", 500);
+    }
+
+    successResponse(res, 200, dto, "Metric retrieved successfully");
   }
 );
 
+// Developer Note: This function is WAS deprecated due to API endpoint changes (from flat to query params structure), but will be reimplemented for metric details retrieval.
+// Proposal for future development: getPublicMetricId -> Public metrics retrieval that could be used for public templates or shared metrics.
 /**
+ * @deprecated This function is deprecated due to API endpoint changes from flat to query params structure.
  * * Get specific Metric by Id
  * @route GET /api/metrics/:id
  */

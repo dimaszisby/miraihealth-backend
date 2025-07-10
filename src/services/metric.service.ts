@@ -12,7 +12,11 @@ import {
   UpdateMetricRequestDTO,
 } from "@/types/dtos/metric.dto";
 import AppError from "@/utils/AppError";
-import { redisClient, invalidateCache, invalidateCacheByPattern } from "@/utils/redis-client";
+import {
+  redisClient,
+  invalidateCache,
+  invalidateCacheByPattern,
+} from "@/utils/redis-client";
 import { findOwnedMetric, validateMetricAccess } from "@/utils/db-helper";
 import logger from "@/utils/logger";
 import {
@@ -258,58 +262,79 @@ export const getUserMetricLibrariesService = async (
  */
 export const getUserMetricDetailService = async (
   userId: string,
-  metricId: string
+  metricId: string,
+  options: { includes?: string[]; logsLimit?: number }
 ): Promise<MetricDomainExtended | null> => {
   logger.info(
     `Fetching details for metricId: ${metricId} and userId: ${userId}`
   );
 
-  // Fetch the whole data
+  // Core where clause: only allow owned metric or public (if supporting public templates)
+  const where = { id: metricId, userId };
+
+  // Map includes to ORM eager-load
+  const includeArr: any[] = [];
+
+  if (options.includes?.includes("category")) {
+    includeArr.push({
+      model: MetricCategory,
+attributes: ["id", "name", "color", "icon", "createdAt", "updatedAt"],
+      as: "MetricCategory",
+    });
+  }
+
+  if (options.includes?.includes("settings")) {
+    includeArr.push({
+      model: MetricSettings,
+      attributes: [
+        "id",
+        "goalType",
+        "goalValue",
+        "startDate",
+        "deadlineDate",
+        "alertThresholds",
+        "isAchieved",
+        "isActive",
+        "displayOptions",
+        "createdAt",
+        "updatedAt",
+      ],
+      as: "MetricSettings",
+    });
+  }
+
+  if (options.includes?.includes("logs")) {
+    includeArr.push({
+      model: MetricLog,
+      attributes: ["id", "logValue", "type", "loggedAt", "createdAt"],
+      order: [["createdAt", "DESC"]],
+      as: "MetricLogs",
+      limit: options.logsLimit || 20, // Default to 20 logs if not specified
+    });
+  }
+
+  // Fetch the metric
   const metric = await Metric.findOne({
-    where: { id: metricId, userId },
-    include: [
-      {
-        model: MetricCategory,
-        attributes: ["id", "name", "color", "icon"],
-        as: "MetricCategory",
-      },
-      {
-        model: MetricSettings,
-        attributes: [
-          "id",
-          "goalType",
-          "goalValue",
-          "startDate",
-          "deadlineDate",
-          "alertThresholds",
-          "isAchieved",
-          "isActive",
-          "displayOptions",
-        ],
-        as: "MetricSettings",
-      },
-      {
-        model: MetricLog,
-        attributes: ["id", "logValue", "type", "createdAt"],
-        order: [["createdAt", "DESC"]],
-        as: "MetricLogs",
-      },
-    ],
+    where,
+    include: includeArr,
   });
   if (!metric) {
     logger.info("No metric found.");
     return null;
   }
 
-  // Authorization check if not public or don't owned by requesting user
+  // Security: Authorization check if not public or don't owned by requesting user
   if (!metric.isPublic && metric.userId !== userId) {
-    throw new AppError("Unauthorized access to metric details", 403);
+    throw new AppError("Unauthorized", 403);
   }
 
   return toExtendedMetricDomain(metric);
 };
 
+// Developer Note: This function is WAS deprecated due to API endpoint changes (from flat to query params structure), but will be reimplemented for metric details retrieval.
+// Proposal for future development: getPublicMetricId -> Public metrics retrieval that could be used for public templates or shared metrics.
 /**
+ * @deprecated This function is deprecated due to API endpoint changes from flat to query params structure.
  * Fetch specific metric owned by requesting/authenticated user
  *
  * @param userId - ID of the user requesting the data
@@ -323,7 +348,7 @@ export const getUserMetricByIdService = async (
   // Ensure the metric exists, check visibility, and  enforce ownership
   const metric = await findOwnedMetric(userId, metricId);
 
-  console.info("Metric Domain on Service", metric);
+  logger.debug("Metric object before mapping:", metric);
 
   return toDomainMetric(metric);
 };
