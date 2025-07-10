@@ -1,5 +1,9 @@
 // src/types/api/zod-metric-log.schema.ts
 
+import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
+
+extendZodWithOpenApi(z);
+
 import {
   zDateOptional,
   zLogType,
@@ -35,15 +39,20 @@ export const getMetricLogSchema = z.object({
 });
 
 export const getAllMetricLogsSchema = z.object({
-  query: z.object({
-    metricId: zUUID.optional(),
-    startDate: zDateOptional,
-    endDate: zDateOptional,
-    sortBy: z.string().optional(),
-    order: z.enum(["asc", "desc"]).optional(),
-    page: z.preprocess(Number, z.number().int().min(1)).optional().default(1),
-    limit: z.preprocess(Number, z.number().int().min(1)).optional().default(10),
-  }).optional(),
+  query: z
+    .object({
+      metricId: zUUID.optional(),
+      startDate: zDateOptional,
+      endDate: zDateOptional,
+      sortBy: z.string().optional(),
+      order: z.enum(["asc", "desc"]).optional(),
+      page: z.preprocess(Number, z.number().int().min(1)).optional().default(1),
+      limit: z
+        .preprocess(Number, z.number().int().min(1))
+        .optional()
+        .default(10),
+    })
+    .optional(),
 });
 
 export const deleteMetricLogSchema = z.object({

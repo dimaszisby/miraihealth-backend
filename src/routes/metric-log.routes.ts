@@ -21,7 +21,7 @@ import {
   deleteMetricLogSchema,
   getAggregatedStatsSchema,
   generateDummyMetricLogsSchema,
-} from "../validators/metric-log.validator.js";
+} from "../types/api/zod-metric-log.schema.js";
 import { userRateLimiter } from "../middleware/rate-limiter.js";
 
 const router = Router();
@@ -31,19 +31,31 @@ const router = Router();
  * Generates a cache key based on user ID and log ID
  */
 const logsCacheKey = (req: any) => {
-  const { metricId, page = 1, limit = 10, startDate, endDate, sortBy, order } = req.query;
+  const {
+    metricId,
+    page = 1,
+    limit = 10,
+    startDate,
+    endDate,
+    sortBy,
+    order,
+  } = req.query;
   return `logs:${req.user?.id}:${metricId || "all"}:${page}:${limit}:${startDate}:${endDate}:${sortBy}:${order}`;
 };
-const logCacheKey = (req: any) =>
-  `log:${req.user?.id}:${req.params.id}`;
+const logCacheKey = (req: any) => `log:${req.user?.id}:${req.params.id}`;
 const logStatsCacheKey = (req: any) =>
   `logStats:${req.user?.id}:${req.query.metricId || "all"}`;
 
 // Middleware to add deprecation warning
 const deprecateMetricLogRoute = (req: any, res: any, next: any) => {
-  res.setHeader('X-Deprecated-Endpoint', 'true');
-  res.setHeader('Link', '</api/v1/metric-logs>; rel="successor-version"; title="Use /api/v1/metric-logs instead"');
-  console.warn(`DEPRECATED ACCESS: User ${req.user?.id} accessed deprecated metric log endpoint: ${req.originalUrl}`);
+  res.setHeader("X-Deprecated-Endpoint", "true");
+  res.setHeader(
+    "Link",
+    '</api/v1/metric-logs>; rel="successor-version"; title="Use /api/v1/metric-logs instead"'
+  );
+  console.warn(
+    `DEPRECATED ACCESS: User ${req.user?.id} accessed deprecated metric log endpoint: ${req.originalUrl}`
+  );
   next();
 };
 
@@ -159,12 +171,7 @@ router.get(
 );
 
 // UPDATE Log
-router.put(
-  "/:id",
-  userRateLimiter,
-  validate(updateMetricLogSchema),
-  updateLog
-);
+router.put("/:id", userRateLimiter, validate(updateMetricLogSchema), updateLog);
 
 // DELETE Log
 router.delete(

@@ -21,7 +21,11 @@ import {
 } from "@/types/dtos/metric-log.dto";
 import { MetricLogDomain } from "@/types/domain/metric-log.domain";
 import AppError from "@/utils/AppError";
-import { redisClient, invalidateCache } from "@/utils/redis-client";
+import {
+  redisClient,
+  invalidateCache,
+  invalidateCacheByPattern,
+} from "@/utils/redis-client";
 import { findOwnedMetricLog, validateMetricAccess } from "@/utils/db-helper";
 import logger from "@/utils/logger";
 import {
@@ -50,7 +54,6 @@ export interface LogQueryOptions {
   page?: number;
   limit?: number;
 }
-
 
 /**
  * * Create a new log for a given metric.
@@ -83,7 +86,10 @@ export const createLog = async ({
     where: { metricId, loggedAt: finalLogData.loggedAt },
   });
   if (existing) {
-    throw new AppError("A log entry already exists for this timestamp for this metric", 400);
+    throw new AppError(
+      "A log entry already exists for this timestamp for this metric",
+      400
+    );
   }
 
   const created = await MetricLog.create(finalLogData);
@@ -92,7 +98,7 @@ export const createLog = async ({
   if (redisClient.isOpen) {
     await invalidateCache(`logs:${userId}`); // Invalidate general logs list for the user
     await invalidateCache(`logStats:${userId}`); // Invalidate general stats for the user
-    await invalidateCache(`logs:${userId}:${metricId}`); // Invalidate logs list for this specific metric
+    await invalidateCacheByPattern(`logs:${userId}:${metricId}:*`); // Invalidate any cached logs for this metric
     await invalidateCache(`logStats:${userId}:${metricId}`); // Invalidate stats for this specific metric
     logger.info(
       `♻️ Cache invalidated for logs and stats of user:${userId} and metric:${metricId}`
@@ -233,7 +239,10 @@ export const updateLogService = async ({
       where: { metricId: log.metricId, loggedAt: updateData.loggedAt },
     });
     if (existingLog && existingLog.id !== logId)
-      throw new AppError("A log already exists for this date for this metric", 400);
+      throw new AppError(
+        "A log already exists for this date for this metric",
+        400
+      );
   }
 
   // Create update instance
@@ -252,13 +261,17 @@ export const updateLogService = async ({
 
   // Invalidate caches based on updatedLog.metric data
   if (redisClient.isOpen && updatedLog.metric) {
-    await invalidateCache(`log:${updatedLog.metric.userId}:${updatedLog.id}`);
-    await invalidateCache(`logs:${updatedLog.metric.userId}`);
-    await invalidateCache(`logStats:${updatedLog.metric.userId}`);
+    await invalidateCache(`log:${updatedLog.metric.userId}:${updatedLog.id}`); // Invalidate specific log cache
+    await invalidateCache(`logs:${updatedLog.metric.userId}`); // Invalidate general logs list for the user
+    await invalidateCache(`logStats:${updatedLog.metric.userId}`); // Invalidate general stats for the user
     // Invalidate specific metric logs/stats if metricId was present
     if (updatedLog.metric.id) {
-      await invalidateCache(`logs:${updatedLog.metric.userId}:${updatedLog.metric.id}`);
-      await invalidateCache(`logStats:${updatedLog.metric.userId}:${updatedLog.metric.id}`);
+      await invalidateCacheByPattern(
+        `logs:${userId}:${updatedLog.metric.id}:*`
+      ); // Invalidate any cached logs for this metric
+      await invalidateCache(
+        `logStats:${updatedLog.metric.userId}:${updatedLog.metric.id}`
+      ); // Invalidate specific metric stats
     }
     logger.info(
       `♻️ Cache invalidated for log:${updatedLog.id}, logs, and stats of user:${updatedLog.metric.userId} and metric:${updatedLog.metric.id}`
@@ -296,13 +309,13 @@ export const deleteLogService = async ({
   });
 
   if (redisClient.isOpen && log.metric) {
-    await invalidateCache(`log:${log.metric.userId}:${log.id}`);
-    await invalidateCache(`logs:${log.metric.userId}`);
-    await invalidateCache(`logStats:${log.metric.userId}`);
+    await invalidateCache(`log:${log.metric.userId}:${log.id}`); // Invalidate specific log cache
+    await invalidateCache(`logs:${log.metric.userId}`); // Invalidate general logs list for the user
+    await invalidateCache(`logStats:${log.metric.userId}`); // Invalidate general stats for the user
     // Invalidate specific metric logs/stats if metricId was present
     if (log.metric.id) {
-      await invalidateCache(`logs:${log.metric.userId}:${log.metric.id}`);
-      await invalidateCache(`logStats:${log.metric.userId}:${log.metric.id}`);
+      await invalidateCacheByPattern(`logs:${userId}:${log.metric.id}:*`); // Invalidate any cached logs for this metric
+      await invalidateCache(`logStats:${log.metric.userId}:${log.metric.id}`); // Invalidate specific metric stats
     }
     logger.info(
       `♻️ Cache invalidated for log:${log.id}, logs, and stats of user:${log.metric.userId} and metric:${log.metric.id}`
