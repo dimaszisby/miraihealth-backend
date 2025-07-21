@@ -96,13 +96,7 @@ export const createLog = async ({
 
   // Invalidate caches
   if (redisClient.isOpen) {
-    await invalidateCache(`logs:${userId}`); // Invalidate general logs list for the user
-    await invalidateCache(`logStats:${userId}`); // Invalidate general stats for the user
-    await invalidateCacheByPattern(`logs:${userId}:${metricId}:*`); // Invalidate any cached logs for this metric
-    await invalidateCache(`logStats:${userId}:${metricId}`); // Invalidate stats for this specific metric
-    logger.info(
-      `♻️ Cache invalidated for logs and stats of user:${userId} and metric:${metricId}`
-    );
+    await invalidateAllMetricLogsCache(userId, metricId, created.id);
   }
 
   return toDomainMetricLog(created);
@@ -259,23 +253,18 @@ export const updateLogService = async ({
     ],
   });
 
+  // Fetch metricId safely
+  const metricId =
+    updatedLog.metricId || (updatedLog.metric && updatedLog.metric.id);
+
   // Invalidate caches based on updatedLog.metric data
-  if (redisClient.isOpen && updatedLog.metric) {
-    await invalidateCache(`log:${updatedLog.metric.userId}:${updatedLog.id}`); // Invalidate specific log cache
-    await invalidateCache(`logs:${updatedLog.metric.userId}`); // Invalidate general logs list for the user
-    await invalidateCache(`logStats:${updatedLog.metric.userId}`); // Invalidate general stats for the user
-    // Invalidate specific metric logs/stats if metricId was present
-    if (updatedLog.metric.id) {
-      await invalidateCacheByPattern(
-        `logs:${userId}:${updatedLog.metric.id}:*`
-      ); // Invalidate any cached logs for this metric
-      await invalidateCache(
-        `logStats:${updatedLog.metric.userId}:${updatedLog.metric.id}`
-      ); // Invalidate specific metric stats
-    }
-    logger.info(
-      `♻️ Cache invalidated for log:${updatedLog.id}, logs, and stats of user:${updatedLog.metric.userId} and metric:${updatedLog.metric.id}`
+  if (redisClient.isOpen && metricId) {
+    await invalidateAllMetricLogsCache(userId, metricId, updatedLog.id);
+  } else if (redisClient.isOpen && !metricId) {
+    logger.warn(
+      `[CACHE] Could not resolve metricId for log ${logId}, invalidating all user's logs cache!`
     );
+    await invalidateCacheByPattern(`logs:${userId}:*`);
   }
 
   return toDomainMetricLog(updatedLog);
@@ -308,18 +297,16 @@ export const deleteLogService = async ({
     ],
   });
 
-  if (redisClient.isOpen && log.metric) {
-    await invalidateCache(`log:${log.metric.userId}:${log.id}`); // Invalidate specific log cache
-    await invalidateCache(`logs:${log.metric.userId}`); // Invalidate general logs list for the user
-    await invalidateCache(`logStats:${log.metric.userId}`); // Invalidate general stats for the user
-    // Invalidate specific metric logs/stats if metricId was present
-    if (log.metric.id) {
-      await invalidateCacheByPattern(`logs:${userId}:${log.metric.id}:*`); // Invalidate any cached logs for this metric
-      await invalidateCache(`logStats:${log.metric.userId}:${log.metric.id}`); // Invalidate specific metric stats
-    }
-    logger.info(
-      `♻️ Cache invalidated for log:${log.id}, logs, and stats of user:${log.metric.userId} and metric:${log.metric.id}`
+  // Fetch metricId safely BEFORE destroy
+  const metricId = log.metricId || (log.metric && log.metric.id);
+
+  if (redisClient.isOpen && metricId) {
+    await invalidateAllMetricLogsCache(userId, metricId, log.id);
+  } else if (redisClient.isOpen && !metricId) {
+    logger.warn(
+      `[CACHE] Could not resolve metricId for log ${logId}, invalidating all user's logs cache!`
     );
+    await invalidateCacheByPattern(`logs:${userId}:*`);
   }
 
   await log.destroy();
@@ -410,15 +397,45 @@ export const generateDummyLogsService = async ({
   }
 
   if (redisClient.isOpen) {
-    await invalidateCache(`logs:${userId}`);
-    await invalidateCache(`logStats:${userId}`);
-    // Invalidate specific metric logs/stats
-    await invalidateCache(`logs:${userId}:${metricId}`);
-    await invalidateCache(`logStats:${userId}:${metricId}`);
-    logger.info(
-      `♻️ Cache invalidated for logs and stats of user:${userId} and metric:${metricId} after dummy generation`
-    );
+    await invalidateAllMetricLogsCache(userId, metricId);
   }
 
   return dummyLogs;
 };
+
+/**
+ * Invalidates all cache keys related to a user's logs for a specific metric,
+ * including paginated, filtered, and stats keys.
+ * @param userId - The user ID.
+ * @param metricId - The metric ID.
+ * @param logId - (optional) The log ID for per-log cache keys.
+ */
+export async function invalidateAllMetricLogsCache(
+  userId: string,
+  metricId: string,
+  logId?: string
+) {
+  console.log(
+    `[CACHE] Invalidating logs for user=${userId}, metric=${metricId}, log=${logId ?? "-"}`
+  );
+  // Invalidate all logs list queries for this metric
+  await invalidateCacheByPattern(`logs:${userId}:${metricId}:*`);
+
+  // Invalidate "all metrics" list (user dashboard or similar)
+  await invalidateCacheByPattern(`logs:${userId}:all:*`);
+
+  // Invalidate stats for this metric
+  await invalidateCache(`logStats:${userId}:${metricId}`);
+
+  // Invalidate general stats for this user (if you have aggregate endpoints)
+  await invalidateCache(`logStats:${userId}`);
+
+  // Invalidate single log cache if present
+  if (logId) {
+    await invalidateCache(`log:${userId}:${logId}`);
+  }
+
+  logger.info(
+    `♻️ Cache invalidated for log:${logId ?? "-"}, and stats of user:${userId} and metric:${metricId}`
+  );
+}

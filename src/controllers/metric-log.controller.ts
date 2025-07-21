@@ -55,7 +55,8 @@ export const getAllLogsByMetric = catchAsync(
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
 
-    const { metricId, startDate, endDate, sortBy, order, page, limit } = req.query;
+    const { metricId, startDate, endDate, sortBy, order, page, limit } =
+      req.query;
 
     const { logs, totalCount } =
       await metricLogService.getAllLogsByMetricService({
@@ -91,7 +92,8 @@ export const getLogById = catchAsync(
     const { id } = req.params;
     const { metricId } = req.query; // metricId is now an optional query parameter for GET by ID
 
-    if (!metricId) throw new AppError("metricId is required as a query parameter", 400); // Still require metricId for validation
+    if (!metricId)
+      throw new AppError("metricId is required as a query parameter", 400); // Still require metricId for validation
     const logDomain = await metricLogService.getLogByIdService({
       userId: userId,
       logId: id,
@@ -114,10 +116,8 @@ export const updateLog = catchAsync(
     const userId = req.user.id;
 
     const { id } = req.params;
-    const { metricId } = req.query; // metricId is now an optional query parameter for PUT
     const { logValue, type, loggedAt } = req.body;
 
-    if (!metricId) throw new AppError("metricId is required as a query parameter", 400); // Still require metricId for validation
     const logDomain = await metricLogService.updateLogService({
       userId: userId,
       logId: id,
@@ -127,10 +127,7 @@ export const updateLog = catchAsync(
         loggedAt,
       },
     });
-    // After updating, verify that the log belongs to the specified metricId
-    if (logDomain.metricId !== metricId) {
-      throw new AppError("Log not found for the specified metric", 404);
-    }
+
     successResponse(
       res,
       200,
@@ -148,19 +145,13 @@ export const deleteLog = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
-
     const { id } = req.params;
-    const { metricId } = req.query; // metricId is now an optional query parameter for DELETE
 
-    if (!metricId) throw new AppError("metricId is required as a query parameter", 400); // Still require metricId for validation
     const logDomain = await metricLogService.deleteLogService({
       userId: userId,
       logId: id,
     });
-    // After deleting, verify that the log belonged to the specified metricId
-    if (logDomain.metricId !== metricId) {
-      throw new AppError("Log not found for the specified metric", 404);
-    }
+
     successResponse(
       res,
       200,
@@ -181,7 +172,10 @@ export const getAggregatedStats = catchAsync(
 
     const { metricId } = req.query;
 
-    const stats = await metricLogService.getAggregatedStats(userId, metricId as string);
+    const stats = await metricLogService.getAggregatedStats(
+      userId,
+      metricId as string
+    );
     successResponse(res, 200, stats);
   }
 );

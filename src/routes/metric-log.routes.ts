@@ -1,6 +1,8 @@
 //src/routes/metric-log.routes.ts
 
 import { Router } from "express";
+
+// Controllers
 import {
   createMetricLog,
   getAllLogsByMetric,
@@ -9,10 +11,15 @@ import {
   deleteLog,
   getAggregatedStats,
   generateDummyMetricLogs,
-} from "../controllers/metric-log.controller.js";
-import { authMiddleware } from "../middleware/auth-middleware.js";
-import { cacheMiddleware } from "../middleware/cache-middleware.js";
-import { validate } from "../middleware/validate.js";
+} from "@/controllers/metric-log.controller.js";
+
+// Middlewares
+import { authMiddleware } from "@/middleware/auth-middleware.js";
+import { cacheMiddleware } from "@/middleware/cache-middleware.js";
+import { userRateLimiter } from "@/middleware/rate-limiter.js";
+import { validate } from "@/middleware/validate.js";
+
+// Schema validation
 import {
   createMetricLogSchema,
   updateMetricLogSchema,
@@ -21,8 +28,8 @@ import {
   deleteMetricLogSchema,
   getAggregatedStatsSchema,
   generateDummyMetricLogsSchema,
-} from "../types/api/zod-metric-log.schema.js";
-import { userRateLimiter } from "../middleware/rate-limiter.js";
+} from "@/types/api/zod-metric-log.schema.js";
+import { AuthRequest } from "@/types/request.context";
 
 const router = Router();
 
@@ -30,9 +37,9 @@ const router = Router();
  * * Key Generator Function
  * Generates a cache key based on user ID and log ID
  */
-const logsCacheKey = (req: any) => {
+// Logs List
+const buildLogsCacheKey = (req: AuthRequest) => {
   const {
-    metricId,
     page = 1,
     limit = 10,
     startDate,
@@ -40,11 +47,30 @@ const logsCacheKey = (req: any) => {
     sortBy,
     order,
   } = req.query;
-  return `logs:${req.user?.id}:${metricId || "all"}:${page}:${limit}:${startDate}:${endDate}:${sortBy}:${order}`;
+
+  const metricId = req.params.metricId || req.query.metricId; // Get metricId from params or query
+  const userId = req.user?.id;
+
+  return [
+    "logs",
+    userId,
+    metricId || "all", // Use "all" if no metricId is found
+    page,
+    limit,
+    startDate || "_",
+    endDate || "_",
+    sortBy || "_",
+    order || "_",
+  ].join(":");
 };
-const logCacheKey = (req: any) => `log:${req.user?.id}:${req.params.id}`;
-const logStatsCacheKey = (req: any) =>
-  `logStats:${req.user?.id}:${req.query.metricId || "all"}`;
+// Singular Log
+const logCacheKey = (req: AuthRequest) =>
+  `log:${req.user?.id}:${req.params.id}`;
+// User Log Stats
+const logStatsCacheKey = (req: AuthRequest) => {
+  const metricId = req.params.metricId || req.query.metricId;
+  return `logStats:${req.user?.id}:${metricId || "all"}`;
+};
 
 // Middleware to add deprecation warning
 const deprecateMetricLogRoute = (req: any, res: any, next: any) => {
@@ -81,7 +107,7 @@ router.get(
   "/metrics/:metricId/logs/",
   deprecateMetricLogRoute,
   validate(getAllMetricLogsSchema),
-  cacheMiddleware(logsCacheKey, 300),
+  cacheMiddleware(buildLogsCacheKey, 300),
   getAllLogsByMetric
 );
 
@@ -150,7 +176,7 @@ router.post(
 router.get(
   "/",
   validate(getAllMetricLogsSchema),
-  cacheMiddleware(logsCacheKey, 300),
+  cacheMiddleware(buildLogsCacheKey, 300),
   getAllLogsByMetric
 );
 

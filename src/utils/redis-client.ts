@@ -31,7 +31,7 @@ redisClient.on("error", (err: Error) => {
 
 redisClient.on("connect", () => logger.info("✅ Connected to Redis"));
 redisClient.on("reconnecting", () =>
-  logger.warn("♻️ Reconnecting to Redis..."),
+  logger.warn("♻️ Reconnecting to Redis...")
 );
 redisClient.on("end", () => logger.warn("🚨 Redis connection closed."));
 
@@ -92,7 +92,10 @@ const invalidateCacheByPattern = async (pattern: string) => {
 
       if (keys.length > 0) {
         await redisClient.del(keys);
-        logger.info(`♻️ Cache invalidated for pattern ${pattern}. Deleted keys: ${keys.join(', ')}`);
+        // logger.info(`♻️ Cache invalidated for pattern ${pattern}. Deleted keys: ${keys.join(', ')}`);
+        logger.info(`[CACHE] Pattern "${pattern}" deleted keys:`, keys); // More verbose logging
+      } else {
+        logger.info(`[CACHE] Pattern "${pattern}" found NO keys to delete.`);
       }
     } while (cursor !== 0);
   }
@@ -101,4 +104,9 @@ const invalidateCacheByPattern = async (pattern: string) => {
 // Auto-connect on import
 connectRedis();
 
-export { redisClient, disconnectRedis, invalidateCache, invalidateCacheByPattern };
+export {
+  redisClient,
+  disconnectRedis,
+  invalidateCache,
+  invalidateCacheByPattern,
+};
