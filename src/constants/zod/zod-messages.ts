@@ -1,8 +1,18 @@
+// src/constants/zod-messages.ts
+
 export const ZodMessages = {
   common: {
     invalidUUID: "Invalid UUID",
     invalidDate: "Invalid date format",
     positiveNumber: "Must be a positive number",
+  },
+  api: {
+    minLength: (field: string, min: number) => `${field} must be at least ${min} characters long.`,
+    maxLength: (field: string, max: number) => `${field} must be at most ${max} characters long.`,
+    invalidEmail: "Invalid email address.",
+    invalidUUID: (field: string) => `Invalid ${field} format.`,
+    positiveNumber: (field: string) => `${field} must be a positive number.`,
+    invalidAuthHeader: 'Authorization header must start with "Bearer ".',
   },
   user: {
     usernameMin: "Username must be at least 3 characters",
@@ -41,3 +51,4 @@ export const ZodMessages = {
     logDateInvalid: "Invalid date format",
   },
 };
+
