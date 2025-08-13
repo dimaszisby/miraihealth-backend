@@ -38,7 +38,7 @@ function maybeCreateStore() {
 export const globalRateLimiter = rateLimit({
   store: maybeCreateStore(),
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: env.NODE_ENV === "test" ? 999999 : 50, // Limit each IP to 100 requests per window, but 999999 in test mode
+  max: env.NODE_ENV === "test" || env.NODE_ENV === "development" ? 999999 : 50, // Limit each IP to 100 requests per window, but 999999 in test mode
   standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
   legacyHeaders: false, // Disable `X-RateLimit-*` headers
   message: {
