@@ -1,6 +1,6 @@
 // src/controllers/metric-category.controller.ts
 
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import * as MetricCategoryService from "@/services/metric-category.service";
 import { MetricCategoryDomain } from "@/types/domain/metric-category.domain";
 import { AuthRequest } from "@/types/request.context";
@@ -12,11 +12,26 @@ import {
   toMetricCategoryListResponseDTO,
 } from "@/utils/mappers/metric-category.mapper";
 import { GenerateDummyMetricCategoriesRequestDTO } from "@/types/dtos/metric-category.dto";
+import logger from "@/utils/logger";
+import { listCategoriesQuery } from "@/types/api/zod-metric-category.schema";
 
 /**
  * * Metric Category Controller
  * Handles CRUD operations for metric categories.
  */
+
+const isSortParam = (v: unknown): v is MetricCategoryService.SortParam =>
+  typeof v === "string" &&
+  [
+    "createdAt",
+    "-createdAt",
+    "updatedAt",
+    "-updatedAt",
+    "name",
+    "-name",
+    "metricCount",
+    "-metricCount",
+  ].includes(v);
 
 /**
  * * Create a new Metric Category
@@ -48,12 +63,38 @@ export const getAllCategories = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
 
-    const categories: MetricCategoryDomain[] =
-      await MetricCategoryService.getAllUserMetricCategoryService(req.user.id);
+    const userId = req.user.id;
 
-    const categoriesRespose = categories.map(toMetricCategoryResponseDTO);
+    const parsed = listCategoriesQuery.parse(req.query);
+    const { limit, sort, q, after, includeTotal } = parsed;
+    const filter =
+      parsed["filter[name]"] && parsed["filter[name]"]!.trim().length > 0
+        ? { name: parsed["filter[name]"]!.trim() }
+        : undefined;
 
-    successResponse(res, 200, { categories: categoriesRespose });
+    const page = await MetricCategoryService.listMetricCategories({
+      userId,
+      limit,
+      sort,
+      q,
+      filter,
+      after,
+      includeTotal,
+    });
+
+    // Explicit response DTO to guarantee presence/absence of keys as intended
+    const dto = {
+      items: page.items.map(toMetricCategoryResponseDTO),
+      nextCursor: page.nextCursor,
+      sort: page.sort,
+      limit: page.limit,
+      ...(page.q ? { q: page.q } : {}),
+      ...(page.filter ? { filter: page.filter } : {}),
+      ...(includeTotal ? { totalCount: page.totalCount ?? 0 } : {}),
+    };
+
+    // Question: Should have an explicit return DTO type/mapper like other function
+    successResponse(res, 200, dto);
   }
 );
 
@@ -132,6 +173,7 @@ export const deleteCategory = catchAsync(
 export const generateDummyCategories = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
+
     const userId = req.user.id;
     const { count } = req.body as GenerateDummyMetricCategoriesRequestDTO;
 
