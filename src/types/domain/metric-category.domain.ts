@@ -52,4 +52,12 @@ export interface MetricCategoryDomain {
    * @readonly
    */
   readonly deletedAt?: Date | null;
+
+  // Dev note: Type Added recently
+  /**
+   * @property {number} metricCount - The number of metrics associated with the category.
+   * @readonly
+   * @example 10
+   */
+  readonly metricCount: number;
 }

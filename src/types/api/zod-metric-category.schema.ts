@@ -1,59 +1,66 @@
 // src/types/api/metric-category.schema.ts
 
 import { z } from "zod";
-import { ZodMessages } from "@/constants/zod-messages";
+import { ZodMessages } from "@/constants/zod/zod-messages";
 import {
   zMetricCategoryName,
   zMetricCategoryColor,
   zMetricCategoryIcon,
-} from "@/validators/zod-rules";
+} from "@/constants/zod/zod-rules";
+import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 
-/**
- * * Metric Category Schema Validator
- * Defines validation schemas for metric category-related requests.
- */
+extendZodWithOpenApi(z);
 
-// CREATE MetricCategory Schema
-export const createMetricCategorySchema = z.object({
-  body: z.object({
-    name: zMetricCategoryName,
-    color: zMetricCategoryColor,
-    icon: zMetricCategoryIcon,
-  }),
+// * Base
+export const metricCategoryBody = z.object({
+  name: zMetricCategoryName,
+  color: zMetricCategoryColor,
+  icon: zMetricCategoryIcon,
 });
 
-// UPDATE MetricCategory Schema
-export const updateMetricCategorySchema = z.object({
-  params: z.object({
-    id: z.string().uuid({ message: ZodMessages.metricCategory.invalidId }),
-  }),
-  body: z.object({
-    name: zMetricCategoryName.optional(),
-    color: zMetricCategoryColor.optional(),
-    icon: zMetricCategoryIcon.optional(),
-  }),
+export const metricCategoryParams = z.object({
+  id: z.string().uuid({ message: ZodMessages.metricCategory.invalidId }),
 });
 
-// GET MetricCategory Schema
-export const getMetricCategorySchema = z.object({
-  params: z.object({
-    id: z.string().uuid({ message: ZodMessages.metricCategory.invalidId }),
-  }),
+export const listCategoriesQuery = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  sort: z
+    .enum([
+      "createdAt",
+      "-createdAt",
+      "updatedAt",
+      "-updatedAt",
+      "name",
+      "-name",
+      "metricCount",
+      "-metricCount",
+    ] as const)
+    .default("-createdAt"),
+  q: z.string().trim().min(1).optional(),
+  ["filter[name]"]: z.string().trim().min(1).optional(),
+  after: z.string().optional(),
+  includeTotal: z.coerce.boolean().default(false),
 });
 
-// DELETE MetricCategory Schema
-export const deleteMetricCategorySchema = z.object({
-  params: z.object({
-    id: z.string().uuid({ message: ZodMessages.metricCategory.invalidId }),
-  }),
-});
+// * Schema Implementations
+export const createMetricCategorySchema = { body: metricCategoryBody };
+export const updateMetricCategorySchema = {
+  params: metricCategoryParams,
+  body: metricCategoryBody.partial(),
+};
+export const getMetricCategorySchema = { params: metricCategoryParams };
+export const deleteMetricCategorySchema = { params: metricCategoryParams };
+export const getAllMetricCategoriesSchema = { query: listCategoriesQuery };
 
 /**
  * * ===== Schemas for Testing Purposes =====
  */
 
-export const generateDummyMetricCategoriesSchema = z.object({
-  body: z.object({
-    count: z.number().int().min(1).max(1000).default(50), // Default to 50, max 1000
-  }),
+export const createMetricCategoryDummyBody = z.object({
+  // id: z.string().uuid({ message: ZodMessages.metricCategory.invalidId }),
+  count: z.number().int().min(1).max(1000).default(5), // Default to 5, max 1000
 });
+
+export const generateDummyMetricCategoriesSchema = {
+  body: createMetricCategoryDummyBody,
+};

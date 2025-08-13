@@ -8,7 +8,7 @@ import { MetricCategoryResponseDTO } from "@/types/dtos/metric-category.dto";
  * * Mapper: Sequelize → Domain
  */
 export const toDomainMetricCategory = (
-  metricCategory: MetricCategory,
+  metricCategory: MetricCategory & { metricCount?: number }
 ): MetricCategoryDomain => ({
   id: metricCategory.id,
   name: metricCategory.name,
@@ -17,13 +17,22 @@ export const toDomainMetricCategory = (
   createdAt: metricCategory.createdAt!,
   updatedAt: metricCategory.updatedAt!,
   deletedAt: metricCategory.deletedAt,
+  metricCount: Number(metricCategory.metricCount) ?? 0,
 });
+
+/**
+ * * Sequelize[] → Domain[] Mapper
+ */
+// Dev Note Update: ADDED
+export const toDomainMetricCategories = (
+  logs: MetricCategory[]
+): MetricCategoryDomain[] => logs.map(toDomainMetricCategory);
 
 /**
  * * Mapper: Domain → DTO (for responses)
  */
 export const toMetricCategoryResponseDTO = (
-  metricCategory: MetricCategoryDomain,
+  metricCategory: MetricCategoryDomain
 ): MetricCategoryResponseDTO => ({
   id: metricCategory.id,
   name: metricCategory.name,
@@ -31,10 +40,11 @@ export const toMetricCategoryResponseDTO = (
   icon: metricCategory.icon,
   createdAt: metricCategory.createdAt.toISOString(),
   updatedAt: metricCategory.updatedAt.toISOString(),
+  metricCount: metricCategory.metricCount,
 });
 
 export const toMetricCategoryListResponseDTO = (
-  metricCategories: MetricCategoryDomain[],
+  metricCategories: MetricCategoryDomain[]
 ): MetricCategoryResponseDTO[] => {
   return metricCategories.map(toMetricCategoryResponseDTO);
 };

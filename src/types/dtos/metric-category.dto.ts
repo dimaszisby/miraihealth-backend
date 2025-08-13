@@ -63,6 +63,14 @@ export interface MetricCategoryResponseDTO {
    * @readonly
    */
   readonly deletedAt?: string | null;
+
+  // Dev note: Type Added recently
+  /**
+   * @property {number} metricCount - The number of metrics associated with the category.
+   * @readonly
+   * @example 10
+   */
+  readonly metricCount: number;
 }
 
 /**
@@ -71,7 +79,7 @@ export interface MetricCategoryResponseDTO {
  * Inferred from the Zod schema for validation.
  */
 export type CreateMetricCategoryRequestDTO = z.infer<
-  typeof createMetricCategorySchema.shape.body
+  typeof createMetricCategorySchema.body
 >;
 
 /**
@@ -80,7 +88,7 @@ export type CreateMetricCategoryRequestDTO = z.infer<
  * Inferred from the Zod schema for validation.
  */
 export type UpdateMetricCategoryRequestDTO = z.infer<
-  typeof updateMetricCategorySchema.shape.body
+  typeof updateMetricCategorySchema.body
 >;
 
 /**
@@ -93,5 +101,5 @@ export type UpdateMetricCategoryRequestDTO = z.infer<
  * Inferred from the Zod schema for validation.
  */
 export type GenerateDummyMetricCategoriesRequestDTO = z.infer<
-  typeof generateDummyMetricCategoriesSchema.shape.body
+  typeof generateDummyMetricCategoriesSchema.body
 >;
