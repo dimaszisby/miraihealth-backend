@@ -2,12 +2,18 @@
 
 import { AuthRequest } from "@/types/request.context";
 import { Request, Response, NextFunction } from "express";
-import { ZodSchema, ZodError, AnyZodObject } from "zod";
+import { ZodSchema, ZodError, AnyZodObject, ZodTypeAny } from "zod";
 
 /**
  * * Validation Middleware
  * Used to validate incoming requests against Zod schemas.
  */
+
+type SchemaBag = {
+  body?: ZodTypeAny;
+  params?: ZodTypeAny;
+  query?: ZodTypeAny;
+};
 
 const handleError = (res: Response, error: ZodError) => {
   const formattedErrors = error.errors.map((err) => ({
@@ -20,32 +26,30 @@ const handleError = (res: Response, error: ZodError) => {
 };
 
 export const validate =
-  (schema?: AnyZodObject) =>
+  (schemas?: SchemaBag) =>
   (req: AuthRequest, res: Response, next: NextFunction): void => {
-    if (!schema) {
+    if (!schemas) {
       console.warn("No validation schema provided for this route.");
       return next();
     }
 
     try {
-      const { body, params, query } = schema.shape;
-
-      if (body) {
-        const parsedBody = body.safeParse(req.body);
+      if (schemas.body) {
+        const parsedBody = schemas.body.safeParse(req.body);
         if (!parsedBody.success) return handleError(res, parsedBody.error);
-        req.body = parsedBody.data;
+        req.body = parsedBody.data as typeof req.body;
       }
 
-      if (params) {
-        const parsedParams = params.safeParse(req.params);
+      if (schemas.params) {
+        const parsedParams = schemas.params.safeParse(req.params);
         if (!parsedParams.success) return handleError(res, parsedParams.error);
-        req.params = parsedParams.data;
+        req.params = parsedParams.data as typeof req.params;
       }
 
-      if (query) {
-        const parsedQuery = query.safeParse(req.query);
+      if (schemas.query) {
+        const parsedQuery = schemas.query.safeParse(req.query);
         if (!parsedQuery.success) return handleError(res, parsedQuery.error);
-        req.query = parsedQuery.data;
+        req.query = parsedQuery.data as any;
       }
 
       // Override body with parsed/validated data
