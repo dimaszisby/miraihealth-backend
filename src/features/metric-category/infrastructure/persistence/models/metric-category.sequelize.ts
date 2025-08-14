@@ -1,0 +1,121 @@
+// src/features/metric-category/infrastructure/persistence/models/metric-category.sequelize.ts
+
+import { Model, DataTypes, Sequelize, Optional } from "sequelize";
+// import { Metric } from "../../../../../models/metric.model.js"; // Overhaul WIP
+// import { User } from "../../../../../models/user.model.js"; // Overhaul WIP
+import { MetricCategoryAttributesBase } from "@/features/metric-category/infrastructure/persistence/models/metric-category.attribute.js";
+import { DbModels } from "@/models/types.js";
+import { User } from "@/models/user.model";
+import { Metric } from "@/models/metric.model";
+
+/**
+ * * MetricCategory Model
+ * Represents categories used to group health metrics.
+ */
+
+// Define attributes
+export interface MetricCategoryAttributes extends MetricCategoryAttributesBase {
+  // DB-specifics
+  id: string;
+  userId: string;
+
+  // Timestamps managed by DB
+  createdAt?: Date;
+  updatedAt?: Date;
+
+  // Optional associated objects
+  // User?: User;
+  // Metrics?: Metric[];
+}
+
+// Define optional fields for Sequelize
+export interface MetricCategoryCreationAttributes
+  extends Optional<MetricCategoryAttributes, "id"> {}
+
+export class MetricCategory
+  extends Model<MetricCategoryAttributes, MetricCategoryCreationAttributes>
+  implements MetricCategoryAttributes
+{
+  declare id: string;
+  declare userId: string;
+  declare name: string;
+  declare color: string;
+  declare icon: string;
+  declare deletedAt?: Date | null;
+
+  // Timestamps managed by DB
+  declare createdAt?: Date;
+  declare updatedAt?: Date;
+
+  // Optional associated objects
+  declare User?: User;
+  declare Metrics?: Metric[];
+
+  // * Init
+  static initModel(sequelize: Sequelize) {
+    MetricCategory.init(
+      {
+        id: {
+          type: DataTypes.UUID,
+          defaultValue: DataTypes.UUIDV4,
+          primaryKey: true,
+        },
+        userId: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          references: {
+            model: "users",
+            key: "id",
+          },
+        },
+        name: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        color: {
+          type: DataTypes.STRING,
+          defaultValue: "#E897A3",
+        },
+        icon: {
+          type: DataTypes.STRING,
+          defaultValue: "📁",
+        },
+        deletedAt: {
+          type: DataTypes.DATE,
+          allowNull: true,
+        },
+      },
+      {
+        sequelize,
+        modelName: "MetricCategory",
+        tableName: "metric_categories",
+        paranoid: true,
+        underscored: true,
+        schema: "public",
+      }
+    );
+
+    return MetricCategory;
+  }
+
+  // * Associations
+  public static associate(models: DbModels) {
+    MetricCategory.belongsTo(models.User, {
+      as: "user",
+      foreignKey: { name: "userId", field: "user_id", allowNull: false },
+      onDelete: "CASCADE",
+    });
+    MetricCategory.hasMany(models.Metric, {
+      as: "metrics",
+      foreignKey: { name: "categoryId", field: "category_id", allowNull: true },
+      onDelete: "SET NULL",
+    });
+  }
+}
+
+export function initMetricCategory(sequelize: Sequelize) {
+  return MetricCategory.initModel(sequelize);
+}
+export function associateMetricCategory(models: DbModels) {
+  MetricCategory.associate(models);
+}

@@ -1,8 +1,8 @@
-// src/utils/mappers/metricCategory.mapper.ts
+// src/features/metric-category/infrastructure/http/schema.zod.ts
 
-import { MetricCategory } from "@/models/metric-category.model";
-import { MetricCategoryDomain } from "@/types/domain/metric-category.domain";
-import { MetricCategoryResponseDTO } from "@/types/dtos/metric-category.dto";
+import { MetricCategory } from "@/features/metric-category/infrastructure/persistence/models/metric-category.sequelize";
+import { MetricCategoryDomain } from "@/features/metric-category/domain/entities/domain";
+import { MetricCategoryResponseDTO } from "@/features/metric-category/infrastructure/http/dto";
 
 /**
  * * Mapper: Sequelize → Domain

@@ -1,8 +1,7 @@
-// src/controllers/metric-category.controller.ts
+// src/features/metric-category/infrastructure/http/controller.ts
 
 import { Response, NextFunction } from "express";
-import * as MetricCategoryService from "@/services/metric-category.service";
-import { MetricCategoryDomain } from "@/types/domain/metric-category.domain";
+import { MetricCategoryDomain } from "@/features/metric-category/domain/entities/domain";
 import { AuthRequest } from "@/types/request.context";
 import AppError from "@/utils/AppError";
 import catchAsync from "@/utils/catch-async";
@@ -10,17 +9,25 @@ import { successResponse } from "@/utils/response-formatter";
 import {
   toMetricCategoryResponseDTO,
   toMetricCategoryListResponseDTO,
-} from "@/utils/mappers/metric-category.mapper";
-import { GenerateDummyMetricCategoriesRequestDTO } from "@/types/dtos/metric-category.dto";
+} from "@/features/metric-category/infrastructure/mapping/mapper";
+import { GenerateDummyMetricCategoriesRequestDTO } from "@/features/metric-category/infrastructure/http/dto";
 import logger from "@/utils/logger";
-import { listCategoriesQuery } from "@/types/api/zod-metric-category.schema";
+import { listCategoriesQuery } from "@/features/metric-category/infrastructure/http/schema.zod";
+import listMetricCategories, {
+  SortParam,
+} from "../../application/queries/ListCategories";
+import createMetricCategoryService from "../../application/commands/CreateCategory";
+import getUserMetricCategoryByIdService from "../../application/queries/GetCategoryById";
+import updateMetricCategoryService from "../../application/commands/UpdateCategory";
+import deleteMetricCategoryService from "../../application/commands/DeleteCategory";
+import generateDummyCategoriesService from "../../application/commands/CreateDummyCategories";
 
 /**
  * * Metric Category Controller
  * Handles CRUD operations for metric categories.
  */
 
-const isSortParam = (v: unknown): v is MetricCategoryService.SortParam =>
+const isSortParam = (v: unknown): v is SortParam =>
   typeof v === "string" &&
   [
     "createdAt",
@@ -41,11 +48,10 @@ export const createCategory = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
 
-    const category: MetricCategoryDomain =
-      await MetricCategoryService.createMetricCategoryService(
-        req.user.id,
-        req.body
-      );
+    const category: MetricCategoryDomain = await createMetricCategoryService(
+      req.user.id,
+      req.body
+    );
     successResponse(
       res,
       201,
@@ -72,7 +78,7 @@ export const getAllCategories = catchAsync(
         ? { name: parsed["filter[name]"]!.trim() }
         : undefined;
 
-    const page = await MetricCategoryService.listMetricCategories({
+    const page = await listMetricCategories({
       userId,
       limit,
       sort,
@@ -107,10 +113,7 @@ export const getCategoryById = catchAsync(
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
 
     const category: MetricCategoryDomain =
-      await MetricCategoryService.getUserMetricCategoryByIdService(
-        req.user.id,
-        req.params.id
-      );
+      await getUserMetricCategoryByIdService(req.user.id, req.params.id);
     successResponse(res, 200, {
       category: toMetricCategoryResponseDTO(category),
     });
@@ -125,12 +128,11 @@ export const updateCategory = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
 
-    const category: MetricCategoryDomain =
-      await MetricCategoryService.updateMetricCategoryService(
-        req.user.id,
-        req.params.id,
-        req.body
-      );
+    const category: MetricCategoryDomain = await updateMetricCategoryService(
+      req.user.id,
+      req.params.id,
+      req.body
+    );
     successResponse(
       res,
       200,
@@ -148,11 +150,10 @@ export const deleteCategory = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
 
-    const category: MetricCategoryDomain =
-      await MetricCategoryService.deleteMetricCategoryService(
-        req.user.id,
-        req.params.id
-      );
+    const category: MetricCategoryDomain = await deleteMetricCategoryService(
+      req.user.id,
+      req.params.id
+    );
     successResponse(
       res,
       200,
@@ -177,8 +178,7 @@ export const generateDummyCategories = catchAsync(
     const userId = req.user.id;
     const { count } = req.body as GenerateDummyMetricCategoriesRequestDTO;
 
-    const dummyCategories =
-      await MetricCategoryService.generateDummyCategoriesService(userId, count);
+    const dummyCategories = await generateDummyCategoriesService(userId, count);
 
     successResponse(
       res,

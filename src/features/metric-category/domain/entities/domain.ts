@@ -1,3 +1,5 @@
+// src/features/metric-category/domain/entities/domain.ts
+
 /**
  * @file src/types/domain/metric-category.domain.ts
  * @description Defines the domain model interface for a Metric Category.

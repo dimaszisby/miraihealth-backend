@@ -1,4 +1,4 @@
-// src/metric-category.routes.ts
+// src/features/metric-category/infrastructure/http/routes.ts
 
 import { Router } from "express";
 
@@ -10,7 +10,7 @@ import {
   updateCategory,
   deleteCategory,
   generateDummyCategories,
-} from "@/controllers/metric-category.controller.js";
+} from "@/features/metric-category/infrastructure/http/controller.js";
 
 // Middlewares
 import { authMiddleware } from "@/middleware/auth-middleware.js";
@@ -26,7 +26,7 @@ import {
   getAllMetricCategoriesSchema,
   deleteMetricCategorySchema,
   generateDummyMetricCategoriesSchema,
-} from "@/types/api/zod-metric-category.schema.js";
+} from "@/features/metric-category/infrastructure/http/schema.zod.js";
 import { AuthRequest } from "@/types/request.context";
 
 const router = Router();

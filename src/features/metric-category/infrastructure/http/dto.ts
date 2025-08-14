@@ -1,4 +1,4 @@
-// src/types/dtos/metric-category.dto.ts
+// src/features/metric-category/infrastructure/http/dto.ts
 
 import { z } from "zod";
 
@@ -7,7 +7,7 @@ import {
   createMetricCategorySchema,
   updateMetricCategorySchema,
   generateDummyMetricCategoriesSchema,
-} from "@/types/api/zod-metric-category.schema.js";
+} from "@/features/metric-category/infrastructure/http/schema.zod.js";
 
 /**
  * @file src/types/dtos/metric-category.dto.ts

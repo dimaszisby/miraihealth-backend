@@ -1,4 +1,4 @@
-// src/types/db/metric-category.types.ts
+// src/features/metric-category/infrastructure/http/schema.zod.ts
 
 /**
  * @interface MetricCategoryAttributesBase

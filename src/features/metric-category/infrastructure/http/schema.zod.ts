@@ -1,4 +1,4 @@
-// src/types/api/metric-category.schema.ts
+// src/features/metric-category/infrastructure/http/schema.zod.ts
 
 import { z } from "zod";
 import { ZodMessages } from "@/constants/zod/zod-messages";
