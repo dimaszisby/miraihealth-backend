@@ -11,6 +11,7 @@ import { MetricLog } from "@/models/metric-log.model";
 import {
   MetricDomain,
   MetricDomainExtended,
+  MetricLibraryCategoryInfoDomain,
 } from "@/types/domain/metric.domain";
 
 // DTO types
@@ -31,6 +32,10 @@ import { toMetricLogResponseDTO } from "./metric-log.mapper";
 import { toDomain } from "../../features/metric-category/infrastructure/mappers/MetricCategoryMapper";
 import { toDomainMetricSettings } from "./metric-settings.mapper";
 import { toDomainMetricLog } from "./metric-log.mapper";
+import {
+  toDomainLegacy,
+  toMResponseDTOLegacy as toResponseDTOLegacy,
+} from "@/features/metric-category/legacies/MetricCategoryLegacy.mapper";
 
 /**
  * * Mapper: Sequelize → Domain
@@ -61,6 +66,51 @@ export const toDomainMetric = (metric: Metric): MetricDomain => {
   };
 };
 
+export const toDomainMetricLibrary = (
+  metric: Metric & { logCount?: number }
+): MetricLibraryDomain => {
+  // userId is crucial and should exist on the Metric model instance
+  if (!metric.userId) {
+    logger.error("Metric object missing userId:", { metricId: metric.id }); // Log error
+    // Throw an error as userId is required for the domain model
+    throw new AppError(
+      `Metric with id ${metric.id} is missing the required userId. This indicates a data integrity issue.`,
+      500
+    );
+  }
+
+  // normalize
+  const categoryDomain = metric.MetricCategory
+    ? toDomainCategoryInfo(metric.MetricCategory)
+    : null;
+  const settingsDomain = metric.MetricSettings?.goalType ?? "Not Set";
+
+  return {
+    id: metric.id,
+    name: metric.name,
+    description: metric.description,
+    defaultUnit: metric.defaultUnit,
+    isPublic: metric.isPublic,
+    category: categoryDomain,
+    goalType: settingsDomain,
+    createdAt: metric.createdAt!,
+    updatedAt: metric.updatedAt!,
+    logCount: Number(metric.logCount) ?? 0,
+    // Assuming createdAt/updatedAt are guaranteed non-null by Sequelize model/query
+  };
+};
+
+const toDomainCategoryInfo = (
+  category: MetricCategory
+): MetricLibraryCategoryInfoDomain => {
+  return {
+    id: category.id,
+    name: category.name,
+    icon: category.icon,
+    color: category.color,
+  };
+};
+
 // Define a type for Metric with expected associations loaded via Sequelize includes
 // Adjust aliases ('MetricCategory', 'MetricSettings', 'MetricLogs') if they differ in your model definitions/queries
 type MetricWithAssociations = Metric & {
@@ -80,7 +130,7 @@ export const toExtendedMetricDomain = (
 
   // Use the dedicated mapper for category
   const categoryDomain = metric.MetricCategory
-    ? toDomain(metric.MetricCategory)
+    ? toDomainLegacy(metric.MetricCategory)
     : null;
 
   // Use the dedicated mapper for settings
@@ -139,9 +189,7 @@ export const toUserMetricDetailResponseDTO = (
   updatedAt: metric.updatedAt.toISOString(),
 
   // Map associated entities
-  category: metric.category
-    ? toResponseDTO(metric.category)
-    : null,
+  category: metric.category ? toResponseDTOLegacy(metric.category) : null,
   settings: metric.settings
     ? toMetricSettingsResponseDTO(metric.settings)
     : null,

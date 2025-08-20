@@ -23,6 +23,8 @@ import {
 } from "@/types/domain/metric.domain";
 import { GenerateDummyMetricsRequestDTO } from "@/types/dtos/metric.dto";
 import logger from "@/utils/logger";
+import { listCategoriesQueryViaCursor } from "@/types/api/zod-metric.schema";
+import { listMetricsViaCursor } from "@/features/metric/application/queries/ListMetrics";
 
 /**
  * * Metric Controller
@@ -98,6 +100,42 @@ export const getUserMetricLibraries = catchAsync(
     logger.info(`=== [METRIC CONTROLLER - Library Fetch]`, metricsResponseDTO);
 
     successResponse(res, 200, { metrics: metricsResponseDTO, total: total });
+  }
+);
+
+export const getUserMetricLibrariesViaCursor = catchAsync(
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+    const userId = req.user.id;
+
+    const parsed = listCategoriesQueryViaCursor.parse(req.query);
+    const { limit, sort, q, after, includeTotal } = parsed;
+    const filter =
+      parsed["filter[name]"] && parsed["filter[name]"]!.trim().length > 0
+        ? { name: parsed["filter[name]"]!.trim() }
+        : undefined;
+
+    const page = await listMetricsViaCursor({
+      userId,
+      limit,
+      sort,
+      q,
+      filter,
+      after,
+      includeTotal,
+    });
+
+    const dto = {
+      items: page.items.map(toMetricLibraryResponseDTO),
+      nextCursor: page.nextCursor,
+      sort: page.sort,
+      limit: page.limit,
+      ...(page.q ? { q: page.q } : {}),
+      ...(page.filter ? { filter: page.filter } : {}),
+      ...(includeTotal ? { totalCount: page.totalCount ?? 0 } : {}),
+    };
+
+    successResponse(res, 200, dto);
   }
 );
 

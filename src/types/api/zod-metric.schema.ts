@@ -44,6 +44,26 @@ export const listMetricsQuery = z.object({
   sortOrder: z.enum(["ASC", "DESC"]).default("DESC"),
 });
 
+export const listCategoriesQueryViaCursor = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  sort: z
+    .enum([
+      "createdAt",
+      "-createdAt",
+      "updatedAt",
+      "-updatedAt",
+      "name",
+      "-name",
+      "logCount",
+      "-logCount",
+    ] as const)
+    .default("-createdAt"),
+  q: z.string().trim().min(1).optional(),
+  ["filter[name]"]: z.string().trim().min(1).optional(),
+  after: z.string().optional(),
+  includeTotal: z.coerce.boolean().default(false),
+});
+
 // detail include shape e.g. “flat” | “full”
 const allowedIncludes = ["settings", "category", "logs"] as const;
 const csvIncludes = z
@@ -80,6 +100,9 @@ export const getMetricSchema = {
 };
 export const deleteMetricSchema = { params: metricParams };
 export const getAllMetricsSchema = { query: listMetricsQuery };
+export const getAllMetricsViaCursorSchema = {
+  query: listCategoriesQueryViaCursor,
+};
 
 // testing
 export const generateDummyMetricsBody = z.object({

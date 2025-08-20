@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {
   createMetric,
-  getUserMetricLibraries,
+  getUserMetricLibrariesViaCursor,
   getUserDetailMetricById,
   updateMetric,
   deleteMetric,
@@ -23,6 +23,7 @@ import {
   getMetricSchema,
   getAllMetricsSchema,
   generateDummyMetricsSchema,
+  getAllMetricsViaCursorSchema,
 } from "@/types/api/zod-metric.schema";
 
 import { AuthRequest } from "@/types/request.context";
@@ -79,6 +80,13 @@ const metricsCacheKey = (req: AuthRequest) => {
   return `metrics:${req.user?.id}:${stable}`;
 };
 
+const metricsCursorCacheKey = (req: AuthRequest) => {
+  const { limit = 20, sort = "-createdAt", q, after } = req.query as any; // only cache GET list
+  const fname = (req.query["filter[name]"] as string) ?? ""; // allowlist filter keys to avoid cache explosion
+  const includeTotal = String(req.query.includeTotal ?? "false");
+  return `metrics:${req.user?.id}:l:${limit}:s:${sort}:q:${q ?? ""}:fn:${fname}:after:${after ?? ""}:it:${includeTotal}`;
+};
+
 // const metricCacheKey = (req: AuthRequest) => {
 //   const include = (req.query as any)?.include ?? "flat";
 //   return `metric:${req.user?.id}:${req.params.id}:${include}`;
@@ -109,11 +117,19 @@ const metricCacheKey = (req: AuthRequest) => {
 /** Routes */
 router.post("/", userRateLimiter, validate(createMetricSchema), createMetric);
 
+// Workig Route non-cursor
+// router.get(
+//   "/",
+//   validate(getAllMetricsSchema),
+//   cacheMiddleware(metricsCacheKey, 60),
+//   getUserMetricLibraries
+// );
+
 router.get(
   "/",
-  validate(getAllMetricsSchema),
-  cacheMiddleware(metricsCacheKey, 60),
-  getUserMetricLibraries
+  validate(getAllMetricsViaCursorSchema),
+  cacheMiddleware(metricsCursorCacheKey, 60),
+  getUserMetricLibrariesViaCursor
 );
 
 router.get(

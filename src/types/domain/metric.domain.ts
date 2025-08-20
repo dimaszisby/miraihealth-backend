@@ -87,7 +87,7 @@ export interface MetricDomain {
  * @interface MetricLibraryCategoryInfo
  * @description Represents summarized category information used within the metric library view.
  */
-interface MetricLibraryCategoryInfo {
+export interface MetricLibraryCategoryInfoDomain {
   /**
    * @property {string} id - The unique identifier of the category.
    * @readonly
@@ -149,13 +149,25 @@ export interface MetricLibraryDomain {
    * @property {MetricLibraryCategoryInfo} [category] - Optional summarized information about the metric's category.
    * @readonly
    */
-  readonly category: MetricLibraryCategoryInfo;
+  readonly category: MetricLibraryCategoryInfoDomain | null;
 
   /**
    * @property {string} [goalType] - Optional goal type associated with the metric's settings (e.g., 'cumulative', 'incremental').
    * @readonly
    */
   readonly goalType: string; // Consider using the specific ENUM type if available/stable
+
+  /**
+   * @property {Date} createdAt - The timestamp when the metric was created.
+   * @readonly
+   */
+  readonly createdAt: Date;
+
+  /**
+   * @property {Date} updatedAt - The timestamp when the metric was last updated.
+   * @readonly
+   */
+  readonly updatedAt: Date;
 
   /**
    * @property {number} logCount - The number of logs associated with the metric.
