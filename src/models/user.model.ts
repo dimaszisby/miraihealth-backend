@@ -9,6 +9,7 @@ import {
 } from "sequelize";
 import bcrypt from "bcrypt";
 import { UserAttributesBase } from "@/types/db/user.types";
+import { DbModels } from "./types";
 
 /**
  * * User Model
@@ -45,18 +46,88 @@ export class User
   declare updatedAt?: Date | null;
   declare deletedAt?: Date | null;
 
-  /**
-   * * Associations
-   */
-  static associate(models: any) {
+  // * Init
+  static initModel(sequelize: Sequelize) {
+    User.init(
+      {
+        id: {
+          type: DataTypes.UUID,
+          defaultValue: DataTypes.UUIDV4,
+          primaryKey: true,
+        },
+        username: {
+          type: DataTypes.STRING,
+          unique: true,
+          allowNull: false,
+        },
+        email: {
+          type: DataTypes.STRING,
+          unique: true,
+          allowNull: false,
+          validate: { isEmail: true },
+        },
+        password: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        role: {
+          type: DataTypes.ENUM("user", "admin"),
+          allowNull: false,
+          defaultValue: "user",
+        },
+        isPublicProfile: {
+          type: DataTypes.BOOLEAN,
+          allowNull: false,
+          defaultValue: true,
+        },
+        deletedAt: {
+          type: DataTypes.DATE,
+          allowNull: true,
+        },
+      },
+      {
+        sequelize,
+        modelName: "User",
+        tableName: "users",
+        paranoid: true,
+        underscored: true,
+        schema: "public",
+        hooks: {
+          /**
+           * * Hash password before saving
+           */
+          beforeCreate: async (user: UserInstance) => {
+            if (!user.password)
+              throw new Error("Password is required for registration.");
+            const salt = await bcrypt.genSalt(10);
+            user.password = await bcrypt.hash(user.password, salt);
+          },
+          beforeUpdate: async (user: UserInstance) => {
+            if (user.changed("password")) {
+              if (!user.password)
+                throw new Error("Password is required for update.");
+              const salt = await bcrypt.genSalt(10);
+              user.password = await bcrypt.hash(user.password, salt);
+            }
+          },
+        },
+      }
+    );
+
+    return User;
+  }
+
+  // *  Associations
+  static associate(models: DbModels) {
     User.hasMany(models.Metric, {
-      as: "Metric",
-      foreignKey: "userId",
+      as: "metrics",
+      foreignKey: { name: "userId", field: "user_id", allowNull: false },
       onDelete: "CASCADE",
     });
+
     User.hasMany(models.MetricCategory, {
-      as: "MetricCategory",
-      foreignKey: "userId",
+      as: "categories",
+      foreignKey: { name: "userId", field: "user_id", allowNull: false },
       onDelete: "CASCADE",
     });
   }
@@ -69,74 +140,9 @@ export class User
   }
 }
 
-export default (sequelize: Sequelize) => {
-  User.init(
-    {
-      id: {
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
-        primaryKey: true,
-      },
-      username: {
-        type: DataTypes.STRING,
-        unique: true,
-        allowNull: false,
-      },
-      email: {
-        type: DataTypes.STRING,
-        unique: true,
-        allowNull: false,
-        validate: { isEmail: true },
-      },
-      password: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      role: {
-        type: DataTypes.ENUM("user", "admin"),
-        allowNull: false,
-        defaultValue: "user",
-      },
-      isPublicProfile: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: true,
-      },
-      deletedAt: {
-        type: DataTypes.DATE,
-        allowNull: true,
-      },
-    },
-    {
-      sequelize,
-      modelName: "User",
-      tableName: "users",
-      paranoid: true,
-      underscored: true,
-      schema: "public",
-      hooks: {
-        /**
-         * * Hash password before saving
-         */
-        beforeCreate: async (user: UserInstance) => {
-          if (!user.password) {
-            throw new Error("Password is required for registration.");
-          }
-          const salt = await bcrypt.genSalt(10);
-          user.password = await bcrypt.hash(user.password, salt);
-        },
-        beforeUpdate: async (user: UserInstance) => {
-          if (user.changed("password")) {
-            if (!user.password) {
-              throw new Error("Password is required for update.");
-            }
-            const salt = await bcrypt.genSalt(10);
-            user.password = await bcrypt.hash(user.password, salt);
-          }
-        },
-      },
-    },
-  );
-
-  return User;
-};
+export function initUser(sequelize: Sequelize) {
+  return User.initModel(sequelize);
+}
+export function associateUser(models: DbModels) {
+  User.associate(models);
+}

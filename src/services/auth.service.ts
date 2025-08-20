@@ -1,8 +1,9 @@
 // src/services/user.service.ts
 
-import db from "@/models/index";
+import db from "@/infrastructure/db/sequelize";
 import bcrypt from "bcrypt";
 import AppError from "@/utils/AppError";
+import logger from "@/utils/logger";
 import { tokenGenerator } from "@/utils/token-generator";
 import { UserDomain } from "@/types/domain/user.domain";
 import {
@@ -10,8 +11,7 @@ import {
   UpdateUserRequestDTO,
 } from "@/types/api/zod-user.schema";
 import { toDomainUser } from "@/utils/mappers/user.mapper";
-
-const { User } = db;
+import { models } from "@/models";
 
 /**
  * * Auth Service
@@ -30,7 +30,7 @@ interface AuthData {
  * @throws {AppError}  If error happened or user credential have been used
  */
 export const registerUserService = async (
-  registerData: CreateUserRequestDTO,
+  registerData: CreateUserRequestDTO
 ): Promise<AuthData> => {
   // Ensure that password and password confirmation is equal
   if (registerData.password !== registerData.passwordConfirmation) {
@@ -38,19 +38,24 @@ export const registerUserService = async (
   }
 
   // Ensure Email is not registered
-  const existingUser = await User.findOne({
+  const existingUser = await models.User.findOne({
     where: { email: registerData.email },
   });
   if (existingUser) {
     throw new AppError("Email already in use", 400);
   }
 
-  const user = await User.create(registerData);
-  const token = tokenGenerator(user);
+  try {
+    const user = await models.User.create(registerData);
+    const token = tokenGenerator(user);
 
-  const authData: AuthData = { token, user: toDomainUser(user) };
+    const authData: AuthData = { token, user: toDomainUser(user) };
 
-  return authData;
+    return authData;
+  } catch (error) {
+    logger.error("Error during user creation:", error);
+    throw error; // Re-throw the original error
+  }
 };
 
 /**
@@ -61,10 +66,10 @@ export const registerUserService = async (
  */
 export const loginUserService = async (
   email: string,
-  password: string,
+  password: string
 ): Promise<AuthData> => {
   // Ensure email is registered on the db
-  const user = await User.findOne({ where: { email } });
+  const user = await models.User.findOne({ where: { email } });
   // Ensure user and password is valid
   if (!user || !(await user.validPassword(password))) {
     throw new AppError("Invalid email or password", 401);
@@ -83,14 +88,15 @@ export const loginUserService = async (
  * @throws {AppError}  If error happened
  */
 export const getUserProfileService = async (
-  user: typeof User,
+  current: string | Pick<UserDomain, "id">
 ): Promise<UserDomain> => {
-  if (!user) throw new AppError("User not authenticated", 401);
+  const userId = typeof current === "string" ? current : current.id;
+  if (!userId) throw new AppError("User not authenticated", 401);
 
-  const userProfile = await User.findOne({ where: { id: user.id } });
+  const user = await models.User.findByPk(userId);
   if (!user) throw new AppError("User not found", 404);
 
-  return userProfile;
+  return toDomainUser(user);
 };
 
 /**
@@ -103,14 +109,18 @@ export const getUserProfileService = async (
  * @throws {AppError}  If error happened or requested data is already used
  */
 export const updateUserProfileService = async (
-  user: typeof User,
-  updateData: UpdateUserRequestDTO,
+  current: string | Pick<UserDomain, "id" | "email" | "username">,
+  updateData: UpdateUserRequestDTO
 ): Promise<UserDomain> => {
-  if (!user) throw new AppError("User not authenticated", 401);
+  const userId = typeof current === "string" ? current : current.id;
+  if (!userId) throw new AppError("User not authenticated", 401);
+
+  const user = await models.User.findByPk(userId);
+  if (!user) throw new AppError("User not found", 404);
 
   // Ensure update email is not taken
   if (updateData.email && updateData.email !== user.email) {
-    const existingEmail = await User.findOne({
+    const existingEmail = await models.User.findOne({
       where: { email: updateData.email },
     });
     if (existingEmail) {
@@ -120,7 +130,7 @@ export const updateUserProfileService = async (
 
   // Ensure update username is not taken
   if (updateData.username && updateData.username !== user.username) {
-    const existingUsername = await User.findOne({
+    const existingUsername = await models.User.findOne({
       where: { username: updateData.username },
     });
     if (existingUsername) {
@@ -134,12 +144,12 @@ export const updateUserProfileService = async (
     user.password = await bcrypt.hash(updateData.password, salt);
   }
 
-  const updatedUser = await user.update({
+  await user.update({
     username: updateData.username,
     email: updateData.email,
     isPublicProfile: updateData.isPublicProfile,
   });
-  await updatedUser.reload();
+  await user.reload();
 
-  return updatedUser;
+  return toDomainUser(user);
 };

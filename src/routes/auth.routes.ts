@@ -1,7 +1,8 @@
 // src/routes/auth.routes.ts
 
 import { Router } from "express";
-import { authMiddleware } from "@/middleware/auth-middleware";
+
+// Controllers
 import {
   register,
   login,
@@ -9,8 +10,13 @@ import {
   updateProfile,
   logout,
 } from "@/controllers/auth.controller";
-import { validate } from "@/middleware/validate";
+
+// Middlewares
+import { authMiddleware } from "@/middleware/auth-middleware";
 import { userRateLimiter } from "@/middleware/rate-limiter";
+import { validate } from "@/middleware/validate";
+
+// Types
 import {
   createUserSchema,
   updateUserSchema,
@@ -44,7 +50,7 @@ router.put(
   userRateLimiter,
   authMiddleware,
   validate(updateUserSchema),
-  updateProfile,
+  updateProfile
 );
 
 // 🔹 Logout user (Handled client-side for JWT)
