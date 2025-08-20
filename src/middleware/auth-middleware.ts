@@ -3,18 +3,11 @@
 import { env } from "@/config/zodEnv";
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import UserModel from "@/models/user.model";
-import db from "@/models/index";
+import db from "@/infrastructure/db/sequelize";
 import AppError from "@/utils/AppError";
 import { toDomainUser } from "@/utils/mappers/user.mapper";
 import { AuthRequest } from "@/types/request.context";
-
-/**
- * * Auth Middleware
- * Wrapper class for routes that require authentication
- */
-const { sequelize } = db;
-const UserModelInstance = UserModel(sequelize);
+import { models } from "@/models";
 
 /**
  * Middleware to validate authentication using JWT
@@ -25,7 +18,7 @@ const UserModelInstance = UserModel(sequelize);
 export const authMiddleware = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> => {
   // 1. Check if Authorization header is present
   const authHeader = req.headers.authorization;
@@ -43,7 +36,7 @@ export const authMiddleware = async (
 
     // 4. Check if user exists
     // ✅ Explicitly define the user attributes we need
-    const userRecord = await UserModelInstance.findByPk(decoded.id, {
+    const userRecord = await models.User.findByPk(decoded.id, {
       attributes: ["id", "username", "email", "role"], // ✅ Ensure `role` is included
     });
 
