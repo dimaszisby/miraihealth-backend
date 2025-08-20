@@ -3,6 +3,12 @@
 import { Request } from "express";
 import { UserDomain } from "@/types/domain/user.domain";
 
+export type ValidatedBag = {
+  body?: unknown;
+  query?: unknown;
+  params?: unknown;
+};
+
 /**
  * * Extended Request Interface for Authenticated Routes
  * Ensures all authenticated requests include user information.
