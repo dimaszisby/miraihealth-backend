@@ -112,9 +112,10 @@ export const getCategoryByIdLegacy = catchAsync(
 
     const category: MetricCategoryDomain =
       await getUserMetricCategoryByIdServiceLegacy(req.user.id, req.params.id);
-    successResponse(res, 200, {
-      category: toMResponseDTOLegacy(category),
-    });
+
+    const dto = toMResponseDTOLegacy(category);
+
+    successResponse(res, 200, dto, "Category retrieved successfully");
   }
 );
 
