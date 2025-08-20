@@ -1,5 +1,3 @@
-// src/models/index.ts
-
 import {
   associateMetricCategory,
   initMetricCategory,
@@ -22,14 +20,14 @@ import sequelize from "@/config/db";
 import type { DbModels } from "./types";
 
 export function loadModels() {
-  // 1) INIT: every model gets registered against the SAME sequelize instance
+  // INIT: every model gets registered
   initUser(sequelize);
   initMetricCategory(sequelize);
   initMetric(sequelize);
   initMetricSettings(sequelize);
   initMetriclog(sequelize);
 
-  // 2) ASSOCIATE: now relations can safely be wired
+  // ASSOCIATE: safely wires relationship
   const models: DbModels = {
     User,
     MetricCategory,
