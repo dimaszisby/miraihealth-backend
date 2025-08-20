@@ -1,11 +1,10 @@
 // src/services/metric-service.ts
 
-import db from "@/models/index";
+import db from "@/infrastructure/db/sequelize";
 import {
   MetricDomain,
   MetricDomainExtended,
   MetricLibraryDomain,
-  MetricLibraryListDomain,
 } from "@/types/domain/metric.domain";
 import {
   CreateMetricRequestDTO,
@@ -24,8 +23,7 @@ import {
   toExtendedMetricDomain,
 } from "@/utils/mappers/metric.mapper";
 import { Op, fn, col, literal, Sequelize, Transaction } from "sequelize";
-
-const { Metric, MetricLog, MetricSettings, MetricCategory } = db;
+import { models } from "@/models"; // ✅ unified source of truth
 
 /**
  * * Metric Service
@@ -50,7 +48,7 @@ export const createMetricService = async (
   // console.log("Create metric service triggered for user", userId);
 
   // Check for duplicate metric name for the user
-  const existingMetric = await Metric.findOne({
+  const existingMetric = await models.Metric.findOne({
     where: { userId, name: data.name },
   });
   if (existingMetric) {
@@ -59,7 +57,7 @@ export const createMetricService = async (
 
   // If categoryId is provided, verify that the category exists for the user
   if (data.categoryId) {
-    const category = await MetricCategory.findOne({
+    const category = await models.MetricCategory.findOne({
       where: { id: data.categoryId, userId },
     });
     if (!category) {
@@ -72,10 +70,13 @@ export const createMetricService = async (
 
   return db.sequelize.transaction(async (t: Transaction) => {
     // Create the metric
-    const metric = await Metric.create({ userId, ...data }, { transaction: t });
+    const metric = await models.Metric.create(
+      { userId, ...data },
+      { transaction: t }
+    );
 
     // Eagerly create the default settings row
-    await MetricSettings.create(
+    await models.MetricSettings.create(
       {
         metricId: metric.id,
         // All default fields for your settings model:
@@ -101,9 +102,13 @@ export const createMetricService = async (
 
     // Invalidate only the metrics list cache (not individual metric cache)
     if (redisClient.isOpen) {
-      await invalidateCacheByPattern(`metrics:${userId}:*`);
-      logger.info(`♻️ Cache invalidated for metrics:${userId}:*`);
+      // await invalidateCacheByPattern(`metrics:${userId}:*`);
+      // logger.info(`♻️ Cache invalidated for metrics:${userId}:*`);
+
+      invalidateAllMetricCache(userId);
     }
+
+    logger.info(`=== [METRIC SERVICE - Library Fetch]`, metric);
 
     // Optionally: reload the metric with settings for immediate DTO return
     return metric;
@@ -122,17 +127,11 @@ export const createMetricService = async (
  * @returns MetricLibraryListDomain
  */
 const transformMetric = (
-  metric: typeof Metric & { logCount?: number } // 👈 add optional prop for TS
-): MetricLibraryDomain | null => {
-  if (!metric) return null;
-
+  metric: InstanceType<typeof models.Metric> & { logCount?: number } // 👈 add optional prop for TS
+): MetricLibraryDomain => {
   // we only call toJSON **once**
-  const {
-    MetricCategory: category,
-    MetricSettings,
-    logCount, // ⬅ already present
-    ...metricData
-  } = metric.toJSON() as any; // cast is fine at the edge
+  const { category, settings, logCount, ...metricData } =
+    metric.toJSON() as any;
 
   return {
     ...metricData,
@@ -144,8 +143,8 @@ const transformMetric = (
           color: category.color,
         }
       : undefined,
-    goalType: MetricSettings?.goalType ?? undefined,
-    logCount: logCount ?? 0, // default 0 for metrics without logs
+    goalType: settings?.goalType ?? null,
+    logCount: logCount ?? 0,
   };
 };
 
@@ -163,21 +162,21 @@ const fetchMetrics = async (userId: string, options: any) => {
 
   const includeOptions: any[] = [
     {
-      model: MetricSettings,
-      as: "MetricSettings",
+      model: models.MetricSettings,
+      as: "settings",
       attributes: ["goalType"],
     },
   ];
 
-  if (include === "category") {
-    includeOptions.unshift({
-      model: MetricCategory,
-      as: "MetricCategory",
-      attributes: ["id", "name", "icon", "color"],
-    });
-  }
+  // Always include MetricCategory if it exists for the metric
+  includeOptions.unshift({
+    model: models.MetricCategory,
+    as: "category",
+    attributes: ["id", "name", "icon", "color"],
+    required: false, // Use left join to include metrics without categories
+  });
 
-  return Metric.findAll({
+  return models.Metric.findAll({
     where: whereClause,
     attributes: {
       include: [
@@ -241,11 +240,11 @@ export const getUserMetricLibrariesService = async (
   );
 
   // Fetch total count for all metrics matching this user/filters
-  const total = await Metric.count({ where: whereClause });
+  const total = await models.Metric.count({ where: whereClause });
 
   const transformed: MetricLibraryDomain[] = metrics
     .map(transformMetric)
-    .filter(Boolean);
+    .filter((m): m is MetricLibraryDomain => m !== null);
 
   return { metricsDomain: transformed, total };
 };
@@ -277,15 +276,16 @@ export const getUserMetricDetailService = async (
 
   if (options.includes?.includes("category")) {
     includeArr.push({
-      model: MetricCategory,
-attributes: ["id", "name", "color", "icon", "createdAt", "updatedAt"],
-      as: "MetricCategory",
+      model: models.MetricCategory,
+      as: "category",
+      attributes: ["id", "name", "color", "icon", "createdAt", "updatedAt"],
     });
   }
 
   if (options.includes?.includes("settings")) {
     includeArr.push({
-      model: MetricSettings,
+      model: models.MetricSettings,
+      as: "settings",
       attributes: [
         "id",
         "goalType",
@@ -299,22 +299,21 @@ attributes: ["id", "name", "color", "icon", "createdAt", "updatedAt"],
         "createdAt",
         "updatedAt",
       ],
-      as: "MetricSettings",
     });
   }
 
   if (options.includes?.includes("logs")) {
     includeArr.push({
-      model: MetricLog,
+      model: models.MetricLog,
+      as: "logs",
       attributes: ["id", "logValue", "type", "loggedAt", "createdAt"],
       order: [["createdAt", "DESC"]],
-      as: "MetricLogs",
       limit: options.logsLimit || 20, // Default to 20 logs if not specified
     });
   }
 
   // Fetch the metric
-  const metric = await Metric.findOne({
+  const metric = await models.Metric.findOne({
     where,
     include: includeArr,
   });
@@ -333,25 +332,25 @@ attributes: ["id", "name", "color", "icon", "createdAt", "updatedAt"],
 
 // Developer Note: This function is WAS deprecated due to API endpoint changes (from flat to query params structure), but will be reimplemented for metric details retrieval.
 // Proposal for future development: getPublicMetricId -> Public metrics retrieval that could be used for public templates or shared metrics.
-/**
- * @deprecated This function is deprecated due to API endpoint changes from flat to query params structure.
- * Fetch specific metric owned by requesting/authenticated user
- *
- * @param userId - ID of the user requesting the data
- * @param metricId - ID of the metric to fetch
- * @returns Metric detail object or null if not found
- */
-export const getUserMetricByIdService = async (
-  userId: string,
-  metricId: string
-): Promise<MetricDomain> => {
-  // Ensure the metric exists, check visibility, and  enforce ownership
-  const metric = await findOwnedMetric(userId, metricId);
+// /**
+//  * @deprecated This function is deprecated due to API endpoint changes from flat to query params structure.
+//  * Fetch specific metric owned by requesting/authenticated user
+//  *
+//  * @param userId - ID of the user requesting the data
+//  * @param metricId - ID of the metric to fetch
+//  * @returns Metric detail object or null if not found
+//  */
+// export const getUserMetricByIdService = async (
+//   userId: string,
+//   metricId: string
+// ): Promise<MetricDomain> => {
+//   // Ensure the metric exists, check visibility, and  enforce ownership
+//   const metric = await findOwnedMetric(userId, metricId);
 
-  logger.debug("Metric object before mapping:", metric);
+//   logger.debug("Metric object before mapping:", metric);
 
-  return toDomainMetric(metric);
-};
+//   return toDomainMetric(metric);
+// };
 
 // * NEW Service func
 // Currently not being used
@@ -380,7 +379,7 @@ export const updateMetricService = async (
   userId: string,
   data: UpdateMetricRequestDTO
 ): Promise<MetricDomain> => {
-  // Ensure the metric exists, check visibility, and  enforce ownership.
+  // Checks: Existance, visibility, and ownership
   const metric = await findOwnedMetric(userId, metricId);
 
   // Update the metric
@@ -391,12 +390,8 @@ export const updateMetricService = async (
 
   // Invalidate Redis cache
   try {
-    if (redisClient.isOpen) {
-      await invalidateCache(`metric:${metric.userId}:${metric.id}`);
-      await invalidateCache(`metrics:${metric.userId}`);
-      logger.info(
-        `♻️ Cache invalidated for metric:${metric.userId}:${metric.id} and metrics:${metric.userId}`
-      );
+    if (redisClient.isOpen && metric.id) {
+      invalidateAllMetricCache(userId, metric.id);
     }
   } catch (error: any) {
     logger.error(`Error invalidating cache: ${error.message}`, error);
@@ -419,21 +414,16 @@ export const deleteMetricService = async (
   // Ensure the metric exists, check visibility, and  enforce ownership.
   const metric = await findOwnedMetric(userId, metricId);
 
-  await metric.destroy();
-  logger.info(`Metric deleted successfully from database`);
-
   // Invalidate Redis cache
   try {
-    if (redisClient.isOpen) {
-      await invalidateCache(`metric:${metric.userId}:${metric.id}`);
-      await invalidateCache(`metrics:${metric.userId}`);
-      logger.info(
-        `♻️ Cache invalidated for metric:${metric.userId}:${metric.id} and metrics:${metric.userId}`
-      );
+    if (redisClient.isOpen && metric.id) {
+      invalidateAllMetricCache(userId, metric.id);
     }
   } catch (error: any) {
     logger.error(`Error invalidating cache: ${error.message}`, error);
   }
+
+  await metric.destroy();
 
   return toDomainMetric(metric);
 };
@@ -455,29 +445,54 @@ export const generateDummyMetricsService = async (
 ): Promise<MetricDomain[]> => {
   const dummyMetrics: MetricDomain[] = [];
   for (let i = 0; i < count; i++) {
-    const name = `Dummy Metric ${Date.now()}-${i}`;
-    const description = `This is a dummy metric generated for testing pagination.`;
-    const defaultUnit = ["kg", "steps", "ml", "units"][
-      Math.floor(Math.random() * 4)
-    ];
-    const isPublic = Math.random() > 0.5;
-
-    const metric = await Metric.create({
+    const metric = await models.Metric.create({
       userId,
-      name,
-      description,
-      defaultUnit,
-      isPublic,
+      name: `Dummy Metric ${Date.now()}-${i}`,
+      description: `This is a dummy metric generated for testing pagination.`,
+      defaultUnit: ["kg", "steps", "ml", "units"][
+        Math.floor(Math.random() * 4)
+      ],
+      isPublic: Math.random() > 0.5,
     });
     dummyMetrics.push(toDomainMetric(metric));
   }
 
   if (redisClient.isOpen) {
-    await invalidateCache(`metrics:${userId}`);
+    await invalidateCacheByPattern(`metrics:${userId}:*`);
     logger.info(
-      `♻️ Cache invalidated for metrics:${userId} after dummy generation`
+      `♻️ Cache invalidated for metrics:${userId}:* after dummy generation`
     );
   }
 
   return dummyMetrics;
 };
+
+/**
+ * Invalidates all cache keys related to a user's metrics,
+ * including paginated, filtered, and stats keys.
+ * @param userId - The user ID.
+ * @param metricId -(optional) The Metric ID for per-metric cache keys. The metric ID.
+ */
+export async function invalidateAllMetricCache(
+  userId: string,
+  metricId?: string
+) {
+  try {
+    // lists, with any query combo
+    await invalidateCacheByPattern(`metrics:${userId}:*`);
+
+    // details, any include/logsLimit combo
+    if (metricId) {
+      await invalidateCacheByPattern(`metric:${userId}:${metricId}:*`);
+    }
+
+    // optional: if you cache trends or aggregates
+    // await invalidateCacheByPattern(`trends:${userId}:${metricId}:*`);
+
+    logger.info(
+      `♻️ [CACHE] cache invalidated user=${userId}, metric=${metricId ?? "-"}`
+    );
+  } catch (e: any) {
+    logger.error(`Cache invalidation failed: ${e?.message}`, e);
+  }
+}

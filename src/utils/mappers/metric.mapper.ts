@@ -3,7 +3,7 @@
 // Sequelize models
 import { Metric } from "@/models/metric.model";
 import { MetricLibraryDomain } from "@/types/domain/metric.domain";
-import { MetricCategory } from "@/models/metric-category.model";
+import { MetricCategory } from "@/features/metric-category/infrastructure/persistence/models/metric-category.sequelize";
 import { MetricSettings } from "@/models/metric-settings.model";
 import { MetricLog } from "@/models/metric-log.model";
 
@@ -23,12 +23,12 @@ import logger from "../logger"; // Import logger for error logging
 import AppError from "@/utils/AppError";
 
 // DTO Mappers (Domain -> DTO)
-import { toMetricCategoryResponseDTO } from "./metric-category.mapper";
+import { toResponseDTO } from "../../features/metric-category/infrastructure/mappers/MetricCategoryMapper";
 import { toMetricSettingsResponseDTO } from "./metric-settings.mapper";
 import { toMetricLogResponseDTO } from "./metric-log.mapper";
 
 // Domain Mappers (Model -> Domain)
-import { toDomainMetricCategory } from "./metric-category.mapper";
+import { toDomain } from "../../features/metric-category/infrastructure/mappers/MetricCategoryMapper";
 import { toDomainMetricSettings } from "./metric-settings.mapper";
 import { toDomainMetricLog } from "./metric-log.mapper";
 
@@ -80,7 +80,7 @@ export const toExtendedMetricDomain = (
 
   // Use the dedicated mapper for category
   const categoryDomain = metric.MetricCategory
-    ? toDomainMetricCategory(metric.MetricCategory)
+    ? toDomain(metric.MetricCategory)
     : null;
 
   // Use the dedicated mapper for settings
@@ -140,7 +140,7 @@ export const toUserMetricDetailResponseDTO = (
 
   // Map associated entities
   category: metric.category
-    ? toMetricCategoryResponseDTO(metric.category)
+    ? toResponseDTO(metric.category)
     : null,
   settings: metric.settings
     ? toMetricSettingsResponseDTO(metric.settings)

@@ -1,10 +1,11 @@
 // src/models/metric.model.ts
 
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
-import { MetricCategory } from "./metric-category.model.js";
+import { MetricAttributesBase } from "@/types/db/metric.types";
+import { DbModels } from "./types.js";
+import { MetricCategory } from "@/features/metric-category/infrastructure/persistence/models/metric-category.sequelize.js";
 import { MetricSettings } from "./metric-settings.model.js";
 import { MetricLog } from "./metric-log.model.js";
-import { MetricAttributesBase } from "@/types/db/metric.types";
 
 /**
  * * Metric Model
@@ -25,9 +26,9 @@ export interface MetricAttributes extends MetricAttributesBase {
   updatedAt?: Date;
 
   // Optional associated objects
-  MetricCategory?: MetricCategory;
-  MetricSettings?: MetricSettings;
-  MetricLogs?: MetricLog[];
+  // MetricCategory?: MetricCategory;
+  // MetricSettings?: MetricSettings;
+  // MetricLogs?: MetricLog[];
 }
 
 // Define optional fields for Sequelize
@@ -56,108 +57,119 @@ export class Metric
   declare createdAt?: Date;
   declare updatedAt?: Date;
 
-  // Optional associated objects
   declare MetricCategory?: MetricCategory;
   declare MetricSettings?: MetricSettings;
   declare MetricLogs?: MetricLog[];
-  /**
-   * * Associations
-   */
-  public static associate(models: any) {
+
+  // * Init
+  static initModel(sequelize: Sequelize) {
+    Metric.init(
+      {
+        id: {
+          type: DataTypes.UUID,
+          defaultValue: DataTypes.UUIDV4,
+          primaryKey: true,
+        },
+        userId: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          references: {
+            model: "users",
+            key: "id",
+          },
+        },
+        categoryId: {
+          type: DataTypes.UUID,
+          allowNull: true,
+          references: {
+            model: "metric_categories",
+            key: "id",
+          },
+        },
+        originalMetricId: {
+          type: DataTypes.UUID,
+          allowNull: true,
+          references: {
+            model: "metrics",
+            key: "id",
+          },
+        },
+        name: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        description: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        defaultUnit: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        isPublic: {
+          type: DataTypes.BOOLEAN,
+          allowNull: false,
+          defaultValue: true,
+        },
+        deletedAt: {
+          type: DataTypes.DATE,
+          allowNull: true,
+        },
+      },
+      {
+        sequelize,
+        modelName: "Metric",
+        tableName: "metrics",
+        paranoid: true,
+        underscored: true,
+        schema: "public",
+      }
+    );
+
+    return Metric;
+  }
+
+  // * Associations
+  static associate(models: DbModels) {
     Metric.belongsTo(models.User, {
-      foreignKey: "userId",
-      as: "User",
-      onDelete: "SET NULL",
-    });
-    Metric.belongsTo(models.MetricCategory, {
-      as: "MetricCategory",
-      foreignKey: "categoryId",
-      onDelete: "SET NULL",
-    });
-    Metric.belongsTo(models.Metric, {
-      as: "OriginalMetric",
-      foreignKey: "originalMetricId",
-      onDelete: "SET NULL",
-    });
-    Metric.hasOne(models.MetricSettings, {
-      as: "MetricSettings",
-      foreignKey: "metricId",
+      as: "user",
+      foreignKey: { name: "userId", field: "user_id", allowNull: false },
       onDelete: "CASCADE",
     });
+
+    Metric.belongsTo(models.MetricCategory, {
+      as: "category",
+      foreignKey: { name: "categoryId", field: "category_id", allowNull: true },
+      onDelete: "SET NULL",
+    });
+
+    Metric.belongsTo(models.Metric, {
+      as: "originalMetric",
+      foreignKey: {
+        name: "originalMetricId",
+        field: "original_metric_id",
+        allowNull: true,
+      },
+      onDelete: "SET NULL",
+    });
+
+    Metric.hasOne(models.MetricSettings, {
+      as: "settings",
+      foreignKey: { name: "metricId", field: "metric_id", allowNull: false },
+      onDelete: "CASCADE",
+    });
+
     Metric.hasMany(models.MetricLog, {
-      as: "MetricLogs",
-      foreignKey: "metricId",
+      as: "logs",
+      foreignKey: { name: "metricId", field: "metric_id", allowNull: false },
       onDelete: "CASCADE",
     });
   }
 }
 
-/**
- * * Initialize Metric Model
- */
-export default (sequelize: Sequelize) => {
-  Metric.init(
-    {
-      id: {
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
-        primaryKey: true,
-      },
-      userId: {
-        type: DataTypes.UUID,
-        allowNull: false,
-        references: {
-          model: "users",
-          key: "id",
-        },
-      },
-      categoryId: {
-        type: DataTypes.UUID,
-        allowNull: true,
-        references: {
-          model: "metric_categories",
-          key: "id",
-        },
-      },
-      originalMetricId: {
-        type: DataTypes.UUID,
-        allowNull: true,
-        references: {
-          model: "metrics",
-          key: "id",
-        },
-      },
-      name: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      description: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      defaultUnit: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      isPublic: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: true,
-      },
-      deletedAt: {
-        type: DataTypes.DATE,
-        allowNull: true,
-      },
-    },
-    {
-      sequelize,
-      modelName: "Metric",
-      tableName: "metrics",
-      paranoid: true,
-      underscored: true,
-      schema: "public",
-    }
-  );
-
-  return Metric;
-};
+export function initMetric(sequelize: Sequelize) {
+  return Metric.initModel(sequelize);
+}
+export function associateMetric(models: DbModels) {
+  Metric.associate(models);
+}

@@ -10,7 +10,7 @@ import {
 } from "@/types/api/zod-metric.schema";
 
 // Internal DTOs for associations
-import { MetricCategoryResponseDTO } from "./metric-category.dto";
+import { MetricCategoryResponseDTO } from "../../features/metric-category/infrastructure/http/dto";
 import { MetricSettingsResponseDTO } from "./metric-settings.dto";
 import { MetricLogResponseDTO } from "./metric-log.dto";
 

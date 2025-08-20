@@ -95,6 +95,8 @@ export const getUserMetricLibraries = catchAsync(
       toMetricLibraryResponseDTO(metric)
     );
 
+    logger.info(`=== [METRIC CONTROLLER - Library Fetch]`, metricsResponseDTO);
+
     successResponse(res, 200, { metrics: metricsResponseDTO, total: total });
   }
 );
@@ -110,16 +112,20 @@ export const getUserDetailMetricById = catchAsync(
     const userId = req.user.id;
     const { id } = req.params;
 
-    // Parse and whitelist includes
-    const includeRaw = (req.query.include as String) || "";
-    const allowedIncludes = ["settings", "category", "logs"];
-    const includes = includeRaw
-      .split(",")
-      .map((inc) => inc.trim())
-      .filter((inc) => allowedIncludes.includes(inc));
+    const includeRaw = String(req.query.include ?? "flat");
+    const allowed = new Set(["settings", "category", "logs"]);
 
-    // Metric Log pagination: Parsing limit/page
-    const logsLimit = req.query.logsLimit ? Number(req.query.logsLimit) : 20;
+    let includes: Array<"settings" | "category" | "logs"> = [];
+    if (includeRaw === "full") {
+      includes = ["settings", "category", "logs"];
+    } else if (includeRaw !== "flat") {
+      includes = includeRaw
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s): s is "settings" | "category" | "logs" => allowed.has(s));
+    }
+
+    const logsLimit = Number(req.query.logsLimit ?? 20);
 
     // Service
     const metric = await MetricService.getUserMetricDetailService(userId, id, {
@@ -154,29 +160,29 @@ export const getUserDetailMetricById = catchAsync(
 
 // Developer Note: This function is WAS deprecated due to API endpoint changes (from flat to query params structure), but will be reimplemented for metric details retrieval.
 // Proposal for future development: getPublicMetricId -> Public metrics retrieval that could be used for public templates or shared metrics.
-/**
- * @deprecated This function is deprecated due to API endpoint changes from flat to query params structure.
- * * Get specific Metric by Id
- * @route GET /api/metrics/:id
- */
-export const getMetricById = catchAsync(
-  async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
-    const userId = req.user.id;
-    const { id } = req.params;
+// /**
+//  * @deprecated This function is deprecated due to API endpoint changes from flat to query params structure.
+//  * * Get specific Metric by Id
+//  * @route GET /api/metrics/:id
+//  */
+// export const getMetricById = catchAsync(
+//   async (req: AuthRequest, res: Response, next: NextFunction) => {
+//     if (!req.user?.id) throw new AppError("User not authenticated", 401);
+//     const userId = req.user.id;
+//     const { id } = req.params;
 
-    const metric = await MetricService.getUserMetricByIdService(userId, id);
-    if (!metric) {
-      throw new AppError("Metric not found", 404);
-    }
-    successResponse(
-      res,
-      200,
-      toMetricResponseDTO(metric),
-      "Metric retrieved successfully"
-    );
-  }
-);
+//     const metric = await MetricService.getUserMetricByIdService(userId, id);
+//     if (!metric) {
+//       throw new AppError("Metric not found", 404);
+//     }
+//     successResponse(
+//       res,
+//       200,
+//       toMetricResponseDTO(metric),
+//       "Metric retrieved successfully"
+//     );
+//   }
+// );
 
 /**
  * * Update Metric

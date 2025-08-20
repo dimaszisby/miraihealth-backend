@@ -6,7 +6,7 @@
  * Domain models are often immutable.
  */
 
-import { MetricCategoryDomain } from "./metric-category.domain";
+import { MetricCategoryDomain } from "../../features/metric-category/legacies/MetricCategoryLegacy.domain";
 import { MetricLogDomain } from "./metric-log.domain";
 import { MetricSettingsDomain } from "./metric-settings.domain";
 
