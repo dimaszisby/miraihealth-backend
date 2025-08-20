@@ -1,6 +1,6 @@
 // src/utils/token-generator.ts
 
-import db from "../models/index.js";
+import db from "../infrastructure/db/sequelize.js";
 import { env } from "../config/zodEnv.js";
 import jwt from "jsonwebtoken";
 
