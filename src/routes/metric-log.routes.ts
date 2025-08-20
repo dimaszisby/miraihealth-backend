@@ -24,7 +24,7 @@ import {
   createMetricLogSchema,
   updateMetricLogSchema,
   getAllMetricLogsSchema,
-  getMetricLogSchema,
+  getMetricLogByIdSchema,
   deleteMetricLogSchema,
   getAggregatedStatsSchema,
   generateDummyMetricLogsSchema,
@@ -38,6 +38,25 @@ const router = Router();
  * Generates a cache key based on user ID and log ID
  */
 // Logs List
+// const buildLogsCacheKey = (req: AuthRequest) => {
+//   const { page = 1, limit = 10, startDate, endDate, sortBy, order } = req.query;
+
+//   const metricId = req.params.metricId || req.query.metricId; // Get metricId from params or query
+//   const userId = req.user?.id;
+
+//   return [
+//     "logs",
+//     userId,
+//     metricId || "all", // Use "all" if no metricId is found
+//     page,
+//     limit,
+//     startDate || "_",
+//     endDate || "_",
+//     sortBy || "_",
+//     order || "_",
+//   ].join(":");
+// };
+
 const buildLogsCacheKey = (req: AuthRequest) => {
   const {
     page = 1,
@@ -46,23 +65,23 @@ const buildLogsCacheKey = (req: AuthRequest) => {
     endDate,
     sortBy,
     order,
-  } = req.query;
-
-  const metricId = req.params.metricId || req.query.metricId; // Get metricId from params or query
+    metricId,
+  } = req.query as any;
   const userId = req.user?.id;
-
+  const resolvedMetricId = req.params.metricId || metricId || "all";
   return [
     "logs",
     userId,
-    metricId || "all", // Use "all" if no metricId is found
-    page,
-    limit,
+    resolvedMetricId,
+    Number(page),
+    Number(limit),
     startDate || "_",
     endDate || "_",
     sortBy || "_",
     order || "_",
   ].join(":");
 };
+
 // Singular Log
 const logCacheKey = (req: AuthRequest) =>
   `log:${req.user?.id}:${req.params.id}`;
@@ -124,7 +143,7 @@ router.get(
 router.get(
   "/metrics/:metricId/logs/:id",
   deprecateMetricLogRoute,
-  validate(getMetricLogSchema),
+  validate(getMetricLogByIdSchema),
   cacheMiddleware(logCacheKey, 300), // Cache a single log entry
   getLogById
 );
@@ -191,7 +210,7 @@ router.get(
 // GET Specific Log by Id
 router.get(
   "/:id",
-  validate(getMetricLogSchema),
+  validate(getMetricLogByIdSchema),
   cacheMiddleware(logCacheKey, 300), // Cache a single log entry
   getLogById
 );

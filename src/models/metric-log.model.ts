@@ -1,8 +1,16 @@
 // src/models/metric-log.model.ts
 
-import { Model, DataTypes, Sequelize, Optional } from "sequelize";
-import { Metric } from "./metric.model.js";
+import {
+  Model,
+  DataTypes,
+  Sequelize,
+  Optional,
+  NonAttribute,
+  BelongsToGetAssociationMixin,
+} from "sequelize";
 import { MetricLogAttributesBase } from "@/types/db/metric-log.types";
+import { DbModels } from "./types.js";
+import { Metric } from "./metric.model.js";
 
 /**
  * * MetricLog Model
@@ -20,7 +28,7 @@ export interface MetricLogAttributes extends MetricLogAttributesBase {
   updatedAt?: Date;
 
   // Optional associated objects
-  Metric?: Metric;
+  // Metric?: Metric;
 }
 
 // Define optional fields for Sequelize
@@ -39,70 +47,75 @@ export class MetricLog
   declare createdAt?: Date;
   declare updatedAt?: Date;
 
-  // Optional associated objects
-  declare Metric?: Metric;
+  // associated objects
+  declare metric?: NonAttribute<Metric>;
+  declare getMetric: BelongsToGetAssociationMixin<Metric>;
 
-  /**
-   * * Associations
-   */
-  public static associate(models: any) {
+  // * Init
+  static initModel(sequelize: Sequelize) {
+    MetricLog.init(
+      {
+        id: {
+          type: DataTypes.UUID,
+          defaultValue: DataTypes.UUIDV4,
+          primaryKey: true,
+        },
+        metricId: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          references: {
+            model: "metrics",
+            key: "id",
+          },
+        },
+        type: {
+          type: DataTypes.ENUM("manual", "automatic"),
+          allowNull: false,
+          defaultValue: "manual",
+        },
+        logValue: {
+          type: DataTypes.FLOAT,
+          allowNull: false,
+          validate: {
+            isPositive(value: number) {
+              if (value <= 0) {
+                throw new Error("Log value must be greater than 0.");
+              }
+            },
+          },
+        },
+        loggedAt: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("NOW()"),
+        },
+      },
+      {
+        sequelize,
+        modelName: "MetricLog",
+        tableName: "metric_logs",
+        underscored: true,
+        schema: "public",
+      }
+    );
+
+    return MetricLog;
+  }
+
+  // * Associations
+  static associate(models: DbModels) {
     MetricLog.belongsTo(models.Metric, {
-      as: "Metric",
-      foreignKey: "metricId",
-      onDelete: "SET NULL",
+      as: "metric",
+      foreignKey: { name: "metricId", field: "metric_id", allowNull: false },
+      onDelete: "CASCADE",
     });
   }
 }
 
-/**
- * * Initialize MetricLog Model
- */
-export default (sequelize: Sequelize) => {
-  MetricLog.init(
-    {
-      id: {
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
-        primaryKey: true,
-      },
-      metricId: {
-        type: DataTypes.UUID,
-        allowNull: false,
-        references: {
-          model: "metrics",
-          key: "id",
-        },
-      },
-      type: {
-        type: DataTypes.ENUM("manual", "automatic"),
-        allowNull: false,
-        defaultValue: "manual",
-      },
-      logValue: {
-        type: DataTypes.FLOAT,
-        allowNull: false,
-        validate: {
-          isPositive(value: number) {
-            if (value <= 0) {
-              throw new Error("Log value must be greater than 0.");
-            }
-          },
-        },
-      },
-      loggedAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("NOW()"),
-      },
-    },
-    {
-      sequelize,
-      modelName: "MetricLog",
-      tableName: "metric_logs",
-      underscored: true,
-      schema: "public",
-    },
-  );
+export function initMetriclog(sequelize: Sequelize) {
+  return MetricLog.initModel(sequelize);
+}
 
-  return MetricLog;
-};
+export function associatedMetricLog(models: DbModels) {
+  MetricLog.associate(models);
+}

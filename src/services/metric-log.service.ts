@@ -13,7 +13,6 @@ const createDateRangeFilter = (startDate?: Date, endDate?: Date) => {
   return dateRangeFilter;
 };
 
-import db from "@/models/index";
 import { Op, Order } from "sequelize";
 import {
   CreateMetricLogRequestDTO,
@@ -33,7 +32,7 @@ import {
   toDomainMetricLogs,
 } from "@/utils/mappers/metric-log.mapper";
 
-const { MetricLog } = db;
+import { models } from "@/models"; // ✅ unified source of truth
 
 /**
  * * Metric Log Service
@@ -82,7 +81,7 @@ export const createLog = async ({
   };
 
   // Prevent duplicate logs for the exact same timestamp for a given metric
-  const existing = await MetricLog.findOne({
+  const existing = await models.MetricLog.findOne({
     where: { metricId, loggedAt: finalLogData.loggedAt },
   });
   if (existing) {
@@ -92,7 +91,7 @@ export const createLog = async ({
     );
   }
 
-  const created = await MetricLog.create(finalLogData);
+  const created = await models.MetricLog.create(finalLogData);
 
   // Invalidate caches
   if (redisClient.isOpen) {
@@ -173,15 +172,15 @@ export const getAllLogsByMetricService = async ({
     // This requires joining with the Metric model to filter by userId
     queryOptions.include = [
       {
-        model: db.Metric,
-        as: "Metric",
+        model: models.Metric,
+        as: "metric",
         where: { userId },
         attributes: [], // Don't fetch metric attributes, just use for filtering
       },
     ];
   }
 
-  const { count, rows } = await MetricLog.findAndCountAll(queryOptions);
+  const { count, rows } = await models.MetricLog.findAndCountAll(queryOptions);
 
   return { logs: toDomainMetricLogs(rows), totalCount: count };
 };
@@ -229,7 +228,7 @@ export const updateLogService = async ({
   }
 
   if (updateData.loggedAt) {
-    const existingLog = await MetricLog.findOne({
+    const existingLog = await models.MetricLog.findOne({
       where: { metricId: log.metricId, loggedAt: updateData.loggedAt },
     });
     if (existingLog && existingLog.id !== logId)
@@ -246,8 +245,7 @@ export const updateLogService = async ({
   await updatedLog.reload({
     include: [
       {
-        model: db.Metric,
-        as: "Metric",
+        association: models.MetricLog.associations.metric,
         attributes: ["id", "userId"],
       },
     ],
@@ -281,24 +279,29 @@ export const deleteLogService = async ({
   logId,
 }: MetricLogBaseParams): Promise<MetricLogDomain> => {
   // Ensure Log Exists and is owned by the user. The db-helper function now handles metricId validation.
-  const log = await findOwnedMetricLog(userId, logId);
+  const log = await models.MetricLog.findOne({
+    where: { id: logId },
+    include: [
+      {
+        association: models.MetricLog.associations.metric, // <- safe
+        attributes: ["id", "userId"],
+        required: true,
+        where: { userId }, // ownership check
+      },
+    ],
+  });
   if (!log) {
     throw new AppError("Log not found", 404);
   }
 
-  // Reload to include Metric association (if not already present)
-  await log.reload({
-    include: [
-      {
-        model: db.Metric,
-        as: "Metric",
-        attributes: ["id", "userId"],
-      },
-    ],
-  });
+  // 2) Hold associated info for cache invalidation
+  const metricId = log.metric!.id;
+  const ownerId = log.metric!.userId;
+
+  // 3) Destroy without reloads afterwards
+  await log.destroy();
 
   // Fetch metricId safely BEFORE destroy
-  const metricId = log.metricId || (log.metric && log.metric.id);
 
   if (redisClient.isOpen && metricId) {
     await invalidateAllMetricLogsCache(userId, metricId, log.id);
@@ -308,8 +311,6 @@ export const deleteLogService = async ({
     );
     await invalidateCacheByPattern(`logs:${userId}:*`);
   }
-
-  await log.destroy();
 
   return toDomainMetricLog(log);
 };
@@ -334,20 +335,22 @@ export const getAggregatedStats = async (userId: string, metricId?: string) => {
     // This requires joining with the Metric model to filter by userId
     queryOptions.include = [
       {
-        model: db.Metric,
-        as: "Metric",
+        model: models.Metric,
+        as: "metric",
         where: { userId },
         attributes: [],
       },
     ];
   }
-  const logs = await MetricLog.findAll(queryOptions);
+  const logs = await models.MetricLog.findAll(queryOptions);
   if (logs.length === 0) {
     logger.warn("⚠️ No logs found, returning default stats.");
     return { average: 0, min: 0, max: 0 };
   }
 
-  const logValues = logs.map((log: typeof MetricLog) => log.logValue);
+  const logValues = logs.map(
+    (log: InstanceType<typeof models.MetricLog>) => log.logValue
+  );
 
   return {
     average:
@@ -387,7 +390,7 @@ export const generateDummyLogsService = async ({
       Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
     ); // Random date within the last 30 days
 
-    const createdLog = await MetricLog.create({
+    const createdLog = await models.MetricLog.create({
       metricId,
       logValue,
       loggedAt,
