@@ -1,13 +1,13 @@
 // src/services/metric-settings-service.ts
 
-import db from "@/models/index";
+import db from "@/infrastructure/db/sequelize";
 import AppError from "@/utils/AppError"; // Added missing import
 import {
   CreateMetricSettingsRequestDTO,
   UpdateMetricSettingsRequestDTO,
 } from "@/types/dtos/metric-settings.dto";
 import { MetricSettingsDomain } from "@/types/domain/metric-settings.domain";
-import { UpdateMetricCategoryRequestDTO } from "@/types/dtos/metric-category.dto";
+import { UpdateMetricCategoryRequestDTO } from "@/features/metric-category/infrastructure/http/dto";
 import { redisClient, invalidateCache } from "@/utils/redis-client";
 import {
   findOwnedMetricSettings,
@@ -19,7 +19,7 @@ import {
   toDomainMetricSettings,
 } from "@/utils/mappers/metric-settings.mapper";
 
-const { MetricSettings } = db;
+import { models } from "@/models"; // ✅ unified source of truth
 
 /**
  * * Metric Settings Service
@@ -64,14 +64,14 @@ export const createMetricSettingsService = async (
   };
 
   // Create metric settings record
-  let metricSettings = await MetricSettings.create(finalData);
+  let metricSettings = await models.MetricSettings.create(finalData);
 
   // Reload the record to include the associated Metric
   metricSettings = await metricSettings.reload({
     include: [
       {
-        model: db.Metric,
-        as: "Metric",
+        model: models.Metric,
+        as: "metric",
         attributes: ["id", "userId"],
       },
     ],
@@ -110,16 +110,16 @@ export const getAllMetricSettingsService = async (
     // This requires joining with the Metric model to filter by userId
     queryOptions.include = [
       {
-        model: db.Metric,
-        as: "Metric",
+        model: models.Metric,
+        as: "metric",
         where: { userId },
         attributes: [], // Don't fetch metric attributes, just use for filtering
       },
     ];
   }
 
-  const settings = await MetricSettings.findAll(queryOptions);
-  return settings.map((setting: typeof MetricSettings) =>
+  const settings = await models.MetricSettings.findAll(queryOptions);
+  return settings.map((setting: InstanceType<typeof models.MetricSettings>) =>
     toDomainMetricSettings(setting),
   );
 };
@@ -157,7 +157,7 @@ export const getMetricSettingsByIdService = async ({
 export const updateMetricSettingsService = async (
   userId: string,
   settingsId: string,
-  updateData: Partial<UpdateMetricCategoryRequestDTO>,
+  updateData: Partial<UpdateMetricSettingsRequestDTO>,
 ): Promise<MetricSettingsDomain> => {
   // Ensure the metric settings exists and owned by the requesting user
   const metricSettings = await findOwnedMetricSettings(
@@ -172,7 +172,7 @@ export const updateMetricSettingsService = async (
     include: [
       {
         model: db.Metric,
-        as: "Metric",
+        as: "metric",
         attributes: ["id", "userId"],
       },
     ],
@@ -257,7 +257,7 @@ export const updateGoalAchievementService = async ({
     include: [
       {
         model: db.Metric,
-        as: "Metric",
+        as: "metric",
         attributes: ["id", "userId"],
       },
     ],
@@ -309,7 +309,7 @@ export const updateDisplayOptionsService = async ({
     include: [
       {
         model: db.Metric,
-        as: "Metric",
+        as: "metric",
         attributes: ["id", "userId"],
       },
     ],

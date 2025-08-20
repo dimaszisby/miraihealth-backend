@@ -1,8 +1,16 @@
 // src/models/metric-settings.model.ts
 
-import { Model, DataTypes, Sequelize, Optional } from "sequelize";
-import { Metric } from "./metric.model.js";
+import {
+  Model,
+  DataTypes,
+  Sequelize,
+  Optional,
+  BelongsToGetAssociationMixin,
+  NonAttribute,
+} from "sequelize";
 import { MetricSettingsAttributesBase } from "@/types/db/metric-settings.types";
+import type { Metric } from "./metric.model";
+import { DbModels } from "./types.js";
 
 /**
  * * MetricSettings Model
@@ -25,7 +33,7 @@ export interface MetricSettingsAttributes extends MetricSettingsAttributesBase {
   updatedAt?: Date;
 
   // Optional associated objects
-  Metric?: Metric;
+  // Metric?: Metric;
 }
 
 // Define optional fields for Sequelize
@@ -57,17 +65,155 @@ export class MetricSettings
   declare createdAt?: Date;
   declare updatedAt?: Date;
 
-  // Optional associated objects
-  declare Metric?: Metric;
+  declare metric?: NonAttribute<Metric>;
+  declare getMetric: BelongsToGetAssociationMixin<Metric>;
 
-  /**
-   * * Associations
-   */
-  public static associate(models: any) {
+  // * Init
+  static initModel(sequelize: Sequelize) {
+    MetricSettings.init(
+      {
+        id: {
+          type: DataTypes.UUID,
+          defaultValue: DataTypes.UUIDV4,
+          primaryKey: true,
+        },
+        metricId: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          references: {
+            model: "metrics",
+            key: "id",
+          },
+        },
+        goalEnabled: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false,
+        },
+        goalType: {
+          type: DataTypes.ENUM("cumulative", "incremental"),
+          allowNull: true,
+        },
+        goalValue: {
+          type: DataTypes.FLOAT,
+          allowNull: true,
+          validate: {
+            isValidValue(value: number | null) {
+              if (value !== null && value <= 0) {
+                throw new Error("Goal value must be greater than 0.");
+              }
+            },
+          },
+        },
+        timeFrameEnabled: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false,
+        },
+        startDate: {
+          type: DataTypes.DATEONLY,
+          allowNull: true,
+        },
+        deadlineDate: {
+          type: DataTypes.DATEONLY,
+          allowNull: true,
+          validate: {
+            isAfterStart(this: { startDate: string | null }, value: unknown) {
+              if (this.startDate && value) {
+                const startDate = new Date(this.startDate);
+                const deadline = new Date(value as string);
+                if (deadline <= startDate) {
+                  throw new Error(
+                    "Deadline date must be after the start date."
+                  );
+                }
+              }
+            },
+          },
+        },
+        alertEnabled: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false,
+        },
+        alertThresholds: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          defaultValue: 80,
+          validate: {
+            isInRange(value: number) {
+              if (value !== null && (value < 0 || value > 100)) {
+                throw new Error("alertThresholds must be between 0 and 100.");
+              }
+            },
+          },
+        },
+        isAchieved: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false,
+        },
+        isActive: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: true,
+        },
+        displayOptions: {
+          type: DataTypes.JSONB,
+          defaultValue: {
+            showOnDashboard: true,
+            priority: 1,
+            chartType: "line",
+            color: "#E897A3",
+          },
+        },
+      },
+      {
+        sequelize,
+        modelName: "MetricSettings",
+        tableName: "metric_settings",
+        underscored: true,
+        timestamps: true,
+        hooks: {
+          beforeUpdate: async (metricSettings: MetricSettings) => {
+            const changed = metricSettings.changed();
+
+            if (
+              Array.isArray(changed) &&
+              changed.includes("goalEnabled") &&
+              !metricSettings.goalEnabled
+            ) {
+              metricSettings.goalType = null;
+              metricSettings.goalValue = null;
+              metricSettings.startDate = null;
+              metricSettings.deadlineDate = null;
+            }
+
+            if (
+              Array.isArray(changed) &&
+              changed?.includes("timeFrameEnabled") &&
+              !metricSettings.timeFrameEnabled
+            ) {
+              metricSettings.startDate = null;
+              metricSettings.deadlineDate = null;
+            }
+
+            if (
+              Array.isArray(changed) &&
+              changed?.includes("alertEnabled") &&
+              !metricSettings.alertEnabled
+            ) {
+              metricSettings.alertThresholds = null;
+            }
+          },
+        },
+      }
+    );
+
+    return MetricSettings;
+  }
+
+  // * Associations
+  static associate(models: DbModels) {
     MetricSettings.belongsTo(models.Metric, {
-      as: "Metric",
-      foreignKey: "metricId",
-      onDelete: "SET NULL",
+      as: "metric",
+      foreignKey: { name: "metricId", field: "metric_id", allowNull: false },
+      onDelete: "CASCADE",
     });
   }
 
@@ -91,142 +237,9 @@ export class MetricSettings
   }
 }
 
-/**
- * * Initialize MetricSettings Model
- */
-export default (sequelize: Sequelize) => {
-  MetricSettings.init(
-    {
-      id: {
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
-        primaryKey: true,
-      },
-      metricId: {
-        type: DataTypes.UUID,
-        allowNull: false,
-        references: {
-          model: "metrics",
-          key: "id",
-        },
-      },
-      goalEnabled: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
-      },
-      goalType: {
-        type: DataTypes.ENUM("cumulative", "incremental"),
-        allowNull: true,
-      },
-      goalValue: {
-        type: DataTypes.FLOAT,
-        allowNull: true,
-        validate: {
-          isValidValue(value: number | null) {
-            if (value !== null && value <= 0) {
-              throw new Error("Goal value must be greater than 0.");
-            }
-          },
-        },
-      },
-      timeFrameEnabled: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
-      },
-      startDate: {
-        type: DataTypes.DATEONLY,
-        allowNull: true,
-      },
-      deadlineDate: {
-        type: DataTypes.DATEONLY,
-        allowNull: true,
-        validate: {
-          isAfterStart(this: { startDate: string | null }, value: unknown) {
-            if (this.startDate && value) {
-              const startDate = new Date(this.startDate);
-              const deadline = new Date(value as string);
-              if (deadline <= startDate) {
-                throw new Error("Deadline date must be after the start date.");
-              }
-            }
-          },
-        },
-      },
-      alertEnabled: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
-      },
-      alertThresholds: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        defaultValue: 80,
-        validate: {
-          isInRange(value: number) {
-            if (value !== null && (value < 0 || value > 100)) {
-              throw new Error("alertThresholds must be between 0 and 100.");
-            }
-          },
-        },
-      },
-      isAchieved: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
-      },
-      isActive: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: true,
-      },
-      displayOptions: {
-        type: DataTypes.JSONB,
-        defaultValue: {
-          showOnDashboard: true,
-          priority: 1,
-          chartType: "line",
-          color: "#E897A3",
-        },
-      },
-    },
-    {
-      sequelize,
-      modelName: "MetricSettings",
-      tableName: "metric_settings",
-      underscored: true,
-      timestamps: true,
-      hooks: {
-        beforeUpdate: async (metricSettings: MetricSettings) => {
-          const changed = metricSettings.changed();
-
-          if (
-            Array.isArray(changed) &&
-            changed.includes("goalEnabled") &&
-            !metricSettings.goalEnabled
-          ) {
-            metricSettings.goalType = null;
-            metricSettings.goalValue = null;
-            metricSettings.startDate = null;
-            metricSettings.deadlineDate = null;
-          }
-
-          if (
-            Array.isArray(changed) &&
-            changed?.includes("timeFrameEnabled") &&
-            !metricSettings.timeFrameEnabled
-          ) {
-            metricSettings.startDate = null;
-            metricSettings.deadlineDate = null;
-          }
-
-          if (
-            Array.isArray(changed) &&
-            changed?.includes("alertEnabled") &&
-            !metricSettings.alertEnabled
-          ) {
-            metricSettings.alertThresholds = null;
-          }
-        },
-      },
-    },
-  );
-
-  return MetricSettings;
-};
+export function initMetricSettings(sequelize: Sequelize) {
+  return MetricSettings.initModel(sequelize);
+}
+export function associateMetricSettings(models: DbModels) {
+  MetricSettings.associate(models);
+}
