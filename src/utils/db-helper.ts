@@ -1,9 +1,13 @@
 // src/utils/db-validators.ts
+// Not yet migrated to DDD
 
-import db from "@/models/index";
 import AppError from "./AppError.js";
+import { models } from "@/models";
 
-const { Metric, MetricCategory, MetricSettings } = db;
+import type { Metric } from "@/models/metric.model";
+import type { MetricCategory } from "@/features/metric-category/infrastructure/persistence/models/metric-category.sequelize";
+import type { MetricSettings } from "@/models/metric-settings.model";
+import type { MetricLog } from "@/models/metric-log.model";
 
 /**
  * * Utility function to validate if a metric exists and owned by the requesting user
@@ -13,10 +17,10 @@ const { Metric, MetricCategory, MetricSettings } = db;
  */
 export const validateMetricAccess = async (
   userId: string | null,
-  metricId: string,
-) => {
+  metricId: string
+): Promise<Metric> => {
   // 1. Fetch the metric regardless of the userId.
-  const metric = await Metric.findOne({
+  const metric = await models.Metric.findOne({
     where: { id: metricId },
     attributes: ["id", "userId", "isPublic"],
   });
@@ -38,10 +42,10 @@ export const validateMetricAccess = async (
  */
 export const validateMetricCategoryAccess = async (
   userId: string,
-  categoryId: string,
-) => {
+  categoryId: string
+): Promise<MetricCategory> => {
   // 1. Fetch the metric category regardless of the userId.
-  const metricCategory = await MetricCategory.findOne({
+  const metricCategory = await models.MetricCategory.findOne({
     where: { id: categoryId },
     attributes: ["id", "userId"],
   });
@@ -60,7 +64,6 @@ export const validateMetricCategoryAccess = async (
  * Includes: Metric, Category, Settings, and Log
  */
 
-// TODO: Create Helper function to find a metric by ID
 /**
  * * Metric
  * Helper function to find a metric owned by the user
@@ -70,11 +73,12 @@ export const validateMetricCategoryAccess = async (
  */
 export const findOwnedMetric = async (
   userId: string,
-  metricId: string,
-): Promise<typeof Metric | null> => {
+  metricId: string
+): Promise<Metric> => {
+  // Overhaul: Stuck Here
   await validateMetricAccess(userId, metricId);
 
-  const metric = await Metric.findOne({
+  const metric = await models.Metric.findOne({
     where: { id: metricId, userId },
   });
   if (!metric) throw new AppError("Metric not found", 404);
@@ -91,11 +95,11 @@ export const findOwnedMetric = async (
  */
 export const findOwnedCategory = async (
   userId: string,
-  categoryId: string,
-): Promise<typeof MetricCategory | null> => {
+  categoryId: string
+): Promise<MetricCategory> => {
   await validateMetricCategoryAccess(userId, categoryId);
 
-  const category = await MetricCategory.findOne({
+  const category = await models.MetricCategory.findOne({
     where: { id: categoryId, userId },
   });
   if (!category) throw new AppError("Category not found", 404);
@@ -113,15 +117,25 @@ export const findOwnedCategory = async (
  */
 export const findOwnedMetricSettings = async (
   userId: string,
-  metricId: string,
-  settingsId: string,
-): Promise<typeof MetricSettings | null> => {
-  await validateMetricAccess(userId, metricId);
-
-  const settings = await MetricSettings.findOne({
-    where: { id: settingsId, metricId },
+  settingsId: string
+): Promise<MetricSettings> => {
+  const settings = await models.MetricSettings.findOne({
+    where: { id: settingsId },
+    include: [
+      {
+        model: models.Metric,
+        as: "metric",
+        attributes: ["id", "userId", "isPublic"],
+      },
+    ],
   });
   if (!settings) throw new AppError("Metric Settings not found", 404);
+
+  // Ensure the user has access to the associated metric
+  const metric = settings.metric;
+  if (metric && metric.userId !== userId && !metric.isPublic) {
+    throw new AppError("Unauthorized access to metric settings", 403);
+  }
 
   return settings;
 };
@@ -136,13 +150,24 @@ export const findOwnedMetricSettings = async (
  */
 export const findOwnedMetricLog = async (
   userId: string,
-  metricId: string,
-  logId: string,
-): Promise<typeof db.MetricLog | null> => {
-  await validateMetricAccess(userId, metricId);
-  const log = await db.MetricLog.findOne({
-    where: { id: logId, metricId },
+  logId: string
+): Promise<MetricLog> => {
+  const log = await models.MetricLog.findOne({
+    where: { id: logId },
+    include: [
+      {
+        model: models.Metric,
+        as: "metric",
+        attributes: ["id", "userId", "isPublic"],
+      },
+    ],
   });
   if (!log) throw new AppError("Metric Log not found", 404);
+
+  // Ensure the user has access to the associated metric
+  const metric = log.metric;
+  if (metric && metric.userId !== userId && !metric.isPublic) {
+    throw new AppError("Unauthorized access to metric log", 403);
+  }
   return log;
 };
