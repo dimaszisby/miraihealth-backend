@@ -1,35 +1,19 @@
-// src/controllers/metric.controller.ts
-
-import { Request, Response, NextFunction } from "express";
-
-// Internal Types
-import { AuthRequest } from "@/types/request.context";
-
-// Services
+import { Response, NextFunction } from "express";
 import * as MetricService from "@/services/metric.service";
-
-// Utils
-import AppError from "@/utils/AppError";
-import { successResponse } from "@/utils/response-formatter";
-import catchAsync from "@/utils/catch-async";
+import { MetricDomain } from "@/types/domain/metric.domain";
+import { GenerateDummyMetricsRequestDTO } from "@/types/dtos/metric.dto";
+import { listCategoriesQueryViaCursor } from "@/types/api/zod-metric.schema";
+import { listMetricsViaCursor } from "@/features/metric/application/queries/ListMetrics";
+import { AuthRequest } from "@/types/request.context";
+import logger from "@/utils/logger";
 import {
   toMetricLibraryResponseDTO,
   toMetricResponseDTO,
   toUserMetricDetailResponseDTO,
 } from "@/utils/mappers/metric.mapper";
-import {
-  MetricDomain,
-  MetricLibraryDomain,
-} from "@/types/domain/metric.domain";
-import { GenerateDummyMetricsRequestDTO } from "@/types/dtos/metric.dto";
-import logger from "@/utils/logger";
-import { listCategoriesQueryViaCursor } from "@/types/api/zod-metric.schema";
-import { listMetricsViaCursor } from "@/features/metric/application/queries/ListMetrics";
-
-/**
- * * Metric Controller
- * Handles CRUD operations for user metrics.
- */
+import AppError from "@/utils/AppError";
+import { successResponse } from "@/utils/response-formatter";
+import catchAsync from "@/utils/catch-async";
 
 /**
  * * Create a new Metric
@@ -59,17 +43,15 @@ export const createMetric = catchAsync(
         isPublic,
       }
     );
-    successResponse(
-      res,
-      201,
-      { metric: toMetricResponseDTO(metricDomain) },
-      "Metric created successfully."
-    );
+    const dto = toMetricResponseDTO(metricDomain);
+
+    successResponse(res, 201, dto, "Metric created successfully");
   }
 );
 
 /**
  * * Get All Metrics owned by User
+ * @deprecated replaced with cursor fetch method
  * @route GET /api/metrics
  */
 export const getUserMetricLibraries = catchAsync(
@@ -97,11 +79,19 @@ export const getUserMetricLibraries = catchAsync(
       toMetricLibraryResponseDTO(metric)
     );
 
-    logger.info(`=== [METRIC CONTROLLER - Library Fetch]`, metricsResponseDTO);
+    const dto = {
+      metrics: metricsResponseDTO,
+      total: total,
+    };
 
-    successResponse(res, 200, { metrics: metricsResponseDTO, total: total });
+    successResponse(res, 200, dto, "Metrics fetched successfully");
   }
 );
+
+/**
+ * * Get All Metrics owned by User via Cursor
+ * @route GET /api/metrics
+ */
 
 export const getUserMetricLibrariesViaCursor = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -135,7 +125,7 @@ export const getUserMetricLibrariesViaCursor = catchAsync(
       ...(includeTotal ? { totalCount: page.totalCount ?? 0 } : {}),
     };
 
-    successResponse(res, 200, dto);
+    successResponse(res, 200, dto, "Metrics cursor fetched successfully");
   }
 );
 
@@ -165,7 +155,6 @@ export const getUserDetailMetricById = catchAsync(
 
     const logsLimit = Number(req.query.logsLimit ?? 20);
 
-    // Service
     const metric = await MetricService.getUserMetricDetailService(userId, id, {
       includes,
       logsLimit,
@@ -174,16 +163,7 @@ export const getUserDetailMetricById = catchAsync(
       throw new AppError("Metric not found", 404);
     }
 
-    logger.debug(
-      "Fetched metric before DTO mapping:",
-      JSON.stringify(metric, null, 2)
-    );
-
-    logger.info(
-      "Fetched metric before DTO mapping:",
-      JSON.stringify(metric, null, 2)
-    );
-    // Defensive: wrap mapping in try/catch for diagnostics
+    // Defensive: wrap mapping
     let dto;
     try {
       dto = toUserMetricDetailResponseDTO(metric);
@@ -192,7 +172,12 @@ export const getUserDetailMetricById = catchAsync(
       throw new AppError("Internal Server Error: mapping failed", 500);
     }
 
-    successResponse(res, 200, dto, "Metric retrieved successfully");
+    successResponse(
+      res,
+      200,
+      dto,
+      "Metric extended detail retrieved successfully"
+    );
   }
 );
 
@@ -234,12 +219,9 @@ export const updateMetric = catchAsync(
 
     const updatedMetricDomain: MetricDomain =
       await MetricService.updateMetricService(id, userId, req.body);
-    successResponse(
-      res,
-      200,
-      { metric: toMetricResponseDTO(updatedMetricDomain) },
-      "Metric updated successfully"
-    );
+    const dto = toMetricResponseDTO(updatedMetricDomain);
+
+    successResponse(res, 200, dto, "Metric updated successfully");
   }
 );
 
@@ -257,12 +239,9 @@ export const deleteMetric = catchAsync(
       userId,
       id
     );
-    successResponse(
-      res,
-      200,
-      { metric: toMetricResponseDTO(metricDomain) },
-      "Metric deleted successfully"
-    );
+    const dto = toMetricResponseDTO(metricDomain);
+
+    successResponse(res, 200, dto, "Metric deleted successfully");
   }
 );
 
