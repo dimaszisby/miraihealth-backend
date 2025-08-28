@@ -1,5 +1,3 @@
-//src/controllers/metric-log.controller.ts
-
 import { Request, Response, NextFunction } from "express";
 import AppError from "../utils/AppError.js";
 import { successResponse } from "../utils/response-formatter.js";
@@ -11,11 +9,6 @@ import {
   toMetricLogResponseDTO,
 } from "@/utils/mappers/metric-log.mapper";
 import { GenerateDummyMetricLogsRequestDTO } from "@/types/dtos/metric-log.dto";
-
-/**
- * * Metric Log Controller
- * Handles CRUD operations for metric logs.
- */
 
 /**
  * * Create a Log for a Metric
@@ -37,12 +30,9 @@ export const createMetricLog = catchAsync(
         loggedAt,
       },
     });
-    successResponse(
-      res,
-      201,
-      { log: toMetricLogResponseDTO(logDomain) },
-      "Metric Log created successfully"
-    );
+    const dto = toMetricLogResponseDTO(logDomain);
+
+    successResponse(res, 201, dto, "Metric Log created successfully");
   }
 );
 
@@ -71,12 +61,9 @@ export const getAllLogsByMetric = catchAsync(
           limit: limit ? parseInt(limit as string) : undefined,
         },
       });
-    successResponse(
-      res,
-      200,
-      { logs: toMetricLogListResponseDTO(logs), total: totalCount },
-      "Metric logs retrieved successfully"
-    );
+    const dto = { logs: toMetricLogListResponseDTO(logs), total: totalCount };
+
+    successResponse(res, 200, dto, "Metric logs retrieved successfully");
   }
 );
 
@@ -102,7 +89,9 @@ export const getLogById = catchAsync(
     if (logDomain.metricId !== metricId) {
       throw new AppError("Log not found for the specified metric", 404);
     }
-    successResponse(res, 200, { log: toMetricLogResponseDTO(logDomain) });
+    const dto = toMetricLogResponseDTO(logDomain);
+
+    successResponse(res, 200, dto);
   }
 );
 
@@ -127,13 +116,9 @@ export const updateLog = catchAsync(
         loggedAt,
       },
     });
+    const dto = toMetricLogResponseDTO(logDomain);
 
-    successResponse(
-      res,
-      200,
-      { log: toMetricLogResponseDTO(logDomain) },
-      "Log updated successfully"
-    );
+    successResponse(res, 200, dto, "Log updated successfully");
   }
 );
 
@@ -151,13 +136,9 @@ export const deleteLog = catchAsync(
       userId: userId,
       logId: id,
     });
+    const dto = toMetricLogResponseDTO(logDomain);
 
-    successResponse(
-      res,
-      200,
-      { log: toMetricLogResponseDTO(logDomain) },
-      "Log deleted successfully"
-    );
+    successResponse(res, 200, dto, "Log deleted successfully");
   }
 );
 
@@ -204,11 +185,12 @@ export const generateDummyMetricLogs = catchAsync(
       metricId,
       count,
     });
+    const dto = toMetricLogListResponseDTO(dummyLogs);
 
     successResponse(
       res,
       201,
-      { logs: toMetricLogListResponseDTO(dummyLogs) },
+      dto,
       `${count} dummy metric logs generated successfully`
     );
   }

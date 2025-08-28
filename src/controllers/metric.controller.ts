@@ -2,7 +2,7 @@ import { Response, NextFunction } from "express";
 import * as MetricService from "@/services/metric.service";
 import { MetricDomain } from "@/types/domain/metric.domain";
 import { GenerateDummyMetricsRequestDTO } from "@/types/dtos/metric.dto";
-import { listCategoriesQueryViaCursor } from "@/types/api/zod-metric.schema";
+import { listMetricQueryViaCursor } from "@/types/api/zod-metric.schema";
 import { listMetricsViaCursor } from "@/features/metric/application/queries/ListMetrics";
 import { AuthRequest } from "@/types/request.context";
 import logger from "@/utils/logger";
@@ -98,12 +98,8 @@ export const getUserMetricLibrariesViaCursor = catchAsync(
     if (!req.user?.id) throw new AppError("User not authenticated", 401);
     const userId = req.user.id;
 
-    const parsed = listCategoriesQueryViaCursor.parse(req.query);
-    const { limit, sort, q, after, includeTotal } = parsed;
-    const filter =
-      parsed["filter[name]"] && parsed["filter[name]"]!.trim().length > 0
-        ? { name: parsed["filter[name]"]!.trim() }
-        : undefined;
+    const parsed = listMetricQueryViaCursor.parse(req.query);
+    const { limit, sort, q, after, includeTotal, filter } = parsed;
 
     const page = await listMetricsViaCursor({
       userId,
