@@ -79,15 +79,9 @@ export const toDisplayOptionsResponseDTO = (
   color: displayOptions?.color ?? "#E897A3",
 });
 
-/**
- * Helpers
- */
+// * Helpers
 
-/**
- * Helper function to normalize display options
- * @param opts - The display options to normalize
- * @returns
- */
+// Helper function to normalize display options
 const normalizeDisplayOptions = (
   opts: any = {}
 ): MetricSettingsDomain["displayOptions"] => ({

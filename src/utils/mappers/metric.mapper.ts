@@ -1,35 +1,22 @@
-// src/utils/mappers/metric.mapper.ts
-
-// Sequelize models
 import { Metric } from "@/models/metric.model";
 import { MetricLibraryDomain } from "@/types/domain/metric.domain";
 import { MetricCategory } from "@/features/metric-category/infrastructure/persistence/models/metric-category.sequelize";
 import { MetricSettings } from "@/models/metric-settings.model";
 import { MetricLog } from "@/models/metric-log.model";
-
-// Domain types
 import {
   MetricDomain,
   MetricDomainExtended,
   MetricLibraryCategoryInfoDomain,
 } from "@/types/domain/metric.domain";
-
-// DTO types
 import {
   MetricPreviewResponseDTO,
   MetricResponseDTO,
   UserMetricDetailResponseDTO,
-} from "@/types/dtos/metric.dto"; // Added UserMetricDetailResponseDTO
-import logger from "../logger"; // Import logger for error logging
+} from "@/types/dtos/metric.dto";
+import logger from "../logger";
 import AppError from "@/utils/AppError";
-
-// DTO Mappers (Domain -> DTO)
-import { toResponseDTO } from "../../features/metric-category/infrastructure/mappers/MetricCategoryMapper";
 import { toMetricSettingsResponseDTO } from "./metric-settings.mapper";
 import { toMetricLogResponseDTO } from "./metric-log.mapper";
-
-// Domain Mappers (Model -> Domain)
-import { toDomain } from "../../features/metric-category/infrastructure/mappers/MetricCategoryMapper";
 import { toDomainMetricSettings } from "./metric-settings.mapper";
 import { toDomainMetricLog } from "./metric-log.mapper";
 import {
@@ -41,10 +28,8 @@ import {
  * * Mapper: Sequelize → Domain
  */
 export const toDomainMetric = (metric: Metric): MetricDomain => {
-  // userId is crucial and should exist on the Metric model instance
   if (!metric.userId) {
-    logger.error("Metric object missing userId:", { metricId: metric.id }); // Log error
-    // Throw an error as userId is required for the domain model
+    logger.error("Metric object missing userId:", { metricId: metric.id });
     throw new AppError(
       `Metric with id ${metric.id} is missing the required userId. This indicates a data integrity issue.`,
       500
@@ -60,7 +45,6 @@ export const toDomainMetric = (metric: Metric): MetricDomain => {
     defaultUnit: metric.defaultUnit,
     isPublic: metric.isPublic,
     deletedAt: metric.deletedAt ?? null,
-    // Assuming createdAt/updatedAt are guaranteed non-null by Sequelize model/query
     createdAt: metric.createdAt!,
     updatedAt: metric.updatedAt!,
   };
@@ -69,10 +53,8 @@ export const toDomainMetric = (metric: Metric): MetricDomain => {
 export const toDomainMetricLibrary = (
   metric: Metric & { logCount?: number }
 ): MetricLibraryDomain => {
-  // userId is crucial and should exist on the Metric model instance
   if (!metric.userId) {
-    logger.error("Metric object missing userId:", { metricId: metric.id }); // Log error
-    // Throw an error as userId is required for the domain model
+    logger.error("Metric object missing userId:", { metricId: metric.id });
     throw new AppError(
       `Metric with id ${metric.id} is missing the required userId. This indicates a data integrity issue.`,
       500
@@ -96,7 +78,6 @@ export const toDomainMetricLibrary = (
     createdAt: metric.createdAt!,
     updatedAt: metric.updatedAt!,
     logCount: Number(metric.logCount) ?? 0,
-    // Assuming createdAt/updatedAt are guaranteed non-null by Sequelize model/query
   };
 };
 
@@ -111,8 +92,6 @@ const toDomainCategoryInfo = (
   };
 };
 
-// Define a type for Metric with expected associations loaded via Sequelize includes
-// Adjust aliases ('MetricCategory', 'MetricSettings', 'MetricLogs') if they differ in your model definitions/queries
 type MetricWithAssociations = Metric & {
   MetricCategory?: MetricCategory | null;
   MetricSettings?: MetricSettings | null;
@@ -128,20 +107,18 @@ export const toExtendedMetricDomain = (
 ): MetricDomainExtended => {
   const domain = toDomainMetric(metric);
 
-  // Use the dedicated mapper for category
-  const categoryDomain = metric.MetricCategory
-    ? toDomainLegacy(metric.MetricCategory)
+  const rawCategory =
+    (metric as any).MetricCategory ?? (metric as any).category ?? null;
+  const categoryDomain = rawCategory ? toDomainLegacy(rawCategory) : null;
+
+  const rawSettings =
+    (metric as any).MetricSettings ?? (metric as any).settings ?? null;
+  const settingsDomain = rawSettings
+    ? toDomainMetricSettings(rawSettings)
     : null;
 
-  // Use the dedicated mapper for settings
-  const settingsDomain = metric.MetricSettings
-    ? toDomainMetricSettings(metric.MetricSettings)
-    : null;
-
-  // Use the dedicated mapper for logs
-  const logsDomain = metric.MetricLogs
-    ? metric.MetricLogs.map(toDomainMetricLog)
-    : null;
+  const rawLogs = (metric as any).MetricLogs ?? (metric as any).logs ?? null;
+  const logsDomain = rawLogs ? rawLogs.map(toDomainMetricLog) : null;
 
   return {
     ...domain,
@@ -167,16 +144,16 @@ export const toMetricResponseDTO = (
   isPublic: metric.isPublic,
   createdAt: metric.createdAt.toISOString(),
   updatedAt: metric.updatedAt.toISOString(),
-  // deletedAt is usually not included in success responses unless specifically needed
+  // deletedAt
 });
 
 /**
  * * Mapper: Domain (Extended) → DTO (for Detailed Metric API Response)
  */
 export const toUserMetricDetailResponseDTO = (
-  metric: MetricDomainExtended // Takes the extended domain object
+  metric: MetricDomainExtended
 ): UserMetricDetailResponseDTO => ({
-  // Map base metric fields
+  // Map base
   id: metric.id,
   userId: metric.userId,
   categoryId: metric.categoryId,
@@ -188,7 +165,7 @@ export const toUserMetricDetailResponseDTO = (
   createdAt: metric.createdAt.toISOString(),
   updatedAt: metric.updatedAt.toISOString(),
 
-  // Map associated entities
+  // Map associated
   category: metric.category ? toResponseDTOLegacy(metric.category) : null,
   settings: metric.settings
     ? toMetricSettingsResponseDTO(metric.settings)
@@ -199,9 +176,6 @@ export const toUserMetricDetailResponseDTO = (
 /**
  * * Mapper: Domain → DTO (for Metric Library Response)
  */
-// This is a simplified version of the metric, typically used in public libraries or templates
-// It may not include all fields from the full MetricDomain
-// and is designed for quick display or selection
 export const toMetricLibraryResponseDTO = (
   metric: MetricLibraryDomain
 ): MetricPreviewResponseDTO => ({
