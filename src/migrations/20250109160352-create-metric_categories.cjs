@@ -1,10 +1,7 @@
 "use strict";
 
-/**
- * * Migration: Create Metric Categories Table
- * Defines the structure of the "metric_categories" table.
- */
 /** @type {import('sequelize-cli').Migration} */
+
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     return queryInterface.sequelize.transaction(async (transaction) => {
@@ -16,7 +13,7 @@ module.exports = {
         );
 
         await queryInterface.createTable(
-          { schema: "public", tableName: "metric_categories" }, // ✅ Specify schema in tableName
+          { schema: "public", tableName: "metric_categories" },
           {
             id: {
               type: Sequelize.UUID,
@@ -30,7 +27,7 @@ module.exports = {
               references: {
                 model: { schema: "public", tableName: "users" },
                 key: "id",
-              }, // ✅ Ensure schema reference
+              },
               onDelete: "CASCADE",
             },
             name: {
@@ -65,10 +62,12 @@ module.exports = {
           { transaction }
         );
 
-        console.log("✅ Metric Categories table created successfully.");
+        console.log(
+          "[DB PROCESS] Metric Categories table created successfully."
+        );
       } catch (error) {
-        console.error("❌ Error creating Metric Categories table:", error);
-        throw error; // Ensure rollback if an error occurs
+        console.error("[DB ERROR] creating Metric Categories table:", error);
+        throw error;
       }
     });
   },
@@ -81,10 +80,12 @@ module.exports = {
           { transaction }
         );
 
-        console.log("✅ Metric Categories table dropped successfully.");
+        console.log(
+          "[DB PROCESS] Metric Categories table dropped successfully."
+        );
       } catch (error) {
-        console.error("❌ Error dropping Metric Categories table:", error);
-        throw error; // Ensure rollback if an error occurs
+        console.error("[DB ERROR] dropping Metric Categories table:", error);
+        throw error;
       }
     });
   },

@@ -1,12 +1,7 @@
-// src/migrations/20250109160355-create-metric_settings.cjs
-
 "use strict";
 
-/**
- * * Migration: Create Metric Settings Table
- * Defines the structure of the "metric_settings" table.
- */
 /** @type {import('sequelize-cli').Migration} */
+
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     return queryInterface.sequelize.transaction(async (transaction) => {
@@ -120,9 +115,9 @@ module.exports = {
           { transaction }
         );
 
-        console.log("✅ Metric Settings table created successfully.");
+        console.log("[DB PROCESS] Metric Settings table created successfully.");
       } catch (error) {
-        console.error("❌ Error creating Metric Settings table:", error);
+        console.error("[DB ERROR] creating Metric Settings table:", error);
         throw error;
       }
     });
@@ -142,9 +137,9 @@ module.exports = {
           { transaction }
         );
 
-        console.log("✅ Metric Settings table dropped successfully.");
+        console.log("[DB PROCESS] Metric Settings table dropped successfully.");
       } catch (error) {
-        console.error("❌ Error dropping Metric Settings table:", error);
+        console.error("[DB ERROR] dropping Metric Settings table:", error);
         throw error;
       }
     });

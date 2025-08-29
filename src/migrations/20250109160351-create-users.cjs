@@ -1,11 +1,5 @@
-// src/migrations/20250109160351-create-users.cjs
-
 "use strict";
 
-/**
- * * Migration: Create Users Table
- * Defines the structure of the "users" table.
- */
 /** @type {import('sequelize-cli').Migration} */
 
 module.exports = {
@@ -69,10 +63,10 @@ module.exports = {
           { transaction }
         );
 
-        console.log("✅ Users table created successfully.");
+        console.log("[DB PROCESS] Users table created successfully.");
       } catch (error) {
-        console.error("❌ Error creating Users table:", error);
-        throw error; // Ensure rollback if an error occurs
+        console.error("[DB ERROR] creating Users table:", error);
+        throw error;
       }
     });
   },
@@ -89,10 +83,10 @@ module.exports = {
           { transaction }
         );
 
-        console.log("✅ Users table dropped successfully.");
+        console.log("[DB PROCESS] Users table dropped successfully.");
       } catch (error) {
-        console.error("❌ Error dropping Users table:", error);
-        throw error; // Ensure rollback if an error occurs
+        console.error("[DB ERROR] dropping Users table:", error);
+        throw error;
       }
     });
   },

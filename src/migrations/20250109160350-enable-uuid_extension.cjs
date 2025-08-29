@@ -13,10 +13,10 @@ module.exports = {
           'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";',
           { transaction }
         );
-        console.log("✅ UUID-OSSP extension enabled.");
+        console.log("[DB PROCESS] UUID-OSSP extension enabled.");
       } catch (error) {
-        console.error("❌ Error enabling UUID-OSSP extension:", error);
-        throw error; // Ensure rollback if an error occurs
+        console.error("[DB ERROR] enabling UUID-OSSP extension:", error);
+        throw error;
       }
     });
   },
@@ -28,10 +28,10 @@ module.exports = {
           'DROP EXTENSION IF EXISTS "uuid-ossp";',
           { transaction }
         );
-        console.log("✅ UUID-OSSP extension disabled.");
+        console.log("[DB PROCESS] UUID-OSSP extension disabled.");
       } catch (error) {
-        console.error("❌ Error disabling UUID-OSSP extension:", error);
-        throw error; // Ensure rollback if an error occurs
+        console.error("[DB ERROR] disabling UUID-OSSP extension:", error);
+        throw error;
       }
     });
   },

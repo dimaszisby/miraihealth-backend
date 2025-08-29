@@ -1,10 +1,7 @@
 "use strict";
 
-/**
- * * Migration: Create Metrics Table
- * Defines the structure of the "metrics" table.
- */
 /** @type {import('sequelize-cli').Migration} */
+
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     return queryInterface.sequelize.transaction(async (transaction) => {
@@ -16,7 +13,7 @@ module.exports = {
         );
 
         await queryInterface.createTable(
-          { schema: "public", tableName: "metrics" }, // ✅ Specify schema explicitly
+          { schema: "public", tableName: "metrics" },
           {
             id: {
               type: Sequelize.UUID,
@@ -30,7 +27,7 @@ module.exports = {
               references: {
                 model: { schema: "public", tableName: "users" },
                 key: "id",
-              }, // ✅ Ensure schema reference
+              },
               onDelete: "CASCADE",
             },
             category_id: {
@@ -39,7 +36,7 @@ module.exports = {
               references: {
                 model: { schema: "public", tableName: "metric_categories" },
                 key: "id",
-              }, // ✅ Schema-safe reference
+              },
               onDelete: "SET NULL",
             },
             original_metric_id: {
@@ -48,7 +45,7 @@ module.exports = {
               references: {
                 model: { schema: "public", tableName: "metrics" },
                 key: "id",
-              }, // ✅ Self-referencing metrics
+              },
               onDelete: "SET NULL",
             },
             name: {
@@ -86,10 +83,10 @@ module.exports = {
           { transaction }
         );
 
-        console.log("✅ Metrics table created successfully.");
+        console.log("[DB PROCESS] Metrics table created successfully.");
       } catch (error) {
-        console.error("❌ Error creating Metrics table:", error);
-        throw error; // Ensure rollback on failure
+        console.error("[DB ERROR] creating Metrics table:", error);
+        throw error;
       }
     });
   },
@@ -102,10 +99,10 @@ module.exports = {
           { transaction }
         );
 
-        console.log("✅ Metrics table dropped successfully.");
+        console.log("[DB PROCESS] Metrics table dropped successfully.");
       } catch (error) {
-        console.error("❌ Error dropping Metrics table:", error);
-        throw error; // Ensure rollback on failure
+        console.error("[DB ERROR] dropping Metrics table:", error);
+        throw error;
       }
     });
   },

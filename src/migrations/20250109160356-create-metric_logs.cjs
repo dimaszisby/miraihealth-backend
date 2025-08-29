@@ -1,11 +1,7 @@
-//src/migrations/20250109160356-create-metric_logs.cjs
 "use strict";
 
-/**
- * * Migration: Create Metric Logs Table
- * Defines the structure of the "metric_logs" table.
- */
 /** @type {import('sequelize-cli').Migration} */
+
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     return queryInterface.sequelize.transaction(async (transaction) => {
@@ -63,9 +59,9 @@ module.exports = {
           { transaction }
         );
 
-        console.log("✅ Metric Logs table created successfully.");
+        console.log("[DB PROCESS] Metric Logs table created successfully.");
       } catch (error) {
-        console.error("❌ Error creating Metric Logs table:", error);
+        console.error("[DB ERROR] creating Metric Logs table:", error);
         throw error;
       }
     });
@@ -79,9 +75,9 @@ module.exports = {
           { transaction }
         );
 
-        console.log("✅ Metric Logs table dropped successfully.");
+        console.log("[DB PROCESS] Metric Logs table dropped successfully.");
       } catch (error) {
-        console.error("❌ Error dropping Metric Logs table:", error);
+        console.error("[DB ERROR] dropping Metric Logs table:", error);
         throw error;
       }
     });
