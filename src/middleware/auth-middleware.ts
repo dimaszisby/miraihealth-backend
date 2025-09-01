@@ -1,9 +1,6 @@
-// src/middleware/auth-middleware.ts
-
 import { env } from "@/config/zodEnv";
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import db from "@/infrastructure/db/sequelize";
 import AppError from "@/utils/AppError";
 import { toDomainUser } from "@/utils/mappers/user.mapper";
 import { AuthRequest } from "@/types/request.context";
@@ -20,31 +17,31 @@ export const authMiddleware = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  // 1. Check if Authorization header is present
+  // Check if Authorization header is present
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return next(new AppError("Unauthorized: No token provided", 401));
   }
 
-  // 2. Extract token from Authorization header
+  // Extract token from Authorization header
   const token = authHeader.split(" ")[1];
   try {
-    // 3. Verify token
+    // Verify token
     const decoded = jwt.verify(token, env.JWT_SECRET as string) as {
       id: string;
     };
 
-    // 4. Check if user exists
-    // ✅ Explicitly define the user attributes we need
+    // Check if user exists
+    // Explicitly define the user attributes we need
     const userRecord = await models.User.findByPk(decoded.id, {
-      attributes: ["id", "username", "email", "role"], // ✅ Ensure `role` is included
+      attributes: ["id", "username", "email", "role"],
     });
 
     if (!userRecord) {
       return next(new AppError("Unauthorized: User not found", 401));
     }
 
-    // ✅ Manually map the Sequelize object to the defined User type
+    // Manually map the Sequelize object to the defined User type
     // req.user = userRecord.toJSON() as UserDomain;
     req.user = toDomainUser(userRecord);
 

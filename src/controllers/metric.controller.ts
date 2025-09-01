@@ -126,7 +126,6 @@ export const getUserMetricLibrariesViaCursor = catchAsync(
 );
 
 /**
- *
  * * Get specific User Metric by Id
  * @route GET /api/metrics/:id
  */
@@ -259,11 +258,12 @@ export const generateDummyMetrics = catchAsync(
       userId,
       count
     );
+    const dto = dummyMetrics.map(toMetricResponseDTO);
 
     successResponse(
       res,
       201,
-      { metrics: dummyMetrics.map(toMetricResponseDTO) },
+      dto,
       `${count} dummy metrics generated successfully`
     );
   }

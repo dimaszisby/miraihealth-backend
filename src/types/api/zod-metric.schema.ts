@@ -12,6 +12,31 @@ import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 
 extendZodWithOpenApi(z);
 
+const FilterSchema = z.object({
+  // bracket form
+  ["filter[name]"]: z.preprocess(
+    (v) => (typeof v === "string" ? v.trim() : v),
+    z.string().min(1).optional()
+  ),
+  ["filter[categoryId]"]: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    zUUID.optional()
+  ),
+
+  // nested form
+  // Safeguard in case Express parses into an object
+  filter: z
+    .object({
+      name: z.preprocess(
+        (v) => (typeof v === "string" ? v.trim() : v),
+        z.string().min(1).optional()
+      ),
+      categoryId: zUUID.optional(),
+    })
+    .partial()
+    .optional(),
+});
+
 /** ===== Base pieces ===== */
 export const metricParams = z.object({ id: zUUID });
 
@@ -44,25 +69,47 @@ export const listMetricsQuery = z.object({
   sortOrder: z.enum(["ASC", "DESC"]).default("DESC"),
 });
 
-export const listCategoriesQueryViaCursor = z.object({
-  limit: z.coerce.number().int().min(1).max(100).default(20),
-  sort: z
-    .enum([
-      "createdAt",
-      "-createdAt",
-      "updatedAt",
-      "-updatedAt",
-      "name",
-      "-name",
-      "logCount",
-      "-logCount",
-    ] as const)
-    .default("-createdAt"),
-  q: z.string().trim().min(1).optional(),
-  ["filter[name]"]: z.string().trim().min(1).optional(),
-  after: z.string().optional(),
-  includeTotal: z.coerce.boolean().default(false),
-});
+export const listMetricQueryViaCursor = z
+  .object({
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+    sort: z
+      .enum([
+        "createdAt",
+        "-createdAt",
+        "updatedAt",
+        "-updatedAt",
+        "name",
+        "-name",
+        "logCount",
+        "-logCount",
+      ] as const)
+      .default("-createdAt"),
+    q: z.preprocess(
+      (v) => (typeof v === "string" ? v.trim() : v),
+      z.string().min(1).optional()
+    ),
+    after: z.string().optional(),
+    includeTotal: z.coerce.boolean().default(false),
+  })
+  .and(FilterSchema)
+  .transform((v) => {
+    // Canonical filter object
+    const name = v["filter[name]"] ?? v.filter?.name;
+    const categoryId = v["filter[categoryId]"] ?? v.filter?.categoryId;
+
+    const filter: { name?: string; categoryId?: string } = {};
+    if (name) filter.name = name;
+    if (categoryId) filter.categoryId = categoryId;
+
+    return {
+      limit: v.limit,
+      sort: v.sort,
+      q: v.q,
+      after: v.after,
+      includeTotal: v.includeTotal,
+      filter: Object.keys(filter).length ? filter : undefined,
+    };
+  });
 
 // detail include shape e.g. “flat” | “full”
 const allowedIncludes = ["settings", "category", "logs"] as const;
@@ -101,7 +148,7 @@ export const getMetricSchema = {
 export const deleteMetricSchema = { params: metricParams };
 export const getAllMetricsSchema = { query: listMetricsQuery };
 export const getAllMetricsViaCursorSchema = {
-  query: listCategoriesQueryViaCursor,
+  query: listMetricQueryViaCursor,
 };
 
 // testing

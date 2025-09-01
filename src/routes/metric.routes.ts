@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { z } from "zod";
 import {
   createMetric,
   getUserMetricLibrariesViaCursor,
@@ -8,41 +9,24 @@ import {
   generateDummyMetrics,
 } from "@/controllers/metric.controller";
 import { getTrends } from "@/controllers/trend.controller";
-
-// Middlewares
 import { authMiddleware } from "@/middleware/auth-middleware";
 import { cacheMiddleware } from "@/middleware/cache-middleware";
 import { userRateLimiter } from "@/middleware/rate-limiter";
 import { validate } from "@/middleware/validate";
-
-// Schema validation
 import {
   createMetricSchema,
   updateMetricSchema,
   deleteMetricSchema,
   getMetricSchema,
-  getAllMetricsSchema,
   generateDummyMetricsSchema,
   getAllMetricsViaCursorSchema,
 } from "@/types/api/zod-metric.schema";
-
 import { AuthRequest } from "@/types/request.context";
-import { z } from "zod";
 
 const router = Router();
 router.use(authMiddleware);
 
-/** Cache keys */
-// const metricsCacheKey = (req: AuthRequest) => {
-//   const {
-//     page = 1,
-//     limit = 20,
-//     sortBy = "createdAt",
-//     sortOrder = "DESC",
-//   } = req.query as any;
-//   return `metrics:${req.user?.id}:p:${Number(page)}:l:${Number(limit)}:sb:${sortBy}:so:${sortOrder}`;
-// };
-
+// LIST: offset (deprecated, migrating to cursor)
 const metricsCacheKey = (req: AuthRequest) => {
   const q = req.query as Record<string, unknown>;
 
@@ -80,17 +64,25 @@ const metricsCacheKey = (req: AuthRequest) => {
   return `metrics:${req.user?.id}:${stable}`;
 };
 
+// LIST: Cursor
 const metricsCursorCacheKey = (req: AuthRequest) => {
   const { limit = 20, sort = "-createdAt", q, after } = req.query as any; // only cache GET list
   const fname = (req.query["filter[name]"] as string) ?? ""; // allowlist filter keys to avoid cache explosion
+  const fcat = (req.query["filter[categoryId]"] as string) ?? ""; // WIP
   const includeTotal = String(req.query.includeTotal ?? "false");
-  return `metrics:${req.user?.id}:l:${limit}:s:${sort}:q:${q ?? ""}:fn:${fname}:after:${after ?? ""}:it:${includeTotal}`;
-};
 
-// const metricCacheKey = (req: AuthRequest) => {
-//   const include = (req.query as any)?.include ?? "flat";
-//   return `metric:${req.user?.id}:${req.params.id}:${include}`;
-// };
+  return [
+    "metrics",
+    req.user?.id,
+    `l:${limit}`,
+    `s:${sort}`,
+    `q:${q ?? ""}`,
+    `fn:${fname}`,
+    `fc:${fcat}`, // WIP
+    `after:${after ?? ""}`,
+    `it:${includeTotal}`,
+  ].join(":");
+};
 
 const metricCacheKey = (req: AuthRequest) => {
   const includeRaw = String((req.query as any)?.include ?? "flat");
@@ -114,10 +106,12 @@ const metricCacheKey = (req: AuthRequest) => {
   return `metric:${req.user?.id}:${req.params.id}:inc:${includeNormalized}:ll:${logsLimit}`;
 };
 
-/** Routes */
+/**
+ * * Routes
+ */
 router.post("/", userRateLimiter, validate(createMetricSchema), createMetric);
 
-// Workig Route non-cursor
+// DETAIL: Workig Route non-cursor
 // router.get(
 //   "/",
 //   validate(getAllMetricsSchema),
@@ -125,6 +119,7 @@ router.post("/", userRateLimiter, validate(createMetricSchema), createMetric);
 //   getUserMetricLibraries
 // );
 
+// DETAIL: Via cursor
 router.get(
   "/",
   validate(getAllMetricsViaCursorSchema),
