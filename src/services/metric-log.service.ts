@@ -1,19 +1,4 @@
-// src/services/metric-log.service.ts
-
-/**
- * Creates a date range filter for the Sequelize query.
- * @param startDate - Start date for the filter
- * @param endDate - End date for the filter
- * @returns An object containing the date range filter
- */
-const createDateRangeFilter = (startDate?: Date, endDate?: Date) => {
-  const dateRangeFilter: any = {};
-  if (startDate) dateRangeFilter[Op.gte] = new Date(startDate);
-  if (endDate) dateRangeFilter[Op.lte] = new Date(endDate);
-  return dateRangeFilter;
-};
-
-import { Op, Order } from "sequelize";
+import { Op } from "sequelize";
 import {
   CreateMetricLogRequestDTO,
   UpdateMetricLogRequestDTO,
@@ -32,12 +17,7 @@ import {
   toDomainMetricLogs,
 } from "@/utils/mappers/metric-log.mapper";
 
-import { models } from "@/models"; // ✅ unified source of truth
-
-/**
- * * Metric Log Service
- * Handles all business logic related to metric log.
- */
+import { models } from "@/models";
 
 interface MetricLogBaseParams {
   userId: string;
@@ -54,12 +34,23 @@ export interface LogQueryOptions {
   limit?: number;
 }
 
+// TODO: Refactor and migrate to cursor
 /**
- * * Create a new log for a given metric.
- * @param userId - ID of the user
- * @param metricId - ID of the metric
- * @param logData - Metric log data
- * @returns Created metric log object
+ * Creates a date range filter for the Sequelize query.
+ * @param startDate - Start date for the filter
+ * @param endDate - End date for the filter
+ * @returns An object containing the date range filter
+ */
+const createDateRangeFilter = (startDate?: Date, endDate?: Date) => {
+  const dateRangeFilter: any = {};
+  if (startDate) dateRangeFilter[Op.gte] = new Date(startDate);
+  if (endDate) dateRangeFilter[Op.lte] = new Date(endDate);
+  return dateRangeFilter;
+};
+
+/**
+ * * CREATE
+ * Create a new log for a given metric.
  */
 export const createLog = async ({
   userId,
@@ -148,12 +139,9 @@ const buildQueryOptions = (options?: LogQueryOptions): any => {
 };
 
 /**
+ * * GET ALL offset
  * Retrieves all logs for a given metric, with optional filtering, sorting, and pagination.
- *
- * @param userId - ID of the user.
- * @param metricId - ID of the metric.
- * @param options - Optional query options for filtering, sorting, and pagination.
- * @returns A promise that resolves to an object containing an array of metric logs and the total count.
+ * @deprecated replaced with cursor-based pagination
  */
 export const getAllLogsByMetricService = async ({
   userId,
@@ -206,11 +194,8 @@ export const getLogByIdService = async ({
 };
 
 /**
+ * * UPDATE
  * Update a log for a given metric.
- * @param metricId - ID of the metric
- * @param userId - ID of the user
- * @param id - ID of the specific log
- * @returns Updated metric log object
  */
 interface UpdateLogParams extends MetricLogBaseParams {
   updateData: Partial<UpdateMetricLogRequestDTO>;
@@ -268,11 +253,9 @@ export const updateLogService = async ({
   return toDomainMetricLog(updatedLog);
 };
 
-/**s
+/**
+ * * DELETE
  * Delete a log for a given metric.
- * @param metricId - ID of the metric
- * @param userId - ID of the user
- * @param id - ID of the specific log
  */
 export const deleteLogService = async ({
   userId,
@@ -317,9 +300,6 @@ export const deleteLogService = async ({
 
 /**
  * * Get Aggregated Stats for Logs
- * @param metricId - ID of the metric
- * @param userId - ID of the user
- * @returns Numbers of average, min, max of aggregated stats
  */
 // TODO: Here are unfinished implementation, in the future this will be implemented into end-to-end pipeline for data visualization
 export const getAggregatedStats = async (userId: string, metricId?: string) => {
@@ -367,10 +347,6 @@ export const getAggregatedStats = async (userId: string, metricId?: string) => {
 /**
  * * Generate Dummy Metric Logs
  * Generates a specified number of dummy metric log entries for a given metric.
- * @param userId - ID of the user
- * @param metricId - ID of the metric
- * @param count - Number of dummy logs to generate
- * @returns Array of created metric log objects
  */
 export const generateDummyLogsService = async ({
   userId,
@@ -406,12 +382,10 @@ export const generateDummyLogsService = async ({
   return dummyLogs;
 };
 
+// * Helpers
 /**
  * Invalidates all cache keys related to a user's logs for a specific metric,
  * including paginated, filtered, and stats keys.
- * @param userId - The user ID.
- * @param metricId - The metric ID.
- * @param logId - (optional) The log ID for per-log cache keys.
  */
 export async function invalidateAllMetricLogsCache(
   userId: string,
@@ -439,6 +413,6 @@ export async function invalidateAllMetricLogsCache(
   }
 
   logger.info(
-    `♻️ Cache invalidated for log:${logId ?? "-"}, and stats of user:${userId} and metric:${metricId}`
+    `[CACHE] Cache invalidated for log:${logId ?? "-"}, and stats of user:${userId} and metric:${metricId}`
   );
 }

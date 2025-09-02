@@ -1,8 +1,4 @@
-//src/routes/metric-log.routes.ts
-
 import { Router } from "express";
-
-// Controllers
 import {
   createMetricLog,
   getAllLogsByMetric,
@@ -11,15 +7,12 @@ import {
   deleteLog,
   getAggregatedStats,
   generateDummyMetricLogs,
+  getUserLogLibrariesViaCursor,
 } from "@/controllers/metric-log.controller.js";
-
-// Middlewares
 import { authMiddleware } from "@/middleware/auth-middleware.js";
 import { cacheMiddleware } from "@/middleware/cache-middleware.js";
 import { userRateLimiter } from "@/middleware/rate-limiter.js";
 import { validate } from "@/middleware/validate.js";
-
-// Schema validation
 import {
   createMetricLogSchema,
   updateMetricLogSchema,
@@ -28,6 +21,7 @@ import {
   deleteMetricLogSchema,
   getAggregatedStatsSchema,
   generateDummyMetricLogsSchema,
+  listMetricLogsViaCursorSchema,
 } from "@/types/api/zod-metric-log.schema.js";
 import { AuthRequest } from "@/types/request.context";
 
@@ -102,6 +96,26 @@ const deprecateMetricLogRoute = (req: any, res: any, next: any) => {
     `DEPRECATED ACCESS: User ${req.user?.id} accessed deprecated metric log endpoint: ${req.originalUrl}`
   );
   next();
+};
+
+// LIST: Cursor
+const logsCursorCacheKey = (req: AuthRequest) => {
+  const { limit = 20, sort = "-createdAt", q, after } = req.query as any; // only cache GET list
+  const fname = (req.query["filter[logValue]"] as string) ?? ""; // allowlist filter keys to avoid cache explosion
+  const fmet = (req.query["filter[metricId]"] as string) ?? ""; // WIP
+  const includeTotal = String(req.query.includeTotal ?? "false");
+
+  return [
+    "logs-cursor",
+    req.user?.id,
+    `l:${limit}`,
+    `s:${sort}`,
+    `q:${q ?? ""}`,
+    `fn:${fname}`,
+    `fm:${fmet}`, // WIP
+    `after:${after ?? ""}`,
+    `it:${includeTotal}`,
+  ].join(":");
 };
 
 // Apply Authentication Middleware for all metric log routes
@@ -192,12 +206,21 @@ router.post(
 );
 
 // GET All Logs (with optional metricId filter)
+// router.get(
+//   "/",
+//   validate(getAllMetricLogsSchema),
+//   cacheMiddleware(buildLogsCacheKey, 300),
+//   getAllLogsByMetric
+// );
+
+// GET All Logs (with optional metricId filter)
 router.get(
   "/",
-  validate(getAllMetricLogsSchema),
-  cacheMiddleware(buildLogsCacheKey, 300),
-  getAllLogsByMetric
+  validate(listMetricLogsViaCursorSchema),
+  // cacheMiddleware(logsCursorCacheKey, 300),
+  getUserLogLibrariesViaCursor
 );
+
 
 // GET Aggregated Stats for logs (with optional metricId filter)
 router.get(

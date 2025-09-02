@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import AppError from "../utils/AppError.js";
 import { successResponse } from "../utils/response-formatter.js";
 import catchAsync from "../utils/catch-async.js";
@@ -9,10 +9,13 @@ import {
   toMetricLogResponseDTO,
 } from "@/utils/mappers/metric-log.mapper";
 import { GenerateDummyMetricLogsRequestDTO } from "@/types/dtos/metric-log.dto";
+import { listMetricLogsViaCursorSchema } from "@/types/api/zod-metric-log.schema.js";
+import { listLogsViaCursor } from "@/features/metric-log/application/queries/listMetricLogs.js";
+import { parseIsoToDate } from "@/utils/date-io.js";
 
 /**
  * * Create a Log for a Metric
- * @route POST /api/metrics/:metricId/logs
+ * @route POST /api/metric-logs/
  */
 export const createMetricLog = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -27,7 +30,7 @@ export const createMetricLog = catchAsync(
         metricId,
         type,
         logValue,
-        loggedAt,
+        loggedAt: parseIsoToDate(loggedAt),
       },
     });
     const dto = toMetricLogResponseDTO(logDomain);
@@ -38,7 +41,8 @@ export const createMetricLog = catchAsync(
 
 /**
  * * Get All Logs for a Metric
- * @route GET /api/metrics/:metricId/logs
+ * @route GET /api/metrics-logs/
+ * @deprecated Use cursor-based pagination instead
  */
 export const getAllLogsByMetric = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -68,8 +72,45 @@ export const getAllLogsByMetric = catchAsync(
 );
 
 /**
+ * * Get All Metrics owned by User via Cursor
+ * @route GET /api/metric-logs/
+ */
+
+export const getUserLogLibrariesViaCursor = catchAsync(
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+    const userId = req.user.id;
+
+    const parsed = listMetricLogsViaCursorSchema.query.parse(req.query);
+    const { limit, sort, q, after, includeTotal, filter } = parsed;
+
+    const page = await listLogsViaCursor({
+      userId,
+      limit,
+      sort,
+      q,
+      filter,
+      after,
+      includeTotal,
+    });
+
+    const dto = {
+      items: page.items.map(toMetricLogResponseDTO),
+      nextCursor: page.nextCursor,
+      sort: page.sort,
+      limit: page.limit,
+      ...(page.q ? { q: page.q } : {}),
+      ...(page.filter ? { filter: page.filter } : {}),
+      ...(includeTotal ? { totalCount: page.totalCount ?? 0 } : {}),
+    };
+
+    successResponse(res, 200, dto, "Metric Logs cursor fetched successfully");
+  }
+);
+
+/**
  * * Get Specific Log by ID
- * @route GET /api/metrics/:metricId/logs/:id
+ * @route GET /api/metric-logs/:id
  */
 export const getLogById = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -97,7 +138,7 @@ export const getLogById = catchAsync(
 
 /**
  * * Update a Log
- * @route PUT /api/metrics/:metricId/logs/:id
+ * @route PUT /api/metric-logs/:id
  */
 export const updateLog = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -113,7 +154,7 @@ export const updateLog = catchAsync(
       updateData: {
         logValue,
         type,
-        loggedAt,
+        loggedAt: parseIsoToDate(loggedAt),
       },
     });
     const dto = toMetricLogResponseDTO(logDomain);
@@ -124,7 +165,7 @@ export const updateLog = catchAsync(
 
 /**
  * * Delete a Log
- * @route DELETE /api/metrics/:metricId/logs/:id
+ * @route DELETE /api/metric-logs/:id
  */
 export const deleteLog = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
