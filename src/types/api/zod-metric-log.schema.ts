@@ -1,9 +1,4 @@
-// src/types/api/zod-metric-log.schema.ts
-
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
-
-extendZodWithOpenApi(z);
-
 import {
   zDateOptional,
   zLogType,
@@ -13,6 +8,8 @@ import {
 } from "@/constants/zod/zod-rules";
 import { z } from "zod";
 import { ZodMessages } from "@/constants/zod/zod-messages";
+
+extendZodWithOpenApi(z);
 
 const FilterSchema = z.object({
   // bracket form

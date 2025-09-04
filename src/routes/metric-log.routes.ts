@@ -1,7 +1,6 @@
 import { Router } from "express";
 import {
   createMetricLog,
-  getAllLogsByMetric,
   getLogById,
   updateLog,
   deleteLog,
@@ -16,7 +15,6 @@ import { validate } from "@/middleware/validate.js";
 import {
   createMetricLogSchema,
   updateMetricLogSchema,
-  getAllMetricLogsSchema,
   getMetricLogByIdSchema,
   deleteMetricLogSchema,
   getAggregatedStatsSchema,
@@ -31,196 +29,80 @@ const router = Router();
  * * Key Generator Function
  * Generates a cache key based on user ID and log ID
  */
-// Logs List
-// const buildLogsCacheKey = (req: AuthRequest) => {
-//   const { page = 1, limit = 10, startDate, endDate, sortBy, order } = req.query;
 
-//   const metricId = req.params.metricId || req.query.metricId; // Get metricId from params or query
-//   const userId = req.user?.id;
+// TODO: Refactor
+const firstNonEmpty = (...vals: unknown[]) =>
+  vals.find((v) => typeof v === "string" && v.trim().length > 0) as
+    | string
+    | undefined;
 
-//   return [
-//     "logs",
-//     userId,
-//     metricId || "all", // Use "all" if no metricId is found
-//     page,
-//     limit,
-//     startDate || "_",
-//     endDate || "_",
-//     sortBy || "_",
-//     order || "_",
-//   ].join(":");
-// };
+// TODO: Refactor
+const bool01 = (v: any) => (v === true || v === "true" ? "1" : "0");
 
-const buildLogsCacheKey = (req: AuthRequest) => {
-  const {
-    page = 1,
-    limit = 10,
-    startDate,
-    endDate,
-    sortBy,
-    order,
-    metricId,
-  } = req.query as any;
-  const userId = req.user?.id;
-  const resolvedMetricId = req.params.metricId || metricId || "all";
-  return [
-    "logs",
-    userId,
-    resolvedMetricId,
-    Number(page),
-    Number(limit),
-    startDate || "_",
-    endDate || "_",
-    sortBy || "_",
-    order || "_",
-  ].join(":");
-};
-
-// Singular Log
+// Singular Log Cache Key
 const logCacheKey = (req: AuthRequest) =>
   `log:${req.user?.id}:${req.params.id}`;
-// User Log Stats
+
+// Cursor List Cache Key
+const logsCursorCacheKey = (req: AuthRequest) => {
+  const q = req.query as any;
+  const filter = (q && typeof q.filter === "object" && q.filter) || {};
+
+  // Prefer the canonical nested value; fall back to bracket/flat/param; ignore empty strings
+  const metricId =
+    firstNonEmpty(
+      filter.metricId,
+      q["filter[metricId]"],
+      q.metricId,
+      req.params?.metricId
+    ) ?? "_";
+
+  // Optional second filter (keep behavior consistent)
+  const logValueStr =
+    firstNonEmpty(
+      String(filter.logValue ?? ""),
+      String(q["filter[logValue]"] ?? "")
+    ) ?? "_";
+
+  const limit = Number(q.limit ?? 20);
+  const sort = String(q.sort ?? "-createdAt");
+  const search = typeof q.q === "string" ? q.q.trim() : "";
+  const after = typeof q.after === "string" ? q.after : "";
+  const it = bool01(q.includeTotal);
+
+  const key = [
+    "logs-cursor:v2", // new prefix
+    req.user?.id ?? "_",
+    `l:${limit}`,
+    `s:${sort}`,
+    `q:${search}`,
+    `fm:${metricId}`,
+    `fn:${logValueStr}`,
+    `after:${after}`,
+    `it:${it}`,
+  ].join(":");
+
+  console.log("[cache:key]", key);
+  return key;
+};
+
+// User Log Stats Cache Key
 const logStatsCacheKey = (req: AuthRequest) => {
   const metricId = req.params.metricId || req.query.metricId;
   return `logStats:${req.user?.id}:${metricId || "all"}`;
 };
 
-// Middleware to add deprecation warning
-const deprecateMetricLogRoute = (req: any, res: any, next: any) => {
-  res.setHeader("X-Deprecated-Endpoint", "true");
-  res.setHeader(
-    "Link",
-    '</api/v1/metric-logs>; rel="successor-version"; title="Use /api/v1/metric-logs instead"'
-  );
-  console.warn(
-    `DEPRECATED ACCESS: User ${req.user?.id} accessed deprecated metric log endpoint: ${req.originalUrl}`
-  );
-  next();
-};
-
-// LIST: Cursor
-const logsCursorCacheKey = (req: AuthRequest) => {
-  const { limit = 20, sort = "-createdAt", q, after } = req.query as any; // only cache GET list
-  const fname = (req.query["filter[logValue]"] as string) ?? ""; // allowlist filter keys to avoid cache explosion
-  const fmet = (req.query["filter[metricId]"] as string) ?? ""; // WIP
-  const includeTotal = String(req.query.includeTotal ?? "false");
-
-  return [
-    "logs-cursor",
-    req.user?.id,
-    `l:${limit}`,
-    `s:${sort}`,
-    `q:${q ?? ""}`,
-    `fn:${fname}`,
-    `fm:${fmet}`, // WIP
-    `after:${after ?? ""}`,
-    `it:${includeTotal}`,
-  ].join(":");
-};
-
-// Apply Authentication Middleware for all metric log routes
 router.use(authMiddleware);
 
-/**
- * * Deprecated Nested Routes (for backward compatibility)
- * These routes will be removed after a migration period.
- */
-
-// DEPRECATED: CREATE Log
-router.post(
-  "/metrics/:metricId/logs/",
-  deprecateMetricLogRoute,
-  userRateLimiter,
-  validate(createMetricLogSchema),
-  createMetricLog
-);
-
-// DEPRECATED: GET All Logs by Metric Id
-router.get(
-  "/metrics/:metricId/logs/",
-  deprecateMetricLogRoute,
-  validate(getAllMetricLogsSchema),
-  cacheMiddleware(buildLogsCacheKey, 300),
-  getAllLogsByMetric
-);
-
-// DEPRECATED: GET Aggregated Stats for logs
-router.get(
-  "/metrics/:metricId/logs/stats",
-  deprecateMetricLogRoute,
-  validate(getAggregatedStatsSchema),
-  cacheMiddleware(logStatsCacheKey, 300),
-  getAggregatedStats
-);
-
-// DEPRECATED: GET Specific Log by Id
-router.get(
-  "/metrics/:metricId/logs/:id",
-  deprecateMetricLogRoute,
-  validate(getMetricLogByIdSchema),
-  cacheMiddleware(logCacheKey, 300), // Cache a single log entry
-  getLogById
-);
-
-// DEPRECATED: UPDATE Log
-router.put(
-  "/metrics/:metricId/logs/:id",
-  deprecateMetricLogRoute,
-  userRateLimiter,
-  validate(updateMetricLogSchema),
-  updateLog
-);
-
-// DEPRECATED: DELETE Log
-router.delete(
-  "/metrics/:metricId/logs/:id",
-  deprecateMetricLogRoute,
-  userRateLimiter,
-  validate(deleteMetricLogSchema),
-  deleteLog
-);
-
-// DEPRECATED: Generate Dummy Logs
-router.post(
-  "/metrics/:metricId/logs/dummy",
-  deprecateMetricLogRoute,
-  userRateLimiter,
-  validate(generateDummyMetricLogsSchema),
-  generateDummyMetricLogs
-);
-
-/**
- * * Logs Endpoints
- *
- * Use userRateLimiter for writes (POST, PUT, DELETE)
- * - to limit how many logs a single user can create or update within the given time window (default 15 min).
- *
- */
-
-// CREATE Log
-router.post(
-  "/",
-  userRateLimiter,
-  validate(createMetricLogSchema),
-  createMetricLog
-);
-
-// GET All Logs (with optional metricId filter)
-// router.get(
-//   "/",
-//   validate(getAllMetricLogsSchema),
-//   cacheMiddleware(buildLogsCacheKey, 300),
-//   getAllLogsByMetric
-// );
+// * =========== Query Endpoints ===========
 
 // GET All Logs (with optional metricId filter)
 router.get(
   "/",
   validate(listMetricLogsViaCursorSchema),
-  // cacheMiddleware(logsCursorCacheKey, 300),
+  cacheMiddleware(logsCursorCacheKey, 300),
   getUserLogLibrariesViaCursor
 );
-
 
 // GET Aggregated Stats for logs (with optional metricId filter)
 router.get(
@@ -230,12 +112,22 @@ router.get(
   getAggregatedStats
 );
 
-// GET Specific Log by Id
+// GET Log by Id
 router.get(
   "/:id",
   validate(getMetricLogByIdSchema),
   cacheMiddleware(logCacheKey, 300), // Cache a single log entry
   getLogById
+);
+
+// * =========== Commands Endpoints ===========
+
+// CREATE Log
+router.post(
+  "/",
+  userRateLimiter,
+  validate(createMetricLogSchema),
+  createMetricLog
 );
 
 // UPDATE Log
@@ -249,17 +141,7 @@ router.delete(
   deleteLog
 );
 
-/**
- * * ===== Endpoints for Testing Purposes =====
- */
-
-// Generate Dummy Logs
-router.post(
-  "/dummy",
-  userRateLimiter,
-  validate(generateDummyMetricLogsSchema),
-  generateDummyMetricLogs
-);
+// ===== Endpoints for Testing Purposes =====
 
 // Generate Dummy Logs for a specific metric (new endpoint)
 router.post(

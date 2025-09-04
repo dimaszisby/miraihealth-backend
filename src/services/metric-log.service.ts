@@ -395,18 +395,26 @@ export async function invalidateAllMetricLogsCache(
   console.log(
     `[CACHE] Invalidating logs for user=${userId}, metric=${metricId}, log=${logId ?? "-"}`
   );
+
+  // * Offset-based (legacy)
   // Invalidate all logs list queries for this metric
   await invalidateCacheByPattern(`logs:${userId}:${metricId}:*`);
-
   // Invalidate "all metrics" list (user dashboard or similar)
   await invalidateCacheByPattern(`logs:${userId}:all:*`);
 
+  // * Cursor-based (current)
+  // Target queries filtered by the metric
+  await invalidateCacheByPattern(`logs-cursor:${userId}:*fm:${metricId}*`);
+  // Target “all metrics” queries for that user (no metricId filter)
+  await invalidateCacheByPattern(`logs-cursor:${userId}:*`);
+
+  // * Stats
   // Invalidate stats for this metric
   await invalidateCache(`logStats:${userId}:${metricId}`);
-
   // Invalidate general stats for this user (if you have aggregate endpoints)
   await invalidateCache(`logStats:${userId}`);
 
+  // * Detail
   // Invalidate single log cache if present
   if (logId) {
     await invalidateCache(`log:${userId}:${logId}`);

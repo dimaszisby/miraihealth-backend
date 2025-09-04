@@ -2,7 +2,7 @@ import { models } from "@/models";
 import { MetricLogResponseDTO } from "@/types/dtos/metric-log.dto";
 import AppError from "@/utils/AppError";
 import { toDomainMetricLog } from "@/utils/mappers/metric-log.mapper";
-import { Sequelize, WhereOptions, Op, OrderItem } from "sequelize";
+import { WhereOptions, Op, OrderItem } from "sequelize";
 
 // * Sorting
 export type SortField = "createdAt" | "updatedAt" | "logValue" | "loggedAt";
@@ -129,15 +129,13 @@ function buildCursorPredicate(
       };
     }
     case "logValue": {
-      // Case-insensitive lexicographic compare using LOWER(logValue)
-      const logValueExpr = Sequelize.fn("LOWER", Sequelize.col("logValue"));
       const last = cursor.logValue!;
       return {
         [Op.or]: [
-          Sequelize.where(logValueExpr, { [ltgt]: last }),
+          { logValue: { [ltgt]: last } },
           {
             [Op.and]: [
-              Sequelize.where(logValueExpr, { [eq]: last }),
+              { logValue: { [eq]: last } },
               { id: { [ltgt]: cursor.id } },
             ],
           },
@@ -219,6 +217,9 @@ export async function listLogsViaCursor({
   const include = baseIncludeForOwnership(userId);
   // This where is for METRIC LOGS (has userId, deletedAt)
   const baseWhere = buildWhere(filter, q);
+  if (filter?.metricId) {
+    console.log("[logs:list] filtering by metricId:", filter.metricId);
+  }
 
   // total logs for pagination option
   const totalCount = includeTotal
@@ -237,10 +238,11 @@ export async function listLogsViaCursor({
   // order
   const order = buildOrder(field, dir);
 
-  // SELECT with metricCount (subquery) — same as your previous approach
+  // SELECT
   const rows = await models.MetricLog.findAll({
     where,
-    limit: pageSize + 1, // fetch one extra to decide nextCursor
+    include,
+    limit: pageSize + 1,
     order,
     raw: true,
     nest: true,
