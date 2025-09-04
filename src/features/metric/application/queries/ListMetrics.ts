@@ -1,10 +1,7 @@
 import { models } from "@/models";
 import { MetricLibraryDomain } from "@/types/domain/metric.domain";
 import AppError from "@/utils/AppError";
-import {
-  toDomainMetric,
-  toDomainMetricLibrary,
-} from "@/utils/mappers/metric.mapper";
+import { toDomainMetricLibrary } from "@/utils/mappers/metric.mapper";
 import {
   FindAttributeOptions,
   ProjectionAlias,
@@ -28,7 +25,7 @@ export interface ListMetricCategoriesResult {
   sort: SortParam;
   limit: number;
   q?: string;
-  filter?: { name?: string };
+  filter?: { name?: string; categoryId?: string }; // WIP
   totalCount?: number;
 }
 // TODO: Generics/Shared
@@ -37,7 +34,7 @@ export interface ListOpts {
   limit: number;
   sort: SortParam; // now allows createdAt|updatedAt|name|metricCount (+/-)
   q?: string;
-  filter?: { name?: string };
+  filter?: { name?: string; categoryId?: string }; // WIP
   after?: string; // base64url
   includeTotal?: boolean;
 }
@@ -97,13 +94,15 @@ function normalizeSort(sort: SortParam): {
 function buildWhere(
   userId: string,
   q?: string,
-  filter?: { name?: string }
+  filter?: { name?: string; categoryId?: string }
 ): WhereOptions {
   const like = (v: string) => ({ [Op.iLike]: `%${v}%` });
   const and: any[] = [{ userId }, { deletedAt: null }];
 
   if (q) and.push({ name: like(q) });
   if (filter?.name) and.push({ name: like(filter.name) });
+  if (filter?.categoryId) and.push({ categoryId: filter.categoryId }); // WIP
+
   return { [Op.and]: and };
 }
 
@@ -252,6 +251,13 @@ export async function listMetricsViaCursor({
     limit: pageSize + 1, // fetch one extra to decide nextCursor
     order,
     attributes: baseAttributesWithLogCount(),
+    include: [
+      {
+        model: models.MetricCategory,
+        as: "category",
+        attributes: ["id", "name", "icon", "color"],
+      },
+    ],
     raw: true,
     nest: true,
   });
