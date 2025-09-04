@@ -55,35 +55,40 @@ export const createMetricService = async (
     );
 
     // Eagerly create the default settings row
-    await models.MetricSettings.create(
-      {
-        metricId: metric.id,
-        // All default fields for your settings model:
-        goalEnabled: false,
-        goalType: null,
-        goalValue: null,
-        timeFrameEnabled: false,
-        startDate: null,
-        deadlineDate: null,
-        alertEnabled: false,
-        alertThresholds: 80,
-        isAchieved: false,
-        isActive: true,
-        displayOptions: {
-          showOnDashboard: true,
-          priority: 1,
-          chartType: "line",
-          color: "#E897A3",
+    try {
+      await models.MetricSettings.create(
+        {
+          metricId: metric.id,
+          // All default fields for your settings model:
+          goalEnabled: false,
+          goalType: null,
+          goalValue: null,
+          timeFrameEnabled: false,
+          startDate: null,
+          deadlineDate: null,
+          alertEnabled: false,
+          alertThresholds: 80,
+          isAchieved: false,
+          isActive: true,
+          displayOptions: {
+            showOnDashboard: true,
+            priority: 1,
+            chartType: "line",
+            color: "#E897A3",
+          },
         },
-      },
-      { transaction: t }
-    );
+        { transaction: t }
+      );
+    } catch (error) {
+      logger.error(`Error creating MetricSettings for metric ${metric.id}:`, error);
+      throw error; // Re-throw to ensure transaction rollback
+    }
 
     if (redisClient.isOpen) {
       invalidateAllMetricCache(userId);
     }
 
-    await metric.reload();
+    await metric.reload({ transaction: t });
 
     return metric;
   });

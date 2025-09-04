@@ -266,7 +266,7 @@ export interface UserMetricDetailResponseDTO {
  * Inferred from the Zod schema for validation.
  */
 export type CreateMetricRequestDTO = z.infer<
-  typeof createMetricSchema.shape.body
+  typeof createMetricSchema.body
 >;
 
 /**
@@ -275,7 +275,7 @@ export type CreateMetricRequestDTO = z.infer<
  * Inferred from the Zod schema for validation.
  */
 export type UpdateMetricRequestDTO = z.infer<
-  typeof updateMetricSchema.shape.body
+  typeof updateMetricSchema.body
 >;
 
 /**
@@ -288,5 +288,5 @@ export type UpdateMetricRequestDTO = z.infer<
  * Inferred from the Zod schema for validation.
  */
 export type GenerateDummyMetricsRequestDTO = z.infer<
-  typeof generateDummyMetricsSchema.shape.body
+  typeof generateDummyMetricsSchema.body
 >;

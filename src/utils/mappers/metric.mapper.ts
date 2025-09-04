@@ -24,17 +24,23 @@ import {
   toMResponseDTOLegacy as toResponseDTOLegacy,
 } from "@/features/metric-category/legacies/MetricCategoryLegacy.mapper";
 
+const validateUserId = (userId: string | null | undefined) => {
+  if (!userId) {
+    logger.error("Metric object missing userId");
+    throw new AppError(
+      "Metric is missing the required userId. This indicates a data integrity issue.",
+      500
+    );
+  }
+  return userId;
+};
+
 /**
  * * Mapper: Sequelize → Domain
  */
 export const toDomainMetric = (metric: Metric): MetricDomain => {
-  if (!metric.userId) {
-    logger.error("Metric object missing userId:", { metricId: metric.id });
-    throw new AppError(
-      `Metric with id ${metric.id} is missing the required userId. This indicates a data integrity issue.`,
-      500
-    );
-  }
+  validateUserId(metric.userId);
+
   return {
     id: metric.id,
     userId: metric.userId,
@@ -53,19 +59,16 @@ export const toDomainMetric = (metric: Metric): MetricDomain => {
 export const toDomainMetricLibrary = (
   metric: Metric & { logCount?: number }
 ): MetricLibraryDomain => {
-  if (!metric.userId) {
-    logger.error("Metric object missing userId:", { metricId: metric.id });
-    throw new AppError(
-      `Metric with id ${metric.id} is missing the required userId. This indicates a data integrity issue.`,
-      500
-    );
-  }
+  validateUserId(metric.userId);
 
-  // normalize
-  const categoryDomain = metric.MetricCategory
-    ? toDomainCategoryInfo(metric.MetricCategory)
-    : null;
-  const settingsDomain = metric.MetricSettings?.goalType ?? "Not Set";
+  // Accept both shapes: instance include (MetricCategory) and raw+alias include (category)
+  const rawCategory =
+    (metric as any).MetricCategory ?? (metric as any).category ?? null;
+
+  const categoryDomain = rawCategory ? toDomainCategoryInfo(rawCategory) : null;
+
+  // Guard against NaN if the subquery isn't present for any reason
+  const logCount = Number((metric as any).logCount ?? 0);
 
   return {
     id: metric.id,
@@ -74,10 +77,10 @@ export const toDomainMetricLibrary = (
     defaultUnit: metric.defaultUnit,
     isPublic: metric.isPublic,
     category: categoryDomain,
-    goalType: settingsDomain,
+    goalType: metric?.MetricSettings?.goalType ?? "Not Set",
     createdAt: metric.createdAt!,
     updatedAt: metric.updatedAt!,
-    logCount: Number(metric.logCount) ?? 0,
+    logCount,
   };
 };
 
