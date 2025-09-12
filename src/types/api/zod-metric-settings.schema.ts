@@ -24,7 +24,7 @@ const settingsBodyBase = z.object({
   startDate: zDateOptional.optional().nullable(),
   deadlineDate: zDateOptional.optional().nullable(),
   alertEnabled: z.boolean().optional().default(false),
-  alertThresholds: zAlertThresholds,
+  alertThresholds: zAlertThresholds.nullable(),
   displayOptions: zDisplayOptions,
 });
 
@@ -78,7 +78,8 @@ export const settingsBody = settingsBodyBase
     }
   });
 
-/** Update: partial fields allowed (PATCH semantics on your PUT).
+/**
+ * Update: partial fields allowed (PATCH semantics on your PUT).
  * Keep validations “presence-aware” so you can send only what you change.
  */
 export const settingsBodyPartial = settingsBodyBase
@@ -136,9 +137,71 @@ export const settingsBodyPartial = settingsBodyBase
     }
   });
 
+const MetricSettingsFilterSchema = z.object({
+  // bracket form
+  ["filter[metricId]"]: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    zUUID.optional()
+  ),
+  ["filter[isActive]"]: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    z.coerce.boolean().optional()
+  ),
+
+  // nested form
+  // Safeguard in case Express parses into an object
+  filter: z
+    .object({
+      metricId: zUUID.optional(),
+      isActive: z.coerce.boolean().optional(),
+    })
+    .partial()
+    .optional(),
+});
+
 export const listSettingsQuery = z.object({
   metricId: zUUID.optional(),
 });
+
+export const listMetricSettingsQueryViaCursor = z
+  .object({
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+    sort: z
+      .enum([
+        "createdAt",
+        "-createdAt",
+        "updatedAt",
+        "-updatedAt",
+        "isActive",
+        "-isActive",
+      ] as const)
+      .default("-createdAt"),
+    q: z.preprocess(
+      (v) => (typeof v === "string" ? v.trim() : v),
+      z.string().min(1).optional()
+    ),
+    after: z.string().optional(),
+    includeTotal: z.coerce.boolean().default(false),
+  })
+  .and(MetricSettingsFilterSchema)
+  .transform((v) => {
+    // Canonical filter object
+    const metricId = v["filter[metricId]"] ?? v.filter?.metricId;
+    const isActive = v["filter[isActive]"] ?? v.filter?.isActive;
+
+    const filter: { metricId?: string; isActive?: boolean } = {};
+    if (metricId) filter.metricId = metricId;
+    if (isActive !== undefined) filter.isActive = isActive;
+
+    return {
+      limit: v.limit,
+      sort: v.sort,
+      q: v.q,
+      after: v.after,
+      includeTotal: v.includeTotal,
+      filter: Object.keys(filter).length ? filter : undefined,
+    };
+  });
 
 /** ===== SchemaBags for validate(...) ===== */
 export const createMetricSettingsSchema = { body: settingsBody };
@@ -147,5 +210,12 @@ export const updateMetricSettingsSchema = {
   body: settingsBodyPartial,
 };
 export const getMetricSettingsSchema = { params: settingsParams };
+
+/**
+ * @deprecated Use listMetricSettingsViaCursorSchema for cursor-based pagination.
+ */
 export const getAllMetricSettingsSchema = { query: listSettingsQuery };
+export const listMetricSettingsViaCursorSchema = {
+  query: listMetricSettingsQueryViaCursor,
+};
 export const deleteMetricSettingsSchema = { params: settingsParams };

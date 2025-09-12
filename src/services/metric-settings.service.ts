@@ -1,14 +1,14 @@
-// src/services/metric-settings-service.ts
-
-import db from "@/infrastructure/db/sequelize";
-import AppError from "@/utils/AppError"; // Added missing import
+import AppError from "@/utils/AppError";
 import {
   CreateMetricSettingsRequestDTO,
   UpdateMetricSettingsRequestDTO,
 } from "@/types/dtos/metric-settings.dto";
 import { MetricSettingsDomain } from "@/types/domain/metric-settings.domain";
-import { UpdateMetricCategoryRequestDTO } from "@/features/metric-category/infrastructure/http/dto";
-import { redisClient, invalidateCache } from "@/utils/redis-client";
+import {
+  redisClient,
+  invalidateCache,
+  invalidateCacheByPattern,
+} from "@/utils/redis-client";
 import {
   findOwnedMetricSettings,
   validateMetricAccess,
@@ -19,12 +19,7 @@ import {
   toDomainMetricSettings,
 } from "@/utils/mappers/metric-settings.mapper";
 
-import { models } from "@/models"; // ✅ unified source of truth
-
-/**
- * * Metric Settings Service
- * Handles all business logic related to metric settings.
- */
+import { models } from "@/models";
 
 interface MetricSettingsParamsBase {
   userId: string;
@@ -32,15 +27,12 @@ interface MetricSettingsParamsBase {
 }
 
 /**
+ * * CREATE
  * Create metric settings for a specific metric
- * @param userId - ID of the user
- * @param metricId - ID of the metric
- * @param data - Metric settings data
- * @returns The created metric settings
  */
 export const createMetricSettingsService = async (
   userId: string,
-  settingData: CreateMetricSettingsRequestDTO,
+  settingData: CreateMetricSettingsRequestDTO
 ): Promise<MetricSettingsDomain> => {
   const { metricId } = settingData; // Extract metricId from settingData
   if (!metricId) throw new AppError("metricId is required", 400); // Should be caught by Zod, but good for type safety
@@ -79,24 +71,18 @@ export const createMetricSettingsService = async (
 
   // Invalidate cache for metric settings
   if (redisClient.isOpen && metricSettings.metric) {
-    await invalidateCache(`metricSettings:${userId}`); // Invalidate general settings list for the user
-    await invalidateCache(`metricSettings:${userId}:${metricId}`); // Invalidate settings list for this specific metric
-    logger.info(
-      `♻️ Cache invalidated for metricSettings of user:${userId} and metric:${metricId}`,
-    );
+    await invalidateAllMetricSettingsCache(userId, metricId);
   }
   return toDomainMetricSettings(metricSettings);
 };
 
 /**
+ * * GET all
  * Get all metric settings for a specific metric
- * @param userId - ID of the user
- * @param metricId - ID of the metric
- * @returns Array of metric settings
  */
 export const getAllMetricSettingsService = async (
   userId: string,
-  metricId?: string, // metricId is now optional for filtering
+  metricId?: string // metricId is now optional for filtering
 ): Promise<MetricSettingsDomain[]> => {
   const whereClause: any = {};
   const queryOptions: any = { where: whereClause };
@@ -120,17 +106,13 @@ export const getAllMetricSettingsService = async (
 
   const settings = await models.MetricSettings.findAll(queryOptions);
   return settings.map((setting: InstanceType<typeof models.MetricSettings>) =>
-    toDomainMetricSettings(setting),
+    toDomainMetricSettings(setting)
   );
 };
 
 /**
+ * * GET by ID
  * Get a specific metric setting by ID
- * @param userId - ID of the user
- * @param metricId - ID of the metric
- * @param settingsId - ID of the settings
- * @returns Metric settings object
- * @throws {AppError} If settings not found
  */
 // TODO: Create a service to fetch sequelize model by ID
 export const getMetricSettingsByIdService = async ({
@@ -138,40 +120,103 @@ export const getMetricSettingsByIdService = async ({
   settingsId,
 }: MetricSettingsParamsBase) => {
   // Ensure the metric settings exists and owned by the requesting user
-  const metricSettings = await findOwnedMetricSettings(
-    userId,
-    settingsId,
-  );
+  const metricSettings = await findOwnedMetricSettings(userId, settingsId);
 
   return toDomainMetricSettings(metricSettings);
 };
 
 /**
+ * * UPDATE
  * Update a metric setting
- * @param userId - ID of the user
- * @param metricId - ID of the metric
- * @param settingsId - ID of the settings
- * @param updates - Updated data
- * @returns Updated metric settings object
  */
+type Payload = {
+  goalEnabled?: boolean;
+  goalType?: "cumulative" | "incremental";
+  goalValue?: number | null;
+  timeFrameEnabled?: boolean;
+  startDate?: string | null;
+  deadlineDate?: string | null;
+  alertEnabled?: boolean;
+  alertThresholds?: number | null;
+  displayOptions?: {
+    showOnDashboard?: boolean | null;
+    priority?: number | null;
+    chartType?: string | null;
+    color?: string | null;
+  };
+};
+
 export const updateMetricSettingsService = async (
   userId: string,
   settingsId: string,
-  updateData: Partial<UpdateMetricSettingsRequestDTO>,
+  p: Partial<UpdateMetricSettingsRequestDTO>
 ): Promise<MetricSettingsDomain> => {
   // Ensure the metric settings exists and owned by the requesting user
-  const metricSettings = await findOwnedMetricSettings(
-    userId,
-    settingsId,
+  const metricSettings = await findOwnedMetricSettings(userId, settingsId);
+
+  // 1) normalize display options
+  if (p.displayOptions) {
+    p.displayOptions.showOnDashboard = Boolean(
+      p.displayOptions.showOnDashboard
+    );
+  }
+
+  // 2) invariants for goal
+  if (p.goalEnabled === false) {
+    p.goalType = null;
+    p.goalValue = null;
+  } else if (p.goalEnabled === true) {
+    if (p.goalType == null || p.goalValue == null) {
+      throw new AppError(
+        "goalType and goalValue are required when goalEnabled is true",
+        404
+      );
+    }
+  }
+
+  // 3) invariants for timeframe
+  if (p.timeFrameEnabled === false) {
+    p.startDate = null;
+    p.deadlineDate = null;
+  } else if (p.timeFrameEnabled === true) {
+    if (!p.startDate || !p.deadlineDate || p.deadlineDate <= p.startDate) {
+      throw new AppError(
+        "Valid startDate and deadlineDate required when timeFrameEnabled is true", 404
+      );
+    }
+  }
+
+  // 4) invariants for alert
+  if (p.alertEnabled === false) {
+    p.alertThresholds = null;
+  } else if (p.alertEnabled === true && p.alertThresholds == null) {
+    throw new AppError(
+      "alertThresholds is required when alertEnabled is true", 404
+    );
+  }
+
+  // 5) persist
+  await models.MetricSettings.update(
+    {
+      goalEnabled: p.goalEnabled,
+      goalType: p.goalType,
+      goalValue: p.goalValue,
+      timeFrameEnabled: p.timeFrameEnabled,
+      startDate: p.startDate,
+      deadlineDate: p.deadlineDate,
+      alertEnabled: p.alertEnabled,
+      alertThresholds: p.alertThresholds,
+      displayOptions: p.displayOptions, // JSONB
+    },
+    { where: { id: settingsId } }
   );
 
-  await metricSettings.update(updateData);
 
   // Reload to ensure the association is present
   await metricSettings.reload({
     include: [
       {
-        model: db.Metric,
+        model: models.Metric,
         as: "metric",
         attributes: ["id", "userId"],
       },
@@ -179,14 +224,10 @@ export const updateMetricSettingsService = async (
   });
 
   if (redisClient.isOpen && metricSettings.metric) {
-    await invalidateCache(`metricSetting:${metricSettings.metric.userId}:${metricSettings.id}`);
-    await invalidateCache(`metricSettings:${metricSettings.metric.userId}`);
-    // Invalidate specific metric settings if metricId was present
-    if (metricSettings.metric.id) {
-      await invalidateCache(`metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`);
-    }
-    logger.info(
-      `♻️ Cache invalidated for metricSetting:${metricSettings.id}, and metricSettings of user:${metricSettings.metric.userId} and metric:${metricSettings.metric.id}`,
+    await invalidateAllMetricSettingsCache(
+      metricSettings.metric.userId,
+      metricSettings.metric.id,
+      metricSettings.id
     );
   }
 
@@ -194,21 +235,15 @@ export const updateMetricSettingsService = async (
 };
 
 /**
+ * * DELETE
  * Delete metric settings
- * @param userId - ID of the user
- * @param metricId - ID of the metric
- * @param id - ID of the settings
- * @returns Deleted metric settings object
  */
 export const deleteMetricSettingsService = async ({
   userId,
   settingsId,
 }: MetricSettingsParamsBase): Promise<MetricSettingsDomain> => {
   // Ensure the metric settings exists and owned by the requesting user
-  const metricSettings = await findOwnedMetricSettings(
-    userId,
-    settingsId,
-  );
+  const metricSettings = await findOwnedMetricSettings(userId, settingsId);
 
   // Store associated Metric info before deletion.
   const associatedMetric = metricSettings.metric;
@@ -218,35 +253,25 @@ export const deleteMetricSettingsService = async ({
 
   // Invalidate cache using stored associated Metric data.
   if (redisClient.isOpen && associatedMetric) {
-    await invalidateCache(`metricSetting:${associatedMetric.userId}:${settingsId}`);
-    await invalidateCache(`metricSettings:${associatedMetric.userId}`);
-    // Invalidate specific metric settings if metricId was present
-    if (associatedMetric.id) {
-      await invalidateCache(`metricSettings:${associatedMetric.userId}:${associatedMetric.id}`);
-    }
-    logger.info(
-      `♻️ Cache invalidated for metricSetting:${settingsId}, and metricSettings of user:${associatedMetric.userId} and metric:${associatedMetric.id}`,
+    await invalidateAllMetricSettingsCache(
+      associatedMetric.userId,
+      associatedMetric.id,
+      settingsId
     );
   }
   return toDomainMetricSettings(metricSettings);
 };
 
 /**
+ * * PATCH
  * Update goal achievement status property
- * @param userId - ID of the user
- * @param metricId - ID of the metric
- * @param settingsId - ID of the settings
- * @returns Updated metric settings object
  */
 export const updateGoalAchievementService = async ({
   userId,
   settingsId,
 }: MetricSettingsParamsBase): Promise<MetricSettingsDomain> => {
   // Ensure the metric settings exists and owned by the requesting user
-  const metricSettings = await findOwnedMetricSettings(
-    userId,
-    settingsId,
-  );
+  const metricSettings = await findOwnedMetricSettings(userId, settingsId);
 
   await metricSettings.update({
     isAchieved: true,
@@ -256,7 +281,7 @@ export const updateGoalAchievementService = async ({
   await metricSettings.reload({
     include: [
       {
-        model: db.Metric,
+        model: models.Metric,
         as: "metric",
         attributes: ["id", "userId"],
       },
@@ -264,14 +289,10 @@ export const updateGoalAchievementService = async ({
   });
 
   if (redisClient.isOpen && metricSettings.metric) {
-    await invalidateCache(`metricSetting:${metricSettings.metric.userId}:${settingsId}`);
-    await invalidateCache(`metricSettings:${metricSettings.metric.userId}`);
-    // Invalidate specific metric settings if metricId was present
-    if (metricSettings.metric.id) {
-      await invalidateCache(`metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`);
-    }
-    logger.info(
-      `♻️ Cache invalidated for metricSetting:${settingsId}, and metricSettings of user:${metricSettings.metric.userId} and metric:${metricSettings.metric.id}`,
+    await invalidateAllMetricSettingsCache(
+      metricSettings.metric.userId,
+      metricSettings.metric.id,
+      settingsId
     );
   }
 
@@ -279,12 +300,8 @@ export const updateGoalAchievementService = async ({
 };
 
 /**
+ * * PATCH
  * Partial Update only for display options for a metric setting
- * @param userId - ID of the user
- * @param metricId - ID of the metric
- * @param settingsId - ID of the settings
- * @param displayOptions - Updated display options
- * @returns Updated metric settings object
  */
 interface UpdateDisplayOptionsParams extends MetricSettingsParamsBase {
   displayOptions: UpdateMetricSettingsRequestDTO["displayOptions"];
@@ -298,17 +315,14 @@ export const updateDisplayOptionsService = async ({
   MetricSettingsDomain["displayOptions"]
 > => {
   // Ensure the metric settings exists and owned by the requesting user
-  const metricSettings = await findOwnedMetricSettings(
-    userId,
-    settingsId,
-  );
+  const metricSettings = await findOwnedMetricSettings(userId, settingsId);
 
   await metricSettings.update({ displayOptions });
 
   await metricSettings.reload({
     include: [
       {
-        model: db.Metric,
+        model: models.Metric,
         as: "metric",
         attributes: ["id", "userId"],
       },
@@ -316,16 +330,45 @@ export const updateDisplayOptionsService = async ({
   });
 
   if (redisClient.isOpen && metricSettings.metric) {
-    await invalidateCache(`metricSetting:${metricSettings.metric.userId}:${settingsId}`);
-    await invalidateCache(`metricSettings:${metricSettings.metric.userId}`);
-    // Invalidate specific metric settings if metricId was present
-    if (metricSettings.metric.id) {
-      await invalidateCache(`metricSettings:${metricSettings.metric.userId}:${metricSettings.metric.id}`);
-    }
-    logger.info(
-      `♻️ Cache invalidated for metricSetting:${settingsId}, and metricSettings of user:${metricSettings.metric.userId} and metric:${metricSettings.metric.id}`,
+    await invalidateAllMetricSettingsCache(
+      metricSettings.metric.userId,
+      metricSettings.metric.id,
+      settingsId
     );
   }
 
   return toDomainDisplayOptions(metricSettings);
 };
+
+// * Helpers
+/**
+ * Invalidates all cache keys related to a user's metric settings for a specific metric,
+ * including general lists and specific setting details.
+ */
+export async function invalidateAllMetricSettingsCache(
+  userId: string,
+  metricId?: string,
+  settingsId?: string
+) {
+  logger.info(
+    `[CACHE] Invalidating metric settings for user=${userId}, metric=${metricId ?? "-"}, settings=${settingsId ?? "-"}`
+  );
+
+  // Invalidate general settings list for the user
+  await invalidateCache(`metricSettings:${userId}`);
+  await invalidateCacheByPattern(`metricSettings:${userId}:*`);
+
+  // Invalidate settings list for a specific metric if metricId is provided
+  if (metricId) {
+    await invalidateCache(`metricSettings:${userId}:${metricId}`);
+  }
+
+  // Invalidate specific metric setting if settingsId is provided
+  if (settingsId) {
+    await invalidateCache(`metricSetting:${userId}:${settingsId}`);
+  }
+
+  logger.info(
+    `[CACHE] Cache invalidated for metric settings of user:${userId}, metric:${metricId ?? "-"} and settings:${settingsId ?? "-"}`
+  );
+}

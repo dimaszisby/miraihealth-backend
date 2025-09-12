@@ -1,19 +1,8 @@
-// src/types/dtos/metric-settings.dto.ts
-
 import { z } from "zod";
-
-// Internal validation schemas
 import {
   createMetricSettingsSchema,
   updateMetricSettingsSchema,
 } from "@/types/api/zod-metric-settings.schema";
-
-/**
- * @file src/types/dtos/metric-settings.dto.ts
- * @description Defines the Data Transfer Objects (DTOs) for MetricSettings.
- * These interfaces and types are used for incoming and outgoing API contracts,
- * defining the structure of data exchanged between the client and server.
- */
 
 /**
  * @interface DisplayOptionsDTO
@@ -130,7 +119,7 @@ export interface MetricSettingsResponseDTO {
  * Inferred from the Zod schema for validation.
  */
 export type CreateMetricSettingsRequestDTO = z.infer<
-  typeof createMetricSettingsSchema.shape.body
+  typeof createMetricSettingsSchema.body
 >;
 
 /**
@@ -139,5 +128,5 @@ export type CreateMetricSettingsRequestDTO = z.infer<
  * Inferred from the Zod schema for validation.
  */
 export type UpdateMetricSettingsRequestDTO = z.infer<
-  typeof updateMetricSettingsSchema.shape.body
+  typeof updateMetricSettingsSchema.body
 >;

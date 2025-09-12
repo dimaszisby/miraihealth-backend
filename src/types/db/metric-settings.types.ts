@@ -1,4 +1,4 @@
-// src/types/db/metric-settings.types.ts
+
 
 /**
  * @interface MetricDisplayOptions

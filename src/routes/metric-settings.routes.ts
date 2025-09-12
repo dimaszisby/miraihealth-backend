@@ -1,147 +1,90 @@
-// src/routes/metric-settings.routes.ts
-
 import { Router } from "express";
-
-// Controllers
 import {
   createMetricSettings,
-  getAllMetricSettings,
   getMetricSettingsById,
   updateMetricSettings,
   deleteMetricSettings,
   updateGoalAchievement,
   updateDisplayOptions,
+  getAllMetricSettingsViaCursor,
 } from "@/controllers/metric-settings.controller.js";
-
-// Middleware
 import { authMiddleware } from "@/middleware/auth-middleware.js";
 import { cacheMiddleware } from "@/middleware/cache-middleware.js";
 import { userRateLimiter } from "@/middleware/rate-limiter.js";
 import { validate } from "@/middleware/validate.js";
-
-// Schema validation
 import {
   createMetricSettingsSchema,
   updateMetricSettingsSchema,
-  getAllMetricSettingsSchema,
   getMetricSettingsSchema,
   deleteMetricSettingsSchema,
+  listMetricSettingsViaCursorSchema,
 } from "@/types/api/zod-metric-settings.schema.js";
 import { z } from "zod";
+import { AuthRequest } from "@/types/request.context";
 
 const router = Router();
 
+//Offset
 const metricSettingsCacheKey = (req: any) =>
   `metricSettings:${req.user?.id}:${req.query.metricId || "all"}`;
+
 const metricSettingCacheKey = (req: any) =>
   `metricSetting:${req.user?.id}:${req.params.id}`;
-const goalStatsCacheKey = (req: any) =>
-  `goalStats:${req.user?.id}:${req.query.metricId || "all"}`;
 
-// Middleware to add deprecation warning
-const deprecateMetricSettingsRoute = (req: any, res: any, next: any) => {
-  res.setHeader("X-Deprecated-Endpoint", "true");
-  res.setHeader(
-    "Link",
-    '</api/v1/metric-settings>; rel="successor-version"; title="Use /api/v1/metric-settings instead"'
-  );
-  console.warn(
-    `DEPRECATED ACCESS: User ${req.user?.id} accessed deprecated metric settings endpoint: ${req.originalUrl}`
-  );
-  next();
-};
+// TODO: Refactor
+const firstNonEmpty = (...vals: unknown[]) =>
+  vals.find((v) => typeof v === "string" && v.trim().length > 0) as
+    | string
+    | undefined;
+
+// TODO: Refactor
+const bool01 = (v: any) => (v === true || v === "true" ? "1" : "0");
 
 const patchParams = { params: z.object({ id: z.string().uuid() }) };
 
-// Apply Authentication Middleware Globally
+// Cursor List Cache Key
+const metricSettingsCursorCacheKey = (req: AuthRequest) => {
+  const q = req.query as any;
+  const filter = (q && typeof q.filter === "object" && q.filter) || {};
+
+  const metricId =
+    firstNonEmpty(
+      filter.metricId,
+      q["filter[metricId]"],
+      q.metricId,
+      req.params?.metricId
+    ) ?? "_";
+
+  const limit = Number(q.limit ?? 20);
+  const sort = String(q.sort ?? "-createdAt");
+  const after = typeof q.after === "string" ? q.after : "";
+  const it = bool01(q.includeTotal);
+
+  const key = [
+    "metric-settings-cursor:v1",
+    req.user?.id ?? "_",
+    `l:${limit}`,
+    `s:${sort}`,
+    `fm:${metricId}`,
+    `after:${after}`,
+    `it:${it}`,
+  ].join(":");
+
+  console.log("[cache:key]", key);
+  return key;
+};
+
+// Global Auth
 router.use(authMiddleware);
 
-/**
- * * Deprecated Nested Routes (for backward compatibility)
- * These routes will be removed after a migration period.
- */
-
-// DEPRECATED: CREATE Settings
-router.post(
-  "/metrics/:metricId/settings/",
-  deprecateMetricSettingsRoute,
-  userRateLimiter,
-  validate(createMetricSettingsSchema),
-  createMetricSettings
-);
-
-// DEPRECATED: GET All Settings by Metric Id
-router.get(
-  "/metrics/:metricId/settings/",
-  deprecateMetricSettingsRoute,
-  validate(getAllMetricSettingsSchema),
-  cacheMiddleware(metricSettingsCacheKey, 300),
-  getAllMetricSettings
-);
-
-// DEPRECATED: GET Specific Settings by Id
-router.get(
-  "/metrics/:metricId/settings/:id",
-  deprecateMetricSettingsRoute,
-  validate(getMetricSettingsSchema),
-  cacheMiddleware(metricSettingCacheKey, 300),
-  getMetricSettingsById
-);
-
-// DEPRECATED: UPDATE Settings
-router.put(
-  "/metrics/:metricId/settings/:id",
-  deprecateMetricSettingsRoute,
-  userRateLimiter,
-  validate(updateMetricSettingsSchema),
-  updateMetricSettings
-);
-
-// DEPRECATED: DELETE Settings
-router.delete(
-  "/metrics/:metricId/settings/:id",
-  deprecateMetricSettingsRoute,
-  userRateLimiter,
-  validate(deleteMetricSettingsSchema),
-  deleteMetricSettings
-);
-
-// DEPRECATED: New PATCH endpoints
-router.patch(
-  "/metrics/:metricId/settings/:id/achieve",
-  deprecateMetricSettingsRoute,
-  userRateLimiter,
-  updateGoalAchievement
-);
-router.patch(
-  "/metrics/:metricId/settings/:id/display",
-  deprecateMetricSettingsRoute,
-  userRateLimiter,
-  updateDisplayOptions
-);
-
-/**
- * * Metric Settings Endpoints
- *
- * Use userRateLimiter for writes (POST, PUT, DELETE)
- * - to limit how many logs a single user can create or update within the given time window (default 15 min).
- *
- */
-
-// CREATE Settings
-router.post(
-  "/",
-  userRateLimiter,
-  validate(createMetricSettingsSchema),
-  createMetricSettings
-);
+// * =========== Query Endpoints ===========
 
 // GET All Settings (with optional metricId filter)
 router.get(
   "/",
-  validate(getAllMetricSettingsSchema),
-  cacheMiddleware(metricSettingsCacheKey, 300),
-  getAllMetricSettings
+  validate(listMetricSettingsViaCursorSchema),
+  cacheMiddleware(metricSettingsCursorCacheKey, 300),
+  getAllMetricSettingsViaCursor // This will be replaced with listMetricSettingsViaCursor
 );
 
 // GET Specific Settings by Id
@@ -150,6 +93,16 @@ router.get(
   validate(getMetricSettingsSchema),
   cacheMiddleware(metricSettingCacheKey, 300),
   getMetricSettingsById
+);
+
+// * =========== Commands Endpoints ===========
+
+// CREATE Settings
+router.post(
+  "/",
+  userRateLimiter,
+  validate(createMetricSettingsSchema),
+  createMetricSettings
 );
 
 // UPDATE Settings
@@ -175,6 +128,7 @@ router.patch(
   validate(patchParams as any),
   updateGoalAchievement
 );
+
 router.patch(
   "/:id/display",
   userRateLimiter,
