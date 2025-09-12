@@ -24,7 +24,10 @@ import { AuthRequest } from "@/types/request.context";
 
 const router = Router();
 
-//Offset
+/**
+ * Offset
+ * @deprecated migrate to cursor based
+ */
 const metricSettingsCacheKey = (req: any) =>
   `metricSettings:${req.user?.id}:${req.query.metricId || "all"}`;
 
