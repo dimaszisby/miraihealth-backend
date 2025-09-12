@@ -11,7 +11,7 @@ import {
 import { GenerateDummyMetricLogsRequestDTO } from "@/types/dtos/metric-log.dto";
 import { listMetricLogsViaCursorSchema } from "@/types/api/zod-metric-log.schema.js";
 import { listLogsViaCursor } from "@/features/metric-log/application/queries/listMetricLogs.js";
-import { parseIsoToDate } from "@/utils/date-io.js";
+import { assertAuthenticated } from "@/utils/auth-guards.js";
 
 /**
  * * Create a Log for a Metric
@@ -19,18 +19,17 @@ import { parseIsoToDate } from "@/utils/date-io.js";
  */
 export const createMetricLog = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
-    const userId = req.user.id;
+    assertAuthenticated(req);
 
     const { metricId, type, logValue, loggedAt } = req.body;
 
     const logDomain = await metricLogService.createLog({
-      userId: userId,
+      userId: req.user.id,
       logData: {
         metricId,
         type,
         logValue,
-        loggedAt: parseIsoToDate(loggedAt),
+        loggedAt: loggedAt, // normalized on service
       },
     });
     const dto = toMetricLogResponseDTO(logDomain);
@@ -42,19 +41,18 @@ export const createMetricLog = catchAsync(
 /**
  * * Get All Logs for a Metric
  * @route GET /api/metrics-logs/
- * @deprecated Use cursor-based pagination instead
+ * @deprecated migrate to cursor-based pagination
  */
 export const getAllLogsByMetric = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
-    const userId = req.user.id;
+    assertAuthenticated(req);
 
     const { metricId, startDate, endDate, sortBy, order, page, limit } =
       req.query;
 
     const { logs, totalCount } =
       await metricLogService.getAllLogsByMetricService({
-        userId: userId,
+        userId: req.user.id,
         options: {
           metricId: metricId as string,
           startDate: startDate ? new Date(startDate as string) : undefined,
@@ -78,14 +76,13 @@ export const getAllLogsByMetric = catchAsync(
 
 export const getUserLogLibrariesViaCursor = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
-    const userId = req.user.id;
+    assertAuthenticated(req);
 
     const parsed = listMetricLogsViaCursorSchema.query.parse(req.query);
     const { limit, sort, q, after, includeTotal, filter } = parsed;
 
     const page = await listLogsViaCursor({
-      userId,
+      userId: req.user.id,
       limit,
       sort,
       q,
@@ -114,18 +111,17 @@ export const getUserLogLibrariesViaCursor = catchAsync(
  */
 export const getLogById = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
-    const userId = req.user.id;
+    assertAuthenticated(req);
 
-    const { id } = req.params;
-    const { metricId } = req.query; // metricId is now an optional query parameter for GET by ID
-
+    const { metricId } = req.query; // opt params
     if (!metricId)
-      throw new AppError("metricId is required as a query parameter", 400); // Still require metricId for validation
+      throw new AppError("metricId is required as a query parameter", 400);
+
     const logDomain = await metricLogService.getLogByIdService({
-      userId: userId,
-      logId: id,
+      userId: req.user.id,
+      logId: req.params.id,
     });
+
     // After fetching, verify that the log belongs to the specified metricId
     if (logDomain.metricId !== metricId) {
       throw new AppError("Log not found for the specified metric", 404);
@@ -142,19 +138,17 @@ export const getLogById = catchAsync(
  */
 export const updateLog = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
-    const userId = req.user.id;
+    assertAuthenticated(req);
 
-    const { id } = req.params;
     const { logValue, type, loggedAt } = req.body;
 
     const logDomain = await metricLogService.updateLogService({
-      userId: userId,
-      logId: id,
+      userId: req.user.id,
+      logId: req.params.id,
       updateData: {
         logValue,
         type,
-        loggedAt: parseIsoToDate(loggedAt),
+        loggedAt: loggedAt, // normalized on service
       },
     });
     const dto = toMetricLogResponseDTO(logDomain);
@@ -169,13 +163,11 @@ export const updateLog = catchAsync(
  */
 export const deleteLog = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
-    const userId = req.user.id;
-    const { id } = req.params;
+    assertAuthenticated(req);
 
     const logDomain = await metricLogService.deleteLogService({
-      userId: userId,
-      logId: id,
+      userId: req.user.id,
+      logId: req.params.id,
     });
     const dto = toMetricLogResponseDTO(logDomain);
 
@@ -189,13 +181,12 @@ export const deleteLog = catchAsync(
  */
 export const getAggregatedStats = catchAsync(
   async (req: AuthRequest, res: Response) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
-    const userId = req.user.id;
+    assertAuthenticated(req);
 
     const { metricId } = req.query;
 
     const stats = await metricLogService.getAggregatedStats(
-      userId,
+      req.user.id,
       metricId as string
     );
     successResponse(res, 200, stats);
@@ -212,17 +203,16 @@ export const getAggregatedStats = catchAsync(
  */
 export const generateDummyMetricLogs = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
-    const userId = req.user.id;
+    assertAuthenticated(req);
 
     const { metricId, count } = req.body as GenerateDummyMetricLogsRequestDTO;
 
     console.log(
-      `Generating ${count} dummy logs for metric ${metricId} for user ${userId}`
+      `Generating ${count} dummy logs for metric ${metricId} for user ${req.user.id}`
     );
 
     const dummyLogs = await metricLogService.generateDummyLogsService({
-      userId,
+      userId: req.user.id,
       metricId,
       count,
     });
