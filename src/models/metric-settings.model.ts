@@ -1,5 +1,3 @@
-// src/models/metric-settings.model.ts
-
 import {
   Model,
   DataTypes,
@@ -11,17 +9,6 @@ import {
 import { MetricSettingsAttributesBase } from "@/types/db/metric-settings.types";
 import type { Metric } from "./metric.model";
 import { DbModels } from "./types.js";
-
-/**
- * * MetricSettings Model
- * Represents customizable settings for health metrics.
- */
-
-/**
- * * MetricSettings Attributes
- * Represents the Model Attributes of Metric Settings
- * Describe the shape of data specifically for the database
- */
 
 export interface MetricSettingsAttributes extends MetricSettingsAttributesBase {
   // DB-specifics
@@ -46,16 +33,21 @@ export class MetricSettings
 {
   declare id: string;
   declare metricId: string;
+  declare isActive: boolean;
+
   declare goalEnabled: boolean;
   declare goalType: "cumulative" | "incremental" | null;
   declare goalValue: number | null;
+
   declare timeFrameEnabled: boolean;
   declare startDate: Date | null;
   declare deadlineDate: Date | null;
+
   declare alertEnabled: boolean;
   declare alertThresholds: number | null;
+
   declare isAchieved: boolean;
-  declare isActive: boolean;
+
   declare displayOptions: {
     showOnDashboard: boolean;
     priority: number | null;
@@ -87,6 +79,7 @@ export class MetricSettings
         },
         goalEnabled: {
           type: DataTypes.BOOLEAN,
+          allowNull: false,
           defaultValue: false,
         },
         goalType: {
@@ -106,6 +99,7 @@ export class MetricSettings
         },
         timeFrameEnabled: {
           type: DataTypes.BOOLEAN,
+          allowNull: false,
           defaultValue: false,
         },
         startDate: {
@@ -131,6 +125,7 @@ export class MetricSettings
         },
         alertEnabled: {
           type: DataTypes.BOOLEAN,
+          allowNull: false,
           defaultValue: false,
         },
         alertThresholds: {
@@ -147,10 +142,12 @@ export class MetricSettings
         },
         isAchieved: {
           type: DataTypes.BOOLEAN,
+          allowNull: false,
           defaultValue: false,
         },
         isActive: {
           type: DataTypes.BOOLEAN,
+          allowNull: false,
           defaultValue: true,
         },
         displayOptions: {
