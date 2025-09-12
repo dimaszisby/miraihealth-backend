@@ -14,6 +14,7 @@ import {
 import AppError from "@/utils/AppError";
 import { successResponse } from "@/utils/response-formatter";
 import catchAsync from "@/utils/catch-async";
+import { assertAuthenticated } from "@/utils/auth-guards";
 
 /**
  * * Create a new Metric
@@ -21,8 +22,8 @@ import catchAsync from "@/utils/catch-async";
  */
 export const createMetric = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
-    const userId = req.user.id;
+    assertAuthenticated(req);
+
     const {
       categoryId,
       originalMetricId,
@@ -33,7 +34,7 @@ export const createMetric = catchAsync(
     } = req.body;
 
     const metricDomain: MetricDomain = await MetricService.createMetricService(
-      userId,
+      req.user.id,
       {
         categoryId,
         originalMetricId,
@@ -51,13 +52,12 @@ export const createMetric = catchAsync(
 
 /**
  * * Get All Metrics owned by User
- * @deprecated replaced with cursor fetch method
  * @route GET /api/metrics
+ * @deprecated replaced with cursor fetch method
  */
 export const getUserMetricLibraries = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
-    const userId = req.user.id;
+    assertAuthenticated(req);
 
     // Sanitize and validate pagination params
     let { page = 1, limit = 20 } = req.query;
@@ -69,7 +69,7 @@ export const getUserMetricLibraries = catchAsync(
 
     // Forward all params, including sanitized pagination
     const { metricsDomain, total } =
-      await MetricService.getUserMetricLibrariesService(userId, {
+      await MetricService.getUserMetricLibrariesService(req.user.id, {
         ...req.query,
         page,
         limit,
@@ -95,14 +95,13 @@ export const getUserMetricLibraries = catchAsync(
 
 export const getUserMetricLibrariesViaCursor = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
-    const userId = req.user.id;
+    assertAuthenticated(req);
 
     const parsed = listMetricQueryViaCursor.parse(req.query);
     const { limit, sort, q, after, includeTotal, filter } = parsed;
 
     const page = await listMetricsViaCursor({
-      userId,
+      userId: req.user.id,
       limit,
       sort,
       q,
@@ -131,9 +130,7 @@ export const getUserMetricLibrariesViaCursor = catchAsync(
  */
 export const getUserDetailMetricById = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
-    const userId = req.user.id;
-    const { id } = req.params;
+    assertAuthenticated(req);
 
     const includeRaw = String(req.query.include ?? "flat");
     const allowed = new Set(["settings", "category", "logs"]);
@@ -150,10 +147,14 @@ export const getUserDetailMetricById = catchAsync(
 
     const logsLimit = Number(req.query.logsLimit ?? 20);
 
-    const metric = await MetricService.getUserMetricDetailService(userId, id, {
-      includes,
-      logsLimit,
-    });
+    const metric = await MetricService.getUserMetricDetailService(
+      req.user.id,
+      req.params.id,
+      {
+        includes,
+        logsLimit,
+      }
+    );
     if (!metric) {
       throw new AppError("Metric not found", 404);
     }
@@ -208,12 +209,14 @@ export const getUserDetailMetricById = catchAsync(
  */
 export const updateMetric = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
-    const userId = req.user.id;
-    const { id } = req.params;
+    assertAuthenticated(req);
 
     const updatedMetricDomain: MetricDomain =
-      await MetricService.updateMetricService(id, userId, req.body);
+      await MetricService.updateMetricService(
+        req.params.id,
+        req.user.id,
+        req.body
+      );
     const dto = toMetricResponseDTO(updatedMetricDomain);
 
     successResponse(res, 200, dto, "Metric updated successfully");
@@ -226,13 +229,11 @@ export const updateMetric = catchAsync(
  */
 export const deleteMetric = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
-    const userId = req.user.id;
-    const { id } = req.params;
+    assertAuthenticated(req);
 
     const metricDomain: MetricDomain = await MetricService.deleteMetricService(
-      userId,
-      id
+      req.user.id,
+      req.params.id
     );
     const dto = toMetricResponseDTO(metricDomain);
 
@@ -250,12 +251,11 @@ export const deleteMetric = catchAsync(
  */
 export const generateDummyMetrics = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
-    const userId = req.user.id;
+    assertAuthenticated(req);
     const { count } = req.body as GenerateDummyMetricsRequestDTO;
 
     const dummyMetrics = await MetricService.generateDummyMetricsService(
-      userId,
+      req.user.id,
       count
     );
     const dto = dummyMetrics.map(toMetricResponseDTO);
