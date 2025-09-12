@@ -1,18 +1,14 @@
-// src/features/metric-category/infrastructure/http/controller.ts
-
 import { Response, NextFunction } from "express";
 import { MetricCategoryDomain } from "@/features/metric-category/legacies/MetricCategoryLegacy.domain";
 import { AuthRequest } from "@/types/request.context";
-import AppError from "@/utils/AppError";
 import catchAsync from "@/utils/catch-async";
 import { successResponse } from "@/utils/response-formatter";
 import { GenerateDummyMetricCategoriesRequestDTO } from "@/features/metric-category/infrastructure/http/dto";
 import { listCategoriesQuery } from "@/features/metric-category/infrastructure/http/schema.zod";
 import {
   toListResponseDTOLegacy,
-  toMResponseDTOLegacy,
+  toResponseDTOLegacy,
 } from "./MetricCategoryLegacy.mapper";
-import { SortParam } from "../domain/types";
 import {
   createMetricCategoryServiceLegacy,
   deleteMetricCategoryServiceLegacy,
@@ -21,24 +17,7 @@ import {
   listMetricCategoriesLegacy,
   updateMetricCategoryServiceLegacy,
 } from "./MetricCategoryLegacy.service";
-
-/**
- * * Metric Category Controller
- * Handles CRUD operations for metric categories.
- */
-
-const isSortParam = (v: unknown): v is SortParam =>
-  typeof v === "string" &&
-  [
-    "createdAt",
-    "-createdAt",
-    "updatedAt",
-    "-updatedAt",
-    "name",
-    "-name",
-    "metricCount",
-    "-metricCount",
-  ].includes(v);
+import { assertAuthenticated } from "@/utils/auth-guards";
 
 /**
  * * Create a new Metric Category
@@ -46,16 +25,14 @@ const isSortParam = (v: unknown): v is SortParam =>
  */
 export const createCategoryLegacy = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+    assertAuthenticated(req);
 
     const category: MetricCategoryDomain =
       await createMetricCategoryServiceLegacy(req.user.id, req.body);
-    successResponse(
-      res,
-      201,
-      { category: toMResponseDTOLegacy(category) },
-      "Category created successfully"
-    );
+
+    const dto = toResponseDTOLegacy(category);
+
+    successResponse(res, 201, dto, "Category created successfully");
   }
 );
 
@@ -65,9 +42,7 @@ export const createCategoryLegacy = catchAsync(
  */
 export const getAllCategoriesLegacy = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
-
-    const userId = req.user.id;
+    assertAuthenticated(req);
 
     const parsed = listCategoriesQuery.parse(req.query);
     const { limit, sort, q, after, includeTotal } = parsed;
@@ -77,7 +52,7 @@ export const getAllCategoriesLegacy = catchAsync(
         : undefined;
 
     const page = await listMetricCategoriesLegacy({
-      userId,
+      userId: req.user.id,
       limit,
       sort,
       q,
@@ -88,7 +63,7 @@ export const getAllCategoriesLegacy = catchAsync(
 
     // Explicit response DTO to guarantee presence/absence of keys as intended
     const dto = {
-      items: page.items.map(toMResponseDTOLegacy),
+      items: page.items.map(toResponseDTOLegacy),
       nextCursor: page.nextCursor,
       sort: page.sort,
       limit: page.limit,
@@ -98,7 +73,7 @@ export const getAllCategoriesLegacy = catchAsync(
     };
 
     // Question: Should have an explicit return DTO type/mapper like other function
-    successResponse(res, 200, dto);
+    successResponse(res, 200, dto, "Categories list retrieved successfully");
   }
 );
 
@@ -108,12 +83,12 @@ export const getAllCategoriesLegacy = catchAsync(
  */
 export const getCategoryByIdLegacy = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+    assertAuthenticated(req);
 
     const category: MetricCategoryDomain =
       await getUserMetricCategoryByIdServiceLegacy(req.user.id, req.params.id);
 
-    const dto = toMResponseDTOLegacy(category);
+    const dto = toResponseDTOLegacy(category);
 
     successResponse(res, 200, dto, "Category retrieved successfully");
   }
@@ -125,7 +100,7 @@ export const getCategoryByIdLegacy = catchAsync(
  */
 export const updateCategoryLegacy = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+    assertAuthenticated(req);
 
     const category: MetricCategoryDomain =
       await updateMetricCategoryServiceLegacy(
@@ -133,12 +108,10 @@ export const updateCategoryLegacy = catchAsync(
         req.params.id,
         req.body
       );
-    successResponse(
-      res,
-      200,
-      { category: toMResponseDTOLegacy(category) },
-      "Category updated successfully"
-    );
+
+    const dto = toResponseDTOLegacy(category);
+
+    successResponse(res, 200, dto, "Category updated successfully");
   }
 );
 
@@ -148,16 +121,14 @@ export const updateCategoryLegacy = catchAsync(
  */
 export const deleteCategoryLegacy = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+    assertAuthenticated(req);
 
     const category: MetricCategoryDomain =
       await deleteMetricCategoryServiceLegacy(req.user.id, req.params.id);
-    successResponse(
-      res,
-      200,
-      { category: toMResponseDTOLegacy(category) },
-      "Category deleted successfully"
-    );
+
+    const dto = toResponseDTOLegacy(category);
+
+    successResponse(res, 200, dto, "Category deleted successfully");
   }
 );
 
@@ -171,20 +142,21 @@ export const deleteCategoryLegacy = catchAsync(
  */
 export const generateDummyCategoriesLegacy = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+    assertAuthenticated(req);
 
-    const userId = req.user.id;
     const { count } = req.body as GenerateDummyMetricCategoriesRequestDTO;
 
     const dummyCategories = await generateDummyCategoriesServiceLegacy(
-      userId,
+      req.user.id,
       count
     );
+
+    const dto = toListResponseDTOLegacy(dummyCategories);
 
     successResponse(
       res,
       201,
-      { categories: toListResponseDTOLegacy(dummyCategories) },
+      dto,
       `${count} dummy metric categories generated successfully`
     );
   }
