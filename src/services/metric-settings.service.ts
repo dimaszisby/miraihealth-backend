@@ -77,7 +77,7 @@ export const createMetricSettingsService = async (
 };
 
 /**
- * * GET all
+ * * GET all via Offset
  * Get all metric settings for a specific metric
  */
 export const getAllMetricSettingsService = async (
@@ -208,9 +208,8 @@ export const updateMetricSettingsService = async (
       alertThresholds: p.alertThresholds,
       displayOptions: p.displayOptions, // JSONB
     },
-    { where: { id: settingsId } }
+    { where: { id: settingsId } } // Metric Models do not have userId, the relation only with Metric, should we de-normalize data?
   );
-
 
   // Reload to ensure the association is present
   await metricSettings.reload({
