@@ -1,5 +1,8 @@
 import { BucketSpec } from "../../domain/buckets";
 
+// Query for logs in a singular metric
+// used for data visualizations in Metric Details Page
+
 export function buildVisualizationSQL(spec: BucketSpec) {
   // Uses :interval, :tz, :start, :end, :metricId
   // Aligns to bucket boundaries in the user's TZ.
@@ -31,7 +34,7 @@ export function buildVisualizationSQL(spec: BucketSpec) {
         avg(log_value) AS avg_value,
         min(log_value) AS min_value,
         max(log_value) AS max_value,
-        count(*)       AS cnt
+        count(*)::int       AS cnt
       FROM logs
       GROUP BY 1
     )

@@ -11,34 +11,10 @@ import {
 import { models } from "@/models";
 import { BucketAlias, BucketSpec, resolveBucket } from "../../domain/buckets";
 
+// Handling queries for logs for a singular metric
+// used for data visualizations in Metric Details Page
+
 const MAX_BUCKETS = Number(process.env.VIZ_MAX_BUCKETS ?? 400);
-
-function assertBounds(startISO: string, endISO: string, spec: BucketSpec) {
-  const start = Date.parse(startISO);
-  const end = Date.parse(endISO);
-
-  if (Number.isNaN(start) || Number.isNaN(end) || end <= start) {
-    throw new AppError("Invalid date range", 400);
-  }
-
-  // Fast pre-check; OK to be approximate for months/years
-  const est = Math.ceil((end - start) / spec.approxMs) + 2;
-  if (est > MAX_BUCKETS) {
-    throw new AppError(
-      `Range too large for ${spec.iso} (~${est} buckets, max=${MAX_BUCKETS})`,
-      400
-    );
-  }
-}
-
-// TODO: Refactor to helper
-async function assertOwnership(userId: string, metricId: string) {
-  const metric = await models.Metric.findOne({
-    where: { id: metricId, userId },
-  });
-  if (!metric) throw new AppError("Metric not found", 404);
-  return metric;
-}
 
 export async function getVisualization(input: {
   userId: string;
@@ -74,9 +50,6 @@ export async function getVisualization(input: {
     fill: input.fill ?? "none",
   });
 
-  if (await getCachedViz<VizResponse>(cacheK))
-    return (await getCachedViz<VizResponse>(cacheK))!;
-
   const cached = await getCachedViz<VizResponse>(cacheK);
   if (cached) return cached;
 
@@ -106,9 +79,11 @@ export async function getVisualization(input: {
 
   const numeric = (x: number | null): x is number =>
     typeof x === "number" && !Number.isNaN(x);
+
   const allAvg = rows.map((r: VizRow) => r.avg_value).filter(numeric);
   const allMin = rows.map((r: VizRow) => r.min_value).filter(numeric);
   const allMax = rows.map((r: VizRow) => r.max_value).filter(numeric);
+  
   const count = rows.reduce((acc: number, r: VizRow) => acc + (r.cnt ?? 0), 0);
 
   const stats = {
@@ -138,4 +113,32 @@ export async function getVisualization(input: {
 
   await setCachedViz(cacheK, result);
   return result;
+}
+
+// local specific helper
+function assertBounds(startISO: string, endISO: string, spec: BucketSpec) {
+  const start = Date.parse(startISO);
+  const end = Date.parse(endISO);
+
+  if (Number.isNaN(start) || Number.isNaN(end) || end <= start) {
+    throw new AppError("Invalid date range", 400);
+  }
+
+  // Fast pre-check; OK to be approximate for months/years
+  const est = Math.ceil((end - start) / spec.approxMs) + 2;
+  if (est > MAX_BUCKETS) {
+    throw new AppError(
+      `Range too large for ${spec.iso} (~${est} buckets, max=${MAX_BUCKETS})`,
+      400
+    );
+  }
+}
+
+// TODO: Refactor to helper
+async function assertOwnership(userId: string, metricId: string) {
+  const metric = await models.Metric.findOne({
+    where: { id: metricId, userId },
+  });
+  if (!metric) throw new AppError("Metric not found", 404);
+  return metric;
 }

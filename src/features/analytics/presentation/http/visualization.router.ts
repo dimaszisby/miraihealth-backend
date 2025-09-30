@@ -1,8 +1,11 @@
 import { Router } from "express";
-import { handleGetVisualization } from "./visualization.controller";
+import {
+  handleGetDashboardVisualization,
+  handleGetVisualization,
+} from "./visualization.controller";
 import { authMiddleware } from "../../../../middleware/auth-middleware";
 import { validate } from "../../../../middleware/validate";
-import { getVisualizationSchema } from "./validators";
+import { getDashboardVizSchema, getVisualizationSchema } from "./validators";
 import catchAsync from "../../../../utils/catch-async";
 
 const router = Router();
@@ -11,7 +14,13 @@ router.use(authMiddleware);
 
 // TODO: User Rate Limit
 router.get(
-  "/:metricId",
+  "/dashboard",
+  validate(getDashboardVizSchema),
+  catchAsync(handleGetDashboardVisualization)
+);
+
+router.get(
+  "/metrics/:metricId",
   validate(getVisualizationSchema),
   catchAsync(handleGetVisualization)
 );

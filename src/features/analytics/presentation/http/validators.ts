@@ -69,6 +69,8 @@ function computeStartEndFromLast(last: string) {
 }
 
 // * Schemas
+
+// Singular Visualization for a Metric
 export const getVisualizationSchema = z
   .object({
     params: z.object({ metricId: z.string().uuid("Invalid metric ID format") }),
@@ -87,4 +89,24 @@ export const getVisualizationSchema = z
     }
 
     return { params, query }; // validated absolute path
+  });
+
+// Multiple Visualization for Metric Collections (in Dashboard)
+export const getDashboardVizSchema = z
+  .object({
+    query: z
+      .object({
+        bucket: BucketEnum.default("1d"),
+        tz: tzSchema,
+        fill: FillEnum.default("none"),
+        limit: z.coerce.number().int().positive().max(48).default(12),
+      })
+      .and(z.union([AbsoluteRange, RelativeRange])),
+  })
+  .transform(({ query }) => {
+    if ("last" in query) {
+      const { startISO, endISO } = computeStartEndFromLast(query.last);
+      return { query: { ...query, start: startISO, end: endISO } };
+    }
+    return { query };
   });

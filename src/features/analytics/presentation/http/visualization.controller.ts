@@ -3,7 +3,9 @@ import { getVisualization } from "../../application/queries/getVisualization";
 import { AuthRequest } from "@/types/request.context";
 import { assertAuthenticated } from "@/utils/auth-guards";
 import { pickValidated } from "@/middleware/validated";
-import { getVisualizationSchema } from "./validators";
+import { getDashboardVizSchema, getVisualizationSchema } from "./validators";
+import { successResponse } from "@/utils/response-formatter";
+import { getDashboardVisualization } from "../../application/queries/getDashboardVisualization";
 
 // TODO: Refactor
 function makeEtag(body: unknown) {
@@ -36,7 +38,35 @@ export async function handleGetVisualization(
     if (req.headers["if-none-match"] === etag) return res.status(304).end();
     res.setHeader("ETag", etag);
 
-    return res.json(data);
+    return successResponse(res, 200, data);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function handleGetDashboardVisualization(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    assertAuthenticated(req);
+    const { query } = pickValidated(getDashboardVizSchema)(req);
+
+    const data = await getDashboardVisualization({
+      userId: req.user.id,
+      startISO: query.start,
+      endISO: query.end,
+      bucket: query.bucket,
+      tz: query.tz,
+      fill: query.fill,
+      limit: query.limit,
+    });
+
+    const etag = makeEtag(data);
+    if (req.headers["if-none-match"] === etag) return res.status(304).end();
+    res.setHeader("ETag", etag);
+    return successResponse(res, 200, data);
   } catch (err) {
     next(err);
   }
