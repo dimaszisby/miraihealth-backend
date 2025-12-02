@@ -1,6 +1,36 @@
-# Backend Documentation
+# Backend Types Documentation
 
-## zod-metric-category.schema.ts
+This document provides an overview and detailed content of the TypeScript type definitions and Zod validation rules used in the backend application. It covers API schemas, database interfaces, domain models, data transfer objects (DTOs), and reusable Zod validation rules.
+
+## src/types/request.context.ts
+
+```typescript
+// src/types/request.context.ts
+
+import { Request } from "express";
+import { UserDomain } from "@/types/domain/user.domain";
+
+/**
+ * * Extended Request Interface for Authenticated Routes
+ * Ensures all authenticated requests include user information.
+ * The user property in AuthRequest is defined as optional (user?: User) because not all routes require authentication
+ */
+export interface AuthRequest extends Request {
+  user?: UserDomain;
+}
+```
+
+## src/types/xss-clean.d.ts
+
+```typescript
+declare module "xss-clean" {
+  import { RequestHandler } from "express";
+  const xssClean: () => RequestHandler;
+  export default xssClean;
+}
+```
+
+## src/types/api/zod-metric-category.schema.ts
 
 ```typescript
 // src/types/api/metric-category.schema.ts
@@ -53,26 +83,33 @@ export const deleteMetricCategorySchema = z.object({
   }),
 });
 
+/**
+ * * ===== Schemas for Testing Purposes =====
+ */
+
+export const generateDummyMetricCategoriesSchema = z.object({
+  body: z.object({
+    count: z.number().int().min(1).max(1000).default(50), // Default to 50, max 1000
+  }),
+});
 ```
 
-## zod-metric-log.schema.ts
+## src/types/api/zod-metric-log.schema.ts
 
 ```typescript
 // src/types/api/zod-metric-log.schema.ts
 
-import { z } from "zod";
 import {
-  zUUID,
+  zDateOptional,
   zLogType,
   zPositiveFloat,
-  zDateOptional,
+  zUUID,
 } from "@/validators/zod-rules";
+import { z } from "zod";
 
 export const createMetricLogSchema = z.object({
-  params: z.object({
-    metricId: zUUID,
-  }),
   body: z.object({
+    metricId: zUUID,
     type: zLogType.optional().default("manual"),
     logValue: zPositiveFloat,
     loggedAt: zDateOptional,
@@ -81,7 +118,6 @@ export const createMetricLogSchema = z.object({
 
 export const updateMetricLogSchema = z.object({
   params: z.object({
-    metricId: zUUID,
     id: zUUID,
   }),
   body: z.object({
@@ -93,33 +129,47 @@ export const updateMetricLogSchema = z.object({
 
 export const getMetricLogSchema = z.object({
   params: z.object({
-    metricId: zUUID,
     id: zUUID,
   }),
 });
 
 export const getAllMetricLogsSchema = z.object({
-  params: z.object({
-    metricId: zUUID,
-  }),
+  query: z.object({
+    metricId: zUUID.optional(),
+    startDate: zDateOptional,
+    endDate: zDateOptional,
+    sortBy: z.string().optional(),
+    order: z.enum(["asc", "desc"]).optional(),
+    page: z.preprocess(Number, z.number().int().min(1)).optional().default(1),
+    limit: z.preprocess(Number, z.number().int().min(1)).optional().default(10),
+  }).optional(),
 });
 
 export const deleteMetricLogSchema = z.object({
   params: z.object({
-    metricId: zUUID,
     id: zUUID,
   }),
 });
 
 export const getAggregatedStatsSchema = z.object({
-  params: z.object({
-    metricId: zUUID,
+  query: z.object({
+    metricId: zUUID.optional(),
   }),
 });
 
+/**
+ * * ===== Schemas for Testing Purposes =====
+ */
+
+export const generateDummyMetricLogsSchema = z.object({
+  body: z.object({
+    metricId: zUUID,
+    count: z.number().int().min(1).max(1000).default(50), // Default to 50, max 1000 to prevent abuse
+  }),
+});
 ```
 
-## zod-metric-settings.schema.ts
+## src/types/api/zod-metric-settings.schema.ts
 
 ```typescript
 // src/types/api/zod-metric-settings.schema.ts
@@ -135,11 +185,9 @@ import {
 } from "@/validators/zod-rules";
 
 export const createMetricSettingsSchema = z.object({
-  params: z.object({
-    metricId: zUUID,
-  }),
   body: z
     .object({
+      metricId: zUUID,
       goalEnabled: z.boolean().optional().default(false),
       goalType: zGoalType,
       goalValue: zGoalValue,
@@ -180,30 +228,43 @@ export const createMetricSettingsSchema = z.object({
     ),
 });
 
-export const updateMetricSettingsSchema = createMetricSettingsSchema.extend({
+export const updateMetricSettingsSchema = z.object({
   params: z.object({
-    metricId: zUUID,
     id: zUUID,
+  }),
+  body: z.object({
+    goalEnabled: z.boolean().optional(),
+    goalType: zGoalType.optional(),
+    goalValue: zGoalValue.optional(),
+    timeFrameEnabled: z.boolean().optional(),
+    startDate: zDateOptional.optional().nullable(),
+    deadlineDate: zDateOptional.optional().nullable(),
+    alertEnabled: z.boolean().optional(),
+    alertThresholds: zAlertThresholds.optional(),
+    displayOptions: zDisplayOptions.optional(),
   }),
 });
 
 export const getMetricSettingsSchema = z.object({
   params: z.object({
-    metricId: zUUID,
     id: zUUID,
   }),
+});
+
+export const getAllMetricSettingsSchema = z.object({
+  query: z.object({
+    metricId: zUUID.optional(),
+  }).optional(),
 });
 
 export const deleteMetricSettingsSchema = z.object({
   params: z.object({
-    metricId: zUUID,
     id: zUUID,
   }),
 });
-
 ```
 
-## zod-metric.schema.ts
+## src/types/api/zod-metric.schema.ts
 
 ```typescript
 // ✅ src/types/api/zod-metric.schema.ts
@@ -264,9 +325,18 @@ export type UpdateMetricInput = z.infer<typeof updateMetricSchema>; // Includes 
 export type GetMetricInput = z.infer<typeof getMetricSchema>["params"];
 export type DeleteMetricInput = z.infer<typeof deleteMetricSchema>["params"];
 
+/**
+ * * ===== Schemas for Testing Purposes =====
+ */
+
+export const generateDummyMetricsSchema = z.object({
+  body: z.object({
+    count: z.number().int().min(1).max(1000).default(50), // Default to 50, max 1000
+  }),
+});
 ```
 
-## zod-user.schema.ts
+## src/types/api/zod-user.schema.ts
 
 ```typescript
 // src/types/api/zod-user.schema.ts
@@ -371,10 +441,9 @@ export type UpdateUserRequestDTO = z.infer<typeof updateUserSchema.shape.body>;
 // });
 
 // export type UpdateUserRequestDTO = z.infer<typeof updateUserSchema.shape.body>;
-
 ```
 
-## metric-category.types.ts
+## src/types/db/metric-category.types.ts
 
 ```typescript
 // src/types/db/metric-category.types.ts
@@ -409,10 +478,9 @@ export interface MetricCategoryAttributesBase {
    */
   deletedAt?: Date | null;
 }
-
 ```
 
-## metric-log.types.ts
+## src/types/db/metric-log.types.ts
 
 ```typescript
 // src/types/db/metric-log.types.ts
@@ -446,10 +514,9 @@ export interface MetricLogAttributesBase {
    */
   loggedAt?: Date;
 }
-
 ```
 
-## metric-settings.types.ts
+## src/types/db/metric-settings.types.ts
 
 ```typescript
 // src/types/db/metric-settings.types.ts
@@ -495,11 +562,11 @@ export interface MetricSettingsAttributesBase {
    * 'incremental': Goal is based on achieving a specific value in a single log entry.
    * Null if goal is disabled.
    */
-  goalType?: "cumulative" | "incremental" | null;
+  goalType: "cumulative" | "incremental" | null;
   /**
    * @property {number | null} [goalValue] - The target value for the goal, if enabled. Must be > 0 if set. Null if goal is disabled.
    */
-  goalValue?: number | null;
+  goalValue: number | null;
   /**
    * @property {boolean} timeFrameEnabled - Whether a specific time frame (start/deadline) is active for the goal. Defaults to false.
    */
@@ -507,11 +574,11 @@ export interface MetricSettingsAttributesBase {
   /**
    * @property {Date | null} [startDate] - The start date for the goal's time frame, if enabled. Represents the date only (YYYY-MM-DD). Null if timeframe is disabled.
    */
-  startDate?: Date | null;
+  startDate: Date | null;
   /**
    * @property {Date | null} [deadlineDate] - The deadline date for the goal's time frame, if enabled. Represents the date only (YYYY-MM-DD). Must be after startDate if both are set. Null if timeframe is disabled.
    */
-  deadlineDate?: Date | null;
+  deadlineDate: Date | null;
   /**
    * @property {boolean} alertEnabled - Whether alerts are active for this metric's goal progress. Defaults to false.
    */
@@ -519,7 +586,7 @@ export interface MetricSettingsAttributesBase {
   /**
    * @property {number | null} [alertThresholds] - The percentage threshold (0-100) at which to trigger an alert regarding goal progress, if alerts are enabled. Defaults to 80. Null if alerts are disabled.
    */
-  alertThresholds?: number | null;
+  alertThresholds: number | null;
   /**
    * @property {boolean} isAchieved - Flag indicating if the goal (if enabled) has been met. Defaults to false. Logic for setting this likely resides in the service layer.
    */
@@ -533,10 +600,9 @@ export interface MetricSettingsAttributesBase {
    */
   displayOptions: MetricDisplayOptions;
 }
-
 ```
 
-## metric.types.ts
+## src/types/db/metric.types.ts
 
 ```typescript
 // src/types/db/metric.types.ts
@@ -557,7 +623,7 @@ export interface MetricAttributesBase {
   /**
    * @property {string | null} [description] - An optional description providing more details about the metric.
    */
-  description?: string | null;
+  description: string | null;
 
   /**
    * @property {string} defaultUnit - The default unit of measurement for this metric (e.g., 'kg', 'steps', 'ml').
@@ -575,10 +641,9 @@ export interface MetricAttributesBase {
    */
   deletedAt?: Date | null;
 }
-
 ```
 
-## user.types.ts
+## src/types/db/user.types.ts
 
 ```typescript
 // src/types/db/user.types.ts
@@ -615,10 +680,9 @@ export interface UserAttributesBase {
    */
   role: "user" | "admin";
 }
-
 ```
 
-## metric-category.domain.ts
+## src/types/domain/metric-category.domain.ts
 
 ```typescript
 /**
@@ -676,10 +740,9 @@ export interface MetricCategoryDomain {
    */
   readonly deletedAt?: Date | null;
 }
-
 ```
 
-## metric-log.domain.ts
+## src/types/domain/metric-log.domain.ts
 
 ```typescript
 /**
@@ -737,10 +800,9 @@ export interface MetricLogDomain {
    */
   readonly updatedAt: Date;
 }
-
 ```
 
-## metric-settings.domain.ts
+## src/types/domain/metric-settings.domain.ts
 
 ```typescript
 /**
@@ -759,7 +821,7 @@ export interface MetricSettingsDisplayOptionsDomain {
    * @property {boolean} showOnDashboard - Whether the metric should be shown on the dashboard.
    * @readonly
    */
-  readonly showOnDashboard: boolean;
+  readonly showOnDashboard: boolean | false;
   /**
    * @property {number | null} priority - Display priority (lower number = higher priority). Null if not set.
    * @readonly
@@ -811,13 +873,13 @@ export interface MetricSettingsDomain {
    * @property {'cumulative' | 'incremental' | null} [goalType] - The type of goal, if enabled. Null otherwise.
    * @readonly
    */
-  readonly goalType?: "cumulative" | "incremental" | null;
+  readonly goalType: "cumulative" | "incremental" | null;
 
   /**
    * @property {number | null} [goalValue] - The target value for the goal, if enabled. Null otherwise.
    * @readonly
    */
-  readonly goalValue?: number | null;
+  readonly goalValue: number | null;
 
   /**
    * @property {boolean} timeFrameEnabled - Flag indicating if a specific time frame is set for the goal.
@@ -829,13 +891,13 @@ export interface MetricSettingsDomain {
    * @property {Date | null} [startDate] - The start date for the goal's time frame. Null if timeframe is disabled.
    * @readonly
    */
-  readonly startDate?: Date | null;
+  readonly startDate: Date | null;
 
   /**
    * @property {Date | null} [deadlineDate] - The deadline date for the goal's time frame. Null if timeframe is disabled.
    * @readonly
    */
-  readonly deadlineDate?: Date | null;
+  readonly deadlineDate: Date | null;
 
   /**
    * @property {boolean} alertEnabled - Flag indicating if alerts are enabled for goal progress.
@@ -847,7 +909,7 @@ export interface MetricSettingsDomain {
    * @property {number | null} [alertThresholds] - The percentage threshold (0-100) for alerts. Null if alerts are disabled.
    * @readonly
    */
-  readonly alertThresholds?: number | null; // Adjusted to allow null
+  readonly alertThresholds: number | null; // Adjusted to allow null
 
   /**
    * @property {boolean} isAchieved - Flag indicating if the goal has been achieved.
@@ -873,10 +935,9 @@ export interface MetricSettingsDomain {
    */
   readonly updatedAt: Date;
 }
-
 ```
 
-## metric.domain.ts
+## src/types/domain/metric.domain.ts
 
 ```typescript
 /**
@@ -913,13 +974,13 @@ export interface MetricDomain {
    * @property {string | null} [categoryId] - The identifier of the category this metric belongs to, if any.
    * @readonly
    */
-  readonly categoryId?: string | null;
+  readonly categoryId: string | null;
 
   /**
    * @property {string | null} [originalMetricId] - If this metric was created from a public template, this is the ID of the original template metric. Null otherwise.
    * @readonly
    */
-  readonly originalMetricId?: string | null;
+  readonly originalMetricId: string | null;
 
   /**
    * @property {string} name - The user-defined name for the metric.
@@ -931,7 +992,7 @@ export interface MetricDomain {
    * @property {string | null} [description] - An optional description providing more details about the metric.
    * @readonly
    */
-  readonly description?: string | null;
+  readonly description: string | null;
 
   /**
    * @property {string} defaultUnit - The default unit of measurement for this metric (e.g., 'kg', 'steps', 'ml').
@@ -1009,16 +1070,41 @@ export interface MetricLibraryDomain {
   readonly name: string;
 
   /**
+   * @property {string} defaultUnit - The default unit of measurement for this metric (e.g., 'kg', 'steps', 'ml').
+   * @readonly
+   */
+  readonly defaultUnit: string;
+
+  /**
+   * @property {string | null} [description] - An optional description providing more details about the metric.
+   * @readonly
+   */
+  readonly description: string | null;
+
+  /**
+   * @property {isPublic} - Flag indicating if this metric definition can be publicly discovered or used as a template.
+   * @readonly
+   */
+  readonly isPublic: boolean;
+
+  /**
    * @property {MetricLibraryCategoryInfo} [category] - Optional summarized information about the metric's category.
    * @readonly
    */
-  readonly category?: MetricLibraryCategoryInfo;
+  readonly category: MetricLibraryCategoryInfo;
 
   /**
    * @property {string} [goalType] - Optional goal type associated with the metric's settings (e.g., 'cumulative', 'incremental').
    * @readonly
    */
-  readonly goalType?: string; // Consider using the specific ENUM type if available/stable
+  readonly goalType: string; // Consider using the specific ENUM type if available/stable
+
+  /**
+   * @property {number} logCount - The number of logs associated with the metric.
+   * @readonly
+   * @example 10
+   */
+  readonly logCount: number;
 }
 
 /**
@@ -1037,26 +1123,27 @@ export interface MetricDomainExtended extends MetricDomain {
    * @property {MetricCategoryDomain} [category] - The associated metric category domain object, if loaded.
    * @readonly
    */
-  readonly category?: MetricCategoryDomain;
+  readonly category?: MetricCategoryDomain | null;
 
   /**
    * @property {MetricSettingsDomain} [settings] - The associated metric settings domain object, if loaded.
    * @readonly
    */
-  readonly settings?: MetricSettingsDomain;
+  readonly settings?: MetricSettingsDomain | null;
 
   /**
    * @property {MetricLogDomain[]} [logs] - An array of associated metric log domain objects, if loaded.
    * @readonly
    */
-  readonly logs?: MetricLogDomain[];
+  readonly logs?: MetricLogDomain[] | null;
 }
-
 ```
 
-## user.domain.ts
+## src/types/domain/user.domain.ts
 
 ```typescript
+// types/domain/user.domain.ts
+
 /**
  * @file src/types/domain/user.domain.ts
  * @description Defines the domain model interface for a User.
@@ -1118,10 +1205,9 @@ export interface UserDomain {
    */
   readonly deletedAt?: Date | null;
 }
-
 ```
 
-## metric-category.dto.ts
+## src/types/dtos/metric-category.dto.ts
 
 ```typescript
 // src/types/dtos/metric-category.dto.ts
@@ -1132,6 +1218,7 @@ import { z } from "zod";
 import {
   createMetricCategorySchema,
   updateMetricCategorySchema,
+  generateDummyMetricCategoriesSchema,
 } from "@/types/api/zod-metric-category.schema.js";
 
 /**
@@ -1208,9 +1295,21 @@ export type UpdateMetricCategoryRequestDTO = z.infer<
   typeof updateMetricCategorySchema.shape.body
 >;
 
+/**
+ * * ===== DTOs for Testing Purposes =====
+ */
+
+/**
+ * @typedef GenerateDummyMetricCategoriesRequestDTO
+ * @description Represents the expected structure of the request body when generating dummy metric category entries.
+ * Inferred from the Zod schema for validation.
+ */
+export type GenerateDummyMetricCategoriesRequestDTO = z.infer<
+  typeof generateDummyMetricCategoriesSchema.shape.body
+>;
 ```
 
-## metric-log.dto.ts
+## src/types/dtos/metric-log.dto.ts
 
 ```typescript
 // src/types/dtos/metric-log.dto.ts
@@ -1221,6 +1320,7 @@ import { z } from "zod";
 import {
   createMetricLogSchema,
   updateMetricLogSchema,
+  generateDummyMetricLogsSchema,
 } from "@/types/api/zod-metric-log.schema";
 
 /**
@@ -1302,9 +1402,21 @@ export type UpdateMetricLogRequestDTO = z.infer<
   typeof updateMetricLogSchema.shape.body
 >;
 
+/**
+ * * ===== DTOs for Testing Purposes =====
+ */
+
+/**
+ * @typedef GenerateDummyMetricLogsRequestDTO
+ * @description Represents the expected structure of the request body when generating dummy metric log entries.
+ * Inferred from the Zod schema for validation.
+ */
+export type GenerateDummyMetricLogsRequestDTO = z.infer<
+  typeof generateDummyMetricLogsSchema.shape.body
+>;
 ```
 
-## metric-settings.dto.ts
+## src/types/dtos/metric-settings.dto.ts
 
 ```typescript
 // src/types/dtos/metric-settings.dto.ts
@@ -1333,22 +1445,22 @@ export interface DisplayOptionsDTO {
    * @property {boolean} [showOnDashboard] - Whether the metric should be shown on the dashboard.
    * @readonly
    */
-  readonly showOnDashboard?: boolean;
+  readonly showOnDashboard: boolean | null;
   /**
    * @property {number} [priority] - Display priority (lower number = higher priority).
    * @readonly
    */
-  readonly priority?: number;
+  readonly priority: number | null;
   /**
    * @property {string} [chartType] - Preferred chart type (e.g., 'line', 'bar').
    * @readonly
    */
-  readonly chartType?: string;
+  readonly chartType: string | null;
   /**
    * @property {string} [color] - Specific color code (e.g., hex).
    * @readonly
    */
-  readonly color?: string;
+  readonly color: string | null;
 }
 
 /**
@@ -1370,57 +1482,57 @@ export interface MetricSettingsResponseDTO {
    * @property {boolean} [isActive] - Flag indicating if these settings are currently active.
    * @readonly
    */
-  readonly isActive?: boolean;
+  readonly isActive: boolean | null;
   /**
    * @property {boolean} [goalEnabled] - Flag indicating if a goal is set for this metric.
    * @readonly
    */
-  readonly goalEnabled?: boolean;
+  readonly goalEnabled: boolean | null;
   /**
    * @property {'cumulative' | 'incremental' | null} [goalType] - The type of goal, if enabled. Null otherwise.
    * @readonly
    */
-  readonly goalType?: "cumulative" | "incremental" | null;
+  readonly goalType: "cumulative" | "incremental" | null;
   /**
    * @property {number} [goalValue] - The target value for the goal, if enabled. Null otherwise.
    * @readonly
    */
-  readonly goalValue?: number | null;
+  readonly goalValue: number | null;
   /**
    * @property {boolean} [timeFrameEnabled] - Flag indicating if a specific time frame is set for the goal.
    * @readonly
    */
-  readonly timeFrameEnabled?: boolean;
+  readonly timeFrameEnabled: boolean | null;
   /**
    * @property {string} [startDate] - The start date for the goal's time frame. Null if timeframe is disabled.
    * @readonly
    */
-  readonly startDate?: string | null;
+  readonly startDate: string | null;
   /**
    * @property {string} [deadlineDate] - The deadline date for the goal's time frame. Null if timeframe is disabled.
    * @readonly
    */
-  readonly deadlineDate?: string | null;
+  readonly deadlineDate: string | null;
   /**
    * @property {boolean} [alertEnabled] - Flag indicating if alerts are enabled for goal progress.
    * @readonly
    */
-  readonly alertEnabled?: boolean;
+  readonly alertEnabled: boolean | null;
   /**
    * @property {number} [alertThresholds] - The percentage threshold (0-100) for alerts. Null if alerts are disabled.
    * @readonly
    */
-  readonly alertThresholds?: number;
+  readonly alertThresholds: number | null;
   /**
    * @property {boolean} [isAchieved] - Flag indicating if the goal has been achieved.
    * @readonly
    */
-  readonly isAchieved?: boolean;
+  readonly isAchieved: boolean | null;
   /**
    * @property {DisplayOptionsDTO} [displayOptions] - Object containing display-related settings.
    * @readonly
    */
-  readonly displayOptions?: DisplayOptionsDTO;
+  readonly displayOptions: DisplayOptionsDTO | null;
   /**
    * @property {string} createdAt - The timestamp when these settings were created, formatted as an ISO string.
    * @readonly
@@ -1450,10 +1562,9 @@ export type CreateMetricSettingsRequestDTO = z.infer<
 export type UpdateMetricSettingsRequestDTO = z.infer<
   typeof updateMetricSettingsSchema.shape.body
 >;
-
 ```
 
-## metric.dto.ts
+## src/types/dtos/metric.dto.ts
 
 ```typescript
 // src/types/dtos/metric.dto.ts
@@ -1464,6 +1575,7 @@ import { z } from "zod";
 import {
   createMetricSchema,
   updateMetricSchema,
+  generateDummyMetricsSchema,
 } from "@/types/api/zod-metric.schema";
 
 // Internal DTOs for associations
@@ -1589,16 +1701,41 @@ export interface MetricPreviewResponseDTO {
   readonly name: string;
 
   /**
+   * @property {string} defaultUnit - The default unit of measurement for this metric (e.g., 'kg', 'steps', 'ml').
+   * @readonly
+   */
+  readonly defaultUnit: string;
+
+  /**
+   * @property {string | null} description - An optional description providing more details about the metric.
+   * @readonly
+   */
+  readonly description: string | null;
+
+  /**
+   * @property {isPublic} - Flag indicating if this metric definition can be publicly discovered or used as a template.
+   * @readonly
+   */
+  readonly isPublic: boolean;
+
+  /**
    * @property {MetricPreviewCategoryDTO} [category] - Optional summarized information about the metric's category.
    * @readonly
    */
-  readonly category?: MetricPreviewCategoryDTO;
+  readonly category: MetricPreviewCategoryDTO |null;
 
   /**
    * @property {string} [goalType] - Optional goal type associated with the metric's settings (e.g., 'cumulative', 'incremental').
    * @readonly
    */
-  readonly goalType?: string;
+  readonly goalType: string | null;
+
+  /**
+   * @property {number} logCount - The number of logs associated with the metric.
+   * @readonly
+   * @example 10
+   */
+  readonly logCount: number;
 }
 
 /**
@@ -1607,6 +1744,7 @@ export interface MetricPreviewResponseDTO {
  */
 export type MetricListResponseDTO = MetricPreviewResponseDTO[];
 
+// TODO: This should be a deprecated interface, as it is not used in the current API.
 /**
  * @interface UserMetricDetailResponseDTO
  * @description Represents a detailed view of a metric, including associated category, settings, and logs.
@@ -1676,19 +1814,19 @@ export interface UserMetricDetailResponseDTO {
    * @property {MetricCategoryResponseDTO | null} [category] - The associated metric category DTO, if loaded. Null if uncategorized.
    * @readonly
    */
-  readonly category?: MetricCategoryResponseDTO | null;
+  readonly category: MetricCategoryResponseDTO | null;
 
   /**
    * @property {MetricSettingsResponseDTO | null} [settings] - The associated metric settings DTO, if loaded.
    * @readonly
    */
-  readonly settings?: MetricSettingsResponseDTO | null;
+  readonly settings: MetricSettingsResponseDTO | null;
 
   /**
    * @property {MetricLogResponseDTO[] | null} [logs] - An array of associated metric log DTOs, if loaded.
    * @readonly
    */
-  readonly logs?: MetricLogResponseDTO[] | null;
+  readonly logs: MetricLogResponseDTO[] | null;
 }
 
 /**
@@ -1709,9 +1847,21 @@ export type UpdateMetricRequestDTO = z.infer<
   typeof updateMetricSchema.shape.body
 >;
 
+/**
+ * * ===== DTOs for Testing Purposes =====
+ */
+
+/**
+ * @typedef GenerateDummyMetricsRequestDTO
+ * @description Represents the expected structure of the request body when generating dummy metric entries.
+ * Inferred from the Zod schema for validation.
+ */
+export type GenerateDummyMetricsRequestDTO = z.infer<
+  typeof generateDummyMetricsSchema.shape.body
+>;
 ```
 
-## user.dto.ts
+## src/types/dtos/user.dto.ts
 
 ```typescript
 // src/types/dtos/user.dto.ts
@@ -1771,36 +1921,137 @@ export interface UserResponseDTO {
    */
   readonly updatedAt: string;
 }
-
 ```
 
-## request.context.ts
+## src/validators/zod-rules.ts
 
 ```typescript
-// src/types/request.context.ts
-
-import { Request } from "express";
-import { UserDomain } from "@/types/domain/user.domain";
+// src/validators/zod-rules.ts
+import { z } from "zod";
+import { ZodMessages } from "@/constants/zod-messages"; // centralized error messages
 
 /**
- * * Extended Request Interface for Authenticated Routes
- * Ensures all authenticated requests include user information.
- * The user property in AuthRequest is defined as optional (user?: User) because not all routes require authentication
+ * Reusable Zod Field Validations
+ * - These base validators can be composed into full schemas
  */
-export interface AuthRequest extends Request {
-  user?: UserDomain;
-}
 
-```
+// Reuse base rules
+export const zUUID = z
+  .string()
+  .uuid({ message: ZodMessages.common.invalidUUID });
+export const zDateOptional = z
+  .preprocess(
+    (val) => (typeof val === "string" && val.trim() === "" ? undefined : val),
+    z.coerce.date().optional()
+  )
+  .refine((date) => date === undefined || !isNaN(date.getTime()), {
+    message: ZodMessages.common.invalidDate,
+  });
 
-## xss-clean.d.ts
+/**
+ * export const zMetricCategoryId = zUUID.optional().nullable();
+ */
+export const zUsername = z
+  .string()
+  .min(3, { message: ZodMessages.user.usernameMin });
+export const zEmail = z
+  .string()
+  .email({ message: ZodMessages.user.emailInvalid });
+export const zPassword = z
+  .string()
+  .min(6, { message: ZodMessages.user.passwordMin });
+export const zPasswordConfirmation = z
+  .string()
+  .min(6, { message: ZodMessages.user.passwordConfirmMin });
+export const zPublicProfile = z.boolean().optional().default(true);
+export const zRole = z.enum(["user", "admin"]).optional().default("user");
 
-```typescript
-declare module "xss-clean" {
-  import { RequestHandler } from "express";
-  const xssClean: () => RequestHandler;
-  export default xssClean;
-}
+/**
+ * * Metric Category
+ */
+export const zMetricCategoryName = z
+  .string()
+  .min(1, { message: ZodMessages.metricCategory.nameRequired });
+export const zMetricCategoryColor = z
+  .string()
+  .min(1)
+  .optional()
+  .default("#E897A3");
+export const zMetricCategoryIcon = z.string().min(1).optional().default("📁");
+export const zMetricCategoryDeletedAt = zDateOptional.optional().nullable();
 
-```
+/**
+ * * Metric
+ */
+export const zMetricNameRule = {
+  min: 1,
+};
 
+export const zMetricUnitRule = {
+  min: 1,
+};
+export const zMetricName = z
+  .string()
+  .min(zMetricNameRule.min, { message: ZodMessages.metric.nameRequired });
+export const zMetricCategoryId = z
+  .string()
+  .uuid({ message: ZodMessages.metric.invalidCategoryId })
+  .optional();
+export const zMetricOriginalId = z
+  .string()
+  .uuid({ message: ZodMessages.metric.invalidOriginalMetricId })
+  .optional();
+export const zMetricDescription = z.string();
+export const zMetricDefaultUnit = z
+  .string()
+  .min(zMetricUnitRule.min, { message: ZodMessages.metric.unitRequired });
+export const zMetricIsPublic = z.boolean().optional().default(true);
+export const zMetricDeletedAt = z.date().optional();
+
+/**
+ * * Metric Settings
+ */
+export const zGoalEnabled = z.boolean().optional().default(false);
+export const zGoalType = z
+  .enum(["cumulative", "incremental"])
+  .optional()
+  .nullable();
+export const zGoalValue = z
+  .number()
+  .positive(ZodMessages.metricSettings.goalValuePositive)
+  .optional()
+  .nullable();
+export const zTimeFrameEnabled = z.boolean().optional().default(false);
+export const zStartDate = zDateOptional.optional().nullable();
+export const zDeadlineDate = zDateOptional.optional().nullable();
+export const zAlertEnabled = z.boolean().optional().default(false);
+export const zAlertThresholds = z
+  .number()
+  .int({ message: ZodMessages.metricSettings.invalidAlertThreshold })
+  .min(0, { message: ZodMessages.metricSettings.alertThresholdMin })
+  .max(100, { message: ZodMessages.metricSettings.alertThresholdMax })
+  .optional()
+  .default(80);
+export const zDisplayOptions = z
+  .object({
+    priority: z.number().optional().default(1),
+    chartType: z.string().optional().default("line"),
+    color: z.string().optional().default("#E897A3"),
+  })
+  .optional()
+  .default({
+    priority: 1,
+    chartType: "line",
+    color: "#E897A3",
+  });
+
+/**
+ * * * Metric Log
+ */
+export const zPositiveFloat = z
+  .number({ required_error: ZodMessages.metricLog.logValueRequired })
+  .positive({ message: ZodMessages.metricLog.logValueNonNegative });
+
+export const zLogType = z.enum(["manual", "automatic"], {
+  required_error: ZodMessages.metricLog.logTypeInvalid,
+});
