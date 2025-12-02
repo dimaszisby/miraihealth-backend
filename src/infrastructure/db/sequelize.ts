@@ -68,7 +68,7 @@ const modelPromises = modelFiles.map(async (file) => {
   // Initialize the model
   const model = initModelFunc(sequelize, DataTypes);
   db[model.name] = model;
-  logger.info(`✅ Loaded model: ${model.name}`);
+  logger.info(`[PROCESS] Loaded model: ${model.name}`);
 });
 
 await Promise.all(modelPromises);

@@ -1,13 +1,6 @@
-// src/utils/redis-client.ts
-
 import { createClient, RedisClientType } from "redis";
 import logger from "./logger.js"; // Update the import path
 import { env } from "../config/zodEnv.js";
-
-/**
- * * Redis Client
- * This is the base Redis client for the app.
- */
 
 // Redis client configuration
 const redisConfig = {
@@ -25,30 +18,36 @@ const redisClient: RedisClientType = createClient(redisConfig);
 
 // Gracefully handle Redis errors
 redisClient.on("error", (err: Error) => {
-  logger.error("❌ Redis Connection Error:", err);
-  process.exit(1); // Exit in production if Redis is critical
+  logger.error("[REDIS - ERROR] Redis Connection Error:", err);
+  if (env.REDIS_REQUIRED) {
+    process.exit(1);
+  }
 });
 
-redisClient.on("connect", () => logger.info("✅ Connected to Redis"));
+redisClient.on("connect", () => logger.info("[REDIS] Connected to Redis"));
 redisClient.on("reconnecting", () =>
-  logger.warn("♻️ Reconnecting to Redis...")
+  logger.warn("[REDIS] Reconnecting to Redis...")
 );
-redisClient.on("end", () => logger.warn("🚨 Redis connection closed."));
+redisClient.on("end", () => logger.warn("[REDIS] Redis connection closed."));
 
 // Ensure connection before exporting
 const connectRedis = async () => {
   try {
-    // Only connect if not in test environment or if explicitly required
-    if (env.REDIS_REQUIRED) {
+    const shouldConnect =
+      env.REDIS_REQUIRED || env.NODE_ENV !== "test";
+
+    if (shouldConnect) {
       await redisClient.connect();
-      logger.info("✅ Redis connection established.");
+      logger.info("[REDIS] Redis connection established.");
     } else {
-      logger.info("🔍 Skipping Redis connection in test environment.");
+      logger.info("[REDIS] Skipping Redis connection in test environment.");
     }
   } catch (err) {
-    logger.error("❌ Redis connection failed:", err);
-    if (env.NODE_ENV !== "test") {
+    logger.error("[ERROR] Redis connection failed:", err);
+    if (env.REDIS_REQUIRED) {
       process.exit(1);
+    } else {
+      logger.warn("[REDIS] Continuing without Redis connection.");
     }
   }
 };
@@ -56,10 +55,14 @@ const connectRedis = async () => {
 // Graceful Shutdown Hook
 const disconnectRedis = async () => {
   try {
+    if (!redisClient.isOpen) {
+      logger.info("[PROCESS] Redis client already closed.");
+      return;
+    }
     await redisClient.quit();
-    logger.info("🚀 Redis client disconnected.");
+    logger.info("[PROCESS] Redis client disconnected.");
   } catch (error) {
-    logger.error("❌ Error closing Redis connection:", error);
+    logger.error("[ERROR] closing Redis connection:", error);
   }
 };
 
@@ -92,8 +95,7 @@ const invalidateCacheByPattern = async (pattern: string) => {
 
       if (keys.length > 0) {
         await redisClient.del(keys);
-        // logger.info(`♻️ Cache invalidated for pattern ${pattern}. Deleted keys: ${keys.join(', ')}`);
-        logger.info(`[CACHE] Pattern "${pattern}" deleted keys:`, keys); // More verbose logging
+        logger.info(`[CACHE] Pattern "${pattern}" deleted keys:`, keys);
       } else {
         logger.info(`[CACHE] Pattern "${pattern}" found NO keys to delete.`);
       }

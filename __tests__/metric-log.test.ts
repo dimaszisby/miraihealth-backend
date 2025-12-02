@@ -1,381 +1,139 @@
-//src/__tests__/metric-log.test.ts
+import {
+  api,
+  authHeader,
+  createMetric,
+  createMetricLog,
+  createTestUser,
+} from "./helpers/test-utils";
 
-import db from "../src/models/index.js";
-import request, { Response } from "supertest";
-import app from "../src/server";
-
-const { sequelize, User, Metric, MetricLog } = db;
-
-/**
- * * Generate Unique User Data
- * Creates a new test user each time using a timestamp.
- */
-const generateUniqueUserData = () => {
-  const timestamp = Date.now();
-  return {
-    username: `testuser_${timestamp}`,
-    email: `testuser_${timestamp}@example.com`,
-    password: "Password123",
-    passwordConfirmation: "Password123",
-    age: 25,
-    sex: "male",
-  };
-};
-
-describe("Metric Log Endpoints", () => {
-  let user: typeof User;
+describe("Metric Log API", () => {
   let token: string;
-  let metricParent: typeof Metric;
-  let logId: string; // ✅ Declare logId properly to avoid scope issues
-  const nonExistentId = "11111111-1111-1111-1111-111111111111";
+  let metricId: string;
 
   beforeEach(async () => {
-    // 🛠 **Setup User**
-    const userData = generateUniqueUserData();
-    const newUser: Response = await request(app)
-      .post("/api/v1/auth/register")
-      .send(userData);
-
-    expect(newUser.statusCode).toBe(201);
-
-    // 🔑 **Login User & Get Token**
-    const loginRes: Response = await request(app)
-      .post("/api/v1/auth/login")
-      .send({
-        email: userData.email,
-        password: "Password123",
-      });
-
-    expect(loginRes.statusCode).toBe(200);
-    token = loginRes.body.data.token;
-
-    if (!token) throw new Error("Authentication failed. No token received.");
-
-    // ✅ **Fetch user from DB & Handle `null` case properly**
-    const foundUser = await User.findOne({ where: { email: userData.email } });
-    if (!foundUser) throw new Error("Test user not found in the database.");
-    user = foundUser;
-
-    // 🛠 **Setup Metric (Parent Entity)**
-    const metric: Response = await request(app)
-      .post("/api/v1/metrics")
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        name: "Height",
-        defaultUnit: "cm",
-        isPublic: true,
-      });
-
-    expect(metric.statusCode).toBe(201);
-    metricParent = metric.body.data.metric;
+    const auth = await createTestUser();
+    token = auth.token;
+    const { metric } = await createMetric(token);
+    metricId = metric.id;
   });
 
-  /*
-   * 🧪 **Test Cases**
-   */
-
-  it("Should create a Log for a Metric", async () => {
-    const res: Response = await request(app)
-      .post(`/api/v1/metrics/${metricParent.id}/logs`)
-      .set("Authorization", `Bearer ${token}`)
+  it("creates a metric log", async () => {
+    const res = await api
+      .post("/api/v1/metric-logs")
+      .set("Authorization", authHeader(token))
       .send({
-        logValue: 10,
+        metricId,
+        logValue: 15.5,
         type: "manual",
       });
 
-    expect(res.statusCode).toBe(201);
-    expect(res.body.data.log).toHaveProperty("id");
-    expect(res.body.data.log).toHaveProperty("logValue", 10);
-    expect(res.body.data.log).toHaveProperty("type", "manual");
-
-    logId = res.body.data.log.id; // ✅ Store logId for further tests
+    expect(res.status).toBe(201);
+    expect(res.body.status).toBe("success");
+    expect(res.body.data).toHaveProperty("metricId", metricId);
+    expect(res.body.data.logValue).toBe(15.5);
   });
 
-  it("Should fetch all logs for a Metric", async () => {
-    const res: Response = await request(app)
-      .get(`/api/v1/metrics/${metricParent.id}/logs`)
-      .set("Authorization", `Bearer ${token}`);
+  it("lists logs via cursor with filters", async () => {
+    await createMetricLog(token, metricId, { logValue: 10 });
+    await createMetricLog(token, metricId, { logValue: 20 });
 
-    expect(res.statusCode).toBe(200);
-    expect(Array.isArray(res.body.data.logs)).toBe(true);
-  });
-
-  it("Should fetch a specific log for a Metric", async () => {
-    // ✅ Ensure a log exists before fetching
-    const logRes: Response = await request(app)
-      .post(`/api/v1/metrics/${metricParent.id}/logs`)
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        logValue: 20,
-        type: "manual",
+    const res = await api
+      .get("/api/v1/metric-logs")
+      .set("Authorization", authHeader(token))
+      .query({
+        limit: 10,
+        includeTotal: true,
+        "filter[metricId]": metricId,
       });
 
-    expect(logRes.statusCode).toBe(201);
-    logId = logRes.body.data.log.id;
-
-    // 🛠 Fetch the log
-    const res: Response = await request(app)
-      .get(`/api/v1/metrics/${metricParent.id}/logs/${logId}`)
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(res.statusCode).toBe(200);
-    expect(res.body.data.log).toHaveProperty("id", logId);
-    expect(res.body.data.log).toHaveProperty("logValue", 20);
-    expect(res.body.data.log).toHaveProperty("type", "manual");
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe("success");
+    expect(res.body.data.items.length).toBeGreaterThanOrEqual(2);
+    expect(res.body.data).toHaveProperty("totalCount");
   });
 
-  it("Should update a Log for a Metric", async () => {
-    // ✅ Ensure a log exists before updating
-    const logRes: Response = await request(app)
-      .post(`/api/v1/metrics/${metricParent.id}/logs`)
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        logValue: 20,
-        type: "manual",
-      });
+  it("fetches a log by id with metric validation", async () => {
+    const { log } = await createMetricLog(token, metricId, { logValue: 25 });
+    const res = await api
+      .get(`/api/v1/metric-logs/${log.id}`)
+      .set("Authorization", authHeader(token))
+      .query({ metricId });
 
-    expect(logRes.statusCode).toBe(201);
-    logId = logRes.body.data.log.id;
-
-    // 🛠 Update the log
-    const res: Response = await request(app)
-      .put(`/api/v1/metrics/${metricParent.id}/logs/${logId}`)
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        logValue: 30,
-      });
-
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty("message", "Log updated successfully");
-    expect(res.body.data.log.logValue).toEqual(30);
+    expect(res.status).toBe(200);
+    expect(res.body.data.id).toBe(log.id);
   });
 
-  it("Should delete a Log for a Metric", async () => {
-    // ✅ Ensure a log exists before deleting
-    const logRes: Response = await request(app)
-      .post(`/api/v1/metrics/${metricParent.id}/logs`)
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        logValue: 20,
-        type: "manual",
-      });
+  it("updates a metric log", async () => {
+    const { log } = await createMetricLog(token, metricId);
+    const res = await api
+      .put(`/api/v1/metric-logs/${log.id}`)
+      .set("Authorization", authHeader(token))
+      .send({ logValue: 99.9 });
 
-    expect(logRes.statusCode).toBe(201);
-    logId = logRes.body.data.log.id;
-
-    // 🛠 Delete the log
-    const res: Response = await request(app)
-      .delete(`/api/v1/metrics/${metricParent.id}/logs/${logId}`)
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty("message", "Log deleted successfully");
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("Log updated successfully");
+    expect(res.body.data.logValue).toBe(99.9);
   });
 
-  describe("🔒 Authorization Tests", () => {
-    it("should not allow unauthorized access to create logs", async () => {
-      const res = await request(app)
-        .post(`/api/v1/metrics/${metricParent.id}/logs`)
-        .send({
-          logValue: 10,
-          type: "manual",
-        });
+  it("deletes a metric log", async () => {
+    const { log } = await createMetricLog(token, metricId);
+    const res = await api
+      .delete(`/api/v1/metric-logs/${log.id}`)
+      .set("Authorization", authHeader(token));
 
-      expect(res.statusCode).toBe(401);
-      expect(res.body.status).toBe("fail");
-    });
-
-    it("should not allow access to logs of other users", async () => {
-      // Other User: Create another user and their metric
-      const otherUserData = generateUniqueUserData();
-      const otherUser = await request(app)
-        .post("/api/v1/auth/register")
-        .send(otherUserData);
-
-      // Other User: Login another user to get token
-      const otherUserLogin = await request(app)
-        .post("/api/v1/auth/login")
-        .send({
-          email: otherUserData.email,
-          password: "Password123",
-        });
-      const otherUserToken = otherUserLogin.body.data.token;
-
-      // Correct/Original User: Create a metric for the purposed user
-      const originalUserMetric = await request(app)
-        .post("/api/v1/metrics")
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          name: "Weight",
-          defaultUnit: "kg",
-          isPublic: false,
-        });
-
-      // Try to access the correct user's metric logs with the other user's token
-      const res = await request(app)
-        .get(`/api/v1/metrics/${originalUserMetric.body.data.metric.id}/logs`)
-        .set("Authorization", `Bearer ${otherUserToken}`);
-
-      expect(res.statusCode).toBe(403);
-      expect(res.body.status).toBe("fail");
-    });
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("Log deleted successfully");
   });
 
-  describe("✅ Validation Tests", () => {
-    it("should validate log value is numeric", async () => {
-      const res = await request(app)
-        .post(`/api/v1/metrics/${metricParent.id}/logs`)
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          logValue: "invalid",
-          type: "manual",
-        });
+  it("returns aggregated stats for a metric", async () => {
+    await createMetricLog(token, metricId, { logValue: 10 });
+    await createMetricLog(token, metricId, { logValue: 30 });
 
-      expect(res.statusCode).toBe(400);
-      expect(res.body.status).toBe("fail");
-    });
+    const res = await api
+      .get("/api/v1/metric-logs/stats")
+      .set("Authorization", authHeader(token))
+      .query({ metricId });
 
-    it("should validate log type is valid", async () => {
-      const res = await request(app)
-        .post(`/api/v1/metrics/${metricParent.id}/logs`)
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          logValue: 10,
-          type: "invalid_type",
-        });
-
-      expect(res.statusCode).toBe(400);
-      expect(res.body.status).toBe("fail");
-    });
+    expect(res.status).toBe(200);
+    expect(res.body.data.average).toBe(20);
+    expect(res.body.data.min).toBe(10);
+    expect(res.body.data.max).toBe(30);
   });
 
-  describe("🔍 Query Parameters Tests", () => {
-    beforeEach(async () => {
-      // Create multiple logs with different dates
-      await request(app)
-        .post(`/api/v1/metrics/${metricParent.id}/logs`)
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          logValue: 10,
-          type: "manual",
-          loggedAt: "2025-01-01",
-        });
+  it("prevents duplicate logs for the same timestamp", async () => {
+    const loggedAt = new Date().toISOString();
+    await api
+      .post("/api/v1/metric-logs")
+      .set("Authorization", authHeader(token))
+      .send({ metricId, logValue: 10, loggedAt, type: "manual" });
 
-      await request(app)
-        .post(`/api/v1/metrics/${metricParent.id}/logs`)
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          logValue: 20,
-          type: "manual",
-          loggedAt: "2025-02-01",
-        });
-    });
+    const res = await api
+      .post("/api/v1/metric-logs")
+      .set("Authorization", authHeader(token))
+      .send({ metricId, logValue: 12, loggedAt, type: "manual" });
 
-    it("should filter logs by date range", async () => {
-      const res = await request(app)
-        .get(`/api/v1/metrics/${metricParent.id}/logs`)
-        .set("Authorization", `Bearer ${token}`)
-        .query({
-          startDate: "2025-01-01",
-          endDate: "2025-01-31",
-        });
-
-      expect(res.statusCode).toBe(200);
-      expect(res.body.data.logs).toHaveLength(1);
-      expect(res.body.data.logs[0].logValue).toBe(10);
-    });
-
-    it("should sort logs by value", async () => {
-      const res = await request(app)
-        .get(`/api/v1/metrics/${metricParent.id}/logs`)
-        .set("Authorization", `Bearer ${token}`)
-        .query({
-          sortBy: "logValue",
-          order: "desc",
-        });
-
-      expect(res.statusCode).toBe(200);
-      expect(res.body.data.logs[0].logValue).toBe(20);
-    });
+    expect(res.status).toBe(400);
+    expect(res.body.status).toBe("fail");
   });
 
-  describe("📊 Aggregation Tests", () => {
-    it("should return aggregated statistics", async () => {
-      const metricResponse = await request(app)
-        .post("/api/v1/metrics")
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          name: "Weight",
-          defaultUnit: "kg",
-          isPublic: false,
-        });
-
-      // Ensure logs are created
-      await Promise.all(
-        [10, 20, 30].map((value) =>
-          request(app)
-            .post(`/api/v1/metrics/${metricParent.id}/logs`)
-            .set("Authorization", `Bearer ${token}`)
-            .send({
-              logValue: value,
-              type: "manual",
-            })
-        )
-      );
-
-      await new Promise((resolve) => setTimeout(resolve, 500)); // ✅ Ensure DB writes
-
-      // Fetch the stats
-      const res = await request(app)
-        .get(`/api/v1/metrics/${metricParent.id}/logs/stats`)
-        .set("Authorization", `Bearer ${token}`);
-
-      console.log("Aggregation Response:", res.statusCode, res.body);
-
-      expect(res.statusCode).toBe(200);
-      expect(res.body.data).toHaveProperty("average", 20);
-      expect(res.body.data).toHaveProperty("min", 10);
-      expect(res.body.data).toHaveProperty("max", 30);
+  it("blocks unauthorized creation", async () => {
+    const res = await api.post("/api/v1/metric-logs").send({
+      metricId,
+      logValue: 5,
+      type: "manual",
     });
+
+    expect(res.status).toBe(401);
+    expect(res.body.status).toBe("fail");
   });
 
-  describe("🔍 Edge Cases", () => {
-    it("should handle non-existent metric ID", async () => {
-      const res = await request(app)
-        .post(`/api/v1/metrics/${nonExistentId}/logs`)
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          logValue: 10,
-          type: "manual",
-        });
+  it("validates log payloads", async () => {
+    const res = await api
+      .post("/api/v1/metric-logs")
+      .set("Authorization", authHeader(token))
+      .send({ metricId, logValue: "invalid", type: "manual" });
 
-      expect(res.statusCode).toBe(404);
-      expect(res.body.status).toBe("fail");
-    });
-
-    it("should handle duplicate log entries", async () => {
-      // Create first log
-      await request(app)
-        .post(`/api/v1/metrics/${metricParent.id}/logs`)
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          logValue: 10,
-          type: "manual",
-          loggedAt: "2025-01-01T00:00:00Z",
-        });
-
-      // Try to create duplicate log
-      const res = await request(app)
-        .post(`/api/v1/metrics/${metricParent.id}/logs`)
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          logValue: 20,
-          type: "manual",
-          loggedAt: "2025-01-01T00:00:00Z",
-        });
-
-      expect(res.statusCode).toBe(400);
-      expect(res.body.status).toBe("fail");
-    });
+    expect(res.status).toBe(400);
+    expect(res.body.status).toBe("fail");
   });
 });

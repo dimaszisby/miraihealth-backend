@@ -10,7 +10,8 @@ export default {
   testTimeout: 30000,
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1",
-    "^@/(.*)$": "<rootDir>/src/$1",
+    "^@/(.*)\\.js$": "<rootDir>/src/$1.ts",
+    "^@/(.*)$": "<rootDir>/src/$1", // Keep the original for non-.js imports
   },
   transform: {
     "^.+\\.ts$": [
@@ -26,9 +27,14 @@ export default {
     ],
   },
   extensionsToTreatAsEsm: [".ts"],
-  globals: {
-    "ts-jest": {
-      useESM: true,
-    },
-  },
+  reporters: [
+    "default",
+    [
+      "jest-summary-reporter",
+      {
+        failuresOnly: false,
+        showPassed: false,
+      },
+    ],
+  ],
 };

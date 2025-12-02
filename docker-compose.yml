@@ -1,4 +1,3 @@
-version: "3.9"
 
 services:
   db: # PostgreSQL database service
@@ -57,17 +56,10 @@ services:
       dockerfile: Dockerfile
     container_name: node_app
     restart: always # Restart the container automatically if it fails
+    env_file: # Load environment variables from .env.development
+      - .env.development
     environment: # Set environment variables
       NODE_ENV: development # Run in development mode
-      DB_HOST: db # Use the service name as the hostname
-      DB_PORT: 5432
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME}
-      PORT: 8001 # Set port to match development environment
-      REDIS_HOST: redis # Use the service name as the hostname
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
     depends_on: # Ensure dependencies are running before starting the app
       db:
         condition: service_healthy

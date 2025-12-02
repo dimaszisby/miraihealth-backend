@@ -9,7 +9,7 @@ module.exports = {
   // 'seeders-path': path.resolve(__dirname, 'src', 'seeders'),
   
   // Point to the config file
-  'config': path.resolve(__dirname, 'src', 'config', 'config.ts'),
+  'config': path.resolve(__dirname, 'src', 'config', 'config.cjs'),
   
   // If your models are in src/models, you can do:
   // 'models-path': path.resolve(__dirname, 'src', 'models')

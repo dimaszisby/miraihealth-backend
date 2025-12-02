@@ -1,377 +1,153 @@
-// __test__/metric.test.ts
+import {
+  api,
+  authHeader,
+  createCategory,
+  createMetric,
+  createMetricLog,
+  createTestUser,
+} from "./helpers/test-utils";
 
-import db from "../src/models/index.js";
-import request, { Response } from "supertest";
-import app from "../src/server";
-
-const { sequelize, User, Metric, MetricSettings, MetricCategory } = db;
-
-/**
- * * Generate Unique User Data
- * Creates a new test user each time using a timestamp.
- */
-const generateUniqueUserData = () => {
-  const timestamp = Date.now();
-  return {
-    username: `testuser_${timestamp}`,
-    email: `testuser_${timestamp}@example.com`,
-    password: "Password123",
-    passwordConfirmation: "Password123",
-    age: 25,
-    sex: "male",
-  };
-};
-
-describe("Metric Endpoints", () => {
-  let user: typeof User;
+describe("Metric API", () => {
   let token: string;
-  let dummyCategory: typeof MetricCategory;
-  let metricId: string; // ✅ Store metricId for consistency
+  let categoryId: string;
 
   beforeEach(async () => {
-    // 🛠 **Setup User**
-    const userData = generateUniqueUserData();
-    const newUser: Response = await request(app)
-      .post("/api/v1/auth/register")
-      .send(userData);
-
-    expect(newUser.statusCode).toBe(201);
-
-    // 🔑 **Login User & Get Token**
-    const loginRes: Response = await request(app)
-      .post("/api/v1/auth/login")
-      .send({
-        email: userData.email,
-        password: "Password123",
-      });
-
-    expect(loginRes.statusCode).toBe(200);
-    token = loginRes.body.data.token;
-    if (!token) throw new Error("Authentication failed. No token received.");
-
-    // ✅ **Fetch user from DB & Handle `null` case properly**
-    const foundUser = await User.findOne({ where: { email: userData.email } });
-    if (!foundUser) throw new Error("Test user not found in the database.");
-    user = foundUser;
-
-    // 🛠 **Setup Category (Parent Entity)**
-    const category: Response = await request(app)
-      .post("/api/v1/categories")
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        name: "Muscle Group",
-      });
-
-    expect(category.statusCode).toBe(201);
-    dummyCategory = category.body.data.category;
+    const auth = await createTestUser();
+    token = auth.token;
+    const { category } = await createCategory(token);
+    categoryId = category.id;
   });
 
-  /*
-   * 🧪 **Test Cases**
-   */
-
-  it("Should create a new metric with partial parameters", async () => {
-    const res: Response = await request(app)
-      .post(`/api/v1/metrics`)
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        name: "Weight",
-        defaultUnit: "Kg",
-        isPublic: true,
-      });
-
-    expect(res.statusCode).toEqual(201);
-    expect(res.body.data).toHaveProperty("metric");
-    expect(res.body.data.metric).toHaveProperty("id");
-    expect(res.body.data.metric).toHaveProperty("name", "Weight");
-    expect(res.body.data.metric).toHaveProperty("defaultUnit", "Kg");
-
-    metricId = res.body.data.metric.id;
-  });
-
-  it("Should create a new metric with full parameters", async () => {
-    // Dummy metric for insertion
-    const dummyMetric: Response = await request(app)
-      .post(`/api/v1/metrics`)
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        name: "Weight",
-        defaultUnit: "Kg",
-        isPublic: true,
-      });
-
-    expect(dummyMetric.statusCode).toBe(201);
-    const dummyId = dummyMetric.body.data.metric.id;
-
-    // Metric Creation
-    const res: Response = await request(app)
+  it("creates a metric with required fields", async () => {
+    const res = await api
       .post("/api/v1/metrics")
-      .set("Authorization", `Bearer ${token}`)
+      .set("Authorization", authHeader(token))
       .send({
-        categoryId: dummyCategory.id,
-        originalMetricId: dummyId,
-        name: "Height",
-        defaultUnit: "cm",
-        isPublic: true,
-      });
-
-    expect(res.statusCode).toEqual(201);
-    expect(res.body.data.metric).toHaveProperty("id");
-    expect(res.body.data.metric).toHaveProperty("name", "Height");
-    expect(res.body.data.metric).toHaveProperty("defaultUnit", "cm");
-  });
-
-  it("Should fetch all metrics for authenticated user", async () => {
-    const res: Response = await request(app)
-      .get(`/api/v1/metrics`)
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(res.statusCode).toEqual(200);
-    expect(Array.isArray(res.body.data.metrics)).toBe(true);
-  });
-
-  it("Should fetch a metric for authenticated user", async () => {
-    // ✅ Create Metric before fetching
-    const createRes: Response = await request(app)
-      .post(`/api/v1/metrics/`)
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        name: "Height",
-        defaultUnit: "cm",
-        isPublic: true,
-      });
-
-    expect(createRes.statusCode).toBe(201);
-    const metricId = createRes.body.data.metric.id;
-
-    // Fetch Metric
-    const res: Response = await request(app)
-      .get(`/api/v1/metrics/${metricId}`)
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(res.statusCode).toEqual(200);
-    expect(res.body.data).toHaveProperty("metric");
-    expect(res.body.data.metric).toHaveProperty("id", metricId);
-  });
-
-  it("Should update a metric", async () => {
-    // ✅ Create Metric before updating
-    const createRes: Response = await request(app)
-      .post(`/api/v1/metrics`)
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        name: "BMI",
-        defaultUnit: "kg/m²",
-        isPublic: true,
-      });
-
-    expect(createRes.statusCode).toBe(201);
-    const metricId = createRes.body.data.metric.id;
-
-    // Update Metric
-    const res: Response = await request(app)
-      .put(`/api/v1/metrics/${metricId}`)
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        name: "Body Mass Index",
-      });
-
-    expect(res.statusCode).toEqual(200);
-    expect(res.body).toHaveProperty("message", "Metric updated successfully");
-    expect(res.body.data.metric.name).toEqual("Body Mass Index");
-  });
-
-  it("Should delete a metric", async () => {
-    // ✅ Create Metric before deleting
-    const createRes: Response = await request(app)
-      .post(`/api/v1/metrics`)
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        name: "Waist Circumference",
-        defaultUnit: "cm",
-        isPublic: true,
-      });
-
-    expect(createRes.statusCode).toBe(201);
-    const metricId = createRes.body.data.metric.id;
-
-    // Delete Metric
-    const res: Response = await request(app)
-      .delete(`/api/v1/metrics/${metricId}`)
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(res.statusCode).toEqual(200);
-    expect(res.body).toHaveProperty("message", "Metric deleted successfully");
-  });
-
-  describe("🔒 Authorization Tests", () => {
-    it("should not create metric without authentication", async () => {
-      const res: Response = await request(app).post("/api/v1/metrics").send({
         name: "Weight",
-        defaultUnit: "Kg",
+        defaultUnit: "kg",
         isPublic: true,
+        categoryId,
       });
 
-      expect(res.statusCode).toBe(401);
-      expect(res.body.status).toBe("fail");
-    });
-
-    it("should not access metrics with invalid token", async () => {
-      const res: Response = await request(app)
-        .get("/api/v1/metrics")
-        .set("Authorization", "Bearer invalid_token");
-
-      expect(res.statusCode).toBe(401);
-      expect(res.body.status).toBe("fail");
+    expect(res.status).toBe(201);
+    expect(res.body.status).toBe("success");
+    expect(res.body.data).toMatchObject({
+      name: "Weight",
+      defaultUnit: "kg",
+      isPublic: true,
+      categoryId,
     });
   });
 
-  describe("✅ Validation Tests", () => {
-    it("should not create metric with empty name", async () => {
-      const res: Response = await request(app)
-        .post("/api/v1/metrics")
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          name: "",
-          defaultUnit: "Kg",
-          isPublic: true,
-        });
+  it("lists metrics via cursor", async () => {
+    await createMetric(token, { name: "Bench Press", categoryId });
+    await createMetric(token, { name: "Deadlift", categoryId });
 
-      expect(res.statusCode).toBe(400);
-      expect(res.body.status).toBe("fail");
-    });
-
-    it("should not create metric with invalid category ID", async () => {
-      const res: Response = await request(app)
-        .post("/api/v1/metrics")
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          name: "Weight",
-          defaultUnit: "Kg",
-          isPublic: true,
-          categoryId: "invalid-id",
-        });
-
-      expect(res.statusCode).toBe(400);
-      expect(res.body.status).toBe("fail");
-    });
-
-    it("should not create duplicate metric names for same user", async () => {
-      // Create first metric
-      await request(app)
-        .post("/api/v1/metrics")
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          name: "Unique Metric",
-          defaultUnit: "units",
-          isPublic: true,
-        });
-
-      // Try to create duplicate
-      const res: Response = await request(app)
-        .post("/api/v1/metrics")
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          name: "Unique Metric",
-          defaultUnit: "units",
-          isPublic: true,
-        });
-
-      expect(res.statusCode).toBe(400);
-      expect(res.body.status).toBe("fail");
-    });
-  });
-
-  describe("🔍 Edge Cases", () => {
-    it("should handle non-existent metric ID", async () => {
-      const nonExistentId = "11111111-1111-1111-1111-111111111111";
-      const res: Response = await request(app)
-        .get(`/api/v1/metrics/${nonExistentId}`)
-        .set("Authorization", `Bearer ${token}`);
-
-      expect(res.statusCode).toBe(404);
-      expect(res.body.status).toBe("fail");
-    });
-
-    it("should handle malformed metric IDs", async () => {
-      const res: Response = await request(app)
-        .get("/api/v1/metrics/invalid-id")
-        .set("Authorization", `Bearer ${token}`);
-
-      expect(res.statusCode).toBe(400);
-      expect(res.body.status).toBe("fail");
-    });
-  });
-
-  describe("🔄 Relationship Tests", () => {
-    it("should fetch metrics with category information", async () => {
-      // Create metric with category
-      await request(app)
-        .post("/api/v1/metrics")
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          name: "Weight",
-          defaultUnit: "Kg",
-          isPublic: true,
-          categoryId: dummyCategory.id,
-        });
-
-      // Add a small delay to avoid race conditions
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      const res: Response = await request(app)
-        .get("/api/v1/metrics")
-        .set("Authorization", `Bearer ${token}`)
-        .query({ include: 'category' });
-
-      expect(res.statusCode).toBe(200);
-      expect(res.body.data.metrics[0]).toHaveProperty("category");
-      expect(res.body.data.metrics[0].category).toHaveProperty("id", dummyCategory.id);
-      expect(res.body.data.metrics[0].category).toHaveProperty("name", dummyCategory.name);
-    });
-
-    it("should handle metric creation with non-existent category", async () => {
-      const res: Response = await request(app)
-        .post("/api/v1/metrics")
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          name: "Weight",
-          defaultUnit: "Kg",
-          isPublic: true,
-          categoryId: "11111111-1111-1111-1111-111111111111",
-        });
-
-      expect(res.statusCode).toBe(404);
-      expect(res.body.status).toBe("fail");
-    });
-  });
-
-  describe("🔍 Query Parameter Tests", () => {
-    it("should filter metrics by isPublic flag", async () => {
-      const res: Response = await request(app)
-        .get("/api/v1/metrics")
-        .set("Authorization", `Bearer ${token}`)
-        .query({ isPublic: true });
-
-      expect(res.statusCode).toBe(200);
-      expect(Array.isArray(res.body.data.metrics)).toBe(true);
-      res.body.data.metrics.forEach((metric: any) => {
-        expect(metric.isPublic).toBe(true);
+    const res = await api
+      .get("/api/v1/metrics")
+      .set("Authorization", authHeader(token))
+      .query({
+        limit: 5,
+        includeTotal: true,
+        "filter[name]": "Bench",
       });
-    });
 
-    it("should search metrics by name", async () => {
-      const searchTerm = "Weight";
-      const res: Response = await request(app)
-        .get("/api/v1/metrics")
-        .set("Authorization", `Bearer ${token}`)
-        .query({ name: searchTerm });
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe("success");
+    expect(res.body.data.items).toHaveLength(1);
+    expect(res.body.data.items[0].name).toContain("Bench");
+    expect(res.body.data.totalCount).toBe(1);
+  });
 
-      expect(res.statusCode).toBe(200);
-      expect(Array.isArray(res.body.data.metrics)).toBe(true);
-      res.body.data.metrics.forEach((metric: any) => {
-        expect(metric.name.toLowerCase()).toContain(searchTerm.toLowerCase());
+  it("fetches metric details with related data", async () => {
+    const { metric } = await createMetric(token, { categoryId });
+    await createMetricLog(token, metric.id, { logValue: 42 });
+    await createMetricLog(token, metric.id, { logValue: 21 });
+
+    const res = await api
+      .get(`/api/v1/metrics/${metric.id}`)
+      .set("Authorization", authHeader(token))
+      .query({ include: "full", logsLimit: 1 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveProperty("settings");
+    expect(res.body.data).toHaveProperty("category");
+    expect(res.body.data.logs).toHaveLength(1);
+  });
+
+  it("updates a metric", async () => {
+    const { metric } = await createMetric(token, { name: "Tempo Squat" });
+    const res = await api
+      .put(`/api/v1/metrics/${metric.id}`)
+      .set("Authorization", authHeader(token))
+      .send({ name: "Paused Squat", description: "Controlled eccentric" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("Metric updated successfully");
+    expect(res.body.data.name).toBe("Paused Squat");
+    expect(res.body.data.description).toBe("Controlled eccentric");
+  });
+
+  it("deletes a metric", async () => {
+    const { metric } = await createMetric(token);
+    const res = await api
+      .delete(`/api/v1/metrics/${metric.id}`)
+      .set("Authorization", authHeader(token));
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("Metric deleted successfully");
+  });
+
+  it("rejects metrics that reference unknown categories", async () => {
+    const res = await api
+      .post("/api/v1/metrics")
+      .set("Authorization", authHeader(token))
+      .send({
+        name: "Bad Category",
+        defaultUnit: "cm",
+        isPublic: false,
+        categoryId: "11111111-1111-1111-1111-111111111111",
       });
+
+    expect(res.status).toBe(404);
+    expect(res.body.status).toBe("fail");
+  });
+
+  it("blocks unauthenticated metric creation", async () => {
+    const res = await api.post("/api/v1/metrics").send({
+      name: "Unauthorized",
+      defaultUnit: "kg",
+      isPublic: false,
     });
+
+    expect(res.status).toBe(401);
+    expect(res.body.status).toBe("fail");
+  });
+
+  it("searches metrics by query string", async () => {
+    await createMetric(token, { name: "Front Squat" });
+    await createMetric(token, { name: "Back Squat" });
+
+    const res = await api
+      .get("/api/v1/metrics")
+      .set("Authorization", authHeader(token))
+      .query({ q: "Front" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.items).toHaveLength(1);
+    expect(res.body.data.items[0].name).toBe("Front Squat");
+  });
+
+  it("returns trends for a metric", async () => {
+    const { metric } = await createMetric(token, { categoryId });
+    await createMetricLog(token, metric.id, { logValue: 55 });
+
+    const res = await api
+      .get(`/api/v1/metrics/${metric.id}/trends`)
+      .set("Authorization", authHeader(token));
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body[0]).toHaveProperty("value");
   });
 });

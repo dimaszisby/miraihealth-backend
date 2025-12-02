@@ -16,21 +16,26 @@ import type { MetricLog } from "@/models/metric-log.model";
  * @throws {AppError} If metric does not exist
  */
 export const validateMetricAccess = async (
-  userId: string | null,
+  userId: string,
   metricId: string
 ): Promise<Metric> => {
-  // 1. Fetch the metric regardless of the userId.
+  if (!userId) {
+    throw new AppError("User not authenticated", 401);
+  }
+
   const metric = await models.Metric.findOne({
     where: { id: metricId },
-    attributes: ["id", "userId", "isPublic"],
+    attributes: ["id", "userId"],
   });
+
   if (!metric) {
     throw new AppError("Metric not found", 404);
   }
-  // 2. If the metric is not public and does not belong to the user, throw unauthorized.
-  if (userId !== null && !metric.isPublic && metric.userId !== userId) {
-    throw new AppError("Unauthorized access to metric stats", 403);
+
+  if (metric.userId !== userId) {
+    throw new AppError("Unauthorized access to metric", 403);
   }
+
   return metric;
 };
 
@@ -133,7 +138,7 @@ export const findOwnedMetricSettings = async (
 
   // Ensure the user has access to the associated metric
   const metric = settings.metric;
-  if (metric && metric.userId !== userId && !metric.isPublic) {
+  if (metric && metric.userId !== userId) {
     throw new AppError("Unauthorized access to metric settings", 403);
   }
 
@@ -166,7 +171,7 @@ export const findOwnedMetricLog = async (
 
   // Ensure the user has access to the associated metric
   const metric = log.metric;
-  if (metric && metric.userId !== userId && !metric.isPublic) {
+  if (metric && metric.userId !== userId) {
     throw new AppError("Unauthorized access to metric log", 403);
   }
   return log;

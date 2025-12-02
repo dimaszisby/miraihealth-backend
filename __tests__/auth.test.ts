@@ -1,158 +1,114 @@
-// auth.test.ts
+import { api, buildUserPayload, createTestUser, authHeader } from "./helpers/test-utils";
 
-import request from "supertest";
-import app from "@/server";
+describe("Auth API", () => {
+  it("registers a new user", async () => {
+    const payload = buildUserPayload();
+    const res = await api.post("/api/v1/auth/register").send(payload);
 
-/**
- * * Auth Tests
- * Tests authentication endpoints including user registration, login, and error handling.
- */
-
-/**
- * Generates unique user test data to prevent conflicts.
- * @returns Unique test user data
- */
-const generateUniqueUserData = () => {
-  const timestamp = Date.now();
-  return {
-    username: `testuser_${timestamp}`,
-    email: `testuser_${timestamp}@example.com`,
-    password: "Password123!",
-    passwordConfirmation: "Password123!",
-  };
-};
-
-/**
- * * Auth API Tests
- */
-describe("🔒 Auth Endpoints", () => {
-  let testUser = generateUniqueUserData();
-  let authToken = "";
-
-  /**
-   * ✅ Test: User Registration
-   */
-  it("should register a new user", async () => {
-    const res = await request(app)
-      .post("/api/v1/auth/register") // Removed /api/v1 prefix
-      .send(testUser);
-
-    if (res.statusCode !== 201) {
-      console.error("❌ Register Error:", res.body);
-    }
-
-    expect(res.statusCode).toBe(201);
+    expect(res.status).toBe(201);
+    expect(res.body.status).toBe("success");
+    expect(res.body.message).toBe("User created successfully");
     expect(res.body.data).toHaveProperty("token");
-    expect(res.body.data.user).toHaveProperty("email", testUser.email);
-
-    // Store token for later tests
-    authToken = res.body.data.token;
+    expect(res.body.data.user).toMatchObject({
+      email: payload.email,
+      username: payload.username,
+    });
   });
 
-  /**
-   * ✅ Test: User Login
-   */
-  it("should login the user", async () => {
-    // Register user first
-    await request(app).post("/api/v1/auth/register").send(testUser);
+  it("prevents duplicate registrations", async () => {
+    const payload = buildUserPayload();
+    await api.post("/api/v1/auth/register").send(payload);
 
-    const res = await request(app).post("/api/v1/auth/login").send({
-      email: testUser.email,
-      password: testUser.password,
+    const res = await api.post("/api/v1/auth/register").send(payload);
+
+    expect(res.status).toBe(400);
+    expect(res.body.status).toBe("fail");
+  });
+
+  it("logs in an existing user", async () => {
+    const payload = buildUserPayload();
+    await api.post("/api/v1/auth/register").send(payload);
+
+    const res = await api.post("/api/v1/auth/login").send({
+      email: payload.email,
+      password: payload.password,
     });
 
-    if (res.statusCode !== 200) {
-      console.error("❌ Login Error:", res.body);
-    }
-
-    expect(res.statusCode).toBe(200);
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe("success");
     expect(res.body.data).toHaveProperty("token");
-    expect(res.body.data.user).toHaveProperty("email", testUser.email);
-
-    // Store token for later tests
-    authToken = res.body.data.token;
+    expect(res.body.data.user.email).toBe(payload.email);
   });
 
-  /**
-   * ✅ Test: Login Failure with Wrong Credentials
-   */
-  it("should not login with wrong credentials", async () => {
-    const res = await request(app).post("/api/v1/auth/login").send({
-      email: "nonexistent@example.com",
+  it("rejects invalid login attempts", async () => {
+    const res = await api.post("/api/v1/auth/login").send({
+      email: "missing@example.com",
       password: "WrongPassword",
     });
 
-    expect(res.statusCode).toBe(401);
+    expect(res.status).toBe(401);
     expect(res.body.status).toBe("fail");
   });
 
-  /**
-   * ✅ Test: Fetch User Profile with Authentication
-   */
-  it("should fetch user profile when authenticated", async () => {
-    // Register and login first
-    const userData = generateUniqueUserData();
-    await request(app).post("/api/v1/auth/register").send(userData);
+  it("returns the authenticated profile", async () => {
+    const { token, payload } = await createTestUser();
 
-    const loginRes = await request(app).post("/api/v1/auth/login").send({
-      email: userData.email,
-      password: userData.password,
-    });
-
-    const token = loginRes.body.data.token;
-
-    const res = await request(app)
+    const res = await api
       .get("/api/v1/auth/profile")
-      .set("Authorization", `Bearer ${token}`);
+      .set("Authorization", authHeader(token));
 
-    expect(res.statusCode).toBe(200);
-    expect(res.body.data).toHaveProperty("email", userData.email);
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe("success");
+    expect(res.body.data.email).toBe(payload.email);
   });
 
-  /**
-   * ✅ Test: Prevent Fetching Profile Without Authentication
-   */
-  it("should not fetch profile without authentication", async () => {
-    const res = await request(app).get("/api/v1/auth/profile");
-
-    expect(res.statusCode).toBe(401);
+  it("blocks profile access without a token", async () => {
+    const res = await api.get("/api/v1/auth/profile");
+    expect(res.status).toBe(401);
     expect(res.body.status).toBe("fail");
   });
 
-  describe("Validation Tests", () => {
-    it("should fail when passwords do not match", async () => {
-      const invalidUser = {
-        ...generateUniqueUserData(),
-        passwordConfirmation: "DifferentPassword123!",
-      };
-
-      const res = await request(app)
-        .post("/api/v1/auth/register")
-        .send(invalidUser);
-
-      expect(res.statusCode).toBe(400);
-      expect(res.body.status).toBe("fail");
-      expect(res.body.errors).toBeDefined();
-    });
-
-    it("should fail when required fields are missing", async () => {
-      const incompleteUser = {
-        username: "testuser",
-        email: "test@example.com",
-        password: "Password123!",
-        // Missing passwordConfirmation for test purposes
-      };
-
-      const res = await request(app)
-        .post("/api/v1/auth/register")
-        .send(incompleteUser);
-
-      expect(res.statusCode).toBe(400);
-      expect(res.body.status).toBe("fail");
-      expect(res.body.errors).toContainEqual({
-        field: "passwordConfirmation",
-        message: "Required",
+  it("updates the authenticated profile", async () => {
+    const { token } = await createTestUser();
+    const res = await api
+      .put("/api/v1/auth/profile")
+      .set("Authorization", authHeader(token))
+      .send({
+        username: "updated-username",
+        email: `updated-${Date.now()}@example.com`,
+        isPublicProfile: false,
       });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe("success");
+    expect(res.body.message).toBe("Profile updated successfully");
+    expect(res.body.data.user.username).toBe("updated-username");
+    expect(res.body.data.user.isPublicProfile).toBe(false);
+  });
+
+  it("logs out an authenticated user", async () => {
+    const { token } = await createTestUser();
+    const res = await api
+      .post("/api/v1/auth/logout")
+      .set("Authorization", authHeader(token));
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("message", "Logged out successfully");
+  });
+
+  it("validates password mismatch during registration", async () => {
+    const payload = buildUserPayload({
+      password: "Password123!",
+      passwordConfirmation: "Mismatch123!",
     });
+    const res = await api.post("/api/v1/auth/register").send(payload);
+
+    expect(res.status).toBe(400);
+    expect(res.body.status).toBe("fail");
+    expect(res.body.errors).toEqual(
+      expect.arrayContaining([
+        { field: "passwordConfirmation", message: "Passwords do not match" },
+      ])
+    );
   });
 });

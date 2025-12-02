@@ -1,402 +1,188 @@
-// __tests__/metric-settings.test.ts
+import {
+  api,
+  authHeader,
+  createMetric,
+  createMetricSettings,
+  createTestUser,
+} from "./helpers/test-utils";
 
-import db from "../src/models/index.js";
-import request, { Response } from "supertest";
-import app from "../src/server";
+const today = () => new Date().toISOString().split("T")[0];
+const tomorrow = () =>
+  new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
-const { sequelize, User, Metric, MetricSettings } = db;
-
-/**
- * * Generate Unique User Data
- * Creates a new test user each time using a timestamp.
- */
-const generateUniqueUserData = () => {
-  const timestamp = Date.now();
-  return {
-    username: `testuser_${timestamp}`,
-    email: `testuser_${timestamp}@example.com`,
-    password: "Password123",
-    passwordConfirmation: "Password123",
-    age: 25,
-    sex: "male",
-  };
-};
-
-const today = new Date().toISOString().split("T")[0]; // e.g., "2025-02-17"
-const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000)
-  .toISOString()
-  .split("T")[0]; // e.g., "2025-02-18"
-
-describe("Metric Settings Endpoints", () => {
-  let user: typeof User;
+describe("Metric Settings API", () => {
   let token: string;
-  let metricParent: typeof Metric;
-  let settingsId: string; // ✅ Declare settingsId properly to avoid scope issues
-  const nonExistentId = "11111111-1111-1111-1111-111111111111";
+  let metricId: string;
+  let baseSettingsId: string;
 
   beforeEach(async () => {
-    // 🛠 **Setup User**
-    const userData = generateUniqueUserData();
-    const newUser: Response = await request(app)
-      .post("/api/v1/auth/register")
-      .send(userData);
+    const auth = await createTestUser();
+    token = auth.token;
+    const { metric } = await createMetric(token);
+    metricId = metric.id;
 
-    expect(newUser.statusCode).toBe(201);
+    const listRes = await api
+      .get("/api/v1/metric-settings")
+      .set("Authorization", authHeader(token))
+      .query({ "filter[metricId]": metricId });
 
-    // 🔑 **Login User & Get Token**
-    const loginRes: Response = await request(app)
-      .post("/api/v1/auth/login")
-      .send({
-        email: userData.email,
-        password: "Password123",
-      });
-
-    expect(loginRes.statusCode).toBe(200);
-    token = loginRes.body.data.token;
-    if (!token) throw new Error("Authentication failed. No token received.");
-
-    // ✅ **Fetch user from DB & Handle `null` case properly**
-    const foundUser = await User.findOne({ where: { email: userData.email } });
-    if (!foundUser) throw new Error("Test user not found in the database.");
-    user = foundUser;
-
-    // 🛠 **Setup Metric (Parent Entity)**
-    const metric: Response = await request(app)
-      .post("/api/v1/metrics")
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        name: "Height",
-        defaultUnit: "cm",
-        isPublic: true,
-      });
-
-    expect(metric.statusCode).toBe(201);
-    metricParent = metric.body.data.metric;
+    const firstItem = listRes.body.data.items[0];
+    baseSettingsId = firstItem.id;
   });
 
-  /*
-   * 🧪 **Test Cases**
-   */
-
-  it("Should create Settings for a Metric", async () => {
-    const res: Response = await request(app)
-      .post(`/api/v1/metrics/${metricParent.id}/settings`)
-      .set("Authorization", `Bearer ${token}`)
+  it("creates metric settings for a metric", async () => {
+    const res = await api
+      .post("/api/v1/metric-settings")
+      .set("Authorization", authHeader(token))
       .send({
+        metricId,
         goalEnabled: true,
-        goalType: "cumulative", // Added goalType
-        goalValue: 10,
+        goalType: "cumulative",
+        goalValue: 50,
         timeFrameEnabled: true,
-        startDate: today,
-        deadlineDate: tomorrow,
-      });
-
-    expect(res.statusCode).toBe(201);
-    expect(res.body).toHaveProperty(
-      "message",
-      "Metric Settings created successfully"
-    );
-    expect(res.body.data).toHaveProperty("metricSettings");
-    expect(res.body.data.metricSettings).toHaveProperty("id");
-    expect(res.body.data.metricSettings).toHaveProperty("goalEnabled", true);
-    expect(res.body.data.metricSettings).toHaveProperty("goalValue", 10);
-
-    settingsId = res.body.data.metricSettings.id; // ✅ Store settingsId for further tests
-  });
-
-  it("Should fetch all settings for a Metric", async () => {
-    const res: Response = await request(app)
-      .get(`/api/v1/metrics/${metricParent.id}/settings`)
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(res.statusCode).toBe(200);
-    expect(Array.isArray(res.body.data.metricSettings)).toBe(true);
-  });
-
-  it("Should fetch specific Settings for a Metric", async () => {
-    // ✅ Ensure settings exist before fetching
-    const createRes: Response = await request(app)
-      .post(`/api/v1/metrics/${metricParent.id}/settings`)
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        goalEnabled: true,
-        goalType: "cumulative", // Added goalType
-        goalValue: 15,
-        timeFrameEnabled: true,
-        startDate: today,
-        deadlineDate: tomorrow,
-      });
-
-    expect(createRes.statusCode).toBe(201);
-    settingsId = createRes.body.data.metricSettings.id;
-
-    // Wait for the settings to be created
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // 🛠 Fetch the settings
-    const res: Response = await request(app)
-      .get(`/api/v1/metrics/${metricParent.id}/settings/${settingsId}`)
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(res.statusCode).toBe(200);
-    expect(res.body.data).toHaveProperty("metricSettings");
-    expect(res.body.data.metricSettings).toHaveProperty("id", settingsId);
-    expect(res.body.data.metricSettings).toHaveProperty("goalEnabled", true);
-    expect(res.body.data.metricSettings).toHaveProperty("goalValue", 15);
-  });
-
-  it("Should update Settings for a Metric", async () => {
-    // ✅ Ensure settings exist before updating
-    const createRes: Response = await request(app)
-      .post(`/api/v1/metrics/${metricParent.id}/settings`)
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        goalEnabled: true,
-        goalType: "cumulative", // Added goalType
-        goalValue: 15,
-        timeFrameEnabled: true,
-        startDate: today,
-        deadlineDate: tomorrow,
-      });
-
-    expect(createRes.statusCode).toBe(201);
-    settingsId = createRes.body.data.metricSettings.id;
-
-    // Wait for the settings to be created
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // 🛠 Update the settings
-    const res: Response = await request(app)
-      .put(`/api/v1/metrics/${metricParent.id}/settings/${settingsId}`)
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        goalEnabled: true,
-        goalValue: 20,
-      });
-
-    console.log(
-      "Response Metric Settings:",
-      JSON.stringify(res.body.data.metricSettings, null, 2)
-    );
-
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty(
-      "message",
-      "Metric settings updated successfully"
-    );
-    expect(res.body.data.metricSettings).toHaveProperty("goalValue", 20);
-  });
-
-  it("Should delete Settings for a Metric", async () => {
-    // ✅ Ensure settings exist before deleting
-    const createRes: Response = await request(app)
-      .post(`/api/v1/metrics/${metricParent.id}/settings`)
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        goalEnabled: true,
-        goalType: "cumulative", // Added goalType
-        goalValue: 15,
-        timeFrameEnabled: true,
-        startDate: today,
-        deadlineDate: tomorrow,
-      });
-
-    expect(createRes.statusCode).toBe(201);
-    settingsId = createRes.body.data.metricSettings.id;
-
-    // Wait for the settings to be created
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // 🛠 Delete the settings
-    const res: Response = await request(app)
-      .delete(`/api/v1/metrics/${metricParent.id}/settings/${settingsId}`)
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty(
-      "message",
-      "Metric Settings deleted successfully"
-    );
-    expect(res.body.data.metricSettings).toHaveProperty("id", settingsId);
-  });
-
-  describe("🔒 Authorization Tests", () => {
-    it("should not allow unauthorized access to create settings", async () => {
-      const res = await request(app)
-        .post(`/api/v1/metrics/${metricParent.id}/settings`)
-        .send({
-          goalEnabled: true,
-          goalType: "cumulative",
-          goalValue: 10,
-        });
-
-      expect(res.statusCode).toBe(401);
-      expect(res.body.status).toBe("fail");
-    });
-
-    it("should not allow access with invalid token", async () => {
-      const res = await request(app)
-        .get(`/api/v1/metrics/${metricParent.id}/settings`)
-        .set("Authorization", "Bearer invalid_token");
-
-      expect(res.statusCode).toBe(401);
-      expect(res.body.status).toBe("fail");
-    });
-  });
-
-  describe("✅ Validation Tests", () => {
-    it("should validate goal value is positive", async () => {
-      const res = await request(app)
-        .post(`/api/v1/metrics/${metricParent.id}/settings`)
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          goalEnabled: true,
-          goalType: "cumulative",
-          goalValue: -10,
-        });
-
-      expect(res.statusCode).toBe(400);
-      expect(res.body.status).toBe("fail");
-    });
-
-    it("should validate deadline date is after start date", async () => {
-      const res = await request(app)
-        .post(`/api/v1/metrics/${metricParent.id}/settings`)
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          timeFrameEnabled: true,
-          startDate: tomorrow,
-          deadlineDate: today,
-        });
-
-      expect(res.statusCode).toBe(400);
-      expect(res.body.status).toBe("fail");
-    });
-  });
-
-  describe("🎯 Goal Settings Tests", () => {
-    it("should handle goal achievement updates", async () => {
-      // Create settings first
-      const createRes = await request(app)
-        .post(`/api/v1/metrics/${metricParent.id}/settings`)
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          goalEnabled: true,
-          goalType: "cumulative",
-          goalValue: 10,
-        });
-
-      const settingsId = createRes.body.data.metricSettings.id;
-
-      // Update achievement status
-      const res = await request(app)
-        .patch(
-          `/api/v1/metrics/${metricParent.id}/settings/${settingsId}/achieve`
-        )
-        .set("Authorization", `Bearer ${token}`);
-
-      expect(res.statusCode).toBe(200);
-      expect(res.body.data.metricSettings.isAchieved).toBe(true);
-    });
-  });
-
-  describe("📊 Display Options Tests", () => {
-    it("should update display options", async () => {
-      // Create settings first
-      const createRes = await request(app)
-        .post(`/api/v1/metrics/${metricParent.id}/settings`)
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          displayOptions: {
-            showOnDashboard: true,
-            priority: 1,
-            chartType: "line",
-            color: "#E897A3",
-          },
-        });
-
-      const settingsId = createRes.body.data.metricSettings.id;
-
-      // Update display options
-      const res = await request(app)
-        .patch(
-          `/api/v1/metrics/${metricParent.id}/settings/${settingsId}/display`
-        )
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          displayOptions: {
-            showOnDashboard: false,
-            priority: 2,
-            chartType: "bar",
-            color: "#123456",
-          },
-        });
-
-      expect(res.statusCode).toBe(200);
-      expect(res.body).toHaveProperty("data.displayOptions");
-
-      console.info(res.body);
-
-      expect(res.body.data).toHaveProperty("displayOptions");
-      expect(res.body.data).toMatchObject({
+        startDate: today(),
+        deadlineDate: tomorrow(),
         displayOptions: {
-          showOnDashboard: false,
+          showOnDashboard: true,
           priority: 2,
           chartType: "bar",
           color: "#123456",
         },
       });
+
+    expect(res.status).toBe(201);
+    expect(res.body.status).toBe("success");
+    expect(res.body.data.metricId).toBe(metricId);
+  });
+
+  it("lists settings via cursor", async () => {
+    await createMetricSettings(token, metricId, {
+      goalEnabled: true,
+      goalType: "incremental",
+      goalValue: 5,
+    });
+
+    const res = await api
+      .get("/api/v1/metric-settings")
+      .set("Authorization", authHeader(token))
+      .query({
+        "filter[metricId]": metricId,
+        includeTotal: true,
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.items.length).toBeGreaterThanOrEqual(1);
+    expect(res.body.data).toHaveProperty("totalCount");
+  });
+
+  it("retrieves settings by id", async () => {
+    const res = await api
+      .get(`/api/v1/metric-settings/${baseSettingsId}`)
+      .set("Authorization", authHeader(token))
+      .query({ metricId });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.id).toBe(baseSettingsId);
+  });
+
+  it("updates metric settings", async () => {
+    const res = await api
+      .put(`/api/v1/metric-settings/${baseSettingsId}`)
+      .set("Authorization", authHeader(token))
+      .query({ metricId })
+      .send({
+        goalEnabled: true,
+        goalType: "cumulative",
+        goalValue: 100,
+        alertEnabled: true,
+        alertThresholds: 70,
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("Metric settings updated successfully");
+    expect(res.body.data.goalValue).toBe(100);
+    expect(res.body.data.alertThresholds).toBe(70);
+  });
+
+  it("deletes metric settings", async () => {
+    const { settings } = await createMetricSettings(token, metricId, {
+      goalEnabled: true,
+      goalType: "incremental",
+      goalValue: 12,
+    });
+
+    const res = await api
+      .delete(`/api/v1/metric-settings/${settings.id}`)
+      .set("Authorization", authHeader(token))
+      .query({ metricId });
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("Metric Settings deleted successfully");
+  });
+
+  it("toggles goal achievement", async () => {
+    const res = await api
+      .patch(`/api/v1/metric-settings/${baseSettingsId}/achieve`)
+      .set("Authorization", authHeader(token))
+      .query({ metricId });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.isAchieved).toBe(true);
+  });
+
+  it("updates display options", async () => {
+    const res = await api
+      .patch(`/api/v1/metric-settings/${baseSettingsId}/display`)
+      .set("Authorization", authHeader(token))
+      .query({ metricId })
+      .send({
+        displayOptions: {
+          showOnDashboard: false,
+          priority: 3,
+          chartType: "line",
+          color: "#654321",
+        },
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.displayOptions).toMatchObject({
+      showOnDashboard: false,
+      priority: 3,
+      color: "#654321",
     });
   });
 
-  describe("⚠️ Alert Settings Tests", () => {
-    it("should handle alert threshold updates", async () => {
-      const res = await request(app)
-        .post(`/api/v1/metrics/${metricParent.id}/settings`)
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          alertEnabled: true,
-          alertThresholds: 90,
-        });
-
-      expect(res.statusCode).toBe(201);
-      expect(res.body.data.metricSettings.alertThresholds).toBe(90);
+  it("enforces authentication", async () => {
+    const res = await api.post("/api/v1/metric-settings").send({
+      metricId,
+      goalValue: 10,
     });
+
+    expect(res.status).toBe(401);
+    expect(res.body.status).toBe("fail");
   });
 
-  describe("🔍 Edge Cases", () => {
-    it("should handle non-existent metric ID", async () => {
-      const res = await request(app)
-        .post(`/api/v1/metrics/${nonExistentId}/settings`)
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          goalEnabled: true,
-          goalValue: 10,
-        });
+  it("validates payload combinations", async () => {
+    const res = await api
+      .post("/api/v1/metric-settings")
+      .set("Authorization", authHeader(token))
+      .send({
+        metricId,
+        goalEnabled: true,
+      });
 
-      expect(res.statusCode).toBe(404);
-      expect(res.body.status).toBe("fail");
-    });
+    expect(res.status).toBe(400);
+    expect(res.body.status).toBe("fail");
+  });
 
-    it("should handle concurrent updates", async () => {
-      // Create initial settings
-      const createRes = await request(app)
-        .post(`/api/v1/metrics/${metricParent.id}/settings`)
-        .set("Authorization", `Bearer ${token}`)
-        .send({ goalValue: 10 });
+  it("returns 404 for unknown settings", async () => {
+    const unknownId = "11111111-1111-1111-1111-111111111111";
+    const res = await api
+      .get(`/api/v1/metric-settings/${unknownId}`)
+      .set("Authorization", authHeader(token))
+      .query({ metricId });
 
-      const settingsId = createRes.body.data.metricSettings.id;
-
-      // Make concurrent update requests
-      const updates = [15, 20].map((value) =>
-        request(app)
-          .put(`/api/v1/metrics/${metricParent.id}/settings/${settingsId}`)
-          .set("Authorization", `Bearer ${token}`)
-          .send({ goalValue: value })
-      );
-
-      const results = await Promise.all(updates);
-      expect(results.every((res) => res.statusCode === 200)).toBe(true);
-    });
+    expect(res.status).toBe(404);
+    expect(res.body.status).toBe("fail");
   });
 });

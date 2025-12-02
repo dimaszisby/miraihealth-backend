@@ -4,15 +4,16 @@ import type { Server } from "http";
 import { QueryTypes } from "sequelize";
 import { setImmediate } from "timers";
 import app from "./src/server.js";
-import db from "./src/models/index.js";
+import db from "./src/infrastructure/db/sequelize.js";
+import { disconnectRedis } from "./src/utils/redis-client.js";
 import request from "supertest";
 import { env } from "./src/config/zodEnv.js";
 
 const { sequelize } = db;
 
-// ✅ Ensure Jest uses the correct test environment
+// Ensure Jest uses the correct test environment
 if (!env.NODE_ENV) {
-  throw new Error("❌ NODE_ENV not set. Check your .env.test file.");
+  throw new Error("[ERROR] NODE_ENV not set. Check your .env.test file.");
 }
 
 console.log(`🛠 Jest running in environment: ${env.NODE_ENV}`);
@@ -20,32 +21,32 @@ console.log(`🔗 Connected to test DB: ${env.TEST_DATABASE_URL}`);
 console.log(`DB_HOST: ${env.DB_HOST}`);
 console.log(`DB_PORT: ${env.DB_PORT}`);
 
-// ✅ Ensure immediate functions are available in Jest
+// Ensure immediate functions are available in Jest
 global.setImmediate = setImmediate;
 
 let server: Server;
 
 /**
- * ✅ Initialize Database & Start Test Server Before Running Tests
+ * Initialize Database & Start Test Server Before Running Tests
  */
 beforeAll(async () => {
   try {
-    // ✅ Start test server
+    // Start test server
     server = app.listen(4000, () => {
-      console.log("✅ Test server running on port 4000");
+      console.log("[PROCESS] Test server running on port 4000");
     });
 
-    // ✅ Verify database connection
+    // Verify database connection
     await sequelize.authenticate();
-    console.log("✅ Database connection established.");
+    console.log("[PROCESS] Database connection established.");
   } catch (error) {
-    console.error("❌ Error during test setup:", error);
+    console.error("[ERROR] during test setup:", error);
     throw error;
   }
 });
 
 /**
- * ✅ Clean Up Database After Each Test (Truncate Tables)
+ * Clean Up Database After Each Test (Truncate Tables)
  */
 beforeEach(async () => {
   try {
@@ -68,29 +69,31 @@ beforeEach(async () => {
       // await sequelize.query("SET FOREIGN_KEY_CHECKS = 1");
     }
 
-    console.log("✅ Completed raw SQL table truncation.");
+    console.log("[PROCESS] Completed raw SQL table truncation.");
   } catch (error) {
-    console.error("❌ Error during table truncation:", error);
+    console.error("[ERROR] during table truncation:", error);
     throw error;
   }
 });
 
 /**
- * ✅ Gracefully Shut Down Server & DB Connection After Tests
+ * Gracefully Shut Down Server & DB Connection After Tests
  */
 afterAll(async () => {
   try {
     if (server) {
       await new Promise<void>((resolve) => server.close(() => resolve()));
-      console.log("✅ Test server closed.");
+      console.log("[PROCESS] Test server closed.");
     }
 
     await sequelize.close();
-    console.log("✅ Database connection closed.");
+    console.log("[PROCESS] Database connection closed.");
+
+    await disconnectRedis();
   } catch (error) {
-    console.error("❌ Error closing connections:", error);
+    console.error("[ERROR] closing connections:", error);
   }
 });
 
-// ✅ Export test request helper
+// Export test request helper
 export const testRequest = request(app);

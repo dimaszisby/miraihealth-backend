@@ -1,263 +1,161 @@
-// __tests__/metric-category.test.ts
+import {
+  api,
+  authHeader,
+  buildCategoryPayload,
+  createCategory,
+  createTestUser,
+  uniqueName,
+} from "./helpers/test-utils";
 
-import db from "../src/models/index.js";import request from "supertest";
-import app from "../src/server.js";
-import { Response } from "supertest";
-
-const { sequelize, User, MetricCategory } = db;
-
-/**
- * Generates unique user test data to avoid conflicts.
- */
-const generateUniqueUserData = () => {
-  const timestamp = Date.now();
-  return {
-    username: `testuser_${timestamp}`,
-    email: `testuser_${timestamp}@example.com`,
-    password: "Password123",
-    passwordConfirmation: "Password123",
-    age: 25,
-    sex: "male",
-  };
-};
-
-describe("📂 Metric Category Endpoints", () => {
+describe("Metric Category API", () => {
   let token: string;
-  let user: typeof User;
 
   beforeEach(async () => {
-    // 🛠 Setup User: Register a new user
-    const userData = generateUniqueUserData();
-    const newUser: Response = await request(app)
-      .post("/api/v1/auth/register")
-      .send(userData);
-
-    expect(newUser.statusCode).toBe(201);
-
-    // 🔑 Login User & Get Token
-    const loginRes: Response = await request(app)
-      .post("/api/v1/auth/login")
-      .send({
-        email: userData.email,
-        password: userData.password,
-      });
-
-    expect(loginRes.statusCode).toBe(200);
-    token = loginRes.body.data.token;
-
-    if (!token) throw new Error("Authentication failed. No token received.");
-
-    // ✅ Fetch user from DB & Handle `null` case properly
-    const foundUser = await User.findOne({ where: { email: userData.email } });
-    if (!foundUser) throw new Error("Test user not found in the database.");
-    user = foundUser;
+    ({ token } = await createTestUser());
   });
 
-  /**
-   * * ✅ TEST CASES ✅
-   */
+  it("creates a metric category with defaults", async () => {
+    const payload = buildCategoryPayload({ color: "#123456", icon: "💪" });
+    const res = await api
+      .post("/api/v1/metric-categories")
+      .set("Authorization", authHeader(token))
+      .send(payload);
 
-  it("📝 Should create a new Metric Category", async () => {
-    const res: Response = await request(app)
-      .post("/api/v1/categories")
-      .set("Authorization", `Bearer ${token}`)
-      .send({ name: "Muscle" });
-
-    expect(res.statusCode).toBe(201);
+    expect(res.status).toBe(201);
+    expect(res.body.status).toBe("success");
     expect(res.body.message).toBe("Category created successfully");
-    expect(res.body.data.category.name).toBe("Muscle");
+    expect(res.body.data).toMatchObject({
+      name: payload.name,
+      color: "#123456",
+      icon: "💪",
+    });
   });
 
-  it("📚 Should fetch all categories for the authenticated user", async () => {
-    const res: Response = await request(app)
-      .get("/api/v1/categories")
-      .set("Authorization", `Bearer ${token}`);
+  it("lists categories via cursor pagination", async () => {
+    const strengthName = uniqueName("Strength");
+    await Promise.all([
+      createCategory(token, { name: strengthName }),
+      createCategory(token, { name: uniqueName("Mobility") }),
+    ]);
 
-    expect(res.statusCode).toBe(200);
-    expect(Array.isArray(res.body.data.categories)).toBe(true);
+    const res = await api
+      .get("/api/v1/metric-categories")
+      .set("Authorization", authHeader(token))
+      .query({ limit: 10, includeTotal: true, q: strengthName });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe("success");
+    expect(res.body.data.items).toHaveLength(1);
+    expect(res.body.data.items[0].name).toBe(strengthName);
+    expect(res.body.data).toHaveProperty("totalCount", 1);
   });
 
-  it("🔍 Should fetch a specific category by ID", async () => {
-    // Create a category to fetch later
-    const categoryRes: Response = await request(app)
-      .post("/api/v1/categories")
-      .set("Authorization", `Bearer ${token}`)
-      .send({ name: "Body Composition" });
+  it("retrieves a category by id", async () => {
+    const { category } = await createCategory(token);
+    const res = await api
+      .get(`/api/v1/metric-categories/${category.id}`)
+      .set("Authorization", authHeader(token));
 
-    expect(categoryRes.statusCode).toBe(201);
-
-    const categoryId = categoryRes.body.data.category.id;
-
-    // Fetch category
-    const res: Response = await request(app)
-      .get(`/api/v1/categories/${categoryId}`)
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(res.statusCode).toBe(200);
-    expect(res.body.data.category).toHaveProperty("name");
-    expect(res.body.data.category).toHaveProperty("icon");
-    expect(res.body.data.category).toHaveProperty("color");
+    expect(res.status).toBe(200);
+    expect(res.body.data.id).toBe(category.id);
   });
 
-  it("✏️ Should update a metric category", async () => {
-    // Create a category to update
-    const categoryRes: Response = await request(app)
-      .post("/api/v1/categories")
-      .set("Authorization", `Bearer ${token}`)
-      .send({ name: "Body Composition" });
+  it("updates a category", async () => {
+    const { category } = await createCategory(token, { name: "Body" });
+    const res = await api
+      .put(`/api/v1/metric-categories/${category.id}`)
+      .set("Authorization", authHeader(token))
+      .send({ name: "Body Mass" });
 
-    expect(categoryRes.statusCode).toBe(201);
-    const categoryId = categoryRes.body.data.category.id;
-
-    // Update the category
-    const res: Response = await request(app)
-      .put(`/api/v1/categories/${categoryId}`)
-      .set("Authorization", `Bearer ${token}`)
-      .send({ name: "Body Mass Index" });
-
-    expect(res.statusCode).toBe(200);
+    expect(res.status).toBe(200);
     expect(res.body.message).toBe("Category updated successfully");
-    expect(res.body.data.category.name).toBe("Body Mass Index");
+    expect(res.body.data.name).toBe("Body Mass");
   });
 
-  it("🗑️ Should delete a metric category", async () => {
-    // Create a category to delete
-    const categoryRes: Response = await request(app)
-      .post("/api/v1/categories")
-      .set("Authorization", `Bearer ${token}`)
-      .send({ name: "Body Fat Percentage" });
+  it("deletes a category", async () => {
+    const { category } = await createCategory(token);
+    const res = await api
+      .delete(`/api/v1/metric-categories/${category.id}`)
+      .set("Authorization", authHeader(token));
 
-    expect(categoryRes.statusCode).toBe(201);
-    const categoryId = categoryRes.body.data.category.id;
-
-    // Delete category
-    const res: Response = await request(app)
-      .delete(`/api/v1/categories/${categoryId}`)
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(res.statusCode).toBe(200);
+    expect(res.status).toBe(200);
     expect(res.body.message).toBe("Category deleted successfully");
   });
 
-  describe("🔒 Authorization Tests", () => {
-    it("should not create category without authentication", async () => {
-      const res: Response = await request(app)
-        .post("/api/v1/categories")
-        .send({ name: "Muscle" });
+  it("prevents duplicate category names per user", async () => {
+    const payload = buildCategoryPayload({ name: "Cardio" });
+    await api
+      .post("/api/v1/metric-categories")
+      .set("Authorization", authHeader(token))
+      .send(payload);
 
-      expect(res.statusCode).toBe(401);
-      expect(res.body.status).toBe("fail");
-    });
+    const res = await api
+      .post("/api/v1/metric-categories")
+      .set("Authorization", authHeader(token))
+      .send(payload);
 
-    it("should not access categories with invalid token", async () => {
-      const res: Response = await request(app)
-        .get("/api/v1/categories")
-        .set("Authorization", "Bearer invalid_token");
+    expect(res.status).toBe(400);
+    expect(res.body.status).toBe("fail");
+  });
 
-      expect(res.statusCode).toBe(401);
-      expect(res.body.status).toBe("fail");
+  it("validates required fields", async () => {
+    const res = await api
+      .post("/api/v1/metric-categories")
+      .set("Authorization", authHeader(token))
+      .send({ name: "" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.status).toBe("fail");
+  });
+
+  it("returns 404 for unknown categories", async () => {
+    const unknownId = "11111111-1111-1111-1111-111111111111";
+    const [getRes, putRes, deleteRes] = await Promise.all([
+      api
+        .get(`/api/v1/metric-categories/${unknownId}`)
+        .set("Authorization", authHeader(token)),
+      api
+        .put(`/api/v1/metric-categories/${unknownId}`)
+        .set("Authorization", authHeader(token))
+        .send({ name: "Updated" }),
+      api
+        .delete(`/api/v1/metric-categories/${unknownId}`)
+        .set("Authorization", authHeader(token)),
+    ]);
+
+    [getRes, putRes, deleteRes].forEach((response) => {
+      expect(response.status).toBe(404);
+      expect(response.body.status).toBe("fail");
     });
   });
 
-  describe("✅ Validation Tests", () => {
-    it("should not create category with empty name", async () => {
-      const res: Response = await request(app)
-        .post("/api/v1/categories")
-        .set("Authorization", `Bearer ${token}`)
-        .send({ name: "" });
-
-      expect(res.statusCode).toBe(400);
-      expect(res.body.status).toBe("fail");
+  it("blocks unauthenticated access", async () => {
+    const res = await api.post("/api/v1/metric-categories").send({
+      name: "Cardio",
     });
 
-    it("should not create duplicate category names for same user", async () => {
-      // Create first category
-      await request(app)
-        .post("/api/v1/categories")
-        .set("Authorization", `Bearer ${token}`)
-        .send({ name: "Unique Category" });
-
-      // Try to create duplicate
-      const res: Response = await request(app)
-        .post("/api/v1/categories")
-        .set("Authorization", `Bearer ${token}`)
-        .send({ name: "Unique Category" });
-
-      expect(res.statusCode).toBe(400);
-      expect(res.body.status).toBe("fail");
-    });
+    expect(res.status).toBe(401);
+    expect(res.body.status).toBe("fail");
   });
 
-  describe("🔍 Edge Cases", () => {
-    it("should handle non-existent category ID", async () => {
-      const nonExistentId = "11111111-1111-1111-1111-111111111111";
-      const res: Response = await request(app)
-        .get(`/api/v1/categories/${nonExistentId}`)
-        .set("Authorization", `Bearer ${token}`);
+  it("rejects invalid tokens", async () => {
+    const res = await api
+      .get("/api/v1/metric-categories")
+      .set("Authorization", "Bearer invalid");
 
-      expect(res.statusCode).toBe(404);
-      expect(res.body.status).toBe("fail");
-    });
-
-    it("should not update non-existent category", async () => {
-      const nonExistentId = "11111111-1111-1111-1111-111111111111";
-      const res: Response = await request(app)
-        .put(`/api/v1/categories/${nonExistentId}`)
-        .set("Authorization", `Bearer ${token}`)
-        .send({ name: "Updated Name" });
-
-      expect(res.statusCode).toBe(404);
-      expect(res.body.status).toBe("fail");
-    });
-
-    it("should not delete non-existent category", async () => {
-      const nonExistentId = "11111111-1111-1111-1111-111111111111";
-      const res: Response = await request(app)
-        .delete(`/api/v1/categories/${nonExistentId}`)
-        .set("Authorization", `Bearer ${token}`);
-
-      expect(res.statusCode).toBe(404);
-      expect(res.body.status).toBe("fail");
-    });
+    expect(res.status).toBe(401);
+    expect(res.body.status).toBe("fail");
   });
 
-  describe("🎨 Optional Fields Tests", () => {
-    it("should create category with custom icon and color", async () => {
-      const res: Response = await request(app)
-        .post("/api/v1/categories")
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          name: "Cardio",
-          icon: "heart",
-          color: "#FF0000",
-        });
+  it("respects optional fields during updates", async () => {
+    const { category } = await createCategory(token);
+    const res = await api
+      .put(`/api/v1/metric-categories/${category.id}`)
+      .set("Authorization", authHeader(token))
+      .send({ icon: "🔥", color: "#00FF00" });
 
-      expect(res.statusCode).toBe(201);
-      expect(res.body.data.category.icon).toBe("heart");
-      expect(res.body.data.category.color).toBe("#FF0000");
-    });
-
-    it("should update category optional fields", async () => {
-      // Create category first
-      const category = await request(app)
-        .post("/api/v1/categories")
-        .set("Authorization", `Bearer ${token}`)
-        .send({ name: "Test Category" });
-
-      const categoryId = category.body.data.category.id;
-
-      // Update optional fields
-      const res: Response = await request(app)
-        .put(`/api/v1/categories/${categoryId}`)
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          icon: "dumbbell",
-          color: "#00FF00",
-        });
-
-      expect(res.statusCode).toBe(200);
-      expect(res.body.data.category.icon).toBe("dumbbell");
-      expect(res.body.data.category.color).toBe("#00FF00");
-    });
+    expect(res.status).toBe(200);
+    expect(res.body.data.icon).toBe("🔥");
+    expect(res.body.data.color).toBe("#00FF00");
   });
 });
