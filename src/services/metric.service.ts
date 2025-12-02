@@ -80,7 +80,10 @@ export const createMetricService = async (
         { transaction: t }
       );
     } catch (error) {
-      logger.error(`Error creating MetricSettings for metric ${metric.id}:`, error);
+      logger.error(
+        `Error creating MetricSettings for metric ${metric.id}:`,
+        error
+      );
       throw error; // Re-throw to ensure transaction rollback
     }
 
@@ -166,13 +169,17 @@ export const getUserMetricDetailService = async (
       as: "settings",
       attributes: [
         "id",
+        "metricId",
+        "isActive",
+        "goalEnabled",
         "goalType",
         "goalValue",
+        "timeFrameEnabled",
         "startDate",
         "deadlineDate",
+        "alertEnabled",
         "alertThresholds",
         "isAchieved",
-        "isActive",
         "displayOptions",
         "createdAt",
         "updatedAt",
@@ -184,7 +191,7 @@ export const getUserMetricDetailService = async (
     includeArr.push({
       model: models.MetricLog,
       as: "logs",
-      attributes: ["id", "logValue", "type", "loggedAt", "createdAt"],
+      attributes: ["id", "logValue", "type", "loggedAt", "createdAt", "updatedAt"],
       order: [["createdAt", "DESC"]],
       limit: options.logsLimit || 20, // Default
     });

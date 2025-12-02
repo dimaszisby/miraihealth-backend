@@ -21,7 +21,7 @@ import { toDomainMetricSettings } from "./metric-settings.mapper";
 import { toDomainMetricLog } from "./metric-log.mapper";
 import {
   toDomainLegacy,
-  toMResponseDTOLegacy as toResponseDTOLegacy,
+  toResponseDTOLegacy as toResponseDTOLegacy,
 } from "@/features/metric-category/legacies/MetricCategoryLegacy.mapper";
 
 const validateUserId = (userId: string | null | undefined) => {

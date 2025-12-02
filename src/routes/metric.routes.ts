@@ -22,6 +22,7 @@ import {
   getAllMetricsViaCursorSchema,
 } from "@/types/api/zod-metric.schema";
 import { AuthRequest } from "@/types/request.context";
+import { env } from "@/config/zodEnv";
 
 const router = Router();
 router.use(authMiddleware);
@@ -148,11 +149,13 @@ const trendParams = { params: z.object({ metricId: z.string().uuid() }) }; // sm
 router.get("/:metricId/trends", validate(trendParams as any), getTrends);
 
 /** Testing */
-router.post(
-  "/dummy",
-  userRateLimiter,
-  validate(generateDummyMetricsSchema),
-  generateDummyMetrics
-);
+if (env.ENABLE_DUMMY_ENDPOINTS) {
+  router.post(
+    "/dummy",
+    userRateLimiter,
+    validate(generateDummyMetricsSchema),
+    generateDummyMetrics
+  );
+}
 
 export default router;
