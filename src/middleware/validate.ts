@@ -1,13 +1,6 @@
-// src/middleware/validate.ts
-
 import { AuthRequest } from "@/types/request.context";
-import { Request, Response, NextFunction } from "express";
-import { ZodSchema, ZodError, AnyZodObject, ZodTypeAny } from "zod";
-
-/**
- * * Validation Middleware
- * Used to validate incoming requests against Zod schemas.
- */
+import { Response, NextFunction } from "express";
+import { ZodError, ZodTypeAny } from "zod";
 
 type SchemaBag = {
   body?: ZodTypeAny;
@@ -15,6 +8,7 @@ type SchemaBag = {
   query?: ZodTypeAny;
 };
 
+// Helpers
 const handleError = (res: Response, error: ZodError) => {
   const formattedErrors = error.errors.map((err) => ({
     field: err.path.join("."),
@@ -25,35 +19,52 @@ const handleError = (res: Response, error: ZodError) => {
   res.status(400).json({ status: "fail", errors: formattedErrors });
 };
 
+// type guard: is it a Zod schema (object/effects/union/etc.)
+function isZodSchema(x: unknown): x is ZodTypeAny {
+  return !!x && typeof (x as any).safeParse === "function";
+}
+
+/**
+ * Validation Middleware
+ * - Accepts both a bag or full zod schema -> enables old mutation
+ * - Exposes req.validated -> clear contract between the transport layer and application layer
+ */
 export const validate =
-  (schemas?: SchemaBag) =>
+  (arg?: SchemaBag | ZodTypeAny) =>
   (req: AuthRequest, res: Response, next: NextFunction): void => {
-    if (!schemas) {
-      console.warn("No validation schema provided for this route.");
-      return next();
-    }
+    if (!arg) return next();
 
     try {
-      if (schemas.body) {
-        const parsedBody = schemas.body.safeParse(req.body);
-        if (!parsedBody.success) return handleError(res, parsedBody.error);
-        req.body = parsedBody.data as typeof req.body;
+      if (isZodSchema(arg)) {
+        // Full schema: expect { params?, query?, body? }
+        const parsed = arg.safeParse({
+          params: req.params,
+          query: req.query,
+          body: req.body,
+        });
+        if (!parsed.success) return handleError(res, parsed.error);
+        req.validated = parsed.data;
+        return next();
       }
 
-      if (schemas.params) {
-        const parsedParams = schemas.params.safeParse(req.params);
-        if (!parsedParams.success) return handleError(res, parsedParams.error);
-        req.params = parsedParams.data as typeof req.params;
+      // Bag mode (back-compat)
+      const out: Record<string, unknown> = {};
+      if (arg.params) {
+        const p = arg.params.safeParse(req.params);
+        if (!p.success) return handleError(res, p.error);
+        out.params = p.data;
       }
-
-      if (schemas.query) {
-        const parsedQuery = schemas.query.safeParse(req.query);
-        if (!parsedQuery.success) return handleError(res, parsedQuery.error);
-        req.query = parsedQuery.data as any;
+      if (arg.query) {
+        const q = arg.query.safeParse(req.query);
+        if (!q.success) return handleError(res, q.error);
+        out.query = q.data;
       }
-
-      // Override body with parsed/validated data
-      // req.body = result.data;
+      if (arg.body) {
+        const b = arg.body.safeParse(req.body);
+        if (!b.success) return handleError(res, b.error);
+        out.body = b.data;
+      }
+      req.validated = out;
       return next();
     } catch (error) {
       console.error("Unexpected Error during Validation:", error);

@@ -1,5 +1,3 @@
-// src/rate-limiter.ts
-
 import { env } from "../config/zodEnv.js";
 import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
@@ -21,11 +19,16 @@ import logger from "../utils/logger.js";
  */
 function maybeCreateStore() {
   if (env.NODE_ENV === "test") {
-    // Return undefined to use the built-in in-memory store instead
-    // or you could do: return new MemoryStore();
     return undefined;
   }
-  // Otherwise, use Redis
+
+  if (!env.REDIS_REQUIRED && !redisClient.isOpen) {
+    logger.warn(
+      "[RATE LIMITER] Redis not connected; falling back to in-memory store."
+    );
+    return undefined;
+  }
+
   return new RedisStore({
     sendCommand: (...args: string[]) => redisClient.sendCommand(args),
   });
@@ -38,7 +41,7 @@ function maybeCreateStore() {
 export const globalRateLimiter = rateLimit({
   store: maybeCreateStore(),
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: env.NODE_ENV === "test" || env.NODE_ENV === "development" ? 999999 : 50, // Limit each IP to 100 requests per window, but 999999 in test mode
+  max: env.RATE_LIMIT_GLOBAL_MAX,
   standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
   legacyHeaders: false, // Disable `X-RateLimit-*` headers
   message: {
@@ -67,7 +70,7 @@ export const userRateLimiter = rateLimit({
   },
   store: maybeCreateStore(),
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: env.NODE_ENV === "test" ? 999999 : 50, // Limit each user to 50 requests per window, but 999999 in test mode
+  max: env.RATE_LIMIT_USER_MAX,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -80,6 +83,30 @@ export const userRateLimiter = rateLimit({
     } else {
       logger.warn(`Rate limit exceeded for IP: ${req.ip}`);
     }
+    res.status(options.statusCode).json(options.message);
+  },
+});
+
+/**
+ * * Analytics Rate Limiter
+ * Restricts expensive visualization queries.
+ */
+export const analyticsRateLimiter = rateLimit({
+  keyGenerator: (req: AuthRequest): string => {
+    return req.user?.id ? `analytics:${req.user.id}` : req.ip || "anonymous";
+  },
+  store: maybeCreateStore(),
+  windowMs: 60 * 1000, // 1 minute
+  max: env.RATE_LIMIT_ANALYTICS_MAX,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    status: 429,
+    message: "Too many visualization requests, slow down.",
+  },
+  handler: (req: AuthRequest, res: Response, next: NextFunction, options) => {
+    const identifier = req.user?.id ?? req.ip ?? "anonymous";
+    logger.warn(`Analytics rate limit exceeded for ${identifier}`);
     res.status(options.statusCode).json(options.message);
   },
 });

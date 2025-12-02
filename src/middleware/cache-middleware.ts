@@ -1,15 +1,8 @@
-// src/middleware/cache-middleware.ts
-
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import { redisClient } from "../utils/redis-client.js";
 import logger from "../utils/logger.js";
 import { env } from "../config/zodEnv.js";
 import { AuthRequest } from "@/types/request.context.js";
-
-/**
- * * Cache Middleware
- * Caching responses using Redis for improved performance.
- */
 
 export type KeyGenerator = (req: AuthRequest) => string;
 
@@ -20,7 +13,11 @@ export type KeyGenerator = (req: AuthRequest) => string;
  */
 export const cacheMiddleware =
   (keyGenerator: KeyGenerator, duration: number) =>
-  async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     if (env.NODE_ENV === "test") {
       return next();
     }
@@ -32,12 +29,12 @@ export const cacheMiddleware =
       const cachedData = await redisClient.get(key);
 
       if (cachedData) {
-        logger.info(`✅ Cache HIT: ${key}`);
+        logger.info(`[CACHE PROCESS] Cache HIT: ${key}`);
         res.status(200).json(JSON.parse(cachedData));
         return;
       }
 
-      logger.info(`❌ Cache miss for key: ${key}`);
+      logger.info(`[CACHE ERROR] Cache miss for key: ${key}`);
 
       // Store original res.json function
       const originalJson = res.json.bind(res);
@@ -47,18 +44,18 @@ export const cacheMiddleware =
         redisClient
           .setEx(key, duration, JSON.stringify(data))
           .then(() =>
-            logger.info(`✅ Cached response: ${key} (TTL: ${duration}s)`)
+            logger.info(`[CACHE] Cached response: ${key} (TTL: ${duration}s)`)
           )
           .catch((cacheError) =>
-            logger.error(`❌ Cache write failed: ${key}`, cacheError)
+            logger.error(`[CACHE ERROR] Cache write failed: ${key}`, cacheError)
           );
 
-        return originalJson(data); // Ensure normal response flow
+        return originalJson(data);
       };
 
       next();
     } catch (error) {
-      logger.error("❌ Cache middleware error:", error);
-      next(); // Proceed without cache on error
+      logger.error("[CACHE ERROR] Cache middleware error:", error);
+      next();
     }
   };
