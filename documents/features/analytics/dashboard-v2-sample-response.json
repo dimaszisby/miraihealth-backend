@@ -1,0 +1,87 @@
+{
+  "items": [
+    {
+      "metricId": "9de1a4e4-834f-4d7f-9e78-d6ce095ab548",
+      "name": "Sleep",
+      "unit": "hours",
+      "category_name": "Wellness",
+      "category_icon": "😴",
+      "category_color": "#663399",
+      "priority": 1,
+      "series": [
+        { "bucketStartISO": "2024-02-01T00:00:00Z", "value": 7.2 },
+        { "bucketStartISO": "2024-02-02T00:00:00Z", "value": 6.8 }
+      ],
+      "stats": {
+        "average": 6.9,
+        "min": 5.3,
+        "max": 8.1,
+        "count": 30
+      },
+      "lastLogAt": "2024-02-05T06:45:00Z",
+      "firstLogAt": "2022-02-10T05:00:00Z",
+      "totalLogs": 640,
+      "latestValue": 7.1,
+      "latestBucketStart": "2024-02-05T00:00:00Z",
+      "requestedRange": {
+        "startISO": "2024-01-07T00:00:00Z",
+        "endISO": "2024-02-06T00:00:00Z",
+        "bucket": "1d"
+      },
+      "actualRange": {
+        "startISO": "2024-01-07T00:00:00Z",
+        "endISO": "2024-02-06T00:00:00Z",
+        "bucket": "1d"
+      },
+      "fallbackRangeUsed": false,
+      "fallbackStrategy": null
+    },
+    {
+      "metricId": "a84bfb05-1826-40ea-b6c5-7a0a6ee58945",
+      "name": "Churn Tickets",
+      "unit": "count",
+      "category_name": "Operations",
+      "category_icon": "📉",
+      "category_color": "#BF360C",
+      "priority": 4,
+      "series": [],
+      "stats": {
+        "average": null,
+        "min": null,
+        "max": null,
+        "count": 0
+      },
+      "lastLogAt": "2023-10-12T12:00:00Z",
+      "firstLogAt": "2023-01-03T08:00:00Z",
+      "totalLogs": 89,
+      "latestValue": 4,
+      "latestBucketStart": "2023-10-12T00:00:00Z",
+      "requestedRange": {
+        "startISO": "2024-01-07T00:00:00Z",
+        "endISO": "2024-02-06T00:00:00Z",
+        "bucket": "1d"
+      },
+      "actualRange": {
+        "startISO": "2023-09-14T00:00:00Z",
+        "endISO": "2023-10-14T00:00:00Z",
+        "bucket": "7d"
+      },
+      "fallbackRangeUsed": true,
+      "fallbackStrategy": "last_activity_window"
+    }
+  ],
+  "meta": {
+    "bucket": "1d",
+    "tz": "Asia/Jakarta",
+    "range": {
+      "startISO": "2024-01-07T00:00:00Z",
+      "endISO": "2024-02-06T00:00:00Z"
+    },
+    "count": 2,
+    "totalMetrics": 15,
+    "fallbackMetrics": 1
+  },
+  "sync": {
+    "etagSeed": "7bf4c2885dd54e1c909e343ae92c16ce"
+  }
+}
