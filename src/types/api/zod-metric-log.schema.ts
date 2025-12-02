@@ -31,6 +31,7 @@ const FilterSchema = z.object({
 });
 
 // * ===== Base =====
+
 export const metricLogParams = z.object({
   id: z.string().uuid({ message: ZodMessages.metricLog.invalidId }),
 });
@@ -110,19 +111,8 @@ export const aggregatedStatsQuery = z.object({
   endDate: zDateOptional,
 });
 
-// export const deleteMetricLogSchema = z.object({
-//   params: z.object({
-//     id: zUUID,
-//   }),
-// });
+// * ===== Schema Implementations =====
 
-// export const getAggregatedStatsSchema = z.object({
-//   query: z.object({
-//     metricId: zUUID.optional(),
-//   }),
-// });
-
-// * Schema Implementations
 export const createMetricLogSchema = { body: metricLogBody };
 export const updateMetricLogSchema = {
   params: z.object({ id: z.string().uuid() }),
@@ -144,10 +134,8 @@ export const listMetricLogsViaCursorSchema = {
 };
 export const deleteMetricLogSchema = { params: metricLogParams };
 export const getAggregatedStatsSchema = { query: aggregatedStatsQuery };
-/**
- * * ===== Schemas for Testing Purposes =====
- */
 
+// ===== Schemas for Testing Purposes =====
 export const generateDummyMetricLogsBody = z.object({
   metricId: zUUID,
   count: z.coerce.number().int().min(1).max(1000).default(50),

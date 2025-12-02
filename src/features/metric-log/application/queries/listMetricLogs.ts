@@ -3,6 +3,7 @@ import { MetricLogResponseDTO } from "@/types/dtos/metric-log.dto";
 import AppError from "@/utils/AppError";
 import { toDomainMetricLog } from "@/utils/mappers/metric-log.mapper";
 import { WhereOptions, Op, OrderItem } from "sequelize";
+import logger from "@/utils/logger";
 
 // * Sorting
 export type SortField = "createdAt" | "updatedAt" | "logValue" | "loggedAt";
@@ -218,7 +219,10 @@ export async function listLogsViaCursor({
   // This where is for METRIC LOGS (has userId, deletedAt)
   const baseWhere = buildWhere(filter, q);
   if (filter?.metricId) {
-    console.log("[logs:list] filtering by metricId:", filter.metricId);
+    logger.debug("[logs:list] filtering by metricId", {
+      metricId: filter.metricId,
+      userId,
+    });
   }
 
   // total logs for pagination option

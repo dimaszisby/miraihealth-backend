@@ -77,7 +77,7 @@ export type MetricLogListResponseDTO = MetricLogResponseDTO[];
  * Inferred from the Zod schema for validation.
  */
 export type CreateMetricLogRequestDTO = z.infer<
-  typeof createMetricLogSchema.shape.body
+  typeof createMetricLogSchema.body
 >;
 /**
  * @typedef UpdateMetricLogRequestDTO
@@ -85,7 +85,7 @@ export type CreateMetricLogRequestDTO = z.infer<
  * Inferred from the Zod schema for validation.
  */
 export type UpdateMetricLogRequestDTO = z.infer<
-  typeof updateMetricLogSchema.shape.body
+  typeof updateMetricLogSchema.body
 >;
 
 /**
@@ -98,5 +98,5 @@ export type UpdateMetricLogRequestDTO = z.infer<
  * Inferred from the Zod schema for validation.
  */
 export type GenerateDummyMetricLogsRequestDTO = z.infer<
-  typeof generateDummyMetricLogsSchema.shape.body
+  typeof generateDummyMetricLogsSchema.body
 >;

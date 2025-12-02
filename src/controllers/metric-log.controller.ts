@@ -12,6 +12,7 @@ import { GenerateDummyMetricLogsRequestDTO } from "@/types/dtos/metric-log.dto";
 import { listMetricLogsViaCursorSchema } from "@/types/api/zod-metric-log.schema.js";
 import { listLogsViaCursor } from "@/features/metric-log/application/queries/listMetricLogs.js";
 import { assertAuthenticated } from "@/utils/auth-guards.js";
+import logger from "@/utils/logger";
 
 /**
  * * Create a Log for a Metric
@@ -207,9 +208,11 @@ export const generateDummyMetricLogs = catchAsync(
 
     const { metricId, count } = req.body as GenerateDummyMetricLogsRequestDTO;
 
-    console.log(
-      `Generating ${count} dummy logs for metric ${metricId} for user ${req.user.id}`
-    );
+    logger.info("Generating dummy logs", {
+      metricId,
+      count,
+      userId: req.user.id,
+    });
 
     const dummyLogs = await metricLogService.generateDummyLogsService({
       userId: req.user.id,

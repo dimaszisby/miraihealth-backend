@@ -22,6 +22,8 @@ import {
   listMetricLogsViaCursorSchema,
 } from "@/types/api/zod-metric-log.schema.js";
 import { AuthRequest } from "@/types/request.context";
+import { env } from "@/config/zodEnv";
+import logger from "@/utils/logger";
 
 const router = Router();
 
@@ -82,7 +84,7 @@ const logsCursorCacheKey = (req: AuthRequest) => {
     `it:${it}`,
   ].join(":");
 
-  console.log("[cache:key]", key);
+  logger.debug("[CACHE] Generated logs cursor key", { key });
   return key;
 };
 
@@ -144,11 +146,13 @@ router.delete(
 // ===== Endpoints for Testing Purposes =====
 
 // Generate Dummy Logs for a specific metric (new endpoint)
-router.post(
-  "/:metricId/dummy",
-  userRateLimiter,
-  validate(generateDummyMetricLogsSchema),
-  generateDummyMetricLogs
-);
+if (env.ENABLE_DUMMY_ENDPOINTS) {
+  router.post(
+    "/:metricId/dummy",
+    userRateLimiter,
+    validate(generateDummyMetricLogsSchema),
+    generateDummyMetricLogs
+  );
+}
 
 export default router;

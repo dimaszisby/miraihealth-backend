@@ -16,8 +16,9 @@ import {
   toDomainMetricLog,
   toDomainMetricLogs,
 } from "@/utils/mappers/metric-log.mapper";
-
 import { models } from "@/models";
+import { parseIsoToDate } from "@/utils/date-io";
+import { invalidateVizByMetric } from "@/features/analytics/infrastructure/cache/vizCache";
 
 interface MetricLogBaseParams {
   userId: string;
@@ -65,9 +66,13 @@ export const createLog = async ({
   // Ensure the parent metric exists and enforce ownership.
   await validateMetricAccess(userId, metricId);
 
+  const normalizedLoggedAt = logData.loggedAt
+    ? (parseIsoToDate(logData.loggedAt) as Date)
+    : new Date();
+
   const finalLogData = {
     ...logData,
-    loggedAt: logData.loggedAt ?? new Date(), // fallback to current timestamp
+    loggedAt: normalizedLoggedAt,
     type: logData.type ?? "manual",
   };
 
@@ -84,7 +89,6 @@ export const createLog = async ({
 
   const created = await models.MetricLog.create(finalLogData);
 
-  // Invalidate caches
   if (redisClient.isOpen) {
     await invalidateAllMetricLogsCache(userId, metricId, created.id);
   }
@@ -208,23 +212,40 @@ export const updateLogService = async ({
 }: UpdateLogParams): Promise<MetricLogDomain> => {
   // Ensure Log Exists and is owned by the user. The db-helper function now handles metricId validation.
   const log = await findOwnedMetricLog(userId, logId);
-  if (!log) {
-    throw new AppError("Log not found", 404);
-  }
+  if (!log) throw new AppError("Log not found", 404);
 
-  if (updateData.loggedAt) {
+  // sequelize type
+  type Updatable = {
+    logValue?: number;
+    type?: "manual" | "automatic";
+    loggedAt?: Date;
+  };
+
+  const patch: Updatable = {};
+
+  if (typeof updateData.logValue !== "undefined")
+    patch.logValue = updateData.logValue;
+  if (typeof updateData.type !== "undefined") patch.type = updateData.type;
+
+  if (typeof updateData.loggedAt !== "undefined") {
+    const normalizedLoggedAt = parseIsoToDate(updateData.loggedAt) as Date;
+
     const existingLog = await models.MetricLog.findOne({
-      where: { metricId: log.metricId, loggedAt: updateData.loggedAt },
+      where: { metricId: log.metricId, loggedAt: normalizedLoggedAt },
     });
-    if (existingLog && existingLog.id !== logId)
+
+    if (existingLog && existingLog.id !== logId) {
       throw new AppError(
         "A log already exists for this date for this metric",
         400
       );
+    }
+
+    patch.loggedAt = normalizedLoggedAt;
   }
 
   // Create update instance
-  const updatedLog = await log.update(updateData);
+  const updatedLog = await log.update(patch);
 
   // Reload the updated log to include its associated Metric data
   await updatedLog.reload({
@@ -237,17 +258,20 @@ export const updateLogService = async ({
   });
 
   // Fetch metricId safely
-  const metricId =
-    updatedLog.metricId || (updatedLog.metric && updatedLog.metric.id);
+  const metricId = updatedLog.metricId || updatedLog.metric?.id;
 
   // Invalidate caches based on updatedLog.metric data
-  if (redisClient.isOpen && metricId) {
-    await invalidateAllMetricLogsCache(userId, metricId, updatedLog.id);
-  } else if (redisClient.isOpen && !metricId) {
-    logger.warn(
-      `[CACHE] Could not resolve metricId for log ${logId}, invalidating all user's logs cache!`
-    );
-    await invalidateCacheByPattern(`logs:${userId}:*`);
+  if (redisClient.isOpen) {
+    try {
+      if (metricId) {
+        await invalidateAllMetricLogsCache(userId, metricId, updatedLog.id);
+      } else {
+        // fallback: user-scoped invalidation
+        await invalidateCacheByPattern(`logs:${userId}:*`);
+      }
+    } catch (e) {
+      logger.warn("[CACHE] Invalidation failed after update; continuing");
+    }
   }
 
   return toDomainMetricLog(updatedLog);
@@ -392,7 +416,7 @@ export async function invalidateAllMetricLogsCache(
   metricId: string,
   logId?: string
 ) {
-  console.log(
+  logger.info(
     `[CACHE] Invalidating logs for user=${userId}, metric=${metricId}, log=${logId ?? "-"}`
   );
 
@@ -404,15 +428,18 @@ export async function invalidateAllMetricLogsCache(
 
   // * Cursor-based (current)
   // Target queries filtered by the metric
-  await invalidateCacheByPattern(`logs-cursor:${userId}:*fm:${metricId}*`);
+  await invalidateCacheByPattern(`logs-cursor:v*:${userId}:*fm:${metricId}*`);
   // Target “all metrics” queries for that user (no metricId filter)
-  await invalidateCacheByPattern(`logs-cursor:${userId}:*`);
+  await invalidateCacheByPattern(`logs-cursor:v*:${userId}:*`);
 
   // * Stats
   // Invalidate stats for this metric
   await invalidateCache(`logStats:${userId}:${metricId}`);
   // Invalidate general stats for this user (if you have aggregate endpoints)
   await invalidateCache(`logStats:${userId}`);
+
+  // * Viz
+  await invalidateVizByMetric(userId, metricId);
 
   // * Detail
   // Invalidate single log cache if present
