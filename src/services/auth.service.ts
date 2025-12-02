@@ -46,7 +46,10 @@ export const registerUserService = async (
   }
 
   try {
-    const user = await models.User.create(registerData);
+    const user = await models.User.create({
+      ...registerData,
+      role: "user",
+    });
     const token = tokenGenerator(user);
 
     const authData: AuthData = { token, user: toDomainUser(user) };

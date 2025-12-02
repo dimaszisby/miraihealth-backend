@@ -4,6 +4,8 @@ import catchAsync from "@/utils/catch-async";
 import { successResponse } from "@/utils/response-formatter";
 import { toUserResponseDTO } from "@/utils/mappers/user.mapper";
 import { AuthRequest } from "@/types/request.context";
+import { assertAuthenticated } from "@/utils/auth-guards";
+import logger from "@/utils/logger";
 
 /**
  * * Register a New User
@@ -11,14 +13,22 @@ import { AuthRequest } from "@/types/request.context";
  */
 export const register = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const authData = await AuthService.registerUserService(req.body);
-
-    successResponse(
-      res,
-      201,
-      { token: authData.token, user: toUserResponseDTO(authData.user) },
-      "User created successfully"
-    );
+    const { email } = req.body ?? {};
+    try {
+      const authData = await AuthService.registerUserService(req.body);
+      successResponse(
+        res,
+        201,
+        { token: authData.token, user: toUserResponseDTO(authData.user) },
+        "User created successfully"
+      );
+    } catch (error) {
+      logger.error("[AUTH] Registration failed", {
+        email,
+        reason: (error as Error).message,
+      });
+      throw error;
+    }
   }
 );
 
@@ -45,6 +55,8 @@ export const login = catchAsync(
  */
 export const getProfile = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
+    assertAuthenticated(req);
+
     const user = await AuthService.getUserProfileService(req.user);
 
     return successResponse(res, 200, {
@@ -64,6 +76,7 @@ export const getProfile = catchAsync(
  */
 export const updateProfile = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
+    assertAuthenticated(req);
     const user = await AuthService.updateUserProfileService(req.user, req.body);
     successResponse(res, 200, { user }, "Profile updated successfully");
   }

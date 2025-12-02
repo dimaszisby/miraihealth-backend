@@ -1,8 +1,4 @@
-// src/routes/auth.routes.ts
-
 import { Router } from "express";
-
-// Controllers
 import {
   register,
   login,
@@ -10,41 +6,23 @@ import {
   updateProfile,
   logout,
 } from "@/controllers/auth.controller";
-
-// Middlewares
 import { authMiddleware } from "@/middleware/auth-middleware";
 import { userRateLimiter } from "@/middleware/rate-limiter";
 import { validate } from "@/middleware/validate";
-
-// Types
 import {
   createUserSchema,
+  loginUserSchema,
   updateUserSchema,
 } from "@/types/api/zod-user.schema";
 
 const router = Router();
 
-/**
- * * Authentication Routes
- * Handles user registration, login, profile management, and logout.
- *
- * Use userRateLimiter for writes (Update Profile)
- * - to limit how many logs a single user can create or update within the given time window (default 15 min).
- *
- */
-
-// ✅ **Public Routes**
-// 🔹 Register a new user
+// **Public Routes**
 router.post("/register", validate(createUserSchema), register);
+router.post("/login", userRateLimiter, validate(loginUserSchema), login);
 
-// 🔹 Login user and get token
-router.post("/login", login);
-
-// ✅ **Protected Routes (Require Authentication)**
-// 🔹 Get current user profile
+// **Protected Routes (Require Authentication)**
 router.get("/profile", authMiddleware, getProfile);
-
-// 🔹 Update current user profile
 router.put(
   "/profile",
   userRateLimiter,
@@ -52,8 +30,6 @@ router.put(
   validate(updateUserSchema),
   updateProfile
 );
-
-// 🔹 Logout user (Handled client-side for JWT)
 router.post("/logout", authMiddleware, logout);
 
 export default router;
