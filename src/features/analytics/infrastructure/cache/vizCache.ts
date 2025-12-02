@@ -7,11 +7,13 @@ import { DurationISO } from "../../domain/buckets";
 const TTL = Number(process.env.VIZ_DEFAULT_TTL_SEC ?? 120);
 
 export async function getCachedViz<T>(key: string): Promise<T | null> {
+  if (!redisClient.isOpen) return null;
   const json = await redisClient.get(key);
   return json ? (JSON.parse(json) as T) : null;
 }
 
 export async function setCachedViz(key: string, value: unknown) {
+  if (!redisClient.isOpen) return;
   await redisClient.set(key, JSON.stringify(value), { EX: TTL });
 }
 
@@ -22,24 +24,26 @@ export async function setCachedViz(key: string, value: unknown) {
  *  - when any metric logs change (coarse: user-scoped prefix delete)
  */
 export async function invalidateVizByMetric(userId: string, metricId: string) {
-  // Narrow deletions are ideal, but a simple prefix delete is fine to start.
-  // If you use Redis >= 6.2 with lazy deletion:
-  const pattern = `viz:${userId}:${metricId}:*`;
+  if (!redisClient.isOpen) return;
 
-  // implement SCAN + DEL to avoid blocking
-  let cursor = 0;
-  do {
-    // @ts-ignore
-    const [next, keys] = await redis.scan(
-      cursor,
-      "MATCH",
-      pattern,
-      "COUNT",
-      200
-    );
-    cursor = Number(next);
-    if (keys.length) await redisClient.del(...keys);
-  } while (cursor !== 0);
+  // singular viz keys
+  const singular = `viz:${userId}:${metricId}:*`;
+  // dashboards (any set may include this metric) – coarse but safe
+  const dash = `vizdash:${userId}:*`;
+
+  // node-redis v4 scanIterator avoids blocking and weird tuple responses
+  for await (const key of redisClient.scanIterator({
+    MATCH: singular,
+    COUNT: 200,
+  })) {
+    await redisClient.del(key);
+  }
+  for await (const key of redisClient.scanIterator({
+    MATCH: dash,
+    COUNT: 200,
+  })) {
+    await redisClient.del(key);
+  }
 }
 
 // Singular Viz Key
@@ -70,8 +74,9 @@ export function vizDashKey(input: {
   bucketIso: DurationISO;
   tz: string;
   fill: FillMode;
+  versionCursor?: string;
 }) {
-  const raw = `${input.userId}|${input.metricIds.join(",")}|${input.bucketIso}|${input.startISO}|${input.endISO}|${input.tz}|${input.fill}`;
+  const raw = `${input.userId}|${input.metricIds.join(",")}|${input.bucketIso}|${input.startISO}|${input.endISO}|${input.tz}|${input.fill}|${input.versionCursor ?? ""}`;
   const hash = crypto
     .createHash("sha1")
     .update(raw)
