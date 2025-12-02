@@ -1,26 +1,29 @@
-// src/server.ts
-
 import express, { Application } from "express";
-import { env } from "./config/zodEnv.js"; // Custom Environment Variables using Zod for setup
-import db from "./models/index.js";
+import { env } from "./config/zodEnv.js";
+import db from "./infrastructure/db/sequelize.js";
 import cors from "cors";
 import helmet from "helmet";
 import xssClean from "xss-clean";
 import hpp from "hpp";
 import http from "http";
+import swaggerUi from "swagger-ui-express";
+import { getOpenApiDocumentation } from "./lib/openapi/openapi-docs.js";
 
 // Routes
 import authRoutes from "./routes/auth.routes.js";
 import metricRoutes from "./routes/metric.routes.js";
-import metricCategoryRoutes from "./routes/metric-category.routes.js";
+import metricCategoryRoutes from "./features/metric-category/infrastructure/http/routes.js";
 import metricSettingsRoutes from "./routes/metric-settings.routes.js";
 import metricLogRoutes from "./routes/metric-log.routes.js";
+import { visualizationRouter } from "@/features/analytics/presentation/http/visualization.router";
 
 // Other Setup
 import { globalRateLimiter } from "./middleware/rate-limiter.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { disconnectRedis } from "./utils/redis-client.js";
-// import { globalRateLimiter } from "./middleware/rate-limiter.js"; // Uncomment when needed
+import sequelize from "./config/db.js";
+import { loadModels } from "./models/index.js";
+import { authMiddleware } from "./middleware/auth-middleware.js";
 
 /**
  * * App Entry
@@ -32,12 +35,21 @@ import { disconnectRedis } from "./utils/redis-client.js";
  *  5. Start the server based on config/prompt
  */
 
+// * Sequelize
+loadModels();
+
+await sequelize.authenticate(); // Overhaul: recently added
+
 // * Environment Variables
 
 const app: Application = express();
 
 // * Middlewares
-app.use(express.json());
+app.use(
+  express.json({
+    limit: env.REQUEST_BODY_LIMIT,
+  })
+);
 
 // Security Enhancements
 app.use(helmet()); // Secure HTTP headers
@@ -47,26 +59,42 @@ app.use(hpp()); // Prevent HTTP Parameter Pollution
 // Configure CORS
 app.use(
   cors({
-    origin: env.CORS_ORIGIN || "http://localhost:3000", // Fallback if env variable is missing
+    origin: env.CORS_ORIGIN || "http://localhost:3000",
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true, // Allow cookies and auth headers
-  }),
+  })
 );
 
 // Global Rate Limiter (Uncomment when needed)
 app.use(globalRateLimiter);
 
 // * Routes
-// Main Routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/metrics", metricRoutes);
-app.use("/api/v1/categories", metricCategoryRoutes);
+app.use("/api/v1/metric-categories", metricCategoryRoutes);
+app.use("/api/v1/metric-settings", metricSettingsRoutes);
+app.use("/api/v1/metric-logs", metricLogRoutes);
+// DDD based routes
+app.use("/api/v1/analytics", visualizationRouter);
 
-// Nested Routes
-app.use("/api/v1/metrics", metricSettingsRoutes);
-app.use("/api/v1/metrics", metricLogRoutes);
+// Serve OpenAPI documentation
+// TODO: Developer Note -> Learn more about OpenAPI and Swagger integration
+const openApiDocument = getOpenApiDocumentation();
+const swaggerGuards = env.SWAGGER_REQUIRE_AUTH ? [authMiddleware] : [];
 
-// * Global Error Handler (Should be last middleware)
+// Raw OpenAPI JSON endpoint for tooling/codegen
+app.get("/api/v1/docs/openapi.json", ...swaggerGuards, (_req, res) => {
+  res.json(openApiDocument);
+});
+
+app.use(
+  "/api/v1/docs",
+  ...swaggerGuards,
+  swaggerUi.serve,
+  swaggerUi.setup(openApiDocument)
+);
+
+// * Global Error Handler
 app.use(errorHandler);
 
 // HTTP Server Reference
@@ -75,88 +103,81 @@ let server: http.Server | null = null;
 // Helper function for checking test environment
 const isTestEnv = (env: string): env is "test" => env === "test";
 
-/**
- * 🚀 Initialize Server & Database Connection
- */
 const startServer = async () => {
   try {
     if (env.NODE_ENV === "test") {
-      console.log("🧪 Running in test environment. Server not started.");
+      console.log("[SERVER] Running in test environment. Server not started.");
       return;
     }
 
     // Authenticate database connection
     await db.sequelize.authenticate();
-    console.log("✅ Database connection established successfully.");
+    console.log("[SERVER] Database connection established successfully.");
 
     // Start HTTP Server
     const PORT = env.PORT || 5000;
     server = app.listen(PORT, () => {
-      console.log(`🚀 Lakira backend running on port ${PORT}`);
+      console.log(`[SERVER] Lakira backend running on port ${PORT}`);
     });
   } catch (error) {
-    console.error("❌ Server initialization failed:", error);
-    process.exit(1); // Exit if the server fails to start
+    console.error("[SERVER ERROR] Server initialization failed:", error);
+    process.exit(1); 
   }
 };
 
 /**
- * 🔥 Graceful Shutdown Handling
+ * Graceful Shutdown Handling
  * - Capture SIGINT & SIGTERM (Docker, PM2, Kubernetes)
  * - Close DB connection
  * - Close Express server
  * - Log shutdown
  */
-/**
- * 🔥 Graceful Shutdown Handling
- */
 const shutdown = async (signal: string) => {
-  console.log(`\n🛑 Received ${signal}, initiating shutdown...`);
+  console.log(`\n[SERVER] Received ${signal}, initiating shutdown...`);
 
   try {
     if (server) {
-      console.log("🛑 Closing HTTP server...");
+      console.log("[SERVER] Closing HTTP server...");
       await new Promise((resolve) => server!.close(resolve));
     }
 
     // Close database connection
-    console.log("🛑 Closing database connection...");
+    console.log("[SERVER] Closing database connection...");
     await db.sequelize.close();
 
     // Close Redis connection
-    console.log("🛑 Closing Redis connection...");
+    console.log("[SERVER] Closing Redis connection...");
     await disconnectRedis();
 
-    console.log("✅ Cleanup completed. Exiting.");
+    console.log("[SERVER] Cleanup completed. Exiting.");
     process.exit(0);
   } catch (error) {
-    console.error("❌ Error during shutdown:", error);
+    console.error("[SERVER] during shutdown:", error);
     process.exitCode = 1;
   }
 };
 
 // Handle termination signals
 ["SIGTERM", "SIGINT"].forEach((signal) =>
-  process.on(signal, () => shutdown(signal)),
+  process.on(signal, () => shutdown(signal))
 );
 
 // Handle uncaught exceptions and promise rejections
 process.on("uncaughtException", (error) => {
-  console.error("🔥 Uncaught Exception:", error);
+  console.error("[SERVER ERROR] Uncaught Exception:", error);
   shutdown("Uncaught Exception");
 });
 
 process.on("unhandledRejection", (reason, promise) => {
   console.error(
-    "🔥 Unhandled Promise Rejection at:",
+    "[SERVER ERROR] Unhandled Promise Rejection at:",
     promise,
     "reason:",
-    reason,
+    reason
   );
   shutdown("Unhandled Rejection");
 });
 
-// Start the server
 startServer();
 
 export default app;
