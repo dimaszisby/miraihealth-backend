@@ -67,12 +67,24 @@ const LOG_COUNT_SQL =
   `(SELECT COUNT(*) FROM "public"."metric_logs" ml ` +
   `WHERE ml."metric_id" = "Metric"."id")`;
 // TS-safe helper
-function baseAttributesWithLogCount(): FindAttributeOptions {
+function baseAttributesWithLogCount(): (string | ProjectionAlias)[] {
   const logCount: ProjectionAlias = [
     Sequelize.literal(LOG_COUNT_SQL),
     "logCount",
   ];
-  return { include: [logCount] };
+  return [
+    "id",
+    "createdAt",
+    "updatedAt",
+    "defaultUnit",
+    "description",
+    "name",
+    "userId",
+    "categoryId",
+    "deletedAt",
+    "isPublic",
+    logCount,
+  ];
 }
 
 // TODO: Generics
