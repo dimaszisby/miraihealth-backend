@@ -1,5 +1,3 @@
-// src/lib/openapi/openapi-config.ts
-
 import { OpenAPIRegistry, extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import { z } from "zod";
 
@@ -48,6 +46,10 @@ export const openApiDocument = {
     {
       name: "Trends",
       description: "Operations related to data trends and analysis",
+    },
+    {
+      name: "Analytics",
+      description: "Visualization and dashboard analytics endpoints",
     },
   ],
   components: {

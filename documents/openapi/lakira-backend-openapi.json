@@ -1,0 +1,3918 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Lakira Backend API",
+    "version": "1.0.0",
+    "description": "API documentation for the Lakira Backend application."
+  },
+  "servers": [
+    {
+      "url": "/api/v1",
+      "description": "Development server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "User authentication and authorization operations"
+    },
+    {
+      "name": "Metric Categories",
+      "description": "Operations related to metric categories"
+    },
+    {
+      "name": "Metrics",
+      "description": "Operations related to user metrics"
+    },
+    {
+      "name": "Metric Logs",
+      "description": "Operations related to logging metric data"
+    },
+    {
+      "name": "Metric Settings",
+      "description": "Operations related to user-specific metric settings"
+    },
+    {
+      "name": "Trends",
+      "description": "Operations related to data trends and analysis"
+    },
+    {
+      "name": "Analytics",
+      "description": "Visualization and dashboard analytics endpoints"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT authentication using a bearer token"
+      }
+    },
+    "responses": {
+      "UnauthorizedError": {
+        "description": "Authentication required or invalid token",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "fail"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Unauthorized"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ForbiddenError": {
+        "description": "Access denied, insufficient permissions",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "fail"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Forbidden"
+                }
+              }
+            }
+          }
+        }
+      },
+      "NotFoundError": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "fail"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Resource not found"
+                }
+              }
+            }
+          }
+        }
+      },
+      "BadRequestError": {
+        "description": "Invalid request payload or parameters",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "fail"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Bad Request"
+                },
+                "errors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Internal Server Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Uuid": {
+        "type": "string",
+        "format": "uuid",
+        "description": "A UUID identifier",
+        "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "fail"
+          },
+          "message": {
+            "type": "string",
+            "example": "Error message"
+          }
+        },
+        "required": [
+          "status",
+          "message"
+        ]
+      },
+      "ValidationError": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "fail"
+          },
+          "message": {
+            "type": "string",
+            "example": "Validation Error"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "example": [
+                    "body",
+                    "email"
+                  ]
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Invalid email format"
+                }
+              },
+              "required": [
+                "path",
+                "message"
+              ]
+            }
+          }
+        },
+        "required": [
+          "status",
+          "message",
+          "errors"
+        ]
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "message": {
+            "type": "string",
+            "example": "Operation successful"
+          },
+          "data": {
+            "nullable": true,
+            "description": "Response data"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "MetricIdQuery": {
+        "type": "object",
+        "properties": {
+          "metricId": {
+            "$ref": "#/components/schemas/Uuid"
+          }
+        }
+      },
+      "MetricIdRequiredQuery": {
+        "type": "object",
+        "properties": {
+          "metricId": {
+            "$ref": "#/components/schemas/Uuid"
+          }
+        },
+        "required": [
+          "metricId"
+        ]
+      },
+      "MetricCursorQueryParams": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "createdAt",
+              "-createdAt",
+              "updatedAt",
+              "-updatedAt",
+              "name",
+              "-name",
+              "logCount",
+              "-logCount"
+            ]
+          },
+          "q": {
+            "type": "string"
+          },
+          "after": {
+            "type": "string"
+          },
+          "includeTotal": {
+            "type": "boolean"
+          },
+          "filter[name]": {
+            "type": "string"
+          },
+          "filter[categoryId]": {
+            "$ref": "#/components/schemas/Uuid"
+          }
+        }
+      },
+      "MetricCategoryCursorQueryParams": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "createdAt",
+              "-createdAt",
+              "updatedAt",
+              "-updatedAt",
+              "name",
+              "-name",
+              "metricCount",
+              "-metricCount"
+            ]
+          },
+          "q": {
+            "type": "string"
+          },
+          "after": {
+            "type": "string"
+          },
+          "includeTotal": {
+            "type": "boolean"
+          },
+          "filter[name]": {
+            "type": "string"
+          }
+        }
+      },
+      "MetricLogCursorQueryParams": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "createdAt",
+              "-createdAt",
+              "updatedAt",
+              "-updatedAt",
+              "logValue",
+              "-logValue",
+              "loggedAt",
+              "-loggedAt"
+            ]
+          },
+          "q": {
+            "type": "string"
+          },
+          "after": {
+            "type": "string"
+          },
+          "includeTotal": {
+            "type": "boolean"
+          },
+          "filter[metricId]": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "filter[logValue]": {
+            "type": "number"
+          }
+        }
+      },
+      "MetricSettingsCursorQueryParams": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "createdAt",
+              "-createdAt",
+              "updatedAt",
+              "-updatedAt",
+              "isActive",
+              "-isActive"
+            ]
+          },
+          "q": {
+            "type": "string"
+          },
+          "after": {
+            "type": "string"
+          },
+          "includeTotal": {
+            "type": "boolean"
+          },
+          "filter[metricId]": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "filter[isActive]": {
+            "type": "boolean"
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "user@example.com"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6,
+            "example": "password123"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "message": {
+            "type": "string",
+            "example": "Login successful"
+          },
+          "token": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/components/schemas/Uuid"
+              },
+              "username": {
+                "type": "string",
+                "example": "testuser"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "example": "test@example.com"
+              },
+              "isPublicProfile": {
+                "type": "boolean",
+                "example": true
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "user",
+                  "admin"
+                ],
+                "example": "user"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "example": "2023-01-01T12:00:00Z"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "example": "2023-01-01T12:00:00Z"
+              }
+            },
+            "required": [
+              "id",
+              "username",
+              "email",
+              "isPublicProfile",
+              "role",
+              "createdAt",
+              "updatedAt"
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "message",
+          "token",
+          "user"
+        ]
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "minLength": 3,
+            "example": "newuser"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "newuser@example.com"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6,
+            "example": "newpassword123"
+          },
+          "passwordConfirmation": {
+            "type": "string",
+            "minLength": 6,
+            "example": "newpassword123"
+          },
+          "isPublicProfile": {
+            "type": "boolean",
+            "default": true,
+            "example": true
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "admin"
+            ],
+            "default": "user",
+            "example": "user"
+          }
+        },
+        "required": [
+          "username",
+          "email",
+          "password",
+          "passwordConfirmation"
+        ]
+      },
+      "UserResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "username": {
+            "type": "string",
+            "example": "testuser"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "test@example.com"
+          },
+          "isPublicProfile": {
+            "type": "boolean",
+            "example": true
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "admin"
+            ],
+            "example": "user"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-01T12:00:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-01T12:00:00Z"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "email",
+          "isPublicProfile",
+          "role",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateUserRequest": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "minLength": 3,
+            "example": "updateduser"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "updated@example.com"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6,
+            "example": "updatedpassword"
+          },
+          "isPublicProfile": {
+            "type": "boolean",
+            "example": false
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "admin"
+            ],
+            "example": "admin"
+          }
+        }
+      },
+      "MetricCategory": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Fitness"
+          },
+          "color": {
+            "type": "string",
+            "example": "#FF5733"
+          },
+          "icon": {
+            "type": "string",
+            "example": "🏃"
+          },
+          "userId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "metricCount": {
+            "type": "number",
+            "example": 4
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-01T12:00:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-01T12:00:00Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "color",
+          "icon",
+          "userId",
+          "metricCount",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateMetricCategoryRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "New Category"
+          },
+          "color": {
+            "type": "string",
+            "example": "#123456"
+          },
+          "icon": {
+            "type": "string",
+            "example": "✨"
+          }
+        },
+        "required": [
+          "name",
+          "color",
+          "icon"
+        ]
+      },
+      "UpdateMetricCategoryRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Updated Category Name"
+          },
+          "color": {
+            "type": "string",
+            "example": "#654321"
+          },
+          "icon": {
+            "type": "string",
+            "example": "🌟"
+          }
+        }
+      },
+      "MetricCategoryListResponse": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/MetricCategory"
+        }
+      },
+      "MetricPreview": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Sleep Hours"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "example": "Hours slept per day"
+          },
+          "defaultUnit": {
+            "type": "string",
+            "example": "hours"
+          },
+          "isPublic": {
+            "type": "boolean",
+            "example": false
+          },
+          "goalType": {
+            "type": "string",
+            "example": "Not Set"
+          },
+          "logCount": {
+            "type": "number",
+            "example": 42
+          },
+          "category": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "$ref": "#/components/schemas/Uuid"
+              },
+              "name": {
+                "type": "string",
+                "example": "Health"
+              },
+              "icon": {
+                "type": "string",
+                "example": "❤️"
+              },
+              "color": {
+                "type": "string",
+                "example": "#FF0000"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "icon",
+              "color"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "defaultUnit",
+          "isPublic",
+          "goalType",
+          "logCount",
+          "category"
+        ]
+      },
+      "MetricCursorResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MetricPreview"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Opaque cursor for the next page",
+            "example": "eyJpZCI6IjEyMyJ9"
+          },
+          "sort": {
+            "type": "string",
+            "description": "Sort applied to the collection",
+            "example": "-createdAt"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Page size used in the request",
+            "example": 20
+          },
+          "q": {
+            "type": "string",
+            "description": "Search term applied, if any",
+            "example": "sleep"
+          },
+          "filter": {
+            "type": "object",
+            "additionalProperties": {
+              "nullable": true
+            },
+            "description": "Normalized filters applied to the query"
+          },
+          "totalCount": {
+            "type": "number",
+            "description": "Total number of records (present only when includeTotal=true)",
+            "example": 120
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor",
+          "sort",
+          "limit"
+        ]
+      },
+      "MetricDetailQueryParams": {
+        "type": "object",
+        "properties": {
+          "include": {
+            "type": "string",
+            "enum": [
+              "flat",
+              "full",
+              "settings",
+              "category",
+              "logs"
+            ]
+          },
+          "logsLimit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200
+          }
+        }
+      },
+      "MetricCategoryCursorResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MetricCategory"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Opaque cursor for the next page",
+            "example": "eyJpZCI6IjEyMyJ9"
+          },
+          "sort": {
+            "type": "string",
+            "description": "Sort applied to the collection",
+            "example": "-createdAt"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Page size used in the request",
+            "example": 20
+          },
+          "q": {
+            "type": "string",
+            "description": "Search term applied, if any",
+            "example": "sleep"
+          },
+          "filter": {
+            "type": "object",
+            "additionalProperties": {
+              "nullable": true
+            },
+            "description": "Normalized filters applied to the query"
+          },
+          "totalCount": {
+            "type": "number",
+            "description": "Total number of records (present only when includeTotal=true)",
+            "example": 120
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor",
+          "sort",
+          "limit"
+        ]
+      },
+      "Metric": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "userId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "originalMetricId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Uuid"
+              },
+              {
+                "nullable": true
+              }
+            ]
+          },
+          "categoryId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Uuid"
+              },
+              {
+                "nullable": true
+              }
+            ]
+          },
+          "name": {
+            "type": "string",
+            "example": "Daily Steps"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "example": "Number of steps walked per day"
+          },
+          "defaultUnit": {
+            "type": "string",
+            "example": "steps"
+          },
+          "isPublic": {
+            "type": "boolean",
+            "example": false
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-01T12:00:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-01T12:00:00Z"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "name",
+          "defaultUnit",
+          "isPublic",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateMetricRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "New Metric"
+          },
+          "description": {
+            "type": "string",
+            "example": "Description for new metric"
+          },
+          "defaultUnit": {
+            "type": "string",
+            "example": "units"
+          },
+          "isPublic": {
+            "type": "boolean",
+            "example": false
+          },
+          "categoryId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Uuid"
+              },
+              {
+                "nullable": true
+              }
+            ]
+          },
+          "originalMetricId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Uuid"
+              },
+              {
+                "nullable": true
+              }
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "defaultUnit"
+        ]
+      },
+      "UpdateMetricRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Updated Metric Name"
+          },
+          "description": {
+            "type": "string",
+            "example": "Updated description"
+          },
+          "defaultUnit": {
+            "type": "string",
+            "example": "new units"
+          },
+          "isPublic": {
+            "type": "boolean",
+            "example": true
+          },
+          "categoryId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Uuid"
+              },
+              {
+                "nullable": true
+              }
+            ]
+          },
+          "originalMetricId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Uuid"
+              },
+              {
+                "nullable": true
+              }
+            ]
+          }
+        }
+      },
+      "MetricListResponse": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Metric"
+        }
+      },
+      "MetricLog": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "metricId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "automatic"
+            ],
+            "example": "manual"
+          },
+          "logValue": {
+            "type": "number",
+            "example": 10000
+          },
+          "loggedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-01T12:00:00Z"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-01T12:00:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-01T12:00:00Z"
+          }
+        },
+        "required": [
+          "id",
+          "metricId",
+          "type",
+          "logValue",
+          "loggedAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateMetricLogRequest": {
+        "type": "object",
+        "properties": {
+          "metricId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "logValue": {
+            "type": "number",
+            "example": 5000
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "automatic"
+            ],
+            "example": "manual"
+          },
+          "loggedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-01T10:00:00Z"
+          }
+        },
+        "required": [
+          "metricId",
+          "logValue"
+        ]
+      },
+      "UpdateMetricLogRequest": {
+        "type": "object",
+        "properties": {
+          "logValue": {
+            "type": "number",
+            "example": 12000
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "automatic"
+            ],
+            "example": "manual"
+          },
+          "loggedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-01T13:00:00Z"
+          }
+        }
+      },
+      "MetricLogListResponse": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/MetricLog"
+        }
+      },
+      "MetricLogStatsResponse": {
+        "type": "object",
+        "properties": {
+          "average": {
+            "type": "number",
+            "example": 80
+          },
+          "min": {
+            "type": "number",
+            "example": 10
+          },
+          "max": {
+            "type": "number",
+            "example": 150
+          }
+        },
+        "required": [
+          "average",
+          "min",
+          "max"
+        ]
+      },
+      "MetricLogCursorResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MetricLog"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Opaque cursor for the next page",
+            "example": "eyJpZCI6IjEyMyJ9"
+          },
+          "sort": {
+            "type": "string",
+            "description": "Sort applied to the collection",
+            "example": "-createdAt"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Page size used in the request",
+            "example": 20
+          },
+          "q": {
+            "type": "string",
+            "description": "Search term applied, if any",
+            "example": "sleep"
+          },
+          "filter": {
+            "type": "object",
+            "additionalProperties": {
+              "nullable": true
+            },
+            "description": "Normalized filters applied to the query"
+          },
+          "totalCount": {
+            "type": "number",
+            "description": "Total number of records (present only when includeTotal=true)",
+            "example": 120
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor",
+          "sort",
+          "limit"
+        ]
+      },
+      "MetricSettings": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "metricId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "goalEnabled": {
+            "type": "boolean",
+            "example": true
+          },
+          "goalType": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "cumulative",
+              "incremental"
+            ],
+            "example": "cumulative"
+          },
+          "goalValue": {
+            "type": "number",
+            "nullable": true,
+            "example": 10000
+          },
+          "timeFrameEnabled": {
+            "type": "boolean",
+            "example": false
+          },
+          "startDate": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "example": "2023-01-01T00:00:00Z"
+          },
+          "deadlineDate": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "example": "2023-02-01T00:00:00Z"
+          },
+          "alertEnabled": {
+            "type": "boolean",
+            "example": false
+          },
+          "alertThresholds": {
+            "type": "number",
+            "nullable": true,
+            "example": 80
+          },
+          "isAchieved": {
+            "type": "boolean",
+            "example": false
+          },
+          "displayOptions": {
+            "type": "object",
+            "properties": {
+              "showOnDashboard": {
+                "type": "boolean",
+                "example": true
+              },
+              "priority": {
+                "type": "number",
+                "nullable": true,
+                "example": 1
+              },
+              "chartType": {
+                "type": "string",
+                "nullable": true,
+                "example": "line"
+              },
+              "color": {
+                "type": "string",
+                "nullable": true,
+                "example": "#E897A3"
+              }
+            },
+            "required": [
+              "showOnDashboard",
+              "priority",
+              "chartType",
+              "color"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-01T12:00:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-01T12:00:00Z"
+          }
+        },
+        "required": [
+          "id",
+          "metricId",
+          "isActive",
+          "goalEnabled",
+          "goalType",
+          "goalValue",
+          "timeFrameEnabled",
+          "startDate",
+          "deadlineDate",
+          "alertEnabled",
+          "alertThresholds",
+          "isAchieved",
+          "displayOptions",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateMetricSettingsRequest": {
+        "type": "object",
+        "properties": {
+          "metricId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "goalEnabled": {
+            "type": "boolean",
+            "example": true
+          },
+          "goalType": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "cumulative",
+              "incremental"
+            ]
+          },
+          "goalValue": {
+            "type": "number",
+            "nullable": true
+          },
+          "timeFrameEnabled": {
+            "type": "boolean"
+          },
+          "startDate": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "deadlineDate": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "alertEnabled": {
+            "type": "boolean"
+          },
+          "alertThresholds": {
+            "type": "number",
+            "nullable": true
+          },
+          "displayOptions": {
+            "type": "object",
+            "properties": {
+              "showOnDashboard": {
+                "type": "boolean",
+                "example": true
+              },
+              "priority": {
+                "type": "number",
+                "nullable": true,
+                "example": 1
+              },
+              "chartType": {
+                "type": "string",
+                "nullable": true,
+                "example": "line"
+              },
+              "color": {
+                "type": "string",
+                "nullable": true,
+                "example": "#E897A3"
+              }
+            }
+          }
+        },
+        "required": [
+          "metricId"
+        ]
+      },
+      "UpdateMetricSettingsRequest": {
+        "type": "object",
+        "properties": {
+          "goalEnabled": {
+            "type": "boolean"
+          },
+          "goalType": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "cumulative",
+              "incremental"
+            ]
+          },
+          "goalValue": {
+            "type": "number",
+            "nullable": true
+          },
+          "timeFrameEnabled": {
+            "type": "boolean"
+          },
+          "startDate": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "deadlineDate": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "alertEnabled": {
+            "type": "boolean"
+          },
+          "alertThresholds": {
+            "type": "number",
+            "nullable": true
+          },
+          "displayOptions": {
+            "type": "object",
+            "properties": {
+              "showOnDashboard": {
+                "type": "boolean",
+                "example": true
+              },
+              "priority": {
+                "type": "number",
+                "nullable": true,
+                "example": 1
+              },
+              "chartType": {
+                "type": "string",
+                "nullable": true,
+                "example": "line"
+              },
+              "color": {
+                "type": "string",
+                "nullable": true,
+                "example": "#E897A3"
+              }
+            }
+          }
+        }
+      },
+      "UpdateDisplayOptionsRequest": {
+        "type": "object",
+        "properties": {
+          "displayOptions": {
+            "type": "object",
+            "properties": {
+              "showOnDashboard": {
+                "type": "boolean",
+                "example": true
+              },
+              "priority": {
+                "type": "number",
+                "nullable": true,
+                "example": 1
+              },
+              "chartType": {
+                "type": "string",
+                "nullable": true,
+                "example": "line"
+              },
+              "color": {
+                "type": "string",
+                "nullable": true,
+                "example": "#E897A3"
+              }
+            },
+            "example": {
+              "showOnDashboard": true,
+              "priority": 2,
+              "chartType": "bar",
+              "color": "#00FFAA"
+            }
+          }
+        },
+        "required": [
+          "displayOptions"
+        ]
+      },
+      "MetricSettingsListResponse": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/MetricSettings"
+        }
+      },
+      "MetricSettingsCursorResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MetricSettings"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Opaque cursor for the next page",
+            "example": "eyJpZCI6IjEyMyJ9"
+          },
+          "sort": {
+            "type": "string",
+            "description": "Sort applied to the collection",
+            "example": "-createdAt"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Page size used in the request",
+            "example": 20
+          },
+          "q": {
+            "type": "string",
+            "description": "Search term applied, if any",
+            "example": "sleep"
+          },
+          "filter": {
+            "type": "object",
+            "additionalProperties": {
+              "nullable": true
+            },
+            "description": "Normalized filters applied to the query"
+          },
+          "totalCount": {
+            "type": "number",
+            "description": "Total number of records (present only when includeTotal=true)",
+            "example": 120
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor",
+          "sort",
+          "limit"
+        ]
+      },
+      "MetricDetailResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Metric"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "category": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/MetricCategory"
+                  },
+                  {
+                    "nullable": true
+                  }
+                ]
+              },
+              "settings": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/MetricSettings"
+                  },
+                  {
+                    "nullable": true
+                  }
+                ]
+              },
+              "logs": {
+                "type": "array",
+                "nullable": true,
+                "items": {
+                  "$ref": "#/components/schemas/MetricLog"
+                }
+              }
+            },
+            "required": [
+              "category",
+              "settings",
+              "logs"
+            ]
+          }
+        ]
+      },
+      "TrendDataPoint": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2023-01-01"
+          },
+          "value": {
+            "type": "number",
+            "example": 7500
+          }
+        },
+        "required": [
+          "date",
+          "value"
+        ]
+      },
+      "TrendResponse": {
+        "type": "object",
+        "properties": {
+          "metricId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "trend": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrendDataPoint"
+            }
+          }
+        },
+        "required": [
+          "metricId",
+          "trend"
+        ]
+      },
+      "GetTrendRequest": {
+        "type": "object",
+        "properties": {
+          "params": {
+            "type": "object",
+            "properties": {
+              "metricId": {
+                "$ref": "#/components/schemas/Uuid"
+              }
+            },
+            "required": [
+              "metricId"
+            ]
+          },
+          "query": {
+            "type": "object",
+            "properties": {
+              "startDate": {
+                "type": "string",
+                "format": "date-time",
+                "example": "2023-01-01T00:00:00Z"
+              },
+              "endDate": {
+                "type": "string",
+                "format": "date-time",
+                "example": "2023-01-31T23:59:59Z"
+              },
+              "interval": {
+                "type": "string",
+                "enum": [
+                  "daily",
+                  "weekly",
+                  "monthly"
+                ],
+                "example": "daily"
+              }
+            }
+          }
+        },
+        "required": [
+          "params",
+          "query"
+        ]
+      },
+      "VisualizationResponse": {
+        "type": "object",
+        "properties": {
+          "series": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "bucketStartISO": {
+                  "type": "string",
+                  "format": "date-time",
+                  "example": "2023-01-01T00:00:00Z"
+                },
+                "value": {
+                  "type": "number",
+                  "nullable": true,
+                  "example": 42.5
+                }
+              },
+              "required": [
+                "bucketStartISO",
+                "value"
+              ]
+            }
+          },
+          "stats": {
+            "type": "object",
+            "properties": {
+              "average": {
+                "type": "number",
+                "nullable": true,
+                "example": 35.1
+              },
+              "min": {
+                "type": "number",
+                "nullable": true,
+                "example": 5
+              },
+              "max": {
+                "type": "number",
+                "nullable": true,
+                "example": 80
+              },
+              "count": {
+                "type": "number",
+                "example": 120
+              }
+            },
+            "required": [
+              "average",
+              "min",
+              "max",
+              "count"
+            ]
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "metricId": {
+                "$ref": "#/components/schemas/Uuid"
+              },
+              "unit": {
+                "type": "string",
+                "example": "steps"
+              },
+              "bucket": {
+                "type": "string",
+                "example": "1d"
+              },
+              "tz": {
+                "type": "string",
+                "example": "Asia/Jakarta"
+              },
+              "range": {
+                "type": "object",
+                "properties": {
+                  "startISO": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "endISO": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": [
+                  "startISO",
+                  "endISO"
+                ]
+              }
+            },
+            "required": [
+              "metricId",
+              "unit",
+              "bucket",
+              "tz",
+              "range"
+            ]
+          }
+        },
+        "required": [
+          "series",
+          "stats",
+          "meta"
+        ]
+      },
+      "DashboardVisualizationResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "metricId": {
+                  "$ref": "#/components/schemas/Uuid"
+                },
+                "name": {
+                  "type": "string",
+                  "example": "Sleep"
+                },
+                "unit": {
+                  "type": "string",
+                  "example": "hours"
+                },
+                "category_name": {
+                  "type": "string",
+                  "nullable": true,
+                  "example": "Wellness"
+                },
+                "category_icon": {
+                  "type": "string",
+                  "nullable": true,
+                  "example": "😴"
+                },
+                "category_color": {
+                  "type": "string",
+                  "nullable": true,
+                  "example": "#663399"
+                },
+                "priority": {
+                  "type": "number",
+                  "nullable": true,
+                  "example": 1
+                },
+                "series": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "bucketStartISO": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-01-01T00:00:00Z"
+                      },
+                      "value": {
+                        "type": "number",
+                        "nullable": true,
+                        "example": 42.5
+                      }
+                    },
+                    "required": [
+                      "bucketStartISO",
+                      "value"
+                    ]
+                  }
+                },
+                "stats": {
+                  "type": "object",
+                  "properties": {
+                    "average": {
+                      "type": "number",
+                      "nullable": true,
+                      "example": 35.1
+                    },
+                    "min": {
+                      "type": "number",
+                      "nullable": true,
+                      "example": 5
+                    },
+                    "max": {
+                      "type": "number",
+                      "nullable": true,
+                      "example": 80
+                    },
+                    "count": {
+                      "type": "number",
+                      "example": 120
+                    }
+                  },
+                  "required": [
+                    "average",
+                    "min",
+                    "max",
+                    "count"
+                  ]
+                }
+              },
+              "required": [
+                "metricId",
+                "name",
+                "unit",
+                "category_name",
+                "category_icon",
+                "category_color",
+                "priority",
+                "series",
+                "stats"
+              ]
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "bucket": {
+                "type": "string",
+                "example": "1d"
+              },
+              "tz": {
+                "type": "string",
+                "example": "Asia/Jakarta"
+              },
+              "range": {
+                "type": "object",
+                "properties": {
+                  "startISO": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "endISO": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": [
+                  "startISO",
+                  "endISO"
+                ]
+              },
+              "count": {
+                "type": "number",
+                "example": 5
+              }
+            },
+            "required": [
+              "bucket",
+              "tz",
+              "range",
+              "count"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "meta"
+        ]
+      },
+      "VisualizationQueryParams": {
+        "type": "object",
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "enum": [
+              "1h",
+              "1d",
+              "1w",
+              "1m",
+              "1y"
+            ]
+          },
+          "tz": {
+            "type": "string"
+          },
+          "fill": {
+            "type": "string",
+            "enum": [
+              "none",
+              "zero",
+              "nan"
+            ]
+          },
+          "start": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last": {
+            "type": "string"
+          }
+        }
+      },
+      "DashboardVisualizationQueryParams": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/VisualizationQueryParams"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 48
+              }
+            }
+          }
+        ]
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Register a new user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Log in a user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User logged in successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/auth/profile": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Get current user's profile",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current user profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Update current user's profile",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User profile updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Log out the current user",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User logged out successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/metric-categories": {
+      "post": {
+        "tags": [
+          "Metric Categories"
+        ],
+        "summary": "Create a new metric category",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMetricCategoryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Metric category created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricCategory"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Metric Categories"
+        ],
+        "summary": "Get all metric categories for the authenticated user",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "required": false,
+            "description": "Maximum number of records to return (1-100)",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "createdAt",
+                "-createdAt",
+                "updatedAt",
+                "-updatedAt",
+                "name",
+                "-name",
+                "metricCount",
+                "-metricCount"
+              ]
+            },
+            "required": false,
+            "description": "Sort field (prefix with - for DESC)",
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Optional free-text search term",
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Opaque cursor returned from the previous page",
+            "name": "after",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "required": false,
+            "description": "Set to true to include totalCount in the response",
+            "name": "includeTotal",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Filter categories by name",
+            "name": "filter[name]",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cursor-based list of metric categories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricCategoryCursorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/metric-categories/{id}": {
+      "get": {
+        "tags": [
+          "Metric Categories"
+        ],
+        "summary": "Get a single metric category by ID",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "A UUID identifier for the resource",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Metric category details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricCategory"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Metric Categories"
+        ],
+        "summary": "Update a metric category by ID",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "A UUID identifier for the resource",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMetricCategoryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Metric category updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricCategory"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Metric Categories"
+        ],
+        "summary": "Delete a metric category by ID",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "A UUID identifier for the resource",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Metric category deleted successfully"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "post": {
+        "tags": [
+          "Metrics"
+        ],
+        "summary": "Create a new metric",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMetricRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Metric created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Metric"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Metrics"
+        ],
+        "summary": "Get all metrics for the authenticated user",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "required": false,
+            "description": "Maximum number of records to return (1-100)",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "createdAt",
+                "-createdAt",
+                "updatedAt",
+                "-updatedAt",
+                "name",
+                "-name",
+                "logCount",
+                "-logCount"
+              ]
+            },
+            "required": false,
+            "description": "Sort field (prefix with - for DESC)",
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Optional free-text search term",
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Opaque cursor returned from the previous page",
+            "name": "after",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "required": false,
+            "description": "Set to true to include totalCount in the response",
+            "name": "includeTotal",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Filter metrics by name (supports partial matches)",
+            "name": "filter[name]",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": false,
+            "description": "Filter metrics by category identifier",
+            "name": "filter[categoryId]",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cursor-based list of metrics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricCursorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/metrics/{id}": {
+      "get": {
+        "tags": [
+          "Metrics"
+        ],
+        "summary": "Get a single metric by ID",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "A UUID identifier for the resource",
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "flat",
+                "full",
+                "settings",
+                "category",
+                "logs"
+              ]
+            },
+            "required": false,
+            "description": "Controls which relations are included. Use 'full' or a CSV of settings,category,logs.",
+            "name": "include",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            },
+            "required": false,
+            "description": "Maximum number of recent logs to include when logs are requested",
+            "name": "logsLimit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Metric details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Metrics"
+        ],
+        "summary": "Update a metric by ID",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "A UUID identifier for the resource",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMetricRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Metric updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Metric"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Metrics"
+        ],
+        "summary": "Delete a metric by ID",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "A UUID identifier for the resource",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Metric deleted successfully"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/metric-logs": {
+      "post": {
+        "tags": [
+          "Metric Logs"
+        ],
+        "summary": "Create a new metric log",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMetricLogRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Metric log created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricLog"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Metric Logs"
+        ],
+        "summary": "Get all metric logs for the authenticated user",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "required": false,
+            "description": "Maximum number of records to return (1-100)",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "createdAt",
+                "-createdAt",
+                "updatedAt",
+                "-updatedAt",
+                "logValue",
+                "-logValue",
+                "loggedAt",
+                "-loggedAt"
+              ]
+            },
+            "required": false,
+            "description": "Sort field (prefix with - for DESC)",
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Optional search term applied to log notes/metadata",
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Opaque cursor returned from the previous page",
+            "name": "after",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "required": false,
+            "description": "Set to true to include totalCount in the response",
+            "name": "includeTotal",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": false,
+            "description": "Filter logs by metric identifier",
+            "name": "filter[metricId]",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "number"
+            },
+            "required": false,
+            "description": "Filter logs by an exact log value",
+            "name": "filter[logValue]",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cursor-based list of metric logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricLogCursorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/metric-logs/stats": {
+      "get": {
+        "tags": [
+          "Metric Logs"
+        ],
+        "summary": "Get aggregated statistics for metric logs",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": false,
+            "description": "Optional metric identifier to scope the request",
+            "name": "metricId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Aggregated statistics for the requested logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricLogStatsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/metric-logs/{id}": {
+      "get": {
+        "tags": [
+          "Metric Logs"
+        ],
+        "summary": "Get a single metric log by ID",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "A UUID identifier for the resource",
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "Metric identifier required for ownership validation",
+            "name": "metricId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Metric log details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricLog"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Metric Logs"
+        ],
+        "summary": "Update a metric log by ID",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "A UUID identifier for the resource",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMetricLogRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Metric log updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricLog"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Metric Logs"
+        ],
+        "summary": "Delete a metric log by ID",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "A UUID identifier for the resource",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Metric log deleted successfully"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/metric-settings": {
+      "post": {
+        "tags": [
+          "Metric Settings"
+        ],
+        "summary": "Create new metric settings",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMetricSettingsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Metric settings created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Metric Settings"
+        ],
+        "summary": "Get all metric settings for the authenticated user",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "required": false,
+            "description": "Maximum number of records to return (1-100)",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "createdAt",
+                "-createdAt",
+                "updatedAt",
+                "-updatedAt",
+                "isActive",
+                "-isActive"
+              ]
+            },
+            "required": false,
+            "description": "Sort field (prefix with - for DESC)",
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Optional free-text search term",
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Opaque cursor returned from the previous page",
+            "name": "after",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "required": false,
+            "description": "Set to true to include totalCount in the response",
+            "name": "includeTotal",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": false,
+            "description": "Filter settings by metric identifier",
+            "name": "filter[metricId]",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "required": false,
+            "description": "Filter settings by active status",
+            "name": "filter[isActive]",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cursor-based list of metric settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricSettingsCursorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/metric-settings/{id}": {
+      "get": {
+        "tags": [
+          "Metric Settings"
+        ],
+        "summary": "Get single metric settings by ID",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "A UUID identifier for the resource",
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "Metric identifier required for ownership validation",
+            "name": "metricId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Metric settings details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Metric Settings"
+        ],
+        "summary": "Update metric settings by ID",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "A UUID identifier for the resource",
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "Metric identifier required for ownership validation",
+            "name": "metricId",
+            "in": "query"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMetricSettingsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Metric settings updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Metric Settings"
+        ],
+        "summary": "Delete metric settings by ID",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "A UUID identifier for the resource",
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "Metric identifier required for ownership validation",
+            "name": "metricId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Metric settings deleted successfully"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/metric-settings/{id}/achieve": {
+      "patch": {
+        "tags": [
+          "Metric Settings"
+        ],
+        "summary": "Toggle goal achievement for metric settings",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "A UUID identifier for the resource",
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "Metric identifier required for ownership validation",
+            "name": "metricId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Goal achievement updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/metric-settings/{id}/display": {
+      "patch": {
+        "tags": [
+          "Metric Settings"
+        ],
+        "summary": "Update metric settings display options",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "A UUID identifier for the resource",
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "Metric identifier required for ownership validation",
+            "name": "metricId",
+            "in": "query"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDisplayOptionsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Display options updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/metrics/{metricId}/trends": {
+      "get": {
+        "tags": [
+          "Trends"
+        ],
+        "summary": "Get trend data for a specific metric",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "UUID identifier of the metric",
+            "name": "metricId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": false,
+            "description": "Start date for trend data (ISO 8601 format)",
+            "name": "startDate",
+            "in": "query",
+            "example": "2023-01-01T00:00:00Z"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": false,
+            "description": "End date for trend data (ISO 8601 format)",
+            "name": "endDate",
+            "in": "query",
+            "example": "2023-01-31T23:59:59Z"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "daily",
+                "weekly",
+                "monthly"
+              ]
+            },
+            "required": false,
+            "description": "Aggregation interval for trend data",
+            "name": "interval",
+            "in": "query",
+            "example": "daily"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trend data for the metric",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrendResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/analytics/dashboard": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Get aggregated dashboard visualizations",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "1h",
+                "1d",
+                "1w",
+                "1m",
+                "1y"
+              ]
+            },
+            "required": false,
+            "description": "Aggregation bucket size",
+            "name": "bucket",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "IANA timezone (e.g. Asia/Jakarta)",
+            "name": "tz",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "none",
+                "zero",
+                "nan"
+              ]
+            },
+            "required": false,
+            "description": "Missing bucket fill strategy",
+            "name": "fill",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": false,
+            "description": "Absolute start ISO timestamp",
+            "name": "start",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": false,
+            "description": "Absolute end ISO timestamp",
+            "name": "end",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Relative range such as 7d or 12m",
+            "name": "last",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 48
+            },
+            "required": false,
+            "description": "Maximum number of metrics to include",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard visualization payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardVisualizationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/analytics/metrics/{metricId}": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Get visualization data for a metric",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "UUID identifier of the metric",
+            "name": "metricId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "1h",
+                "1d",
+                "1w",
+                "1m",
+                "1y"
+              ]
+            },
+            "required": false,
+            "description": "Aggregation bucket size",
+            "name": "bucket",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "IANA timezone (e.g. Asia/Jakarta)",
+            "name": "tz",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "none",
+                "zero",
+                "nan"
+              ]
+            },
+            "required": false,
+            "description": "Missing bucket fill strategy",
+            "name": "fill",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": false,
+            "description": "Absolute start ISO timestamp",
+            "name": "start",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": false,
+            "description": "Absolute end ISO timestamp",
+            "name": "end",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Relative range such as 7d or 12m",
+            "name": "last",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Visualization payload for the requested metric",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisualizationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    }
+  }
+}

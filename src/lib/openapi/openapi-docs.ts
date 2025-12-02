@@ -1,5 +1,3 @@
-// src/lib/openapi/openapi-docs.ts
-
 import { OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi";
 import { openApiDocument, registry } from "./openapi-config";
 import {
@@ -12,21 +10,39 @@ import {
   CreateMetricCategoryRequestSchema,
   UpdateMetricCategoryRequestSchema,
   MetricCategoryListResponseSchema,
+  MetricCategoryCursorResponseSchema,
+  MetricCategoryCursorQueryParamsSchema,
   MetricSchema,
   CreateMetricRequestSchema,
   UpdateMetricRequestSchema,
   MetricListResponseSchema,
+  MetricCursorResponseSchema,
+  MetricCursorQueryParamsSchema,
+  MetricDetailResponseSchema,
+  MetricDetailQueryParamsSchema,
   MetricLogSchema,
   CreateMetricLogRequestSchema,
   UpdateMetricLogRequestSchema,
   MetricLogListResponseSchema,
+  MetricLogStatsResponseSchema,
+  MetricLogCursorResponseSchema,
+  MetricLogCursorQueryParamsSchema,
   MetricSettingsSchema,
   CreateMetricSettingsRequestSchema,
   UpdateMetricSettingsRequestSchema,
+  UpdateDisplayOptionsRequestSchema,
   MetricSettingsListResponseSchema,
+  MetricSettingsCursorResponseSchema,
+  MetricSettingsCursorQueryParamsSchema,
   TrendDataPointSchema,
   TrendResponseSchema,
   GetTrendRequestSchema,
+  MetricIdQuerySchema,
+  MetricIdRequiredQuerySchema,
+  VisualizationResponseSchema,
+  DashboardVisualizationResponseSchema,
+  VisualizationQueryParamsSchema,
+  DashboardVisualizationQueryParamsSchema,
   UuidSchema,
   ErrorSchema,
   ValidationErrorSchema,
@@ -111,7 +127,7 @@ registry.registerPath({
 
 registry.registerPath({
   method: "get",
-  path: "/auth/me",
+  path: "/auth/profile",
   tags: ["Auth"],
   summary: "Get current user's profile",
   security: [{ BearerAuth: [] }],
@@ -134,8 +150,8 @@ registry.registerPath({
 });
 
 registry.registerPath({
-  method: "patch",
-  path: "/auth/me",
+  method: "put",
+  path: "/auth/profile",
   tags: ["Auth"],
   summary: "Update current user's profile",
   security: [{ BearerAuth: [] }],
@@ -159,6 +175,30 @@ registry.registerPath({
     },
     400: {
       $ref: "#/components/responses/BadRequestError",
+    },
+    401: {
+      $ref: "#/components/responses/UnauthorizedError",
+    },
+    500: {
+      $ref: "#/components/responses/InternalServerError",
+    },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/auth/logout",
+  tags: ["Auth"],
+  summary: "Log out the current user",
+  security: [{ BearerAuth: [] }],
+  responses: {
+    200: {
+      description: "User logged out successfully",
+      content: {
+        "application/json": {
+          schema: SuccessResponseSchema,
+        },
+      },
     },
     401: {
       $ref: "#/components/responses/UnauthorizedError",
@@ -212,12 +252,15 @@ registry.registerPath({
   tags: ["Metric Categories"],
   summary: "Get all metric categories for the authenticated user",
   security: [{ BearerAuth: [] }],
+  request: {
+    query: MetricCategoryCursorQueryParamsSchema,
+  },
   responses: {
     200: {
-      description: "List of metric categories",
+      description: "Cursor-based list of metric categories",
       content: {
         "application/json": {
-          schema: MetricCategoryListResponseSchema,
+          schema: MetricCategoryCursorResponseSchema,
         },
       },
     },
@@ -264,7 +307,7 @@ registry.registerPath({
 });
 
 registry.registerPath({
-  method: "patch",
+  method: "put",
   path: "/metric-categories/{id}",
   tags: ["Metric Categories"],
   summary: "Update a metric category by ID",
@@ -374,12 +417,15 @@ registry.registerPath({
   tags: ["Metrics"],
   summary: "Get all metrics for the authenticated user",
   security: [{ BearerAuth: [] }],
+  request: {
+    query: MetricCursorQueryParamsSchema,
+  },
   responses: {
     200: {
-      description: "List of metrics",
+      description: "Cursor-based list of metrics",
       content: {
         "application/json": {
-          schema: MetricListResponseSchema,
+          schema: MetricCursorResponseSchema,
         },
       },
     },
@@ -400,13 +446,14 @@ registry.registerPath({
   security: [{ BearerAuth: [] }],
   request: {
     params: GetByIdParamSchema,
+    query: MetricDetailQueryParamsSchema,
   },
   responses: {
     200: {
       description: "Metric details",
       content: {
         "application/json": {
-          schema: MetricSchema,
+          schema: MetricDetailResponseSchema,
         },
       },
     },
@@ -426,7 +473,7 @@ registry.registerPath({
 });
 
 registry.registerPath({
-  method: "patch",
+  method: "put",
   path: "/metrics/{id}",
   tags: ["Metrics"],
   summary: "Update a metric by ID",
@@ -536,12 +583,42 @@ registry.registerPath({
   tags: ["Metric Logs"],
   summary: "Get all metric logs for the authenticated user",
   security: [{ BearerAuth: [] }],
+  request: {
+    query: MetricLogCursorQueryParamsSchema,
+  },
   responses: {
     200: {
-      description: "List of metric logs",
+      description: "Cursor-based list of metric logs",
       content: {
         "application/json": {
-          schema: MetricLogListResponseSchema,
+          schema: MetricLogCursorResponseSchema,
+        },
+      },
+    },
+    401: {
+      $ref: "#/components/responses/UnauthorizedError",
+    },
+    500: {
+      $ref: "#/components/responses/InternalServerError",
+    },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/metric-logs/stats",
+  tags: ["Metric Logs"],
+  summary: "Get aggregated statistics for metric logs",
+  security: [{ BearerAuth: [] }],
+  request: {
+    query: MetricIdQuerySchema,
+  },
+  responses: {
+    200: {
+      description: "Aggregated statistics for the requested logs",
+      content: {
+        "application/json": {
+          schema: MetricLogStatsResponseSchema,
         },
       },
     },
@@ -562,6 +639,7 @@ registry.registerPath({
   security: [{ BearerAuth: [] }],
   request: {
     params: GetByIdParamSchema,
+    query: MetricIdRequiredQuerySchema,
   },
   responses: {
     200: {
@@ -588,7 +666,7 @@ registry.registerPath({
 });
 
 registry.registerPath({
-  method: "patch",
+  method: "put",
   path: "/metric-logs/{id}",
   tags: ["Metric Logs"],
   summary: "Update a metric log by ID",
@@ -698,12 +776,15 @@ registry.registerPath({
   tags: ["Metric Settings"],
   summary: "Get all metric settings for the authenticated user",
   security: [{ BearerAuth: [] }],
+  request: {
+    query: MetricSettingsCursorQueryParamsSchema,
+  },
   responses: {
     200: {
-      description: "List of metric settings",
+      description: "Cursor-based list of metric settings",
       content: {
         "application/json": {
-          schema: MetricSettingsListResponseSchema,
+          schema: MetricSettingsCursorResponseSchema,
         },
       },
     },
@@ -724,6 +805,7 @@ registry.registerPath({
   security: [{ BearerAuth: [] }],
   request: {
     params: GetByIdParamSchema,
+    query: MetricIdRequiredQuerySchema,
   },
   responses: {
     200: {
@@ -750,13 +832,14 @@ registry.registerPath({
 });
 
 registry.registerPath({
-  method: "patch",
+  method: "put",
   path: "/metric-settings/{id}",
   tags: ["Metric Settings"],
   summary: "Update metric settings by ID",
   security: [{ BearerAuth: [] }],
   request: {
     params: GetByIdParamSchema,
+    query: MetricIdRequiredQuerySchema,
     body: {
       content: {
         "application/json": {
@@ -797,6 +880,7 @@ registry.registerPath({
   security: [{ BearerAuth: [] }],
   request: {
     params: GetByIdParamSchema,
+    query: MetricIdRequiredQuerySchema,
   },
   responses: {
     204: {
@@ -817,10 +901,85 @@ registry.registerPath({
   },
 });
 
+registry.registerPath({
+  method: "patch",
+  path: "/metric-settings/{id}/achieve",
+  tags: ["Metric Settings"],
+  summary: "Toggle goal achievement for metric settings",
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: GetByIdParamSchema,
+    query: MetricIdRequiredQuerySchema,
+  },
+  responses: {
+    200: {
+      description: "Goal achievement updated successfully",
+      content: {
+        "application/json": {
+          schema: MetricSettingsSchema,
+        },
+      },
+    },
+    400: {
+      $ref: "#/components/responses/BadRequestError",
+    },
+    401: {
+      $ref: "#/components/responses/UnauthorizedError",
+    },
+    404: {
+      $ref: "#/components/responses/NotFoundError",
+    },
+    500: {
+      $ref: "#/components/responses/InternalServerError",
+    },
+  },
+});
+
+registry.registerPath({
+  method: "patch",
+  path: "/metric-settings/{id}/display",
+  tags: ["Metric Settings"],
+  summary: "Update metric settings display options",
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: GetByIdParamSchema,
+    query: MetricIdRequiredQuerySchema,
+    body: {
+      content: {
+        "application/json": {
+          schema: UpdateDisplayOptionsRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Display options updated successfully",
+      content: {
+        "application/json": {
+          schema: MetricSettingsSchema,
+        },
+      },
+    },
+    400: {
+      $ref: "#/components/responses/BadRequestError",
+    },
+    401: {
+      $ref: "#/components/responses/UnauthorizedError",
+    },
+    404: {
+      $ref: "#/components/responses/NotFoundError",
+    },
+    500: {
+      $ref: "#/components/responses/InternalServerError",
+    },
+  },
+});
+
 // Define paths for Trends
 registry.registerPath({
   method: "get",
-  path: "/trends/{metricId}",
+  path: "/metrics/{metricId}/trends",
   tags: ["Trends"],
   summary: "Get trend data for a specific metric",
   security: [{ BearerAuth: [] }],
@@ -852,11 +1011,101 @@ registry.registerPath({
   },
 });
 
+// Analytics paths
+registry.registerPath({
+  method: "get",
+  path: "/analytics/dashboard",
+  tags: ["Analytics"],
+  summary: "Get aggregated dashboard visualizations",
+  security: [{ BearerAuth: [] }],
+  request: {
+    query: DashboardVisualizationQueryParamsSchema,
+  },
+  responses: {
+    200: {
+      description: "Dashboard visualization payload",
+      content: {
+        "application/json": {
+          schema: DashboardVisualizationResponseSchema,
+        },
+      },
+    },
+    400: {
+      $ref: "#/components/responses/BadRequestError",
+    },
+    401: {
+      $ref: "#/components/responses/UnauthorizedError",
+    },
+    500: {
+      $ref: "#/components/responses/InternalServerError",
+    },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/analytics/metrics/{metricId}",
+  tags: ["Analytics"],
+  summary: "Get visualization data for a metric",
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: GetTrendParamsSchema,
+    query: VisualizationQueryParamsSchema,
+  },
+  responses: {
+    200: {
+      description: "Visualization payload for the requested metric",
+      content: {
+        "application/json": {
+          schema: VisualizationResponseSchema,
+        },
+      },
+    },
+    400: {
+      $ref: "#/components/responses/BadRequestError",
+    },
+    401: {
+      $ref: "#/components/responses/UnauthorizedError",
+    },
+    404: {
+      $ref: "#/components/responses/NotFoundError",
+    },
+    500: {
+      $ref: "#/components/responses/InternalServerError",
+    },
+  },
+});
+
 export const getOpenApiDocumentation = () => {
   const generator = new OpenApiGeneratorV3(registry.definitions);
+  // Generate a full OpenAPI document from the registry, seeded with the base config.
   const document = generator.generateDocument(openApiDocument);
-  return {
-    ...openApiDocument,
-    paths: document.paths,
+
+  // Ensure we preserve and merge base components (securitySchemes, responses, etc.)
+  // with any components generated from Zod schemas (schemas, parameters, ...).
+  const baseComponents = openApiDocument.components ?? {};
+  const generatedComponents = document.components ?? {};
+
+  document.components = {
+    ...baseComponents,
+    ...generatedComponents,
+    schemas: {
+      ...(baseComponents as any).schemas,
+      ...(generatedComponents as any).schemas,
+    },
+    responses: {
+      ...(baseComponents as any).responses,
+      ...(generatedComponents as any).responses,
+    },
+    securitySchemes: {
+      ...(baseComponents as any).securitySchemes,
+      ...(generatedComponents as any).securitySchemes,
+    },
+    parameters: {
+      ...(baseComponents as any).parameters,
+      ...(generatedComponents as any).parameters,
+    },
   };
+
+  return document;
 };
