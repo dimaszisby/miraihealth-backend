@@ -3,6 +3,7 @@ import { MetricSettingsResponseDTO } from "@/types/dtos/metric-settings.dto";
 import AppError from "@/utils/AppError";
 import { toDomainMetricSettings } from "@/utils/mappers/metric-settings.mapper";
 import { WhereOptions, Op, OrderItem } from "sequelize";
+import logger from "@/utils/logger";
 
 // * Sorting
 export type SortField = "createdAt" | "updatedAt" | "isActive";
@@ -196,7 +197,10 @@ export async function listSettingsViaCursor({
   // This where is for METRIC SETTINGS (has userId, deletedAt)
   const baseWhere = buildWhere(filter, q);
   if (filter?.metricId) {
-    console.log("[settings:list] filtering by metricId:", filter.metricId);
+    logger.debug("[settings:list] filtering by metricId", {
+      metricId: filter.metricId,
+      userId,
+    });
   }
 
   // total settings for pagination option

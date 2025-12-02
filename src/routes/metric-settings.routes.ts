@@ -21,6 +21,7 @@ import {
 } from "@/types/api/zod-metric-settings.schema.js";
 import { z } from "zod";
 import { AuthRequest } from "@/types/request.context";
+import logger from "@/utils/logger";
 
 const router = Router();
 
@@ -73,7 +74,7 @@ const metricSettingsCursorCacheKey = (req: AuthRequest) => {
     `it:${it}`,
   ].join(":");
 
-  console.log("[cache:key]", key);
+  logger.debug("[CACHE] Generated metric settings cursor key", { key });
   return key;
 };
 
