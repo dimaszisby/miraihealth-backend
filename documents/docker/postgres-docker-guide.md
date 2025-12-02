@@ -7,6 +7,29 @@ This guide provides step-by-step instructions on how to install, configure, and 
 *   Docker installed on your system.
 *   Basic understanding of Docker concepts.
 
+## 0. Test Workflow & Troubleshooting
+
+Use this backend’s Docker Compose harness only when you need full-stack parity (CI, pre-release validation). For everyday Jest iterations, run `npm run test:dev` on the host or let the VS Code Jest extension invoke it automatically. When you need the containerized suite:
+
+```bash
+npm run test:ci -- --coverage
+```
+
+This command proxies to `scripts/test-ci.sh`, which resets the Compose stack (`db`, `redis`), waits for Postgres readiness, runs migrations, and executes Jest once with any additional flags you provide. If VS Code shows “The Compose app is no longer running,” it simply means the teardown in `test-ci.sh` completed—re-run the command to spin everything back up, or inspect `docker compose -f docker-compose.yml -f docker-compose.test.yml ps -a` for lingering containers.
+
+**Host-side migrations:** When you run Jest directly on macOS/Linux without spinning up the `app` container, the Sequelize CLI still needs the Dockerized Postgres schema. Define the host override before invoking the CLI so it speaks to `127.0.0.1` instead of the Compose hostname `db`:
+
+```bash
+TEST_DATABASE_URL=postgres://lakira_user:lakira_password@127.0.0.1:5432/lakira_test_db \
+DB_HOST=127.0.0.1 \
+NODE_ENV=test \
+npx sequelize-cli db:migrate --config src/config/config.cjs
+```
+
+Run the same command whenever you drop local volumes. CI already injects these values inside the `app` container, so no change is required there.
+
+---
+
 ## 1. Pulling the Official PostgreSQL Image -> DONE
 
 The first step is to pull the official PostgreSQL image from Docker Hub. This image provides a pre-configured PostgreSQL environment that you can use to create containers.
