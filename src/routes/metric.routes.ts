@@ -7,8 +7,8 @@ import {
   updateMetric,
   deleteMetric,
   generateDummyMetrics,
-} from "@/controllers/metric.controller";
-import { getTrends } from "@/controllers/trend.controller";
+} from "@/features/metric/infrastructure/http/controller";
+import { handleMetricTrend } from "@/features/analytics/presentation/http/visualization.controller";
 import { authMiddleware } from "@/middleware/auth-middleware";
 import { cacheMiddleware } from "@/middleware/cache-middleware";
 import { userRateLimiter } from "@/middleware/rate-limiter";
@@ -146,7 +146,7 @@ router.delete(
 
 /** Trends (validate param for safety) */
 const trendParams = { params: z.object({ metricId: z.string().uuid() }) }; // small inline guard
-router.get("/:metricId/trends", validate(trendParams as any), getTrends);
+router.get("/:metricId/trends", validate(trendParams as any), handleMetricTrend);
 
 /** Testing */
 if (env.ENABLE_DUMMY_ENDPOINTS) {
