@@ -1,6 +1,4 @@
-import { findOwnedMetric } from "@/utils/db-helper";
-import { MetricDomain } from "@/types/domain/metric.domain";
-import { toDomainMetric } from "@/utils/mappers/metric.mapper";
+import { MetricRepository } from "../../domain/repositories/MetricRepository";
 import { CachePort } from "../ports/CachePort";
 
 type Input = {
@@ -9,17 +7,20 @@ type Input = {
 };
 
 export class DeleteMetric {
-  constructor(private cache: CachePort) {}
+  constructor(
+    private repo: MetricRepository,
+    private cache: CachePort
+  ) {}
 
-  async execute({ userId, metricId }: Input): Promise<MetricDomain> {
-    const metric = await findOwnedMetric(userId, metricId);
+  async execute({ userId, metricId }: Input) {
+    const metric = await this.repo.findOwnedById(userId, metricId);
 
     if (this.cache.isEnabled() && metric.id) {
       await this.cache.invalidateMetrics(userId, metric.id);
     }
 
-    await metric.destroy();
+    await this.repo.delete(metric);
 
-    return toDomainMetric(metric);
+    return metric;
   }
 }

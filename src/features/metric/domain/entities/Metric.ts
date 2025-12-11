@@ -75,6 +75,18 @@ export class Metric implements MetricDomain {
     this.props.deletedAt = new Date();
   }
 
+  update(data: Partial<{ name: string; description: string | null; defaultUnit: string; categoryId: string | null; isPublic: boolean }>) {
+    if (data.name !== undefined) this.rename(data.name);
+    if (data.description !== undefined) this.describe(data.description);
+    if (data.defaultUnit !== undefined) this.setDefaultUnit(data.defaultUnit);
+    if (data.categoryId !== undefined) this.moveToCategory(data.categoryId);
+    if (data.isPublic !== undefined) this.togglePublic(data.isPublic);
+  }
+
+  snapshot() {
+    return { ...this.props };
+  }
+
   get id() {
     return this.props.id;
   }

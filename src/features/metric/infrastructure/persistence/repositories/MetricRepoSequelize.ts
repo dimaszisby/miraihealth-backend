@@ -1,12 +1,10 @@
-import { models } from "@/models";
+import { models } from "@/infrastructure/db/models";
 import { Transaction } from "sequelize";
-import {
-  CreateMetricDTO,
-  MetricRepository,
-} from "../../../domain/repositories/MetricRepository";
+import { CreateMetricDTO, MetricRepository } from "../../../domain/repositories/MetricRepository";
 import { Metric } from "../../../domain/entities/Metric";
 import { PersistenceTransaction } from "../../../application/ports/PersistenceTransaction";
 import { MetricRow, toDomain } from "../mappers/MetricMapper";
+import AppError from "@/utils/AppError";
 
 export class MetricRepoSequelize implements MetricRepository {
   async existsByName(userId: string, name: string): Promise<boolean> {
@@ -59,5 +57,70 @@ export class MetricRepoSequelize implements MetricRepository {
     };
 
     return toDomain(row);
+  }
+
+  async findOwnedById(userId: string, metricId: string): Promise<Metric> {
+    const metric = await models.Metric.findOne({
+      where: { id: metricId, userId },
+    });
+    if (!metric) {
+      throw new AppError("Metric not found", 404);
+    }
+
+    const row: MetricRow = {
+      id: metric.id,
+      userId: metric.userId,
+      categoryId: metric.categoryId,
+      originalMetricId: metric.originalMetricId,
+      name: metric.name,
+      description: metric.description,
+      defaultUnit: metric.defaultUnit,
+      isPublic: metric.isPublic,
+      createdAt: metric.createdAt!,
+      updatedAt: metric.updatedAt!,
+      deletedAt: metric.deletedAt ?? null,
+    };
+
+    return toDomain(row);
+  }
+
+  async save(metric: Metric): Promise<Metric> {
+    const instance = await models.Metric.findOne({
+      where: { id: metric.id, userId: metric.userId },
+    });
+    if (!instance) throw new AppError("Metric not found", 404);
+
+    const snapshot = metric.snapshot();
+    await instance.update({
+      name: snapshot.name,
+      description: snapshot.description,
+      defaultUnit: snapshot.defaultUnit,
+      categoryId: snapshot.categoryId,
+      originalMetricId: snapshot.originalMetricId ?? null,
+      isPublic: snapshot.isPublic,
+    });
+    await instance.reload();
+
+    return toDomain({
+      id: instance.id,
+      userId: instance.userId,
+      categoryId: instance.categoryId,
+      originalMetricId: instance.originalMetricId,
+      name: instance.name,
+      description: instance.description,
+      defaultUnit: instance.defaultUnit,
+      isPublic: instance.isPublic,
+      createdAt: instance.createdAt!,
+      updatedAt: instance.updatedAt!,
+      deletedAt: instance.deletedAt ?? null,
+    });
+  }
+
+  async delete(metric: Metric): Promise<void> {
+    const instance = await models.Metric.findOne({
+      where: { id: metric.id, userId: metric.userId },
+    });
+    if (!instance) throw new AppError("Metric not found", 404);
+    await instance.destroy();
   }
 }

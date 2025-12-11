@@ -1,4 +1,4 @@
-import { models } from "@/models";
+import { models } from "@/infrastructure/db/models";
 import { MetricDomain } from "@/types/domain/metric.domain";
 import { toDomainMetric } from "@/utils/mappers/metric.mapper";
 import { CachePort } from "../ports/CachePort";

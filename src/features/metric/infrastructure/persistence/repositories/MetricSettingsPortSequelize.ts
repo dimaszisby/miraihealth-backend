@@ -1,4 +1,4 @@
-import { models } from "@/models";
+import { models } from "@/infrastructure/db/models";
 import { Transaction } from "sequelize";
 import { MetricSettingsPort } from "../../../application/ports/MetricSettingsPort";
 import { PersistenceTransaction } from "../../../application/ports/PersistenceTransaction";

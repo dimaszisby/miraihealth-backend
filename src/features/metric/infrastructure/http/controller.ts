@@ -1,8 +1,7 @@
 import { NextFunction, Response } from "express";
 import { GenerateDummyMetricsRequestDTO } from "@/types/dtos/metric.dto";
 import { listMetricQueryViaCursor } from "@/types/api/zod-metric.schema";
-import { listMetricsViaCursor } from "../../application/queries/ListMetrics";
-import { buildMetricFeature } from "../../index";
+import { buildMetricFeature } from "../../feature";
 import { AuthRequest } from "@/types/request.context";
 import logger from "@/utils/logger";
 import {
@@ -57,7 +56,7 @@ export const getUserMetricLibrariesViaCursor = catchAsync(
     const parsed = listMetricQueryViaCursor.parse(req.query);
     const { limit, sort, q, after, includeTotal, filter } = parsed;
 
-    const page = await listMetricsViaCursor({
+    const page = await metricFeature.listMetrics.execute({
       userId: req.user.id,
       limit,
       sort,

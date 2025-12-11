@@ -1,7 +1,5 @@
 import { UpdateMetricRequestDTO } from "@/types/dtos/metric.dto";
-import { findOwnedMetric } from "@/utils/db-helper";
-import { MetricDomain } from "@/types/domain/metric.domain";
-import { toDomainMetric } from "@/utils/mappers/metric.mapper";
+import { MetricRepository } from "../../domain/repositories/MetricRepository";
 import { CachePort } from "../ports/CachePort";
 
 type Input = {
@@ -11,18 +9,28 @@ type Input = {
 };
 
 export class UpdateMetric {
-  constructor(private cache: CachePort) {}
+  constructor(
+    private repo: MetricRepository,
+    private cache: CachePort
+  ) {}
 
-  async execute({ userId, metricId, data }: Input): Promise<MetricDomain> {
-    const metric = await findOwnedMetric(userId, metricId);
+  async execute({ userId, metricId, data }: Input) {
+    const metric = await this.repo.findOwnedById(userId, metricId);
 
-    await metric.update(data);
-    await metric.reload();
+    metric.update({
+      name: data.name,
+      description: data.description ?? null,
+      defaultUnit: data.defaultUnit,
+      categoryId: data.categoryId ?? null,
+      isPublic: data.isPublic ?? metric.isPublic,
+    });
+
+    const saved = await this.repo.save(metric);
 
     if (this.cache.isEnabled() && metric.id) {
       await this.cache.invalidateMetrics(userId, metric.id);
     }
 
-    return toDomainMetric(metric);
+    return saved;
   }
 }

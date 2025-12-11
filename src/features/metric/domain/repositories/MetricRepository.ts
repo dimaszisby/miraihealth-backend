@@ -18,4 +18,7 @@ export interface MetricRepository {
     data: CreateMetricDTO,
     tx: PersistenceTransaction
   ): Promise<Metric>;
+  findOwnedById(userId: string, metricId: string): Promise<Metric>;
+  save(metric: Metric): Promise<Metric>;
+  delete(metric: Metric): Promise<void>;
 }
