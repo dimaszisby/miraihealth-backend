@@ -1,0 +1,136 @@
+import { Router } from "express";
+import {
+  createMetricLog,
+  getLogById,
+  updateLog,
+  deleteLog,
+  getAggregatedStats,
+  generateDummyMetricLogs,
+  getUserLogLibrariesViaCursor,
+} from "./controller";
+import { authMiddleware } from "@/features/auth/infrastructure/http/authMiddleware";
+import { cacheMiddleware } from "@/shared/middleware/cache";
+import { userRateLimiter } from "@/shared/middleware/rate-limiter";
+import { validate } from "@/shared/middleware/validation";
+import {
+  createMetricLogSchema,
+  updateMetricLogSchema,
+  getMetricLogByIdSchema,
+  deleteMetricLogSchema,
+  getAggregatedStatsSchema,
+  generateDummyMetricLogsSchema,
+  listMetricLogsViaCursorSchema,
+} from "./schema.zod";
+import { AuthRequest } from "@/types/request.context";
+import { env } from "@/config/zodEnv";
+import logger from "@/utils/logger";
+
+const firstNonEmpty = (...vals: unknown[]) =>
+  vals.find((v) => typeof v === "string" && v.trim().length > 0) as
+    | string
+    | undefined;
+
+const bool01 = (v: any) => (v === true || v === "true" ? "1" : "0");
+
+const logCacheKey = (req: AuthRequest) =>
+  `log:${req.user?.id}:${req.params.id}`;
+
+const logsCursorCacheKey = (req: AuthRequest) => {
+  const q = req.query as any;
+  const filter = (q && typeof q.filter === "object" && q.filter) || {};
+
+  const metricId =
+    firstNonEmpty(
+      filter.metricId,
+      q["filter[metricId]"],
+      q.metricId,
+      req.params?.metricId
+    ) ?? "_";
+
+  const logValueStr =
+    firstNonEmpty(
+      String(filter.logValue ?? ""),
+      String(q["filter[logValue]"] ?? "")
+    ) ?? "_";
+
+  const limit = Number(q.limit ?? 20);
+  const sort = String(q.sort ?? "-createdAt");
+  const search = typeof q.q === "string" ? q.q.trim() : "";
+  const after = typeof q.after === "string" ? q.after : "";
+  const it = bool01(q.includeTotal);
+
+  const key = [
+    "logs-cursor:v2",
+    req.user?.id ?? "_",
+    `l:${limit}`,
+    `s:${sort}`,
+    `q:${search}`,
+    `fm:${metricId}`,
+    `fn:${logValueStr}`,
+    `after:${after}`,
+    `it:${it}`,
+  ].join(":");
+
+  logger.debug("[CACHE] Generated logs cursor key", { key });
+  return key;
+};
+
+const logStatsCacheKey = (req: AuthRequest) => {
+  const metricId = req.params.metricId || req.query.metricId;
+  return `logStats:${req.user?.id}:${metricId || "all"}`;
+};
+
+export const createMetricLogRouter = () => {
+  const router = Router();
+  router.use(authMiddleware);
+
+  router.get(
+    "/",
+    validate(listMetricLogsViaCursorSchema),
+    cacheMiddleware(logsCursorCacheKey, 300),
+    getUserLogLibrariesViaCursor
+  );
+
+  router.get(
+    "/stats",
+    validate(getAggregatedStatsSchema),
+    cacheMiddleware(logStatsCacheKey, 300),
+    getAggregatedStats
+  );
+
+  router.get(
+    "/:id",
+    validate(getMetricLogByIdSchema),
+    cacheMiddleware(logCacheKey, 300),
+    getLogById
+  );
+
+  router.post(
+    "/",
+    userRateLimiter,
+    validate(createMetricLogSchema),
+    createMetricLog
+  );
+
+  router.put("/:id", userRateLimiter, validate(updateMetricLogSchema), updateLog);
+
+  router.delete(
+    "/:id",
+    userRateLimiter,
+    validate(deleteMetricLogSchema),
+    deleteLog
+  );
+
+  if (env.ENABLE_DUMMY_ENDPOINTS) {
+    router.post(
+      "/:metricId/dummy",
+      userRateLimiter,
+      validate(generateDummyMetricLogsSchema),
+      generateDummyMetricLogs
+    );
+  }
+
+  return router;
+};
+
+export const metricLogRouter = createMetricLogRouter();
