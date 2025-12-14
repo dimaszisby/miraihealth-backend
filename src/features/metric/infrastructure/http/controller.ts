@@ -6,7 +6,7 @@ import {
   getAllMetricsViaCursorSchema,
   getMetricSchema,
   updateMetricSchema,
-} from "@/types/api/zod-metric.schema";
+} from "./schema.zod";
 import { buildMetricFeature } from "../../feature";
 import { AuthRequest } from "@/types/request.context";
 import logger from "@/utils/logger";

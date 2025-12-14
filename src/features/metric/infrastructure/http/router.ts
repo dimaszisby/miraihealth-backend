@@ -20,7 +20,7 @@ import {
   getMetricSchema,
   generateDummyMetricsSchema,
   getAllMetricsViaCursorSchema,
-} from "@/types/api/zod-metric.schema";
+} from "./schema.zod";
 import { AuthRequest } from "@/types/request.context";
 import { env } from "@/config/zodEnv";
 

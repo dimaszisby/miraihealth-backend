@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import {
   zUUID,
   zMetricName,
@@ -8,12 +9,10 @@ import {
   zMetricIsPublic,
   zMetricOriginalId,
 } from "@/constants/zod/zod-rules";
-import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 
 extendZodWithOpenApi(z);
 
 const FilterSchema = z.object({
-  // bracket form
   ["filter[name]"]: z.preprocess(
     (v) => (typeof v === "string" ? v.trim() : v),
     z.string().min(1).optional()
@@ -22,9 +21,6 @@ const FilterSchema = z.object({
     (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
     zUUID.optional()
   ),
-
-  // nested form
-  // Safeguard in case Express parses into an object
   filter: z
     .object({
       name: z.preprocess(
@@ -49,10 +45,8 @@ export const metricBody = z.object({
   isPublic: zMetricIsPublic,
 });
 
-// all optional for update
 export const metricBodyPartial = metricBody.partial();
 
-// list query (offset for now; add cursor when ready)
 export const listMetricsQuery = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
@@ -69,7 +63,7 @@ export const listMetricsQuery = z.object({
   sortOrder: z.enum(["ASC", "DESC"]).default("DESC"),
 });
 
-export const listMetricQueryViaCursor = z
+const listMetricQueryRaw = z
   .object({
     limit: z.coerce.number().int().min(1).max(100).default(20),
     sort: z
@@ -91,27 +85,28 @@ export const listMetricQueryViaCursor = z
     after: z.string().optional(),
     includeTotal: z.coerce.boolean().default(false),
   })
-  .and(FilterSchema)
-  .transform((v) => {
-    // Canonical filter object
-    const name = v["filter[name]"] ?? v.filter?.name;
-    const categoryId = v["filter[categoryId]"] ?? v.filter?.categoryId;
+  .merge(FilterSchema);
 
-    const filter: { name?: string; categoryId?: string } = {};
-    if (name) filter.name = name;
-    if (categoryId) filter.categoryId = categoryId;
+export const listMetricQueryViaCursor = listMetricQueryRaw.transform((v) => {
+  const name = v["filter[name]"] ?? v.filter?.name;
+  const categoryId = v["filter[categoryId]"] ?? v.filter?.categoryId;
 
-    return {
-      limit: v.limit,
-      sort: v.sort,
-      q: v.q,
-      after: v.after,
-      includeTotal: v.includeTotal,
-      filter: Object.keys(filter).length ? filter : undefined,
-    };
-  });
+  const filter: { name?: string; categoryId?: string } = {};
+  if (name) filter.name = name;
+  if (categoryId) filter.categoryId = categoryId;
 
-// detail include shape e.g. “flat” | “full”
+  return {
+    limit: v.limit,
+    sort: v.sort,
+    q: v.q,
+    after: v.after,
+    includeTotal: v.includeTotal,
+    filter: Object.keys(filter).length ? filter : undefined,
+  };
+});
+
+export const listMetricQueryDocSchema = listMetricQueryRaw;
+
 const allowedIncludes = ["settings", "category", "logs"] as const;
 const csvIncludes = z
   .string()
@@ -127,6 +122,7 @@ const csvIncludes = z
         "include must be 'flat' | 'full' or a CSV of: settings,category,logs",
     }
   );
+
 export const metricDetailQuery = z.object({
   include: z
     .union([z.enum(["flat", "full"]), csvIncludes])
@@ -135,7 +131,7 @@ export const metricDetailQuery = z.object({
   logsLimit: z.coerce.number().int().min(1).max(200).optional().default(20),
 });
 
-/** ===== SchemaBags for validate(...) ===== */
+/** ===== Schema Bags ===== */
 export const createMetricSchema = z.object({ body: metricBody });
 export const updateMetricSchema = z.object({
   params: metricParams,
@@ -151,7 +147,6 @@ export const getAllMetricsViaCursorSchema = z.object({
   query: listMetricQueryViaCursor,
 });
 
-// testing
 export const generateDummyMetricsBody = z.object({
   count: z.coerce.number().int().min(1).max(1000).default(50),
 });
@@ -159,7 +154,7 @@ export const generateDummyMetricsSchema = z.object({
   body: generateDummyMetricsBody,
 });
 
-/** ===== Inferred types (optional) ===== */
+/** ===== Types ===== */
 export type CreateMetricInput = z.infer<typeof metricBody>;
 export type UpdateMetricInput = z.infer<typeof metricBodyPartial>;
 export type GetMetricParams = z.infer<typeof metricParams>;

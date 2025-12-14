@@ -7,7 +7,7 @@ import {
   createMetricSchema,
   updateMetricSchema,
   generateDummyMetricsSchema,
-} from "@/types/api/zod-metric.schema";
+} from "@/features/metric/infrastructure/http/schema.zod";
 
 // Internal DTOs for associations
 import { MetricCategoryResponseDTO } from "../../features/metric-category/infrastructure/http/dto";

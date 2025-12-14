@@ -1,5 +1,11 @@
 import { z } from "zod";
 import { registerSchema } from "./openapi-config";
+import {
+  listMetricQueryDocSchema,
+  metricBody,
+  metricBodyPartial,
+  metricDetailQuery,
+} from "@/features/metric/infrastructure/http/schema.zod";
 
 // Common Schemas
 export const UuidSchema = registerSchema(
@@ -106,31 +112,7 @@ const cursorSearchParam = queryParamMetadata(
 
 export const MetricCursorQueryParamsSchema = registerSchema(
   "MetricCursorQueryParams",
-  z.object({
-    limit: z.number().int().min(1).max(100).optional().openapi(cursorLimitParam),
-    sort: z
-      .enum(["createdAt", "-createdAt", "updatedAt", "-updatedAt", "name", "-name", "logCount", "-logCount"] as const)
-      .optional()
-      .openapi(cursorSortParam()),
-    q: z.string().optional().openapi(cursorSearchParam),
-    after: z.string().optional().openapi(cursorAfterParam),
-    includeTotal: z.boolean().optional().openapi(cursorIncludeTotalParam),
-    ["filter[name]"]: z
-      .string()
-      .optional()
-      .openapi(
-        queryParamMetadata(
-          "filter[name]",
-          "Filter metrics by name (supports partial matches)"
-        )
-      ),
-    ["filter[categoryId]"]: UuidSchema.optional().openapi(
-      queryParamMetadata(
-        "filter[categoryId]",
-        "Filter metrics by category identifier"
-      )
-    ),
-  })
+  listMetricQueryDocSchema
 );
 
 export const MetricCategoryCursorQueryParamsSchema = registerSchema(
@@ -396,34 +378,7 @@ export const MetricCursorResponseSchema = registerSchema(
 
 export const MetricDetailQueryParamsSchema = registerSchema(
   "MetricDetailQueryParams",
-  z.object({
-    include: z
-      .enum(["flat", "full", "settings", "category", "logs"])
-      .optional()
-      .openapi({
-        param: {
-          name: "include",
-          in: "query",
-          required: false,
-          description:
-            "Controls which relations are included. Use 'full' or a CSV of settings,category,logs.",
-        },
-      }),
-    logsLimit: z
-      .number()
-      .int()
-      .min(1)
-      .max(200)
-      .optional()
-      .openapi({
-        param: {
-          name: "logsLimit",
-          in: "query",
-          required: false,
-          description: "Maximum number of recent logs to include when logs are requested",
-        },
-      }),
-  })
+  metricDetailQuery
 );
 
 export const MetricCategoryCursorResponseSchema = registerSchema(
@@ -453,26 +408,12 @@ export const MetricSchema = registerSchema(
 
 export const CreateMetricRequestSchema = registerSchema(
   "CreateMetricRequest",
-  z.object({
-    name: z.string().openapi({ example: "New Metric" }),
-    description: z.string().optional().openapi({ example: "Description for new metric" }),
-    defaultUnit: z.string().openapi({ example: "units" }),
-    isPublic: z.boolean().optional().openapi({ example: false }),
-    categoryId: UuidSchema.optional().nullable(),
-    originalMetricId: UuidSchema.optional().nullable(),
-  })
+  metricBody
 );
 
 export const UpdateMetricRequestSchema = registerSchema(
   "UpdateMetricRequest",
-  z.object({
-    name: z.string().optional().openapi({ example: "Updated Metric Name" }),
-    description: z.string().optional().openapi({ example: "Updated description" }),
-    defaultUnit: z.string().optional().openapi({ example: "new units" }),
-    isPublic: z.boolean().optional().openapi({ example: true }),
-    categoryId: UuidSchema.optional().nullable(),
-    originalMetricId: UuidSchema.optional().nullable(),
-  })
+  metricBodyPartial
 );
 
 export const MetricListResponseSchema = registerSchema(

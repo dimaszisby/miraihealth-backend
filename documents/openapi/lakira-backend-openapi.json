@@ -282,7 +282,8 @@
           "limit": {
             "type": "integer",
             "minimum": 1,
-            "maximum": 100
+            "maximum": 100,
+            "default": 20
           },
           "sort": {
             "type": "string",
@@ -295,22 +296,41 @@
               "-name",
               "logCount",
               "-logCount"
-            ]
+            ],
+            "default": "-createdAt"
           },
           "q": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "after": {
             "type": "string"
           },
           "includeTotal": {
-            "type": "boolean"
+            "type": "boolean",
+            "nullable": true,
+            "default": false
           },
           "filter[name]": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "filter[categoryId]": {
-            "$ref": "#/components/schemas/Uuid"
+            "type": "string",
+            "format": "uuid"
+          },
+          "filter": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "categoryId": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
           }
         }
       },
@@ -854,19 +874,26 @@
         "type": "object",
         "properties": {
           "include": {
-            "type": "string",
-            "enum": [
-              "flat",
-              "full",
-              "settings",
-              "category",
-              "logs"
-            ]
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "flat",
+                  "full"
+                ]
+              },
+              {
+                "type": "string",
+                "minLength": 1
+              }
+            ],
+            "default": "flat"
           },
           "logsLimit": {
             "type": "integer",
             "minimum": 1,
-            "maximum": 200
+            "maximum": 200,
+            "default": 20
           }
         }
       },
@@ -990,41 +1017,30 @@
       "CreateMetricRequest": {
         "type": "object",
         "properties": {
+          "categoryId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "originalMetricId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
           "name": {
             "type": "string",
-            "example": "New Metric"
+            "minLength": 1
           },
           "description": {
-            "type": "string",
-            "example": "Description for new metric"
+            "type": "string"
           },
           "defaultUnit": {
             "type": "string",
-            "example": "units"
+            "minLength": 1
           },
           "isPublic": {
             "type": "boolean",
-            "example": false
-          },
-          "categoryId": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/Uuid"
-              },
-              {
-                "nullable": true
-              }
-            ]
-          },
-          "originalMetricId": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/Uuid"
-              },
-              {
-                "nullable": true
-              }
-            ]
+            "default": false
           }
         },
         "required": [
@@ -1035,41 +1051,30 @@
       "UpdateMetricRequest": {
         "type": "object",
         "properties": {
+          "categoryId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "originalMetricId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
           "name": {
             "type": "string",
-            "example": "Updated Metric Name"
+            "minLength": 1
           },
           "description": {
-            "type": "string",
-            "example": "Updated description"
+            "type": "string"
           },
           "defaultUnit": {
             "type": "string",
-            "example": "new units"
+            "minLength": 1
           },
           "isPublic": {
             "type": "boolean",
-            "example": true
-          },
-          "categoryId": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/Uuid"
-              },
-              {
-                "nullable": true
-              }
-            ]
-          },
-          "originalMetricId": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/Uuid"
-              },
-              {
-                "nullable": true
-              }
-            ]
+            "default": false
           }
         }
       },
@@ -2556,10 +2561,10 @@
             "schema": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 100
+              "maximum": 100,
+              "default": 20
             },
             "required": false,
-            "description": "Maximum number of records to return (1-100)",
             "name": "limit",
             "in": "query"
           },
@@ -2575,19 +2580,19 @@
                 "-name",
                 "logCount",
                 "-logCount"
-              ]
+              ],
+              "default": "-createdAt"
             },
             "required": false,
-            "description": "Sort field (prefix with - for DESC)",
             "name": "sort",
             "in": "query"
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1
             },
             "required": false,
-            "description": "Optional free-text search term",
             "name": "q",
             "in": "query"
           },
@@ -2596,35 +2601,53 @@
               "type": "string"
             },
             "required": false,
-            "description": "Opaque cursor returned from the previous page",
             "name": "after",
             "in": "query"
           },
           {
             "schema": {
-              "type": "boolean"
+              "type": "boolean",
+              "nullable": true,
+              "default": false
             },
             "required": false,
-            "description": "Set to true to include totalCount in the response",
             "name": "includeTotal",
             "in": "query"
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1
             },
             "required": false,
-            "description": "Filter metrics by name (supports partial matches)",
             "name": "filter[name]",
             "in": "query"
           },
           {
             "schema": {
-              "$ref": "#/components/schemas/Uuid"
+              "type": "string",
+              "format": "uuid"
             },
             "required": false,
-            "description": "Filter metrics by category identifier",
             "name": "filter[categoryId]",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "categoryId": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "required": false,
+            "name": "filter",
             "in": "query"
           }
         ],
@@ -2671,17 +2694,22 @@
           },
           {
             "schema": {
-              "type": "string",
-              "enum": [
-                "flat",
-                "full",
-                "settings",
-                "category",
-                "logs"
-              ]
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "flat",
+                    "full"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "minLength": 1
+                }
+              ],
+              "default": "flat"
             },
             "required": false,
-            "description": "Controls which relations are included. Use 'full' or a CSV of settings,category,logs.",
             "name": "include",
             "in": "query"
           },
@@ -2689,10 +2717,10 @@
             "schema": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 200
+              "maximum": 200,
+              "default": 20
             },
             "required": false,
-            "description": "Maximum number of recent logs to include when logs are requested",
             "name": "logsLimit",
             "in": "query"
           }
