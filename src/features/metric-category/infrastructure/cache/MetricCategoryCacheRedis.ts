@@ -3,7 +3,10 @@ import {
   redisClient,
   invalidateCacheByPattern,
 } from "@/utils/redis-client";
-import logger from "@/utils/logger";
+import {
+  logCacheInvalidation,
+  logCacheInvalidationError,
+} from "@/shared/cache/logging";
 
 export class MetricCategoryCacheRedis implements CachePort {
   constructor(private defaultTtlSeconds = 300) {}
@@ -29,7 +32,12 @@ export class MetricCategoryCacheRedis implements CachePort {
 
   async delByPattern(pattern: string): Promise<void> {
     if (!this.isEnabled()) return;
-    await invalidateCacheByPattern(pattern);
-    logger.info(`[CACHE] invalidated categories pattern=${pattern}`);
+    try {
+      await invalidateCacheByPattern(pattern);
+      logCacheInvalidation("metric-category-cache", { pattern });
+    } catch (error) {
+      logCacheInvalidationError("metric-category-cache", error, { pattern });
+      throw error;
+    }
   }
 }

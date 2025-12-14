@@ -4,7 +4,10 @@ import {
   redisClient,
 } from "@/utils/redis-client";
 import { CacheInvalidationPort } from "../../application/ports/CacheInvalidationPort";
-import logger from "@/utils/logger";
+import {
+  logCacheInvalidation,
+  logCacheInvalidationError,
+} from "@/shared/cache/logging";
 
 export class MetricSettingsCacheInvalidator
   implements CacheInvalidationPort
@@ -15,20 +18,30 @@ export class MetricSettingsCacheInvalidator
     settingsId?: string
   ): Promise<void> {
     if (!redisClient.isOpen) return;
+    try {
+      await invalidateCache(`metricSettings:${userId}`);
+      await invalidateCacheByPattern(`metricSettings:${userId}:*`);
 
-    logger.info(
-      `[CACHE] Invalidating metric settings caches user=${userId} metric=${metricId ?? "-"} settings=${settingsId ?? "-"}`
-    );
+      if (metricId) {
+        await invalidateCache(`metricSettings:${userId}:${metricId}`);
+      }
 
-    await invalidateCache(`metricSettings:${userId}`);
-    await invalidateCacheByPattern(`metricSettings:${userId}:*`);
+      if (settingsId) {
+        await invalidateCache(`metricSetting:${userId}:${settingsId}`);
+      }
 
-    if (metricId) {
-      await invalidateCache(`metricSettings:${userId}:${metricId}`);
-    }
-
-    if (settingsId) {
-      await invalidateCache(`metricSetting:${userId}:${settingsId}`);
+      logCacheInvalidation("metric-settings-cache", {
+        userId,
+        metricId: metricId ?? "-",
+        settingsId: settingsId ?? "-",
+      });
+    } catch (error) {
+      logCacheInvalidationError("metric-settings-cache", error, {
+        userId,
+        metricId: metricId ?? "-",
+        settingsId: settingsId ?? "-",
+      });
+      throw error;
     }
   }
 }

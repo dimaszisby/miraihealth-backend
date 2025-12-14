@@ -1,9 +1,12 @@
-import logger from "@/utils/logger";
 import {
   invalidateCacheByPattern,
   redisClient,
 } from "@/utils/redis-client";
 import { CachePort } from "../../application/ports/CachePort";
+import {
+  logCacheInvalidation,
+  logCacheInvalidationError,
+} from "@/shared/cache/logging";
 
 export class MetricCacheRedis implements CachePort {
   isEnabled(): boolean {
@@ -17,13 +20,18 @@ export class MetricCacheRedis implements CachePort {
       if (metricId) {
         await invalidateCacheByPattern(`metric:${userId}:${metricId}:*`);
       }
-      logger.info(
-        `[CACHE] cache invalidated user=${userId}, metric=${metricId ?? "-"}`
-      );
-    } catch (error: any) {
-      logger.error(
-        `[CACHE ERROR] Cache invalidation failed: ${error?.message}`,
-        error
+      logCacheInvalidation("metric-cache", {
+        userId,
+        metricId: metricId ?? "-",
+      });
+    } catch (error) {
+      logCacheInvalidationError(
+        "metric-cache",
+        error,
+        {
+          userId,
+          metricId: metricId ?? "-",
+        }
       );
     }
   }

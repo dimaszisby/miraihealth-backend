@@ -1,6 +1,9 @@
-import logger from "@/utils/logger";
 import { invalidateCacheByPattern } from "@/utils/redis-client";
 import { METRIC_CATEGORY_CURSOR_NAMESPACE_ALL } from "@/features/metric-category/application/cache.constants";
+import {
+  logCacheInvalidation,
+  logCacheInvalidationError,
+} from "@/shared/cache/logging";
 
 /**
  * Invalidates all cache keys related to a user's category
@@ -12,19 +15,24 @@ export async function invalidateAllMetricCategoryCache(
   userId: string,
   categoryId?: string
 ) {
-  logger.info(
-    `♻️ [CACHE] Invalidating category for user=${userId}, category=${categoryId ?? "-"}`
-  );
+  try {
+    await invalidateCacheByPattern(
+      `${METRIC_CATEGORY_CURSOR_NAMESPACE_ALL}:${userId}:*`
+    );
 
-  // Invalidate "all category" list (user dashboard or similar)
-  await invalidateCacheByPattern(`${METRIC_CATEGORY_CURSOR_NAMESPACE_ALL}:${userId}:*`);
+    if (categoryId) {
+      await invalidateCacheByPattern(`category:${userId}:${categoryId}`);
+    }
 
-  if (categoryId) {
-    // Invalidate all metric list queries for this category
-    await invalidateCacheByPattern(`category:${userId}:${categoryId}`);
+    logCacheInvalidation("metric-category-cache", {
+      userId,
+      categoryId: categoryId ?? "-",
+    });
+  } catch (error) {
+    logCacheInvalidationError("metric-category-cache", error, {
+      userId,
+      categoryId: categoryId ?? "-",
+    });
+    throw error;
   }
-
-  logger.info(
-    `♻️ [CACHE] Cache invalidated for user:${userId}, and categor:${categoryId ?? "-"}`
-  );
 }

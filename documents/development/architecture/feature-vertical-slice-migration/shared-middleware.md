@@ -36,3 +36,10 @@ All cursor/list caches across feature slices must use the shared helper at `src/
 - `cursorCacheNamespace(feature, versionOrWildcard)` returns the namespace prefix so invalidation logic can call `delByPattern` with strings such as ``${cursorCacheNamespace("metric-logs", "*")}:${userId}:*``.
 - Feature slices own their feature slug + version (e.g., metrics = `feature: "metrics", version: 1`; metric logs = `feature: "metric-logs", version: 2`). Bumping versions should happen alongside cache invalidation updates.
 - Metric, metric-log, metric-settings, and metric-category routers/use cases now adhere to this convention; future cursor endpoints must do the same.
+
+## Cache Invalidation Logging
+- Timestamp: 2025-12-14T17:55:00+07:00
+
+- Use `logCacheInvalidation(scope, context)` from `src/shared/cache/logging.ts` whenever a cache invalidation completes successfully. The helper emits a single `[CACHE] invalidate` debug log with the provided metadata.
+- Use `logCacheInvalidationError(scope, error, context)` inside `catch` blocks to capture failures with the same scope/context payload; the helper logs via `logger.error`.
+- Avoid slice-specific `logger.info` statements for cache invalidations—stick to the shared helper so log levels and payloads remain consistent across slices.
