@@ -9,10 +9,20 @@ import { GetMetricLogStats } from "./application/queries/GetMetricLogStats";
 import { GenerateDummyMetricLogs } from "./application/use-cases/GenerateDummyMetricLogs";
 import { MetricLogQueryRepoSequelize } from "./infrastructure/persistence/repositories/MetricLogQueryRepoSequelize";
 import { ListMetricLogs } from "./application/queries/ListMetricLogs";
+import type { VisualizationInvalidationPort } from "@/shared/application/ports/VisualizationInvalidationPort";
+import { NoopVisualizationInvalidation } from "@/shared/application/ports/VisualizationInvalidationPort";
 
-export const buildMetricLogFeature = () => {
+type MetricLogFeatureDeps = {
+  visualizationInvalidator?: VisualizationInvalidationPort;
+};
+
+export const buildMetricLogFeature = (
+  deps: MetricLogFeatureDeps = {}
+) => {
   const repo = new MetricLogRepoSequelize();
-  const cache = new MetricLogCacheRedis();
+  const visualizationInvalidator =
+    deps.visualizationInvalidator ?? new NoopVisualizationInvalidation();
+  const cache = new MetricLogCacheRedis(visualizationInvalidator);
   const access = new MetricAccessSequelize();
   const queryRepo = new MetricLogQueryRepoSequelize();
 

@@ -5,9 +5,13 @@ import {
 } from "@/utils/redis-client";
 import logger from "@/utils/logger";
 import { CachePort } from "../../application/ports/CachePort";
-import { invalidateVizByMetric } from "@/features/analytics/infrastructure/cache/VisualizationCacheRedis";
+import type { VisualizationInvalidationPort } from "@/shared/application/ports/VisualizationInvalidationPort";
 
 export class MetricLogCacheRedis implements CachePort {
+  constructor(
+    private visualizationInvalidation: VisualizationInvalidationPort
+  ) {}
+
   isEnabled(): boolean {
     return redisClient.isOpen;
   }
@@ -31,7 +35,7 @@ export class MetricLogCacheRedis implements CachePort {
     await invalidateCache(`logStats:${userId}:${metricId}`);
     await invalidateCache(`logStats:${userId}`);
 
-    await invalidateVizByMetric(userId, metricId);
+    await this.visualizationInvalidation.invalidateByMetric(userId, metricId);
 
     if (logId) {
       await invalidateCache(`log:${userId}:${logId}`);

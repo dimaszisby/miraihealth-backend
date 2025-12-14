@@ -1,6 +1,5 @@
 import express, { Application } from "express";
 import { env } from "./config/zodEnv.js";
-import db from "./infrastructure/db/sequelize.js";
 import cors from "cors";
 import helmet from "helmet";
 import xssClean from "xss-clean";
@@ -10,20 +9,31 @@ import swaggerUi from "swagger-ui-express";
 import { getOpenApiDocumentation } from "./lib/openapi/openapi-docs.js";
 
 // Routes
-import authRoutes from "./routes/auth.routes.js";
-import metricRoutes from "./routes/metric.routes.js";
-import metricCategoryRoutes from "./features/metric-category/infrastructure/http/routes.js";
-import metricSettingsRoutes from "./routes/metric-settings.routes.js";
-import metricLogRoutes from "./routes/metric-log.routes.js";
-import { visualizationRouter } from "@/features/analytics/presentation/http/visualization.router";
+import { authRouter } from "./features/auth/index.js";
+import { metricRouter } from "./features/metric/index.js";
+import { metricLogRouter } from "./features/metric-log/index.js";
+import { metricSettingsRouter } from "./features/metric-settings/index.js";
+import { metricCategoryRouter } from "./features/metric-category/index.js";
+import { visualizationRouter } from "@/features/analytics/infrastructure/http/router";
+import { buildMetricLogFeature } from "./features/metric-log/feature.js";
+import { __setMetricLogFeature } from "./features/metric-log/infrastructure/http/controller.js";
+import { AnalyticsVisualizationInvalidationAdapter } from "./features/analytics/infrastructure/cache/VisualizationInvalidationAdapter.js";
 
 // Other Setup
-import { globalRateLimiter } from "./middleware/rate-limiter.js";
-import { errorHandler } from "./middleware/error-handler.js";
+import { globalRateLimiter } from "@/shared/middleware/rate-limiter";
+import { errorHandler } from "@/shared/middleware/error";
 import { disconnectRedis } from "./utils/redis-client.js";
 import sequelize from "./config/db.js";
-import { loadModels } from "./models/index.js";
-import { authMiddleware } from "./middleware/auth-middleware.js";
+import { loadModels } from "./infrastructure/db/models.js";
+import { authMiddleware } from "./features/auth/infrastructure/http/authMiddleware";
+
+const visualizationInvalidationAdapter =
+  new AnalyticsVisualizationInvalidationAdapter();
+__setMetricLogFeature(
+  buildMetricLogFeature({
+    visualizationInvalidator: visualizationInvalidationAdapter,
+  })
+);
 
 /**
  * * App Entry
@@ -35,10 +45,14 @@ import { authMiddleware } from "./middleware/auth-middleware.js";
  *  5. Start the server based on config/prompt
  */
 
+const skipDbBootstrap = process.env.SKIP_DB_LIFECYCLE === "true";
 // * Sequelize
-loadModels();
-
-await sequelize.authenticate(); // Overhaul: recently added
+if (!skipDbBootstrap) {
+  loadModels();
+  await sequelize.authenticate();
+} else {
+  console.log("[SERVER] SKIP_DB_LIFECYCLE enabled — skipping initial DB bootstrap.");
+}
 
 // * Environment Variables
 
@@ -69,11 +83,11 @@ app.use(
 app.use(globalRateLimiter);
 
 // * Routes
-app.use("/api/v1/auth", authRoutes);
-app.use("/api/v1/metrics", metricRoutes);
-app.use("/api/v1/metric-categories", metricCategoryRoutes);
-app.use("/api/v1/metric-settings", metricSettingsRoutes);
-app.use("/api/v1/metric-logs", metricLogRoutes);
+app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/metrics", metricRouter);
+app.use("/api/v1/metric-categories", metricCategoryRouter);
+app.use("/api/v1/metric-settings", metricSettingsRouter);
+app.use("/api/v1/metric-logs", metricLogRouter);
 // DDD based routes
 app.use("/api/v1/analytics", visualizationRouter);
 
@@ -111,7 +125,7 @@ const startServer = async () => {
     }
 
     // Authenticate database connection
-    await db.sequelize.authenticate();
+    await sequelize.authenticate();
     console.log("[SERVER] Database connection established successfully.");
 
     // Start HTTP Server
@@ -143,7 +157,7 @@ const shutdown = async (signal: string) => {
 
     // Close database connection
     console.log("[SERVER] Closing database connection...");
-    await db.sequelize.close();
+    await sequelize.close();
 
     // Close Redis connection
     console.log("[SERVER] Closing Redis connection...");
