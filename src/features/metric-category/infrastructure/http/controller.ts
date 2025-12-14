@@ -1,190 +1,247 @@
-// src/features/metric-category/infrastructure/http/controller.ts
-
-import { Response, NextFunction } from "express";
-import { MetricCategoryDomain } from "@/features/metric-category/domain/entities/domain";
-import { AuthRequest } from "@/types/request.context";
-import AppError from "@/utils/AppError";
+import { Response } from "express";
 import catchAsync from "@/utils/catch-async";
 import { successResponse } from "@/utils/response-formatter";
+import { AuthRequest } from "@/types/request.context";
+import { assertAuthenticated } from "@/utils/auth-guards";
 import {
-  toMetricCategoryResponseDTO,
-  toMetricCategoryListResponseDTO,
-} from "@/features/metric-category/infrastructure/mapping/mapper";
-import { GenerateDummyMetricCategoriesRequestDTO } from "@/features/metric-category/infrastructure/http/dto";
-import logger from "@/utils/logger";
-import { listCategoriesQuery } from "@/features/metric-category/infrastructure/http/schema.zod";
-import listMetricCategories, {
-  SortParam,
-} from "../../application/queries/ListCategories";
-import createMetricCategoryService from "../../application/commands/CreateCategory";
-import getUserMetricCategoryByIdService from "../../application/queries/GetCategoryById";
-import updateMetricCategoryService from "../../application/commands/UpdateCategory";
-import deleteMetricCategoryService from "../../application/commands/DeleteCategory";
-import generateDummyCategoriesService from "../../application/commands/CreateDummyCategories";
+  toResponseDTO,
+  toListResponseDTO,
+} from "@/features/metric-category/infrastructure/mappers/MetricCategoryMapper";
+import {
+  createMetricCategorySchema,
+  listCategoriesQuery,
+  updateMetricCategorySchema,
+} from "./schema.zod";
+import { buildMetricCategoryFeature } from "../../feature";
+import { GenerateDummyMetricCategoriesRequestDTO } from "./dto";
+import { generateDummyMetricCategoriesSchema } from "./schema.zod";
 
-/**
- * * Metric Category Controller
- * Handles CRUD operations for metric categories.
- */
+type Feature = ReturnType<typeof buildMetricCategoryFeature>;
+let feature: Feature = buildMetricCategoryFeature();
 
-const isSortParam = (v: unknown): v is SortParam =>
-  typeof v === "string" &&
-  [
-    "createdAt",
-    "-createdAt",
-    "updatedAt",
-    "-updatedAt",
-    "name",
-    "-name",
-    "metricCount",
-    "-metricCount",
-  ].includes(v);
+export const overrideMetricCategoryFeature = (custom: Feature) => {
+  feature = custom;
+};
 
-/**
- * * Create a new Metric Category
- * @route POST /api/categories
- */
-export const createCategory = catchAsync(
-  async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+export const createCategory = catchAsync(async (req: AuthRequest, res: Response) => {
+  assertAuthenticated(req);
+  const payload = createMetricCategorySchema.body.parse(req.body);
+  const category = await feature.createCategory.execute({
+    userId: req.user.id,
+    name: payload.name,
+    color: payload.color,
+    icon: payload.icon,
+  });
 
-    const category: MetricCategoryDomain = await createMetricCategoryService(
-      req.user.id,
-      req.body
-    );
-    successResponse(
-      res,
-      201,
-      { category: toMetricCategoryResponseDTO(category) },
-      "Category created successfully"
-    );
-  }
-);
+  successResponse(
+    res,
+    201,
+    toResponseDTO(category),
+    "Category created successfully"
+  );
+});
 
-/**
- * * Get All Categories owned by User
- * @route GET /api/categories
- */
-export const getAllCategories = catchAsync(
-  async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+export const listCategories = catchAsync(async (req: AuthRequest, res: Response) => {
+  assertAuthenticated(req);
+  const parsed = listCategoriesQuery.parse(req.query);
+  const { limit, sort, q, after, includeTotal } = parsed;
+  const filter =
+    parsed["filter[name]"] && parsed["filter[name]"]!.trim().length > 0
+      ? { name: parsed["filter[name]"]!.trim() }
+      : undefined;
 
-    const userId = req.user.id;
+  const page = await feature.listCategories.execute({
+    userId: req.user.id,
+    limit,
+    sort,
+    q,
+    filter,
+    after,
+    includeTotal,
+  });
 
-    const parsed = listCategoriesQuery.parse(req.query);
-    const { limit, sort, q, after, includeTotal } = parsed;
-    const filter =
-      parsed["filter[name]"] && parsed["filter[name]"]!.trim().length > 0
-        ? { name: parsed["filter[name]"]!.trim() }
-        : undefined;
+  const dto = {
+    items: toListResponseDTO(page.items),
+    nextCursor: page.nextCursor,
+    sort: page.sort,
+    limit: page.limit,
+    ...(page.q ? { q: page.q } : {}),
+    ...(page.filter ? { filter: page.filter } : {}),
+    ...(includeTotal ? { totalCount: page.totalCount ?? 0 } : {}),
+  };
 
-    const page = await listMetricCategories({
-      userId,
-      limit,
-      sort,
-      q,
-      filter,
-      after,
-      includeTotal,
-    });
+  successResponse(res, 200, dto, "Categories list retrieved successfully");
+});
 
-    // Explicit response DTO to guarantee presence/absence of keys as intended
-    const dto = {
-      items: page.items.map(toMetricCategoryResponseDTO),
-      nextCursor: page.nextCursor,
-      sort: page.sort,
-      limit: page.limit,
-      ...(page.q ? { q: page.q } : {}),
-      ...(page.filter ? { filter: page.filter } : {}),
-      ...(includeTotal ? { totalCount: page.totalCount ?? 0 } : {}),
-    };
+export const getCategory = catchAsync(async (req: AuthRequest, res: Response) => {
+  assertAuthenticated(req);
+  const category = await feature.getCategory.execute(req.user.id, req.params.id);
+  successResponse(res, 200, toResponseDTO(category), "Category retrieved successfully");
+});
 
-    // Question: Should have an explicit return DTO type/mapper like other function
-    successResponse(res, 200, dto);
-  }
-);
+export const updateCategory = catchAsync(async (req: AuthRequest, res: Response) => {
+  assertAuthenticated(req);
+  const payload = updateMetricCategorySchema.body.parse(req.body);
+  const category = await feature.updateCategory.execute({
+    userId: req.user.id,
+    categoryId: req.params.id,
+    name: payload.name,
+    color: payload.color,
+    icon: payload.icon,
+  });
 
-/**
- * * Get specific Category by Id
- * @route GET /api/categories/:id
- */
-export const getCategoryById = catchAsync(
-  async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+  successResponse(
+    res,
+    200,
+    toResponseDTO(category),
+    "Category updated successfully"
+  );
+});
 
-    const category: MetricCategoryDomain =
-      await getUserMetricCategoryByIdService(req.user.id, req.params.id);
-    successResponse(res, 200, {
-      category: toMetricCategoryResponseDTO(category),
-    });
-  }
-);
+export const deleteCategory = catchAsync(async (req: AuthRequest, res: Response) => {
+  assertAuthenticated(req);
+  await feature.deleteCategory.execute(req.user.id, req.params.id);
+  successResponse(res, 200, null, "Category deleted successfully");
+});
 
-/**
- * * Update Category
- * @route PUT /api/categories/:id
- */
-export const updateCategory = catchAsync(
-  async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+export const generateDummyCategories = catchAsync(async (req: AuthRequest, res: Response) => {
+  assertAuthenticated(req);
+  const payload = generateDummyMetricCategoriesSchema.body.parse(
+    req.body as GenerateDummyMetricCategoriesRequestDTO
+  );
+  const created = await feature.generateDummyCategories.execute({
+    userId: req.user.id,
+    count: payload.count,
+  });
 
-    const category: MetricCategoryDomain = await updateMetricCategoryService(
-      req.user.id,
-      req.params.id,
-      req.body
-    );
-    successResponse(
-      res,
-      200,
-      { category: toMetricCategoryResponseDTO(category) },
-      "Category updated successfully"
-    );
-  }
-);
+  successResponse(
+    res,
+    201,
+    toListResponseDTO(created),
+    `${payload.count} dummy metric categories generated successfully`
+  );
+});
 
-/**
- * * Delete Category
- * @route DELETE /api/categories/:id
- */
-export const deleteCategory = catchAsync(
-  async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+// /**
+//  * * Update Category
+//  * @route PUT /api/categories/:id
+//  */
+// export const updateCategory = catchAsync(
+//   async (req: AuthRequest, res: Response, next: NextFunction) => {
+//     if (!req.user?.id) throw new AppError("User not authenticated", 401);
 
-    const category: MetricCategoryDomain = await deleteMetricCategoryService(
-      req.user.id,
-      req.params.id
-    );
-    successResponse(
-      res,
-      200,
-      { category: toMetricCategoryResponseDTO(category) },
-      "Category deleted successfully"
-    );
-  }
-);
+//     const category: MetricCategoryDomain =
+//       await updateMetricCategoryServiceLegacy(
+//         req.user.id,
+//         req.params.id,
+//         req.body
+//       );
+      
+//     successResponse(
+//       res,
+//       200,
+//       { category: toResponseDTO(category) },
+//       "Category updated successfully"
+//     );
+//   }
+// );
 
-/**
- * * ===== Controllers for Testing Purposes =====
- */
+// /**
+//  * * Delete Category
+//  * @route DELETE /api/categories/:id
+//  */
+// export const deleteCategory = catchAsync(
+//   async (req: AuthRequest, res: Response, next: NextFunction) => {
+//     if (!req.user?.id) throw new AppError("User not authenticated", 401);
 
-/**
- * * Generate Dummy Metric Categories
- * @route POST /api/categories/dummy
- */
-export const generateDummyCategories = catchAsync(
-  async (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user?.id) throw new AppError("User not authenticated", 401);
+//     const category: MetricCategoryDomain =
+//       await deleteMetricCategoryServiceLegacy(req.user.id, req.params.id);
+//     successResponse(
+//       res,
+//       200,
+//       { category: toResponseDTO(category) },
+//       "Category deleted successfully"
+//     );
+//   }
+// );
 
-    const userId = req.user.id;
-    const { count } = req.body as GenerateDummyMetricCategoriesRequestDTO;
+// /**
+//  * * ===== Controllers for Testing Purposes =====
+//  */
 
-    const dummyCategories = await generateDummyCategoriesService(userId, count);
+// /**
+//  * * Generate Dummy Metric Categories
+//  * @route POST /api/categories/dummy
+//  */
+// export const generateDummyCategories = catchAsync(
+//   async (req: AuthRequest, res: Response, next: NextFunction) => {
+//     if (!req.user?.id) throw new AppError("User not authenticated", 401);
 
-    successResponse(
-      res,
-      201,
-      { categories: toMetricCategoryListResponseDTO(dummyCategories) },
-      `${count} dummy metric categories generated successfully`
-    );
-  }
-);
+//     const userId = req.user.id;
+//     const { count } = req.body as GenerateDummyMetricCategoriesRequestDTO;
+
+//     const dummyCategories = await generateDummyCategoriesServiceLegacy(
+//       userId,
+//       count
+//     );
+
+//     successResponse(
+//       res,
+//       201,
+//       { categories: toListResponseDTO(dummyCategories) },
+//       `${count} dummy metric categories generated successfully`
+//     );
+//   }
+// );
+
+// // * ========== DDD impl ==========
+
+// // infrastructure/http/controller.ts
+// import { ListCategories } from "../../application/use-cases/ListCategories";
+// import { CreateCategory } from "../../application/use-cases/CreateCategory";
+// import { MetricCategoryRepoSequelize } from "../persistence/repositories/MetricCategoryRepoSequelize";
+// import { RedisCacheAdapter } from "../cache/RedisCacheAdapter";
+// import { toResponseDTOLegacy } from "../../legacies/MetricCategoryLegacy.mapper";
+
+// // Construct use-cases via composition root (dependency injection)
+// const listCategoriesUC = new ListCategories(
+//   new MetricCategoryRepoSequelize(),
+//   new RedisCacheAdapter()
+// );
+// const createCategoryUC = new CreateCategory(
+//   new MetricCategoryRepoSequelize(),
+//   new RedisCacheAdapter()
+// );
+
+// export const getAllCategories = async (
+//   req: Request & { validated?: any },
+//   res: Response
+// ) => {
+//   const userId = (req as any).user?.id;
+//   if (!userId)
+//     return res.status(401).json({ message: "User not authenticated" });
+
+//   // prefer validated, fallback to parsing req.query directly
+//   const q = req.validated?.query ?? listCategoriesQuery.parse(req.query);
+
+//   const page = await listCategoriesUC.execute({ userId, ...q });
+
+//   res.status(200).json({
+//     items: toListResponseDTO(page.items),
+//     nextCursor: page.nextCursor,
+//     sort: page.sort,
+//     limit: page.limit,
+//     ...(page.q ? { q: page.q } : {}),
+//     ...(page.filter ? { filter: page.filter } : {}),
+//     ...(page.totalCount !== undefined ? { totalCount: page.totalCount } : {}),
+//   });
+// };
+
+// export const createCategory = async (req: any, res: Response) => {
+//   const userId = req.user!.id;
+//   if (!req.user?.id) throw new AppError("User not authenticated", 401);
+
+//   const body = req.validated.body;
+//   const cat = await createCategoryUC.execute({ userId, ...body });
+//   res.status(201).json({ category: toResponseDTO(cat) });
+// };

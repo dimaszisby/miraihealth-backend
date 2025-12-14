@@ -1,12 +1,8 @@
-// src/features/metric-category/infrastructure/persistence/models/metric-category.sequelize.ts
-
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
-// import { Metric } from "../../../../../models/metric.model.js"; // Overhaul WIP
-// import { User } from "../../../../../models/user.model.js"; // Overhaul WIP
 import { MetricCategoryAttributesBase } from "@/features/metric-category/infrastructure/persistence/models/metric-category.attribute.js";
-import { DbModels } from "@/models/types.js";
-import { User } from "@/models/user.model";
-import { Metric } from "@/models/metric.model";
+import type { DbModels } from "@/infrastructure/db/types";
+import { User } from "@/features/auth/infrastructure/persistence/models/user.sequelize";
+import { Metric } from "@/features/metric/infrastructure/persistence/models/metric.sequelize";
 
 /**
  * * MetricCategory Model
@@ -119,3 +115,12 @@ export function initMetricCategory(sequelize: Sequelize) {
 export function associateMetricCategory(models: DbModels) {
   MetricCategory.associate(models);
 }
+
+export const registerMetricCategoryModels = (sequelize: Sequelize) => {
+  initMetricCategory(sequelize);
+  return { MetricCategory };
+};
+
+export const associateMetricCategoryModels = (models: DbModels) => {
+  associateMetricCategory(models);
+};

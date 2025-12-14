@@ -1,5 +1,3 @@
-// src/features/metric-category/infrastructure/http/dto.ts
-
 import { z } from "zod";
 
 // Internal validation schemas

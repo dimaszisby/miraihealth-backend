@@ -1,6 +1,6 @@
 import { jest } from "@jest/globals";
 import { MetricRepoSequelize } from "@/features/metric/infrastructure/persistence/repositories/MetricRepoSequelize";
-import { models } from "@/models";
+import { models } from "@/infrastructure/db/models";
 
 const makeInstance = () => {
   const reload = jest.fn<(options?: any) => Promise<void>>();

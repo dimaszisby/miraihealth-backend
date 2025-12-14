@@ -1,5 +1,3 @@
-// src/features/metric-category/infrastructure/cache/cache.ts
-
 import logger from "@/utils/logger";
 import { invalidateCacheByPattern } from "@/utils/redis-client";
 
@@ -13,8 +11,8 @@ export async function invalidateAllMetricCategoryCache(
   userId: string,
   categoryId?: string
 ) {
-  console.log(
-    `♻️ [CACHE] Invalidating category for user=${userId}, category=${categoryId ?? "-"}"}`
+  logger.info(
+    `♻️ [CACHE] Invalidating category for user=${userId}, category=${categoryId ?? "-"}`
   );
 
   // Invalidate "all category" list (user dashboard or similar)

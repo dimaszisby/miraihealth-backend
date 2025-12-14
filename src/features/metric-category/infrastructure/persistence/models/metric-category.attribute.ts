@@ -1,5 +1,3 @@
-// src/features/metric-category/infrastructure/http/schema.zod.ts
-
 /**
  * @interface MetricCategoryAttributesBase
  * @description Defines the core, non-database-specific attributes for a Metric Category entity.
