@@ -93,7 +93,9 @@ describe("Auth API", () => {
       .set("Authorization", authHeader(token));
 
     expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty("message", "Logged out successfully");
+    expect(res.body.status).toBe("success");
+    expect(res.body.message).toBe("Logged out successfully");
+    expect(res.body.data).toBeNull();
   });
 
   it("validates password mismatch during registration", async () => {

@@ -147,7 +147,8 @@ describe("Metric API", () => {
       .set("Authorization", authHeader(token));
 
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body[0]).toHaveProperty("value");
+    expect(res.body.status).toBe("success");
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data[0]).toHaveProperty("value");
   });
 });

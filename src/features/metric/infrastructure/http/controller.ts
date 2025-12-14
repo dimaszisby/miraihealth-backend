@@ -203,6 +203,6 @@ export const handleMetricTrend = catchAsync(
       metricId: req.params.metricId ?? req.params.id,
     });
 
-    res.status(200).json(data);
+    successResponse(res, 200, data);
   }
 );
