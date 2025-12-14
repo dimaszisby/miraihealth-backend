@@ -23,6 +23,7 @@ import {
 } from "./schema.zod";
 import { AuthRequest } from "@/types/request.context";
 import { env } from "@/config/zodEnv";
+import { buildCursorCacheKey } from "@/shared/cache/keys";
 
 const metricsCacheKey = (req: AuthRequest) => {
   const q = req.query as Record<string, unknown>;
@@ -55,23 +56,33 @@ const metricsCacheKey = (req: AuthRequest) => {
   return `metrics:${req.user?.id}:${stable}`;
 };
 
-const metricsCursorCacheKey = (req: AuthRequest) => {
-  const { limit = 20, sort = "-createdAt", q, after } = req.query as any;
-  const fname = (req.query["filter[name]"] as string) ?? "";
-  const fcat = (req.query["filter[categoryId]"] as string) ?? "";
-  const includeTotal = String(req.query.includeTotal ?? "false");
+const METRIC_CURSOR_FEATURE = "metrics";
+const METRIC_CURSOR_VERSION = 1;
 
-  return [
-    "metrics",
-    req.user?.id,
-    `l:${limit}`,
-    `s:${sort}`,
-    `q:${q ?? ""}`,
-    `fn:${fname}`,
-    `fc:${fcat}`,
-    `after:${after ?? ""}`,
-    `it:${includeTotal}`,
-  ].join(":");
+const metricsCursorCacheKey = (req: AuthRequest) => {
+  const query = req.query as any;
+  const limit = Number(query.limit ?? 20);
+  const sort = String(query.sort ?? "-createdAt");
+  const search = typeof query.q === "string" ? query.q : "";
+  const fname = (query["filter[name]"] as string) ?? "";
+  const fcat = (query["filter[categoryId]"] as string) ?? "";
+  const after = typeof query.after === "string" ? query.after : "";
+  const includeTotal = String(query.includeTotal ?? "false");
+
+  return buildCursorCacheKey({
+    feature: METRIC_CURSOR_FEATURE,
+    version: METRIC_CURSOR_VERSION,
+    userId: req.user?.id,
+    segments: [
+      ["l", limit],
+      ["s", sort],
+      ["q", search],
+      ["fn", fname],
+      ["fc", fcat],
+      ["after", after],
+      ["it", includeTotal],
+    ],
+  });
 };
 
 const metricCacheKey = (req: AuthRequest) => {

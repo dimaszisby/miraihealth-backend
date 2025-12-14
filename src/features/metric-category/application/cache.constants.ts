@@ -1,0 +1,9 @@
+import { cursorCacheNamespace } from "@/shared/cache/keys";
+
+export const METRIC_CATEGORY_CURSOR_FEATURE = "metric-categories";
+export const METRIC_CATEGORY_CURSOR_VERSION = 1;
+
+export const METRIC_CATEGORY_CURSOR_NAMESPACE_ALL = cursorCacheNamespace(
+  METRIC_CATEGORY_CURSOR_FEATURE,
+  "*"
+);

@@ -23,6 +23,7 @@ import {
 } from "./schema.zod";
 import { AuthRequest } from "@/types/request.context";
 import logger from "@/utils/logger";
+import { buildCursorCacheKey } from "@/shared/cache/keys";
 
 const metricSettingsCacheKey = (req: AuthRequest) =>
   `metricSettings:${req.user?.id}:${req.query.metricId || "all"}`;
@@ -36,6 +37,9 @@ const firstNonEmpty = (...vals: unknown[]) =>
     | undefined;
 
 const bool01 = (v: any) => (v === true || v === "true" ? "1" : "0");
+
+const METRIC_SETTINGS_CURSOR_FEATURE = "metric-settings";
+const METRIC_SETTINGS_CURSOR_VERSION = 1;
 
 const metricSettingsCursorCacheKey = (req: AuthRequest) => {
   const q = req.query as any;
@@ -54,15 +58,18 @@ const metricSettingsCursorCacheKey = (req: AuthRequest) => {
   const after = typeof q.after === "string" ? q.after : "";
   const it = bool01(q.includeTotal);
 
-  const key = [
-    "metric-settings-cursor:v1",
-    req.user?.id ?? "_",
-    `l:${limit}`,
-    `s:${sort}`,
-    `fm:${metricId}`,
-    `after:${after}`,
-    `it:${it}`,
-  ].join(":");
+  const key = buildCursorCacheKey({
+    feature: METRIC_SETTINGS_CURSOR_FEATURE,
+    version: METRIC_SETTINGS_CURSOR_VERSION,
+    userId: req.user?.id,
+    segments: [
+      ["l", limit],
+      ["s", sort],
+      ["fm", metricId],
+      ["after", after],
+      ["it", it],
+    ],
+  });
 
   logger.debug("[CACHE] Generated metric settings cursor key", { key });
   return key;

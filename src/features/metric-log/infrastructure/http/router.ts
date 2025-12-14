@@ -24,6 +24,7 @@ import {
 import { AuthRequest } from "@/types/request.context";
 import { env } from "@/config/zodEnv";
 import logger from "@/utils/logger";
+import { buildCursorCacheKey } from "@/shared/cache/keys";
 
 const firstNonEmpty = (...vals: unknown[]) =>
   vals.find((v) => typeof v === "string" && v.trim().length > 0) as
@@ -34,6 +35,9 @@ const bool01 = (v: any) => (v === true || v === "true" ? "1" : "0");
 
 const logCacheKey = (req: AuthRequest) =>
   `log:${req.user?.id}:${req.params.id}`;
+
+const METRIC_LOG_CURSOR_FEATURE = "metric-logs";
+const METRIC_LOG_CURSOR_VERSION = 2;
 
 const logsCursorCacheKey = (req: AuthRequest) => {
   const q = req.query as any;
@@ -59,17 +63,20 @@ const logsCursorCacheKey = (req: AuthRequest) => {
   const after = typeof q.after === "string" ? q.after : "";
   const it = bool01(q.includeTotal);
 
-  const key = [
-    "logs-cursor:v2",
-    req.user?.id ?? "_",
-    `l:${limit}`,
-    `s:${sort}`,
-    `q:${search}`,
-    `fm:${metricId}`,
-    `fn:${logValueStr}`,
-    `after:${after}`,
-    `it:${it}`,
-  ].join(":");
+  const key = buildCursorCacheKey({
+    feature: METRIC_LOG_CURSOR_FEATURE,
+    version: METRIC_LOG_CURSOR_VERSION,
+    userId: req.user?.id,
+    segments: [
+      ["l", limit],
+      ["s", sort],
+      ["q", search],
+      ["fm", metricId],
+      ["fn", logValueStr],
+      ["after", after],
+      ["it", it],
+    ],
+  });
 
   logger.debug("[CACHE] Generated logs cursor key", { key });
   return key;

@@ -6,6 +6,12 @@ import {
 import logger from "@/utils/logger";
 import { CachePort } from "../../application/ports/CachePort";
 import type { VisualizationInvalidationPort } from "@/shared/application/ports/VisualizationInvalidationPort";
+import { cursorCacheNamespace } from "@/shared/cache/keys";
+
+const METRIC_LOG_CURSOR_NAMESPACE_ALL = cursorCacheNamespace(
+  "metric-logs",
+  "*"
+);
 
 export class MetricLogCacheRedis implements CachePort {
   constructor(
@@ -29,8 +35,12 @@ export class MetricLogCacheRedis implements CachePort {
 
     await invalidateCacheByPattern(`logs:${userId}:${metricId}:*`);
     await invalidateCacheByPattern(`logs:${userId}:all:*`);
-    await invalidateCacheByPattern(`logs-cursor:v*:${userId}:*fm:${metricId}*`);
-    await invalidateCacheByPattern(`logs-cursor:v*:${userId}:*`);
+    await invalidateCacheByPattern(
+      `${METRIC_LOG_CURSOR_NAMESPACE_ALL}:${userId}:*fm:${metricId}*`
+    );
+    await invalidateCacheByPattern(
+      `${METRIC_LOG_CURSOR_NAMESPACE_ALL}:${userId}:*`
+    );
 
     await invalidateCache(`logStats:${userId}:${metricId}`);
     await invalidateCache(`logStats:${userId}`);

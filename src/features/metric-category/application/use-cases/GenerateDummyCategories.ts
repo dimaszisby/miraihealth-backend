@@ -2,6 +2,7 @@ import { MetricCategoryRepository } from "../../domain/repositories/MetricCatego
 import { CachePort } from "../ports/CachePort";
 import { MetricCategory } from "../../domain/entities/MetricCategory";
 import { MetricCategoryFactory } from "../../domain/services/MetricCategoryFactory";
+import { METRIC_CATEGORY_CURSOR_NAMESPACE_ALL } from "@/features/metric-category/application/cache.constants";
 
 type Input = {
   userId: string;
@@ -29,7 +30,9 @@ export class GenerateDummyCategories {
     }
 
     if (this.cache.isEnabled()) {
-      await this.cache.delByPattern(`categories:${userId}:*`);
+      await this.cache.delByPattern(
+        `${METRIC_CATEGORY_CURSOR_NAMESPACE_ALL}:${userId}:*`
+      );
     }
 
     return created;

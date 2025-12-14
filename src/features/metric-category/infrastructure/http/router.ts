@@ -21,21 +21,29 @@ import {
   generateDummyMetricCategoriesSchema,
 } from "@/features/metric-category/infrastructure/http/schema.zod";
 import { AuthRequest } from "@/types/request.context";
+import { buildCursorCacheKey } from "@/shared/cache/keys";
+import {
+  METRIC_CATEGORY_CURSOR_FEATURE,
+  METRIC_CATEGORY_CURSOR_VERSION,
+} from "@/features/metric-category/application/cache.constants";
 
 const categoriesCacheKey = (req: AuthRequest) => {
   const { limit = 20, sort = "-createdAt", q, after } = req.query as any;
   const fname = (req.query["filter[name]"] as string) ?? "";
   const includeTotal = String(req.query.includeTotal ?? "false");
-  return [
-    "categories",
-    req.user?.id,
-    `l:${limit}`,
-    `s:${sort}`,
-    `q:${q ?? ""}`,
-    `fn:${fname}`,
-    `after:${after ?? ""}`,
-    `it:${includeTotal}`,
-  ].join(":");
+  return buildCursorCacheKey({
+    feature: METRIC_CATEGORY_CURSOR_FEATURE,
+    version: METRIC_CATEGORY_CURSOR_VERSION,
+    userId: req.user?.id,
+    segments: [
+      ["l", limit],
+      ["s", sort],
+      ["q", q ?? ""],
+      ["fn", fname],
+      ["after", after ?? ""],
+      ["it", includeTotal],
+    ],
+  });
 };
 
 const categoryCacheKey = (req: AuthRequest) =>

@@ -1,6 +1,7 @@
 import AppError from "@/utils/AppError";
 import { MetricCategoryRepository } from "../../domain/repositories/MetricCategoryRepository";
 import { CachePort } from "../ports/CachePort";
+import { METRIC_CATEGORY_CURSOR_NAMESPACE_ALL } from "@/features/metric-category/application/cache.constants";
 
 type Input = {
   userId: string;
@@ -36,7 +37,9 @@ export class UpdateCategory {
     });
 
     if (this.cache.isEnabled()) {
-      await this.cache.delByPattern(`categories:${userId}:*`);
+      await this.cache.delByPattern(
+        `${METRIC_CATEGORY_CURSOR_NAMESPACE_ALL}:${userId}:*`
+      );
       await this.cache.delByPattern(`category:${userId}:${categoryId}`);
     }
 

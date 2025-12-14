@@ -1,6 +1,7 @@
 import AppError from "@/utils/AppError";
 import { MetricCategoryRepository } from "../../domain/repositories/MetricCategoryRepository";
 import { CachePort } from "../ports/CachePort";
+import { METRIC_CATEGORY_CURSOR_NAMESPACE_ALL } from "@/features/metric-category/application/cache.constants";
 
 type Input = { userId: string; name: string; color?: string; icon?: string };
 
@@ -16,7 +17,9 @@ export class CreateCategory {
     }
     const category = await this.repo.create(userId, { name, color, icon });
     if (this.cache.isEnabled()) {
-      await this.cache.delByPattern(`categories:${userId}:*`); // invalidate lists
+      await this.cache.delByPattern(
+        `${METRIC_CATEGORY_CURSOR_NAMESPACE_ALL}:${userId}:*`
+      ); // invalidate lists
     }
     return category;
   }
