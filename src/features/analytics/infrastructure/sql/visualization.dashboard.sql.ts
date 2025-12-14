@@ -7,8 +7,8 @@ import type { BucketSpec } from "../../domain/buckets";
 export function buildDashboardSQL(spec: BucketSpec) {
   return `
     WITH bounds AS (
-      SELECT timezone($tz, $start::timestamptz) AS start_tz,
-             timezone($tz, $end::timestamptz)   AS end_tz
+      SELECT timezone(:tz, :start::timestamptz) AS start_tz,
+             timezone(:tz, :end::timestamptz)   AS end_tz
     ),
     series AS (
       SELECT generate_series(
@@ -18,16 +18,16 @@ export function buildDashboardSQL(spec: BucketSpec) {
       ) AS bucket_start
     ),
     covered_metrics AS (
-      SELECT unnest($metricIds::uuid[]) AS metric_id
+      SELECT unnest(:metricIds::uuid[]) AS metric_id
     ),
     logs AS (
       SELECT ml.metric_id,
-             timezone($tz, ml.logged_at) AS ts_tz,
+             timezone(:tz, ml.logged_at) AS ts_tz,
              ml.log_value
       FROM metric_logs ml
       JOIN covered_metrics cm ON cm.metric_id = ml.metric_id
-      WHERE ml.logged_at >= $start::timestamptz
-        AND ml.logged_at <  $end::timestamptz
+      WHERE ml.logged_at >= :start::timestamptz
+        AND ml.logged_at <  :end::timestamptz
     ),
     binned AS (
       SELECT l.metric_id,
@@ -54,11 +54,11 @@ export function buildDashboardSQL(spec: BucketSpec) {
 export function buildDashboardLifecycleSQL(spec: BucketSpec) {
   return `
     WITH covered_metrics AS (
-      SELECT unnest($metricIds::uuid[]) AS metric_id
+      SELECT unnest(:metricIds::uuid[]) AS metric_id
     ),
     logs AS (
       SELECT ml.metric_id,
-             timezone($tz, ml.logged_at) AS ts_tz,
+             timezone(:tz, ml.logged_at) AS ts_tz,
              ml.log_value
       FROM metric_logs ml
       JOIN covered_metrics cm ON cm.metric_id = ml.metric_id

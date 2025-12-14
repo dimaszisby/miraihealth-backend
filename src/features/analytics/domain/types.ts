@@ -1,4 +1,5 @@
 import { BucketAlias } from "./buckets";
+import type { RangeDescriptor } from "./fallback-range";
 
 export type FillMode = "none" | "zero" | "nan";
 
@@ -24,9 +25,11 @@ export type VizMeta = {
     startISO: string;
     endISO: string;
   };
+  fill: FillMode;
 };
 
 export type VizResponse = {
+  metricId: string;
   series: VizSeries[];
   stats: VizStats;
   meta: VizMeta;
@@ -48,6 +51,15 @@ export type DashboardVizItem = {
     max: number | null;
     count: number;
   };
+  lastLogAt: string | null;
+  firstLogAt: string | null;
+  totalLogs: number;
+  latestValue: number | null;
+  latestBucketStart: string | null;
+  requestedRange: RangeDescriptor;
+  actualRange: RangeDescriptor;
+  fallbackRangeUsed: boolean;
+  fallbackStrategy: string | null;
 };
 
 export type DashboardVizResponse = {
@@ -56,6 +68,11 @@ export type DashboardVizResponse = {
     bucket: BucketAlias;
     tz: string;
     range: { startISO: string; endISO: string };
-    count: number; // items.length
+    count: number;
+    totalMetrics: number;
+    fallbackMetrics: number;
+  };
+  sync: {
+    etagSeed: string;
   };
 };

@@ -2,18 +2,17 @@ import { Router } from "express";
 import {
   handleGetDashboardVisualization,
   handleGetVisualization,
-} from "./visualization.controller";
-import { authMiddleware } from "../../../../middleware/auth-middleware";
-import { validate } from "../../../../middleware/validate";
+} from "./controller";
+import { authMiddleware } from "@/features/auth/infrastructure/http/authMiddleware";
+import { validate } from "@/shared/middleware/validation";
 import { getDashboardVizSchema, getVisualizationSchema } from "./validators";
-import catchAsync from "../../../../utils/catch-async";
-import { analyticsRateLimiter } from "../../../../middleware/rate-limiter";
+import catchAsync from "@/utils/catch-async";
+import { analyticsRateLimiter } from "@/shared/middleware/rate-limiter";
 
 const router = Router();
 
 router.use(authMiddleware);
 
-// TODO: User Rate Limit
 router.get(
   "/dashboard",
   analyticsRateLimiter,

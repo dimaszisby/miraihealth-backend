@@ -4,8 +4,6 @@ const DEFAULT_TZ = process.env.DEFAULT_TZ ?? "Asia/Jakarta";
 const BucketEnum = z.enum(["1h", "1d", "1w", "1m", "1y"]);
 const FillEnum = z.enum(["none", "zero", "nan"]);
 
-// * Helpers
-// IANA TZ validation (works on modern Node); falls back to try/catch if needed.
 const tzSchema = z
   .string()
   .default(DEFAULT_TZ)
@@ -41,7 +39,6 @@ const RelativeRange = z.object({
     .regex(/^\d+(h|d|w|m|y)$/, "Use format like 7d, 30d, 12m, 1y"),
 });
 
-// Normalize: relative range into concrete ISO strings
 function computeStartEndFromLast(last: string) {
   const now = new Date();
   const end = now;
@@ -68,9 +65,6 @@ function computeStartEndFromLast(last: string) {
   return { startISO: start.toISOString(), endISO: end.toISOString() };
 }
 
-// * Schemas
-
-// Singular Visualization for a Metric
 export const getVisualizationSchema = z
   .object({
     params: z.object({ metricId: z.string().uuid("Invalid metric ID format") }),
@@ -88,10 +82,9 @@ export const getVisualizationSchema = z
       return { params, query: { ...query, start: startISO, end: endISO } };
     }
 
-    return { params, query }; // validated absolute path
+    return { params, query };
   });
 
-// Multiple Visualization for Metric Collections (in Dashboard)
 export const getDashboardVizSchema = z
   .object({
     query: z
