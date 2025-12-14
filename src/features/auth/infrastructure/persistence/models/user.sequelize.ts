@@ -1,0 +1,145 @@
+import {
+  Model,
+  DataTypes,
+  Sequelize,
+  Optional,
+} from "sequelize";
+import bcrypt from "bcrypt";
+import { UserAttributesBase } from "@/types/db/user.types";
+import type { DbModels } from "@/infrastructure/db/types";
+
+const isBcryptHash = (value: unknown): value is string =>
+  typeof value === "string" && /^\$2[aby]\$\d{2}\$/.test(value);
+
+export interface UserAttributes extends UserAttributesBase {
+  id?: string;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
+  deletedAt?: Date | null;
+}
+
+export interface UserCreationAttributes
+  extends Optional<UserAttributes, "id"> {}
+
+export interface UserInstance extends Model<UserAttributes>, UserAttributes {
+  validPassword(password: string): Promise<boolean>;
+}
+
+export class User
+  extends Model<UserAttributes, UserCreationAttributes>
+  implements UserAttributes
+{
+  declare id: string;
+  declare username: string;
+  declare email: string;
+  declare password: string;
+  declare role: "user" | "admin";
+  declare isPublicProfile: boolean;
+
+  declare createdAt?: Date | null;
+  declare updatedAt?: Date | null;
+  declare deletedAt?: Date | null;
+
+  static initModel(sequelize: Sequelize) {
+    User.init(
+      {
+        id: {
+          type: DataTypes.UUID,
+          defaultValue: DataTypes.UUIDV4,
+          primaryKey: true,
+        },
+        username: {
+          type: DataTypes.STRING,
+          unique: true,
+          allowNull: false,
+        },
+        email: {
+          type: DataTypes.STRING,
+          unique: true,
+          allowNull: false,
+          validate: { isEmail: true },
+        },
+        password: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        role: {
+          type: DataTypes.ENUM("user", "admin"),
+          allowNull: false,
+          defaultValue: "user",
+        },
+        isPublicProfile: {
+          type: DataTypes.BOOLEAN,
+          allowNull: false,
+          defaultValue: true,
+        },
+        deletedAt: {
+          type: DataTypes.DATE,
+          allowNull: true,
+        },
+      },
+      {
+        sequelize,
+        modelName: "User",
+        tableName: "users",
+        paranoid: true,
+        underscored: true,
+        schema: "public",
+        hooks: {
+          beforeCreate: async (user: UserInstance) => {
+            if (!user.password)
+              throw new Error("Password is required for registration.");
+            if (isBcryptHash(user.password)) return;
+            const salt = await bcrypt.genSalt(10);
+            user.password = await bcrypt.hash(user.password, salt);
+          },
+          beforeUpdate: async (user: UserInstance) => {
+            if (user.changed("password")) {
+              if (!user.password)
+                throw new Error("Password is required for update.");
+              if (isBcryptHash(user.password)) return;
+              const salt = await bcrypt.genSalt(10);
+              user.password = await bcrypt.hash(user.password, salt);
+            }
+          },
+        },
+      }
+    );
+
+    return User;
+  }
+
+  static associate(models: DbModels) {
+    User.hasMany(models.Metric, {
+      as: "metrics",
+      foreignKey: { name: "userId", field: "user_id", allowNull: false },
+      onDelete: "CASCADE",
+    });
+
+    User.hasMany(models.MetricCategory, {
+      as: "categories",
+      foreignKey: { name: "userId", field: "user_id", allowNull: false },
+      onDelete: "CASCADE",
+    });
+  }
+
+  async validPassword(password: string): Promise<boolean> {
+    return bcrypt.compare(password, this.password);
+  }
+}
+
+export function initUser(sequelize: Sequelize) {
+  return User.initModel(sequelize);
+}
+export function associateUser(models: DbModels) {
+  User.associate(models);
+}
+
+export const registerAuthModels = (sequelize: Sequelize) => {
+  initUser(sequelize);
+  return { User };
+};
+
+export const associateAuthModels = (models: DbModels) => {
+  associateUser(models);
+};
