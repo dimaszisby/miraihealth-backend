@@ -4,7 +4,7 @@ export type SortField = "createdAt" | "updatedAt" | "name" | "logCount";
 export type SortParam = SortField | `-${SortField}`;
 export type Dir = "ASC" | "DESC";
 
-export interface ListMetricCategoriesResult {
+export interface ListMetricsResult {
   items: MetricLibraryDomain[];
   nextCursor?: string;
   sort: SortParam;
@@ -34,7 +34,7 @@ export interface MetricDetailQuery {
 }
 
 export interface MetricReadRepository {
-  listMetrics(opts: ListOpts): Promise<ListMetricCategoriesResult>;
+  listMetrics(opts: ListOpts): Promise<ListMetricsResult>;
   findDetailedMetric(
     params: MetricDetailQuery
   ): Promise<MetricDomainExtended | null>;

@@ -1,5 +1,5 @@
 import type {
-  ListMetricCategoriesResult,
+  ListMetricsResult,
   ListOpts,
   MetricReadRepository,
 } from "../ports/MetricReadRepository";
@@ -8,10 +8,10 @@ import AppError from "@/utils/AppError";
 export class ListMetrics {
   constructor(private repo: MetricReadRepository) {}
 
-  async execute(options: ListOpts): Promise<ListMetricCategoriesResult> {
+  async execute(options: ListOpts): Promise<ListMetricsResult> {
     if (!options.userId) throw new AppError("User not authenticated", 403);
     return this.repo.listMetrics(options);
   }
 }
 
-export type { ListMetricCategoriesResult, ListOpts };
+export type { ListMetricsResult, ListOpts };

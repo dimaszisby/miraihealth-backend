@@ -1,10 +1,10 @@
 import { jest } from "@jest/globals";
 import AppError from "@/utils/AppError";
 import { ListMetrics } from "@/features/metric/application/queries/ListMetrics";
-import type { ListMetricCategoriesResult } from "@/features/metric/application/ports/MetricReadRepository";
+import type { ListMetricsResult } from "@/features/metric/application/ports/MetricReadRepository";
 
 describe("ListMetrics query", () => {
-  const baseResult: ListMetricCategoriesResult = {
+  const baseResult: ListMetricsResult = {
     items: [],
     nextCursor: undefined,
     sort: "-createdAt",
@@ -13,8 +13,7 @@ describe("ListMetrics query", () => {
 
   it("throws when userId is missing", async () => {
     const repo = {
-      listMetrics: jest
-        .fn<(...args: any[]) => Promise<ListMetricCategoriesResult>>(),
+      listMetrics: jest.fn<(...args: any[]) => Promise<ListMetricsResult>>(),
     } as any;
     const query = new ListMetrics(repo);
 
@@ -27,7 +26,7 @@ describe("ListMetrics query", () => {
   it("delegates to read repository", async () => {
     const repo = {
       listMetrics: jest
-        .fn<(...args: any[]) => Promise<ListMetricCategoriesResult>>()
+        .fn<(...args: any[]) => Promise<ListMetricsResult>>()
         .mockResolvedValue(baseResult),
     } as any;
     const query = new ListMetrics(repo);

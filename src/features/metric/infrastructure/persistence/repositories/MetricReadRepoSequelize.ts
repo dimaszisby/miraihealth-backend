@@ -2,7 +2,7 @@ import { models } from "@/infrastructure/db/models";
 import { MetricLibraryDomain, MetricDomainExtended } from "@/types/domain/metric.domain";
 import {
   MetricReadRepository,
-  ListMetricCategoriesResult,
+  ListMetricsResult,
   ListOpts,
   SortField,
   SortParam,
@@ -20,7 +20,7 @@ import {
 } from "sequelize";
 
 export class MetricReadRepoSequelize implements MetricReadRepository {
-  async listMetrics(opts: ListOpts): Promise<ListMetricCategoriesResult> {
+  async listMetrics(opts: ListOpts): Promise<ListMetricsResult> {
     const { userId, limit, sort, q, filter, after, includeTotal } = opts;
     const { field, dir } = normalizeSort(sort);
     const cursor = after ? decodeCursor(after) : null;
