@@ -41,14 +41,20 @@ export const listCategoriesQuery = z.object({
 });
 
 // * Schema Implementations
-export const createMetricCategorySchema = { body: metricCategoryBody };
-export const updateMetricCategorySchema = {
+export const createMetricCategorySchema = z.object({
+  body: metricCategoryBody,
+});
+export const updateMetricCategorySchema = z.object({
   params: metricCategoryParams,
   body: metricCategoryBody.partial(),
-};
-export const getMetricCategorySchema = { params: metricCategoryParams };
-export const deleteMetricCategorySchema = { params: metricCategoryParams };
-export const getAllMetricCategoriesSchema = { query: listCategoriesQuery };
+});
+export const getMetricCategorySchema = z.object({ params: metricCategoryParams });
+export const deleteMetricCategorySchema = z.object({
+  params: metricCategoryParams,
+});
+export const getAllMetricCategoriesSchema = z.object({
+  query: listCategoriesQuery,
+});
 
 /**
  * * ===== Schemas for Testing Purposes =====
@@ -59,6 +65,6 @@ export const createMetricCategoryDummyBody = z.object({
   count: z.number().int().min(1).max(1000).default(5), // Default to 5, max 1000
 });
 
-export const generateDummyMetricCategoriesSchema = {
+export const generateDummyMetricCategoriesSchema = z.object({
   body: createMetricCategoryDummyBody,
-};
+});

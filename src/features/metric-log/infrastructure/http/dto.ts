@@ -18,13 +18,13 @@ export interface MetricLogResponseDTO {
 export type MetricLogListResponseDTO = MetricLogResponseDTO[];
 
 export type CreateMetricLogRequestDTO = z.infer<
-  typeof createMetricLogSchema.body
+  typeof createMetricLogSchema.shape.body
 >;
 
 export type UpdateMetricLogRequestDTO = z.infer<
-  typeof updateMetricLogSchema.body
+  typeof updateMetricLogSchema.shape.body
 >;
 
 export type GenerateDummyMetricLogsRequestDTO = z.infer<
-  typeof generateDummyMetricLogsSchema.body
+  typeof generateDummyMetricLogsSchema.shape.body
 >;

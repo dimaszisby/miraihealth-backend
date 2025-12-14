@@ -30,9 +30,9 @@ export interface MetricSettingsResponseDTO {
 }
 
 export type CreateMetricSettingsRequestDTO = z.infer<
-  typeof createMetricSettingsSchema.body
+  typeof createMetricSettingsSchema.shape.body
 >;
 
 export type UpdateMetricSettingsRequestDTO = z.infer<
-  typeof updateMetricSettingsSchema.body
+  typeof updateMetricSettingsSchema.shape.body
 >;

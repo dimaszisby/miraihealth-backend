@@ -7,11 +7,19 @@ import {
   toMetricLogListResponseDTO,
   toMetricLogResponseDTO,
 } from "@/utils/mappers/metric-log.mapper";
-import { GenerateDummyMetricLogsRequestDTO } from "./dto";
-import { listMetricLogsViaCursorSchema } from "./schema.zod";
+import {
+  createMetricLogSchema,
+  deleteMetricLogSchema,
+  generateDummyMetricLogsSchema,
+  getAggregatedStatsSchema,
+  getMetricLogByIdSchema,
+  listMetricLogsViaCursorSchema,
+  updateMetricLogSchema,
+} from "./schema.zod";
 import { assertAuthenticated } from "@/utils/auth-guards";
 import logger from "@/utils/logger";
 import { buildMetricLogFeature } from "@/features/metric-log/feature";
+import { pickValidated } from "@/shared/middleware/validated";
 
 type MetricLogFeature = ReturnType<typeof buildMetricLogFeature>;
 let metricLogFeature: MetricLogFeature = buildMetricLogFeature();
@@ -24,7 +32,8 @@ export const createMetricLog = catchAsync(
   async (req: AuthRequest, res: Response, _next: NextFunction) => {
     assertAuthenticated(req);
 
-    const { metricId, type, logValue, loggedAt } = req.body;
+    const { body } = pickValidated(createMetricLogSchema)(req);
+    const { metricId, type, logValue, loggedAt } = body;
 
     const logDomain = await metricLogFeature.createLog.execute({
       userId: req.user.id,
@@ -43,8 +52,8 @@ export const getUserLogLibrariesViaCursor = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
 
-    const parsed = listMetricLogsViaCursorSchema.query.parse(req.query);
-    const { limit, sort, q, after, includeTotal, filter } = parsed;
+    const { query } = pickValidated(listMetricLogsViaCursorSchema)(req);
+    const { limit, sort, q, after, includeTotal, filter } = query;
 
     const page = await metricLogFeature.listLogs.execute({
       userId: req.user.id,
@@ -74,13 +83,12 @@ export const getLogById = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
 
-    const { metricId } = req.query;
-    if (!metricId)
-      throw new AppError("metricId is required as a query parameter", 400);
+    const { params, query } = pickValidated(getMetricLogByIdSchema)(req);
+    const { metricId } = query;
 
     const logDomain = await metricLogFeature.getLog.execute({
       userId: req.user.id,
-      logId: req.params.id,
+      logId: params.id,
     });
 
     if (logDomain.metricId !== metricId) {
@@ -95,11 +103,12 @@ export const updateLog = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
 
-    const { logValue, type, loggedAt } = req.body;
+    const { body, params } = pickValidated(updateMetricLogSchema)(req);
+    const { logValue, type, loggedAt } = body;
 
     const logDomain = await metricLogFeature.updateLog.execute({
       userId: req.user.id,
-      logId: req.params.id,
+      logId: params.id,
       updates: { logValue, type, loggedAt },
     });
 
@@ -111,9 +120,10 @@ export const deleteLog = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
 
+    const { params } = pickValidated(deleteMetricLogSchema)(req);
     const logDomain = await metricLogFeature.deleteLog.execute({
       userId: req.user.id,
-      logId: req.params.id,
+      logId: params.id,
     });
 
     successResponse(res, 200, toMetricLogResponseDTO(logDomain), "Log deleted successfully");
@@ -123,9 +133,10 @@ export const deleteLog = catchAsync(
 export const getAggregatedStats = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
+    const { query } = pickValidated(getAggregatedStatsSchema)(req);
     const stats = await metricLogFeature.getStats.execute({
       userId: req.user.id,
-      metricId: req.query.metricId as string | undefined,
+      metricId: query.metricId,
     });
     successResponse(res, 200, stats);
   }
@@ -135,7 +146,8 @@ export const generateDummyMetricLogs = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
 
-    const { metricId, count } = req.body as GenerateDummyMetricLogsRequestDTO;
+    const { body } = pickValidated(generateDummyMetricLogsSchema)(req);
+    const { metricId, count } = body;
 
     logger.info("Generating dummy logs", {
       metricId,

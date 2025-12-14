@@ -147,14 +147,14 @@ const MetricSettingsFilterSchema = z.object({
     .optional(),
 });
 
-export const createMetricSettingsSchema = { body: settingsBody };
-export const updateMetricSettingsSchema = {
+export const createMetricSettingsSchema = z.object({ body: settingsBody });
+export const updateMetricSettingsSchema = z.object({
   params: settingsParams,
   body: settingsBodyPartial,
-};
+});
 
-export const getMetricSettingsSchema = { params: settingsParams };
-export const deleteMetricSettingsSchema = { params: settingsParams };
+export const getMetricSettingsSchema = z.object({ params: settingsParams });
+export const deleteMetricSettingsSchema = z.object({ params: settingsParams });
 
 const listMetricSettingsViaCursorQuery = z
   .object({
@@ -188,15 +188,15 @@ const listMetricSettingsViaCursorQuery = z
     };
   });
 
-export const listMetricSettingsViaCursorSchema = {
+export const listMetricSettingsViaCursorSchema = z.object({
   query: listMetricSettingsViaCursorQuery,
-};
+});
 
-export const updateDisplayOptionsSchema = {
+export const updateDisplayOptionsSchema = z.object({
   params: settingsParams,
   body: z.object({
     displayOptions: zDisplayOptions,
   }),
-};
+});
 
 export const goalAchievementSchema = { params: settingsParams };

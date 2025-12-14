@@ -1,6 +1,12 @@
 import { NextFunction, Response } from "express";
-import { GenerateDummyMetricsRequestDTO } from "@/types/dtos/metric.dto";
-import { listMetricQueryViaCursor } from "@/types/api/zod-metric.schema";
+import {
+  createMetricSchema,
+  deleteMetricSchema,
+  generateDummyMetricsSchema,
+  getAllMetricsViaCursorSchema,
+  getMetricSchema,
+  updateMetricSchema,
+} from "@/types/api/zod-metric.schema";
 import { buildMetricFeature } from "../../feature";
 import { AuthRequest } from "@/types/request.context";
 import logger from "@/utils/logger";
@@ -14,6 +20,7 @@ import { successResponse } from "@/utils/response-formatter";
 import catchAsync from "@/utils/catch-async";
 import { assertAuthenticated } from "@/utils/auth-guards";
 import { buildAnalyticsFeature } from "@/features/analytics/feature";
+import { pickValidated } from "@/shared/middleware/validated";
 
 type MetricFeature = ReturnType<typeof buildMetricFeature>;
 let metricFeature: MetricFeature = buildMetricFeature();
@@ -33,6 +40,7 @@ export const createMetric = catchAsync(
   async (req: AuthRequest, res: Response, _next: NextFunction) => {
     assertAuthenticated(req);
 
+    const { body } = pickValidated(createMetricSchema)(req);
     const {
       categoryId,
       originalMetricId,
@@ -40,7 +48,7 @@ export const createMetric = catchAsync(
       description,
       defaultUnit,
       isPublic,
-    } = req.body;
+    } = body;
 
     const metricDomain = await metricFeature.createMetric.execute({
       userId: req.user.id,
@@ -61,8 +69,8 @@ export const getUserMetricLibrariesViaCursor = catchAsync(
   async (req: AuthRequest, res: Response, _next: NextFunction) => {
     assertAuthenticated(req);
 
-    const parsed = listMetricQueryViaCursor.parse(req.query);
-    const { limit, sort, q, after, includeTotal, filter } = parsed;
+    const { query } = pickValidated(getAllMetricsViaCursorSchema)(req);
+    const { limit, sort, q, after, includeTotal, filter } = query;
 
     const page = await metricFeature.listMetrics.execute({
       userId: req.user.id,
@@ -92,7 +100,8 @@ export const getUserDetailMetricById = catchAsync(
   async (req: AuthRequest, res: Response, _next: NextFunction) => {
     assertAuthenticated(req);
 
-    const includeRaw = String(req.query.include ?? "flat");
+    const { params, query } = pickValidated(getMetricSchema)(req);
+    const includeRaw = query.include ?? "flat";
     const allowed = new Set(["settings", "category", "logs"]);
 
     let includes: Array<"settings" | "category" | "logs"> = [];
@@ -105,11 +114,11 @@ export const getUserDetailMetricById = catchAsync(
         .filter((s): s is "settings" | "category" | "logs" => allowed.has(s));
     }
 
-    const logsLimit = Number(req.query.logsLimit ?? 20);
+    const logsLimit = query.logsLimit ?? 20;
 
     const metric = await metricFeature.getMetricDetail.execute({
       userId: req.user.id,
-      metricId: req.params.id,
+      metricId: params.id,
       includes,
       logsLimit,
     });
@@ -138,10 +147,11 @@ export const updateMetric = catchAsync(
   async (req: AuthRequest, res: Response, _next: NextFunction) => {
     assertAuthenticated(req);
 
+    const { body, params } = pickValidated(updateMetricSchema)(req);
     const updatedMetricDomain = await metricFeature.updateMetric.execute({
       userId: req.user.id,
-      metricId: req.params.id,
-      data: req.body,
+      metricId: params.id,
+      data: body,
     });
     const dto = toMetricResponseDTO(updatedMetricDomain);
 
@@ -153,9 +163,10 @@ export const deleteMetric = catchAsync(
   async (req: AuthRequest, res: Response, _next: NextFunction) => {
     assertAuthenticated(req);
 
+    const { params } = pickValidated(deleteMetricSchema)(req);
     const metricDomain = await metricFeature.deleteMetric.execute({
       userId: req.user.id,
-      metricId: req.params.id,
+      metricId: params.id,
     });
     const dto = toMetricResponseDTO(metricDomain);
 
@@ -166,7 +177,8 @@ export const deleteMetric = catchAsync(
 export const generateDummyMetrics = catchAsync(
   async (req: AuthRequest, res: Response, _next: NextFunction) => {
     assertAuthenticated(req);
-    const { count } = req.body as GenerateDummyMetricsRequestDTO;
+    const { body } = pickValidated(generateDummyMetricsSchema)(req);
+    const { count } = body;
 
     const dummyMetrics = await metricFeature.generateDummyMetrics.execute({
       userId: req.user.id,

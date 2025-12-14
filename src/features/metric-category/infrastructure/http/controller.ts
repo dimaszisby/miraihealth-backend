@@ -9,12 +9,12 @@ import {
 } from "@/features/metric-category/infrastructure/mappers/MetricCategoryMapper";
 import {
   createMetricCategorySchema,
-  listCategoriesQuery,
+  getAllMetricCategoriesSchema,
   updateMetricCategorySchema,
 } from "./schema.zod";
 import { buildMetricCategoryFeature } from "../../feature";
-import { GenerateDummyMetricCategoriesRequestDTO } from "./dto";
 import { generateDummyMetricCategoriesSchema } from "./schema.zod";
+import { pickValidated } from "@/shared/middleware/validated";
 
 type Feature = ReturnType<typeof buildMetricCategoryFeature>;
 let feature: Feature = buildMetricCategoryFeature();
@@ -25,7 +25,8 @@ export const overrideMetricCategoryFeature = (custom: Feature) => {
 
 export const createCategory = catchAsync(async (req: AuthRequest, res: Response) => {
   assertAuthenticated(req);
-  const payload = createMetricCategorySchema.body.parse(req.body);
+  const { body } = pickValidated(createMetricCategorySchema)(req);
+  const payload = body;
   const category = await feature.createCategory.execute({
     userId: req.user.id,
     name: payload.name,
@@ -43,11 +44,11 @@ export const createCategory = catchAsync(async (req: AuthRequest, res: Response)
 
 export const listCategories = catchAsync(async (req: AuthRequest, res: Response) => {
   assertAuthenticated(req);
-  const parsed = listCategoriesQuery.parse(req.query);
-  const { limit, sort, q, after, includeTotal } = parsed;
+  const { query } = pickValidated(getAllMetricCategoriesSchema)(req);
+  const { limit, sort, q, after, includeTotal } = query;
   const filter =
-    parsed["filter[name]"] && parsed["filter[name]"]!.trim().length > 0
-      ? { name: parsed["filter[name]"]!.trim() }
+    query["filter[name]"] && query["filter[name]"]!.trim().length > 0
+      ? { name: query["filter[name]"]!.trim() }
       : undefined;
 
   const page = await feature.listCategories.execute({
@@ -81,13 +82,13 @@ export const getCategory = catchAsync(async (req: AuthRequest, res: Response) =>
 
 export const updateCategory = catchAsync(async (req: AuthRequest, res: Response) => {
   assertAuthenticated(req);
-  const payload = updateMetricCategorySchema.body.parse(req.body);
+  const { body, params } = pickValidated(updateMetricCategorySchema)(req);
   const category = await feature.updateCategory.execute({
     userId: req.user.id,
-    categoryId: req.params.id,
-    name: payload.name,
-    color: payload.color,
-    icon: payload.icon,
+    categoryId: params.id,
+    name: body.name,
+    color: body.color,
+    icon: body.icon,
   });
 
   successResponse(
@@ -106,19 +107,17 @@ export const deleteCategory = catchAsync(async (req: AuthRequest, res: Response)
 
 export const generateDummyCategories = catchAsync(async (req: AuthRequest, res: Response) => {
   assertAuthenticated(req);
-  const payload = generateDummyMetricCategoriesSchema.body.parse(
-    req.body as GenerateDummyMetricCategoriesRequestDTO
-  );
+  const { body } = pickValidated(generateDummyMetricCategoriesSchema)(req);
   const created = await feature.generateDummyCategories.execute({
     userId: req.user.id,
-    count: payload.count,
+    count: body.count,
   });
 
   successResponse(
     res,
     201,
     toListResponseDTO(created),
-    `${payload.count} dummy metric categories generated successfully`
+    `${body.count} dummy metric categories generated successfully`
   );
 });
 

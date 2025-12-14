@@ -12,10 +12,13 @@ import {
 import { DisplayOptionsDTO } from "./dto";
 import {
   createMetricSettingsSchema,
+  deleteMetricSettingsSchema,
+  getMetricSettingsSchema,
   listMetricSettingsViaCursorSchema,
   updateMetricSettingsSchema,
   updateDisplayOptionsSchema,
 } from "./schema.zod";
+import { pickValidated } from "@/shared/middleware/validated";
 
 type Feature = ReturnType<typeof buildMetricSettingsFeature>;
 let feature: Feature = buildMetricSettingsFeature();
@@ -27,7 +30,8 @@ export const overrideMetricSettingsFeature = (custom: Feature) => {
 export const createMetricSettings = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
-    const payload = createMetricSettingsSchema.body.parse(req.body);
+    const { body } = pickValidated(createMetricSettingsSchema)(req);
+    const payload = body;
     const created = await feature.createSettings.execute({
       userId: req.user.id,
       ...payload,
@@ -45,10 +49,10 @@ export const createMetricSettings = catchAsync(
 export const getAllMetricSettingsViaCursor = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
-    const parsed = listMetricSettingsViaCursorSchema.query.parse(req.query);
+    const { query } = pickValidated(listMetricSettingsViaCursorSchema)(req);
     const result = await feature.listSettings.execute({
       userId: req.user.id,
-      ...parsed,
+      ...query,
     });
 
     successResponse(res, 200, {
@@ -63,9 +67,10 @@ export const getAllMetricSettingsViaCursor = catchAsync(
 export const getMetricSettingsById = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
+    const { params } = pickValidated(getMetricSettingsSchema)(req);
     const settings = await feature.getSettings.execute(
       req.user.id,
-      req.params.id
+      params.id
     );
     successResponse(
       res,
@@ -78,11 +83,11 @@ export const getMetricSettingsById = catchAsync(
 export const updateMetricSettings = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
-    const payload = updateMetricSettingsSchema.body.parse(req.body);
+    const { body, params } = pickValidated(updateMetricSettingsSchema)(req);
     const updated = await feature.updateSettings.execute(
       req.user.id,
-      req.params.id,
-      payload
+      params.id,
+      body
     );
     successResponse(
       res,
@@ -96,7 +101,8 @@ export const updateMetricSettings = catchAsync(
 export const deleteMetricSettings = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
-    await feature.deleteSettings.execute(req.user.id, req.params.id);
+    const { params } = pickValidated(deleteMetricSettingsSchema)(req);
+    await feature.deleteSettings.execute(req.user.id, params.id);
     successResponse(res, 200, null, "Metric settings deleted successfully");
   }
 );
@@ -104,9 +110,10 @@ export const deleteMetricSettings = catchAsync(
 export const updateGoalAchievement = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
+    const { params } = pickValidated(getMetricSettingsSchema)(req);
     const updated = await feature.updateGoalAchievement.execute(
       req.user.id,
-      req.params.id
+      params.id
     );
     successResponse(
       res,
@@ -120,10 +127,11 @@ export const updateGoalAchievement = catchAsync(
 export const updateDisplayOptions = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
-    const { displayOptions } = updateDisplayOptionsSchema.body.parse(req.body);
+    const { body, params } = pickValidated(updateDisplayOptionsSchema)(req);
+    const { displayOptions } = body;
     const updated = await feature.updateDisplayOptions.execute(
       req.user.id,
-      req.params.id,
+      params.id,
       displayOptions
     );
     successResponse(

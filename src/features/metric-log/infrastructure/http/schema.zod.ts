@@ -101,33 +101,33 @@ export const aggregatedStatsQuery = z.object({
   endDate: zDateOptional,
 });
 
-export const createMetricLogSchema = { body: metricLogBody };
-export const updateMetricLogSchema = {
+export const createMetricLogSchema = z.object({ body: metricLogBody });
+export const updateMetricLogSchema = z.object({
   params: z.object({ id: z.string().uuid() }),
   body: metricLogBody.partial().extend({
     loggedAt: zISODateTime.optional(),
   }),
-};
+});
 
-export const getMetricLogByIdSchema = {
+export const getMetricLogByIdSchema = z.object({
   params: metricLogParams,
   query: z.object({
-    metricId: zUUID.optional(),
+    metricId: zUUID,
   }),
-};
+});
 
-export const getAllMetricLogsSchema = { query: listMetricLogsQuery };
-export const listMetricLogsViaCursorSchema = {
+export const getAllMetricLogsSchema = z.object({ query: listMetricLogsQuery });
+export const listMetricLogsViaCursorSchema = z.object({
   query: listMetricQueryViaCursor,
-};
-export const deleteMetricLogSchema = { params: metricLogParams };
-export const getAggregatedStatsSchema = { query: aggregatedStatsQuery };
+});
+export const deleteMetricLogSchema = z.object({ params: metricLogParams });
+export const getAggregatedStatsSchema = z.object({ query: aggregatedStatsQuery });
 
 export const generateDummyMetricLogsBody = z.object({
   metricId: zUUID,
   count: z.coerce.number().int().min(1).max(1000).default(50),
 });
 
-export const generateDummyMetricLogsSchema = {
+export const generateDummyMetricLogsSchema = z.object({
   body: generateDummyMetricLogsBody,
-};
+});

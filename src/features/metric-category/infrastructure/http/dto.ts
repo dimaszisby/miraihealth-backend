@@ -77,7 +77,7 @@ export interface MetricCategoryResponseDTO {
  * Inferred from the Zod schema for validation.
  */
 export type CreateMetricCategoryRequestDTO = z.infer<
-  typeof createMetricCategorySchema.body
+  typeof createMetricCategorySchema.shape.body
 >;
 
 /**
@@ -86,7 +86,7 @@ export type CreateMetricCategoryRequestDTO = z.infer<
  * Inferred from the Zod schema for validation.
  */
 export type UpdateMetricCategoryRequestDTO = z.infer<
-  typeof updateMetricCategorySchema.body
+  typeof updateMetricCategorySchema.shape.body
 >;
 
 /**
@@ -99,5 +99,5 @@ export type UpdateMetricCategoryRequestDTO = z.infer<
  * Inferred from the Zod schema for validation.
  */
 export type GenerateDummyMetricCategoriesRequestDTO = z.infer<
-  typeof generateDummyMetricCategoriesSchema.body
+  typeof generateDummyMetricCategoriesSchema.shape.body
 >;

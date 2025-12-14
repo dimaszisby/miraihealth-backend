@@ -136,26 +136,28 @@ export const metricDetailQuery = z.object({
 });
 
 /** ===== SchemaBags for validate(...) ===== */
-export const createMetricSchema = { body: metricBody };
-export const updateMetricSchema = {
+export const createMetricSchema = z.object({ body: metricBody });
+export const updateMetricSchema = z.object({
   params: metricParams,
   body: metricBodyPartial,
-};
-export const getMetricSchema = {
+});
+export const getMetricSchema = z.object({
   params: metricParams,
   query: metricDetailQuery,
-};
-export const deleteMetricSchema = { params: metricParams };
-export const getAllMetricsSchema = { query: listMetricsQuery };
-export const getAllMetricsViaCursorSchema = {
+});
+export const deleteMetricSchema = z.object({ params: metricParams });
+export const getAllMetricsSchema = z.object({ query: listMetricsQuery });
+export const getAllMetricsViaCursorSchema = z.object({
   query: listMetricQueryViaCursor,
-};
+});
 
 // testing
 export const generateDummyMetricsBody = z.object({
   count: z.coerce.number().int().min(1).max(1000).default(50),
 });
-export const generateDummyMetricsSchema = { body: generateDummyMetricsBody };
+export const generateDummyMetricsSchema = z.object({
+  body: generateDummyMetricsBody,
+});
 
 /** ===== Inferred types (optional) ===== */
 export type CreateMetricInput = z.infer<typeof metricBody>;

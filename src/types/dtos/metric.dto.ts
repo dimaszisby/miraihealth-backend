@@ -11,8 +11,8 @@ import {
 
 // Internal DTOs for associations
 import { MetricCategoryResponseDTO } from "../../features/metric-category/infrastructure/http/dto";
-import { MetricSettingsResponseDTO } from "./metric-settings.dto";
-import { MetricLogResponseDTO } from "./metric-log.dto";
+import { MetricSettingsResponseDTO } from "@/features/metric-settings/infrastructure/http/dto";
+import { MetricLogResponseDTO } from "@/features/metric-log/infrastructure/http/dto";
 
 /**
  * @file src/types/dtos/metric.dto.ts
@@ -266,7 +266,7 @@ export interface UserMetricDetailResponseDTO {
  * Inferred from the Zod schema for validation.
  */
 export type CreateMetricRequestDTO = z.infer<
-  typeof createMetricSchema.body
+  typeof createMetricSchema.shape.body
 >;
 
 /**
@@ -275,7 +275,7 @@ export type CreateMetricRequestDTO = z.infer<
  * Inferred from the Zod schema for validation.
  */
 export type UpdateMetricRequestDTO = z.infer<
-  typeof updateMetricSchema.body
+  typeof updateMetricSchema.shape.body
 >;
 
 /**
@@ -288,5 +288,5 @@ export type UpdateMetricRequestDTO = z.infer<
  * Inferred from the Zod schema for validation.
  */
 export type GenerateDummyMetricsRequestDTO = z.infer<
-  typeof generateDummyMetricsSchema.body
+  typeof generateDummyMetricsSchema.shape.body
 >;
