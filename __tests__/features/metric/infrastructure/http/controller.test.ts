@@ -7,7 +7,7 @@ type ControllerModule = typeof import("@/features/metric/infrastructure/http/con
 let createMetric: ControllerModule["createMetric"];
 let getUserDetailMetricById: ControllerModule["getUserDetailMetricById"];
 let deleteMetric: ControllerModule["deleteMetric"];
-let overrideMetricFeature: ControllerModule["overrideMetricFeature"];
+let overrideMetricFeatureForTest: ControllerModule["overrideMetricFeatureForTest"];
 
 type MetricFeature = ReturnType<typeof buildMetricFeature>;
 
@@ -33,7 +33,7 @@ const loadController = async () => {
   createMetric = controller.createMetric;
   getUserDetailMetricById = controller.getUserDetailMetricById;
   deleteMetric = controller.deleteMetric;
-  overrideMetricFeature = controller.overrideMetricFeature;
+  overrideMetricFeatureForTest = controller.overrideMetricFeatureForTest;
 };
 
 const res = () =>
@@ -46,13 +46,13 @@ const next: NextFunction = jest.fn();
 
 beforeAll(async () => {
   await loadController();
-  overrideMetricFeature(buildFeatureMocks());
+  overrideMetricFeatureForTest(buildFeatureMocks());
 });
 
 describe("Metric HTTP controller", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    overrideMetricFeature(buildFeatureMocks());
+    overrideMetricFeatureForTest(buildFeatureMocks());
   });
 
   it("creates metric via use case", async () => {

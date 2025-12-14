@@ -19,7 +19,7 @@ import { pickValidated } from "@/shared/middleware/validated";
 type Feature = ReturnType<typeof buildMetricCategoryFeature>;
 let feature: Feature = buildMetricCategoryFeature();
 
-export const overrideMetricCategoryFeature = (custom: Feature) => {
+export const overrideMetricCategoryFeatureForTest = (custom: Feature) => {
   feature = custom;
 };
 

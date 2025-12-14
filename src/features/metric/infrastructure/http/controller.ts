@@ -25,14 +25,16 @@ import { pickValidated } from "@/shared/middleware/validated";
 type MetricFeature = ReturnType<typeof buildMetricFeature>;
 let metricFeature: MetricFeature = buildMetricFeature();
 
-export const overrideMetricFeature = (feature: MetricFeature) => {
+export const overrideMetricFeatureForTest = (feature: MetricFeature) => {
   metricFeature = feature;
 };
 
 type AnalyticsFeature = ReturnType<typeof buildAnalyticsFeature>;
 let analyticsFeature: AnalyticsFeature = buildAnalyticsFeature();
 
-export const overrideMetricTrendFeature = (feature: AnalyticsFeature) => {
+export const overrideMetricTrendFeatureForTest = (
+  feature: AnalyticsFeature
+) => {
   analyticsFeature = feature;
 };
 

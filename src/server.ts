@@ -16,7 +16,7 @@ import { metricSettingsRouter } from "./features/metric-settings/index.js";
 import { metricCategoryRouter } from "./features/metric-category/index.js";
 import { visualizationRouter } from "@/features/analytics/infrastructure/http/router";
 import { buildMetricLogFeature } from "./features/metric-log/feature.js";
-import { __setMetricLogFeature } from "./features/metric-log/infrastructure/http/controller.js";
+import { overrideMetricLogFeatureForTest } from "./features/metric-log/infrastructure/http/controller.js";
 import { AnalyticsVisualizationInvalidationAdapter } from "./features/analytics/infrastructure/cache/VisualizationInvalidationAdapter.js";
 
 // Other Setup
@@ -29,7 +29,7 @@ import { authMiddleware } from "./features/auth/infrastructure/http/authMiddlewa
 
 const visualizationInvalidationAdapter =
   new AnalyticsVisualizationInvalidationAdapter();
-__setMetricLogFeature(
+overrideMetricLogFeatureForTest(
   buildMetricLogFeature({
     visualizationInvalidator: visualizationInvalidationAdapter,
   })

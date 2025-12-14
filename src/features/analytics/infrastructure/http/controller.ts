@@ -14,7 +14,7 @@ const DASH_CACHE_STALE_WHILE_REVALIDATE = Number(
 type AnalyticsFeature = ReturnType<typeof buildAnalyticsFeature>;
 let feature: AnalyticsFeature = buildAnalyticsFeature();
 
-export const overrideAnalyticsFeature = (custom: AnalyticsFeature) => {
+export const overrideAnalyticsFeatureForTest = (custom: AnalyticsFeature) => {
   feature = custom;
 };
 

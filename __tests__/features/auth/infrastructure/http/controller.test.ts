@@ -9,7 +9,7 @@ let login: ControllerModule["login"];
 let getProfile: ControllerModule["getProfile"];
 let updateProfile: ControllerModule["updateProfile"];
 let logout: ControllerModule["logout"];
-let overrideAuthFeature: ControllerModule["overrideAuthFeature"];
+let overrideAuthFeatureForTest: ControllerModule["overrideAuthFeatureForTest"];
 
 type AuthFeature = ReturnType<typeof buildAuthFeature>;
 type AsyncMock = jest.MockedFunction<(...args: any[]) => Promise<any>>;
@@ -35,7 +35,7 @@ const loadController = async () => {
   getProfile = controller.getProfile;
   updateProfile = controller.updateProfile;
   logout = controller.logout;
-  overrideAuthFeature = controller.overrideAuthFeature;
+  overrideAuthFeatureForTest = controller.overrideAuthFeatureForTest;
 };
 
 const buildFeatureMocks = (): AuthFeature =>
@@ -66,7 +66,7 @@ beforeAll(async () => {
 describe("Auth HTTP controller", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    overrideAuthFeature(buildFeatureMocks());
+    overrideAuthFeatureForTest(buildFeatureMocks());
   });
 
   it("registers new users via use case", async () => {

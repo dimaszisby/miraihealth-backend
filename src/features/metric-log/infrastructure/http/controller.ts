@@ -24,9 +24,9 @@ import { pickValidated } from "@/shared/middleware/validated";
 type MetricLogFeature = ReturnType<typeof buildMetricLogFeature>;
 let metricLogFeature: MetricLogFeature = buildMetricLogFeature();
 
-export function __setMetricLogFeature(feature: MetricLogFeature) {
+export const overrideMetricLogFeatureForTest = (feature: MetricLogFeature) => {
   metricLogFeature = feature;
-}
+};
 
 export const createMetricLog = catchAsync(
   async (req: AuthRequest, res: Response, _next: NextFunction) => {

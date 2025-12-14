@@ -10,7 +10,7 @@ import { assertAuthenticated } from "@/utils/auth-guards";
 type AuthFeature = ReturnType<typeof buildAuthFeature>;
 let feature: AuthFeature = buildAuthFeature();
 
-export const overrideAuthFeature = (custom: AuthFeature) => {
+export const overrideAuthFeatureForTest = (custom: AuthFeature) => {
   feature = custom;
 };
 
