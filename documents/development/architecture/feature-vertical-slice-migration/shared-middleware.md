@@ -43,3 +43,6 @@ All cursor/list caches across feature slices must use the shared helper at `src/
 - Use `logCacheInvalidation(scope, context)` from `src/shared/cache/logging.ts` whenever a cache invalidation completes successfully. The helper emits a single `[CACHE] invalidate` debug log with the provided metadata.
 - Use `logCacheInvalidationError(scope, error, context)` inside `catch` blocks to capture failures with the same scope/context payload; the helper logs via `logger.error`.
 - Avoid slice-specific `logger.info` statements for cache invalidations—stick to the shared helper so log levels and payloads remain consistent across slices.
+
+### Related Docs
+- [Feature Boundary Rules](./feature-boundary-rules.md)
