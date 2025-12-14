@@ -1,0 +1,86 @@
+# Lakira BE Feature Slice Migration Consistency — Overhaul Checklist (v2)
+
+**Document:** `lakira-be-feature-slice-migration-consistency-checklist-v2.md`  
+**CreatedAt:** 2025-12-14T16:07+07:00  
+**LastUpdatedAt:** 2025-12-14T16:07+07:00  
+**Status:** Ready for execution
+
+---
+
+## Codex Execution Notes
+
+- Follow `lakira-be-feature-slice-migration-consistency-plan-v2.md` strictly.
+- Do not refactor outside of listed tickets.
+- One major ticket per commit where feasible.
+
+**Timestamp policy:**
+- Use ISO-8601 with timezone offset (e.g., `2025-12-14T15:00+07:00`)
+- Update `UpdatedAt` whenever status or scope changes.
+
+**Status values:**
+- `TODO`, `IN_PROGRESS`, `BLOCKED`, `DONE`, `DEFERRED`
+
+---
+
+## Naming note: `*.checklist.md` vs `*.ticket.md`
+
+**Recommendation:** keep this as `*-checklist.md`.  
+Rationale:
+- “Checklist” is the standard in-repo execution artifact.
+- “Tickets” belong in GitHub Issues/Jira; you can link them here later.
+
+---
+
+## Major Incidents (Fix First)
+
+> Major = boundary-breaking, contract-affecting, or high risk to long-term maintainability.
+
+| ID | Priority | Slice(s) | Task | Status | CreatedAt | UpdatedAt | Evidence / Links | Suspected Files / Search Anchors | Acceptance Criteria |
+|---|---|---|---|---|---|---|---|---|---|
+| MAJOR-1 | P0 | metric + analytics | Remove cross-slice HTTP controller import(s); move route to owning slice or replace with port injection | DONE | 2025-12-14T16:07+07:00 | 2025-12-14T16:27:04+07:00 | - Files: `src/features/metric/infrastructure/http/router.ts`, `src/features/metric/infrastructure/http/controller.ts`, `src/features/analytics/infrastructure/http/controller.ts`<br>- Commands:<br>&nbsp;&nbsp;• `npm run lint` → PASS<br>&nbsp;&nbsp;• `npm run test:ci` → PASS<br>&nbsp;&nbsp;• `npm run test:contract:local` → FAIL (runner script missing at `documents/tests/4-contract-tests/postman-newman/scripts/run-contract-local.js`)<br>&nbsp;&nbsp;• `npx tsc --noEmit` → FAIL (pre-existing TS errors in `src/config/config.cjs` + `src/features/metric-settings/**`)<br>&nbsp;&nbsp;• `npm run docs:openapi:generate` → PASS<br>- Grep: `rg 'from \"@/features/analytics/infrastructure/http' -n src/features` → no matches<br>- Commit(s): will reference MAJOR-1 commit hash once created | Search: `handleMetricTrend`, `from "@/features/analytics/"` in non-analytics routers/controllers | No router/controller imports another slice’s controller; API paths unchanged; tests pass |
+| MAJOR-2 | P0 | metric-logs + metric-settings + analytics | Eliminate direct imports of analytics cache invalidation from other slices; introduce port/shared utility and inject via feature builders | TODO | 2025-12-14T16:07+07:00 | 2025-12-14T16:07+07:00 |  | Search: `invalidateVizByMetric`, `invalidateViz` in `src/features/metric-logs/**` and `src/features/metric-settings/**`. Likely: `src/features/analytics/infrastructure/cache/**`, `src/features/metric-logs/infrastructure/cache/**`, `src/features/metric-settings/infrastructure/cache/**`, and feature builders `src/features/**/index.ts` | No non-analytics slice imports analytics invalidation helpers; invalidation behavior preserved; grep check passes; tests pass |
+| MAJOR-3 | P0 | all | Standardize request validation flow across controllers (router validate + consistent accessor) | TODO | 2025-12-14T16:07+07:00 | 2025-12-14T16:07+07:00 |  | Search: `.parse(req.body)` in controllers; compare to `validate(` usage in routers | All routes use the same validation contract; no manual `schema.parse(req.body)` remains unless explicitly allowed |
+| MAJOR-4 | P0 | all | Standardize success response envelope for all success endpoints | TODO | 2025-12-14T16:07+07:00 | 2025-12-14T16:07+07:00 |  | Search: `return res.json(` vs `successResponse(` in controllers | All success endpoints use chosen envelope; OpenAPI matches; tests pass |
+| MAJOR-5 | P1 | all | Lock schema ownership strategy (default: feature-owned) and apply consistently; align OpenAPI registration | TODO | 2025-12-14T16:07+07:00 | 2025-12-14T16:07+07:00 |  | Search: `src/types/api/` imports; `extendZodWithOpenApi` usage; OpenAPI registry file(s) in `src/lib/openapi/**` | One source of truth for schemas; consistent OpenAPI registration; tests pass |
+| MAJOR-6 | P1 | all | Standardize test override convention across slices (`override<Feature>ForTest`) | TODO | 2025-12-14T16:07+07:00 | 2025-12-14T16:07+07:00 |  | Search: `__set`, `override`, `ForTest` in `src/features/**/index.ts` and tests | All slices expose same override function naming and behavior; tests pass |
+
+---
+
+## Minor Incidents (After Major Stabilization)
+
+| ID | Priority | Slice(s) | Task | Status | CreatedAt | UpdatedAt | Evidence / Links | Suspected Files / Search Anchors | Acceptance Criteria |
+|---|---|---|---|---|---|---|---|---|---|
+| MINOR-1 | P2 | metric | Fix naming/copy-paste type/export mismatches so identifiers match slice ownership | TODO | 2025-12-14T16:07+07:00 | 2025-12-14T16:07+07:00 |  | Search for mismatched domain names in types/results under `src/features/metric/**` | Names align; no behavior change; build/tests pass |
+| MINOR-2 | P2 | metric-categories + metric-settings + metric-logs + analytics | Normalize cache key spec (prefix/version/hash policy) and document it | TODO | 2025-12-14T16:07+07:00 | 2025-12-14T16:07+07:00 |  | Search: `:v1:`, `cursor`, `sha1`, `base64url` under `src/features/**/infrastructure/cache/**` | Cache key format consistent; no regressions; tests pass |
+| MINOR-3 | P3 | all | Standardize cache invalidation logging policy (consistent logs or debug-gated) | TODO | 2025-12-14T16:07+07:00 | 2025-12-14T16:07+07:00 |  | Search: `invalidate` + logger usage | Logging is consistent; no excessive noise; no behavior change |
+| MINOR-4 | P3 | docs | Add/verify architecture doc snippet for “Feature Boundary Rules” and link to this checklist | TODO | 2025-12-14T16:07+07:00 | 2025-12-14T16:07+07:00 |  | `documents/development/architecture/**` | Docs explain rules; cross-links exist; portfolio-friendly |
+
+---
+
+## Per-Ticket Evidence Template (paste into “Evidence / Links” cell)
+
+- **Branch/PR:** <link or name>
+- **Commit(s):** <hashes>
+- **Commands run:** <exact commands from plan>
+- **Result:** PASS/FAIL (+ brief notes)
+- **Grep proof:** <commands + summary> (when applicable)
+
+---
+
+## Execution Notes
+
+1. Execute Major incidents top-to-bottom (P0 first).
+2. One ticket per commit when possible.
+3. Update the ticket row:
+   - `Status`
+   - `UpdatedAt`
+   - `Evidence / Links`
+4. If a ticket is blocked:
+   - Set `Status = BLOCKED`
+   - Record the reason + proposed fix path
+
+---
+
+## Evidence Log (optional, chronological)
+
+- 2025-12-14T16:07+07:00 — initialized v2 checklist.

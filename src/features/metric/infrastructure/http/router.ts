@@ -7,8 +7,8 @@ import {
   updateMetric,
   deleteMetric,
   generateDummyMetrics,
+  handleMetricTrend,
 } from "./controller";
-import { handleMetricTrend } from "@/features/analytics/infrastructure/http/controller";
 import { authMiddleware } from "@/features/auth/infrastructure/http/authMiddleware";
 import { cacheMiddleware } from "@/shared/middleware/cache";
 import { userRateLimiter } from "@/shared/middleware/rate-limiter";

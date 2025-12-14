@@ -13,12 +13,20 @@ import AppError from "@/utils/AppError";
 import { successResponse } from "@/utils/response-formatter";
 import catchAsync from "@/utils/catch-async";
 import { assertAuthenticated } from "@/utils/auth-guards";
+import { buildAnalyticsFeature } from "@/features/analytics/feature";
 
 type MetricFeature = ReturnType<typeof buildMetricFeature>;
 let metricFeature: MetricFeature = buildMetricFeature();
 
 export const overrideMetricFeature = (feature: MetricFeature) => {
   metricFeature = feature;
+};
+
+type AnalyticsFeature = ReturnType<typeof buildAnalyticsFeature>;
+let analyticsFeature: AnalyticsFeature = buildAnalyticsFeature();
+
+export const overrideMetricTrendFeature = (feature: AnalyticsFeature) => {
+  analyticsFeature = feature;
 };
 
 export const createMetric = catchAsync(
@@ -172,5 +180,17 @@ export const generateDummyMetrics = catchAsync(
       dto,
       `${count} dummy metrics generated successfully`
     );
+  }
+);
+
+export const handleMetricTrend = catchAsync(
+  async (req: AuthRequest, res: Response) => {
+    assertAuthenticated(req);
+    const data = await analyticsFeature.getMetricTrend.execute({
+      userId: req.user.id,
+      metricId: req.params.metricId ?? req.params.id,
+    });
+
+    res.status(200).json(data);
   }
 );
