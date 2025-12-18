@@ -17,7 +17,12 @@ const { extends: omit3, ...prettierConfig } = prettierConfigPackage;
 export default [
   // Ignore migrations and eslint.config.mjs files
   {
-    ignores: ["eslint.config.mjs", "src/migrations/**/*.cjs"],
+    ignores: [
+      "eslint.config.mjs",
+      "src/migrations/**/*.cjs",
+      "dist/**",
+      "coverage/**",
+    ],
   },
   // Register the @typescript-eslint plugin so its rules can be used
   {
@@ -54,6 +59,52 @@ export default [
       quotes: ["error", "double"], // Enforce double quotes
       indent: ["error", 2], // Enforce 2-space indentation
       "prettier/prettier": "error", // Ensure Prettier formatting
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "src/services/**",
+                "services/**",
+                "@services/**",
+                "../services/**",
+                "../../services/**",
+                "../../../services/**",
+                "../../../../services/**",
+              ],
+              message:
+                "Legacy services have been replaced by feature slices. Add code to the owning feature (domain/application/infrastructure) instead of importing from src/services.",
+            },
+            {
+              group: [
+                "src/routes/**",
+                "routes/**",
+                "@routes/**",
+                "../routes/**",
+                "../../routes/**",
+                "../../../routes/**",
+                "../../../../routes/**",
+              ],
+              message:
+                "Feature slices now own their HTTP routers. Import routers from the appropriate feature entrypoint instead of src/routes.",
+            },
+            {
+              group: [
+                "src/controllers/**",
+                "controllers/**",
+                "@controllers/**",
+                "../controllers/**",
+                "../../controllers/**",
+                "../../../controllers/**",
+                "../../../../controllers/**",
+              ],
+              message:
+                "Legacy controllers have been replaced by feature adapters. Import handlers from the owning feature instead of src/controllers.",
+            },
+          ],
+        },
+      ],
     },
   },
   // Override for CommonJS files (migrations, config files)
@@ -79,6 +130,7 @@ export default [
     },
     rules: {
       "no-console": "off", // Allow console logs in this specific file
+      "prettier/prettier": "off", // File relies on CommonJS formatting, skip Prettier noise
     },
   },
 ];

@@ -5,11 +5,6 @@
     "baseUrl": ".", // Base directory to resolve non-relative module names
     "paths": {
       // Define path aliases for cleaner imports
-      "@controllers/*": ["src/controllers/*"],
-      "@services/*": ["src/services/*"],
-      "@models/*": ["src/models/*"],
-      "@middleware/*": ["src/middleware/*"],
-      "@routes/*": ["src/routes/*"],
       "@config/*": ["src/config/*"],
       "@utils/*": ["src/utils/*"],
       "@tests/*": ["tests/*"]
@@ -25,22 +20,10 @@
     "types": ["jest"]
   },
   "include": [
-    "src/server.ts",
-    "src/controllers/**/*.ts",
-    "src/models/**/*.ts",
-    "src/routes/**/*.ts",
-    "src/middleware/**/*.ts",
-    "src/config/**/*.ts",
-    "src/utils/**/*.ts",
+    "src/**/*.ts",
     "tests/**/*.ts",
-    "src/config/config.ts",
-    "src/utils/response-formatter.ts",
-    "src/utils/redis-client.ts",
-    "src/utils/logger.ts",
-    "src/utils/catch-async.ts",
-    "src/config/db.ts",
-    "src/utils/AppError.ts",
-    "src/routes/auth.routes.ts"
-, "__tests__/metric-category.test.ts", "__tests__/metric.test.ts", "__tests__/metric-settings.test.ts", "__tests__/metric-log.test.ts", "__tests__/auth.test.ts"  ],
+    "__tests__/**/*.ts",
+    "jest.setup.ts"
+  ],
   "exclude": ["node_modules", "dist", "src/migrations", "seeders"]
 }

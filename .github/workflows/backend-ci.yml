@@ -1,0 +1,276 @@
+# .github/workflows/backend-ci.yml
+
+name: Lakira Backend CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: 20
+
+  # If backend is in a subfolder (e.g. ./apps/backend), set this accordingly
+  # and uncomment the defaults.run section below.
+  BACKEND_WORKDIR: .
+
+defaults:
+  run:
+    working-directory: ${{ env.BACKEND_WORKDIR }}
+
+jobs:
+  checks:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+  tests:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+    needs: checks
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD_TEST }}
+          POSTGRES_DB: lakira_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgres://postgres:${{ secrets.POSTGRES_PASSWORD_TEST }}@postgres:5432/lakira_ci
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${{ secrets.JWT_SECRET_TEST }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run DB migrations (test)
+        run: npm run db:migrate:test
+        # If you only have `db:migrate`, use that instead:
+        # run: npm run db:migrate
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Run integration tests
+        run: npm run test:integration
+
+      # Optional: upload Jest JUnit reports if you configure them
+      # - name: Upload Jest test reports
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: backend-jest-reports
+      #     path: reports/jest
+
+  contract_local:
+    name: Contract Tests (Local Backend)
+    runs-on: ubuntu-latest
+    needs: tests
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD_TEST }}
+          POSTGRES_DB: lakira_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgres://postgres:${{ secrets.POSTGRES_PASSWORD_TEST }}@postgres:5432/lakira_ci
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${{ secrets.JWT_SECRET_TEST }}
+      PORT: 4000
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run DB migrations (contract)
+        run: npm run db:migrate:test
+        # Or a dedicated contract DB migration script if you add one
+        # run: npm run db:migrate:contract
+
+      - name: Start backend (test server)
+        run: |
+          npm run start:test &
+          echo $! > backend_pid
+
+      - name: Wait for backend health
+        run: npx wait-on http://localhost:4000/api/v1/health --timeout 120000
+
+      - name: Run contract tests (local)
+        run: npm run test:contract:local
+
+      - name: Stop backend server
+        if: always()
+        run: |
+          if [ -f backend_pid ]; then
+            kill "$(cat backend_pid)" || true
+          fi
+
+      - name: Upload Newman contract reports (local)
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-contract-local
+          path: documents/tests/4-contract-tests/postman-newman/reports/local
+
+  deploy_staging:
+    name: Deploy Backend to Staging
+    runs-on: ubuntu-latest
+    needs: contract_local
+    timeout-minutes: 15
+    env:
+      RENDER_STAGING_DEPLOY_HOOK_URL: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL }}
+      STAGING_HEALTH_URL: ${{ secrets.STAGING_HEALTH_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trigger staging deploy
+        run: |
+          if [ -z "$RENDER_STAGING_DEPLOY_HOOK_URL" ]; then
+            echo "RENDER_STAGING_DEPLOY_HOOK_URL secret is not configured."
+            exit 1
+          fi
+          curl -X POST "$RENDER_STAGING_DEPLOY_HOOK_URL"
+
+      - name: Wait for staging to become healthy
+        run: |
+          if [ -z "$STAGING_HEALTH_URL" ]; then
+            echo "STAGING_HEALTH_URL secret is not configured."
+            exit 1
+          fi
+          for i in {1..30}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$STAGING_HEALTH_URL" || echo "000")
+            if [ "$STATUS" -eq 200 ]; then
+              echo "Staging is healthy."
+              exit 0
+            fi
+
+            echo "Waiting for staging to become healthy (status: $STATUS)..."
+            sleep 10
+          done
+
+          echo "Staging did not become healthy in time."
+          exit 1
+
+  contract_staging:
+    name: Contract Tests (Staging Backend)
+    runs-on: ubuntu-latest
+    needs: deploy_staging
+    timeout-minutes: 20
+    env:
+      NODE_ENV: test
+      STAGING_BASE_URL: ${{ secrets.STAGING_BASE_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run contract tests (staging)
+        env:
+          STAGING_BASE_URL: ${{ secrets.STAGING_BASE_URL }}
+        run: npm run test:contract:staging
+
+      - name: Upload Newman contract reports (staging)
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-contract-staging
+          path: documents/tests/4-contract-tests/postman-newman/reports/staging

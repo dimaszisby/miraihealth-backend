@@ -10,9 +10,6 @@
       "@/*": ["./*"],
       "@utils/*": ["./utils/*"],
       "@config/*": ["./config/*"],
-      "@models/*": ["./models/*"],
-      "@controllers/*": ["./controllers/*"],
-      "@middleware/*": ["./middleware/*"]
     },
     "typeRoots": [
       "./node_modules/@types",
