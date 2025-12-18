@@ -38,6 +38,11 @@ function loadValidatedEnv() {
 
 const env = loadValidatedEnv();
 
+const buildSslOptions = () =>
+  env.DB_SSL_REJECT_UNAUTHORIZED
+    ? { require: true, rejectUnauthorized: env.DB_SSL_REJECT_UNAUTHORIZED }
+    : false;
+
 const config = {
   development: {
     url: env.DEVELOPMENT_DATABASE_URL,
@@ -66,7 +71,7 @@ const config = {
     dialect: "postgres",
     logging: false,
     dialectOptions: {
-      ssl: { require: true, rejectUnauthorized: env.DB_SSL_REJECT_UNAUTHORIZED },
+      ssl: buildSslOptions(),
     },
   },
   production: {
@@ -74,7 +79,7 @@ const config = {
     dialect: "postgres",
     logging: env.DB_LOGGING === "true" ? console.log : false,
     dialectOptions: {
-      ssl: { require: true, rejectUnauthorized: env.DB_SSL_REJECT_UNAUTHORIZED },
+      ssl: buildSslOptions(),
     },
   },
 };
