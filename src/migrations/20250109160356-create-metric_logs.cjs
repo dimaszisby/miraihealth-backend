@@ -41,22 +41,40 @@ module.exports = {
               defaultValue: "manual",
             },
             logged_at: {
-              type: Sequelize.DATE,
+              type: "TIMESTAMP WITH TIME ZONE",
               allowNull: false,
               defaultValue: Sequelize.literal("NOW()"),
             },
             created_at: {
-              type: Sequelize.DATE,
+              type: "TIMESTAMP WITH TIME ZONE",
               allowNull: false,
               defaultValue: Sequelize.literal("NOW()"),
             },
             updated_at: {
-              type: Sequelize.DATE,
+              type: "TIMESTAMP WITH TIME ZONE",
               allowNull: false,
               defaultValue: Sequelize.literal("NOW()"),
             },
           },
           { transaction }
+        );
+
+        // Newly added unique constraint to prevent duplicate logs for the same metric at the same time
+        await queryInterface.addConstraint(
+          { schema: "public", tableName: "metric_logs" },
+          {
+            fields: ["metric_id", "logged_at"],
+            type: "unique",
+            name: "uq_metric_logs_metric_id_logged_at",
+            transaction,
+          }
+        );
+
+        // Newly added index for performance optimization
+        await queryInterface.addIndex(
+          { schema: "public", tableName: "metric_logs" },
+          ["metric_id", "logged_at"],
+          { name: "ix_metric_logs_metric_id_logged_at", transaction }
         );
 
         console.log("[DB PROCESS] Metric Logs table created successfully.");
