@@ -20,6 +20,9 @@ export const zDateOptional = z
   .refine((date) => date === undefined || !isNaN(date.getTime()), {
     message: ZodMessages.common.invalidDate,
   });
+export const zISODateTime = z.string().datetime({ offset: true });
+export const zISODate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+export const zISOTime = z.string().regex(/^\d{2}:\d{2}:\d{2}$/);
 
 /**
  * export const zMetricCategoryId = zUUID.optional().nullable();
@@ -69,16 +72,18 @@ export const zMetricName = z
 export const zMetricCategoryId = z
   .string()
   .uuid({ message: ZodMessages.metric.invalidCategoryId })
+  .nullable()
   .optional();
 export const zMetricOriginalId = z
   .string()
   .uuid({ message: ZodMessages.metric.invalidOriginalMetricId })
+  .nullable()
   .optional();
 export const zMetricDescription = z.string();
 export const zMetricDefaultUnit = z
   .string()
   .min(zMetricUnitRule.min, { message: ZodMessages.metric.unitRequired });
-export const zMetricIsPublic = z.boolean().optional().default(true);
+export const zMetricIsPublic = z.boolean().optional().default(false);
 export const zMetricDeletedAt = z.date().optional();
 
 /**
@@ -107,12 +112,14 @@ export const zAlertThresholds = z
   .default(80);
 export const zDisplayOptions = z
   .object({
+    showOnDashboard: z.boolean().optional().default(true),
     priority: z.number().optional().default(1),
     chartType: z.string().optional().default("line"),
     color: z.string().optional().default("#E897A3"),
   })
   .optional()
   .default({
+    showOnDashboard: true,
     priority: 1,
     chartType: "line",
     color: "#E897A3",
