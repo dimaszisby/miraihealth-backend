@@ -1,11 +1,11 @@
 // src/utils/mappers/metric-log.mapper.ts
 
-import { MetricLog } from "@/models/metric-log.model";
+import { MetricLog } from "@/features/metric-log/infrastructure/persistence/models/metric-log.sequelize";
 import { MetricLogDomain } from "@/types/domain/metric-log.domain";
 import {
   MetricLogListResponseDTO,
   MetricLogResponseDTO,
-} from "@/types/dtos/metric-log.dto";
+} from "@/features/metric-log/infrastructure/http/dto";
 
 /**
  * * Sequelize → Domain Mapper

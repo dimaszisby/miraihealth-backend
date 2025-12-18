@@ -1,8 +1,13 @@
-import { Metric } from "@/models/metric.model";
+import { Metric } from "@/features/metric/infrastructure/persistence/models/metric.sequelize";
 import { MetricLibraryDomain } from "@/types/domain/metric.domain";
 import { MetricCategory } from "@/features/metric-category/infrastructure/persistence/models/metric-category.sequelize";
-import { MetricSettings } from "@/models/metric-settings.model";
-import { MetricLog } from "@/models/metric-log.model";
+import {
+  toDomain as toMetricCategoryDomain,
+  toResponseDTO as toMetricCategoryResponseDTO,
+  MetricCategoryRow,
+} from "@/features/metric-category/infrastructure/mappers/MetricCategoryMapper";
+import { MetricSettings } from "@/features/metric-settings/infrastructure/persistence/models/metric-settings.sequelize";
+import { MetricLog } from "@/features/metric-log/infrastructure/persistence/models/metric-log.sequelize";
 import {
   MetricDomain,
   MetricDomainExtended,
@@ -15,14 +20,36 @@ import {
 } from "@/types/dtos/metric.dto";
 import logger from "../logger";
 import AppError from "@/utils/AppError";
-import { toMetricSettingsResponseDTO } from "./metric-settings.mapper";
-import { toMetricLogResponseDTO } from "./metric-log.mapper";
-import { toDomainMetricSettings } from "./metric-settings.mapper";
-import { toDomainMetricLog } from "./metric-log.mapper";
 import {
-  toDomainLegacy,
-  toResponseDTOLegacy as toResponseDTOLegacy,
-} from "@/features/metric-category/legacies/MetricCategoryLegacy.mapper";
+  toMetricSettingsResponseDTO,
+  toDomainMetricSettings,
+} from "@/features/metric-settings/infrastructure/mappers/MetricSettingsMapper";
+import { toMetricLogResponseDTO } from "./metric-log.mapper";
+import { toDomainMetricLog } from "./metric-log.mapper";
+
+const toCategoryRow = (category: Partial<MetricCategoryRow>): MetricCategoryRow => ({
+  id: category.id ?? "",
+  userId: category.userId ?? "",
+  name: category.name ?? "",
+  color: category.color ?? "#E897A3",
+  icon: category.icon ?? "📁",
+  createdAt: category.createdAt ? new Date(category.createdAt) : new Date(0),
+  updatedAt: category.updatedAt
+    ? new Date(category.updatedAt)
+    : category.createdAt
+    ? new Date(category.createdAt)
+    : new Date(0),
+  metricCount: Number(category.metricCount ?? 0),
+});
+
+const toCategoryInfo = (
+  category: ReturnType<typeof toMetricCategoryDomain>
+): MetricLibraryCategoryInfoDomain => ({
+  id: category.id,
+  name: category.name,
+  color: category.color,
+  icon: category.icon,
+});
 
 const validateUserId = (userId: string | null | undefined) => {
   if (!userId) {
@@ -112,7 +139,12 @@ export const toExtendedMetricDomain = (
 
   const rawCategory =
     (metric as any).MetricCategory ?? (metric as any).category ?? null;
-  const categoryDomain = rawCategory ? toDomainLegacy(rawCategory) : null;
+  const categoryDomain = rawCategory
+    ? toMetricCategoryDomain(toCategoryRow(rawCategory))
+    : null;
+  const categorySummary = categoryDomain
+    ? toCategoryInfo(categoryDomain)
+    : null;
 
   const rawSettings =
     (metric as any).MetricSettings ?? (metric as any).settings ?? null;
@@ -125,7 +157,7 @@ export const toExtendedMetricDomain = (
 
   return {
     ...domain,
-    category: categoryDomain,
+    category: categorySummary,
     settings: settingsDomain,
     logs: logsDomain,
   };
@@ -169,7 +201,11 @@ export const toUserMetricDetailResponseDTO = (
   updatedAt: metric.updatedAt.toISOString(),
 
   // Map associated
-  category: metric.category ? toResponseDTOLegacy(metric.category) : null,
+    category: metric.category
+      ? toMetricCategoryResponseDTO(
+          toMetricCategoryDomain(toCategoryRow(metric.category as any))
+        )
+      : null,
   settings: metric.settings
     ? toMetricSettingsResponseDTO(metric.settings)
     : null,

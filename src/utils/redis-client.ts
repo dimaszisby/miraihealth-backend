@@ -16,10 +16,12 @@ const redisConfig = {
 // Create Redis Client
 const redisClient: RedisClientType = createClient(redisConfig);
 
+const isTestEnv = env.NODE_ENV === "test";
+
 // Gracefully handle Redis errors
 redisClient.on("error", (err: Error) => {
   logger.error("[REDIS - ERROR] Redis Connection Error:", err);
-  if (env.REDIS_REQUIRED) {
+  if (env.REDIS_REQUIRED && !isTestEnv) {
     process.exit(1);
   }
 });
@@ -33,8 +35,7 @@ redisClient.on("end", () => logger.warn("[REDIS] Redis connection closed."));
 // Ensure connection before exporting
 const connectRedis = async () => {
   try {
-    const shouldConnect =
-      env.REDIS_REQUIRED || env.NODE_ENV !== "test";
+    const shouldConnect = !isTestEnv;
 
     if (shouldConnect) {
       await redisClient.connect();
