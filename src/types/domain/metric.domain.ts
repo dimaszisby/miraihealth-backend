@@ -6,7 +6,6 @@
  * Domain models are often immutable.
  */
 
-import { MetricCategoryDomain } from "../../features/metric-category/legacies/MetricCategoryLegacy.domain";
 import { MetricLogDomain } from "./metric-log.domain";
 import { MetricSettingsDomain } from "./metric-settings.domain";
 
@@ -190,10 +189,10 @@ export type MetricLibraryListDomain = MetricLibraryDomain[];
  */
 export interface MetricDomainExtended extends MetricDomain {
   /**
-   * @property {MetricCategoryDomain} [category] - The associated metric category domain object, if loaded.
+   * @property {MetricLibraryCategoryInfoDomain} [category] - The associated metric category domain object, if loaded.
    * @readonly
    */
-  readonly category?: MetricCategoryDomain | null;
+  readonly category?: MetricLibraryCategoryInfoDomain | null;
 
   /**
    * @property {MetricSettingsDomain} [settings] - The associated metric settings domain object, if loaded.
