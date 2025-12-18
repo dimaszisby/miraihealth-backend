@@ -17,6 +17,9 @@ const deleteMetricExecute = jest.fn<(payload: any) => Promise<any>>();
 const getMetricDetailExecute = jest.fn<(payload: any) => Promise<any>>();
 const generateDummyMetricsExecute = jest.fn<(payload: any) => Promise<any>>();
 
+const userId = "00000000-0000-0000-0000-000000000001";
+const metricId = "11111111-1111-1111-1111-111111111111";
+
 const buildFeatureMocks = (): MetricFeature =>
   ({
     createMetric: { execute: createMetricExecute },
@@ -71,7 +74,7 @@ describe("Metric HTTP controller", () => {
     createMetricExecute.mockResolvedValue(metric);
 
     const req = {
-      user: { id: "user-1" },
+      user: { id: userId },
       body: {
         name: "Steps",
         defaultUnit: "steps",
@@ -83,7 +86,7 @@ describe("Metric HTTP controller", () => {
     await createMetric(req, response, next);
 
     expect(createMetricExecute).toHaveBeenCalledWith({
-      userId: "user-1",
+      userId,
       name: "Steps",
       defaultUnit: "steps",
       isPublic: true,
@@ -115,8 +118,8 @@ describe("Metric HTTP controller", () => {
     getMetricDetailExecute.mockResolvedValue(metric);
 
     const req = {
-      user: { id: "user-1" },
-      params: { id: "metric-1" },
+      user: { id: userId },
+      params: { id: metricId },
       query: { include: "full", logsLimit: 10 },
     } as unknown as AuthRequest;
 
@@ -124,8 +127,8 @@ describe("Metric HTTP controller", () => {
     await getUserDetailMetricById(req, response, next);
 
     expect(getMetricDetailExecute).toHaveBeenCalledWith({
-      userId: "user-1",
-      metricId: "metric-1",
+      userId,
+      metricId,
       includes: ["settings", "category", "logs"],
       logsLimit: 10,
     });
@@ -154,16 +157,16 @@ describe("Metric HTTP controller", () => {
     deleteMetricExecute.mockResolvedValue(metric);
 
     const req = {
-      user: { id: "user-1" },
-      params: { id: "metric-1" },
+      user: { id: userId },
+      params: { id: metricId },
     } as unknown as AuthRequest;
 
     const response = res();
     await deleteMetric(req, response, next);
 
     expect(deleteMetricExecute).toHaveBeenCalledWith({
-      userId: "user-1",
-      metricId: "metric-1",
+      userId,
+      metricId,
     });
     expect(response.status).toHaveBeenCalledWith(200);
     expect(response.json).toHaveBeenCalledWith(

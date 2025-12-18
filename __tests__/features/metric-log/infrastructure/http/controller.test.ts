@@ -12,6 +12,9 @@ const deleteLogExecute = jest.fn<(args: any) => Promise<any>>();
 const getStatsExecute = jest.fn<(args: any) => Promise<any>>();
 const generateDummyExecute = jest.fn<(args: any) => Promise<any>>();
 const listLogsExecute = jest.fn<(args: ListOpts) => Promise<ListLogsResult>>();
+const userId = "00000000-0000-0000-0000-000000000001";
+const metricId = "11111111-1111-1111-1111-111111111111";
+const logId = "22222222-2222-2222-2222-222222222222";
 
 const makeRes = () => {
   const res: any = {
@@ -60,12 +63,12 @@ describe("Metric log controller", () => {
 
   it("creates metric log through feature use case", async () => {
     const req: any = {
-      user: { id: "user-1" },
-      body: { metricId: "metric-1", logValue: 10, type: "manual" },
+      user: { id: userId },
+      body: { metricId, logValue: 10, type: "manual" },
     };
     const log = {
-      id: "log-1",
-      metricId: "metric-1",
+      id: logId,
+      metricId,
       logValue: 10,
       type: "manual",
       loggedAt: new Date(),
@@ -78,8 +81,8 @@ describe("Metric log controller", () => {
     await createMetricLog(req, res, jest.fn());
 
     expect(createLogExecute).toHaveBeenCalledWith({
-      userId: "user-1",
-      metricId: "metric-1",
+      userId,
+      metricId,
       logValue: 10,
       type: "manual",
       loggedAt: undefined,
@@ -89,8 +92,8 @@ describe("Metric log controller", () => {
 
   it("fetches metric log by id", async () => {
     const log = {
-      id: "log-1",
-      metricId: "metric-1",
+      id: logId,
+      metricId,
       logValue: 10,
       type: "manual",
       loggedAt: new Date(),
@@ -99,30 +102,30 @@ describe("Metric log controller", () => {
     };
     getLogExecute.mockResolvedValue(log as any);
     const req: any = {
-      user: { id: "user-1" },
-      params: { id: "log-1" },
-      query: { metricId: "metric-1" },
+      user: { id: userId },
+      params: { id: logId },
+      query: { metricId },
     };
 
     const res = makeRes();
     await getLogById(req, res, jest.fn());
 
     expect(getLogExecute).toHaveBeenCalledWith({
-      userId: "user-1",
-      logId: "log-1",
+      userId,
+      logId,
     });
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
   it("returns aggregated stats via feature", async () => {
     getStatsExecute.mockResolvedValue({ average: 0, min: 0, max: 0 } as any);
-    const req: any = { user: { id: "user-1" }, query: {} };
+    const req: any = { user: { id: userId }, query: {} };
 
     const res = makeRes();
     await getAggregatedStats(req, res, jest.fn());
 
     expect(getStatsExecute).toHaveBeenCalledWith({
-      userId: "user-1",
+      userId,
       metricId: undefined,
     });
     expect(res.status).toHaveBeenCalledWith(200);
@@ -130,12 +133,12 @@ describe("Metric log controller", () => {
 
   it("lists logs via feature query", async () => {
     const req: any = {
-      user: { id: "user-1" },
+      user: { id: userId },
       query: {
         limit: "10",
         sort: "-createdAt",
         includeTotal: "true",
-        ["filter[metricId]"]: "11111111-1111-1111-1111-111111111111",
+        ["filter[metricId]"]: metricId,
       },
     };
     const res = makeRes();
@@ -143,11 +146,11 @@ describe("Metric log controller", () => {
     await getUserLogLibrariesViaCursor(req, res, jest.fn());
 
     expect(listLogsExecute).toHaveBeenCalledWith({
-      userId: "user-1",
+      userId,
       limit: 10,
       sort: "-createdAt",
       q: undefined,
-      filter: { metricId: "11111111-1111-1111-1111-111111111111" },
+      filter: { metricId },
       after: undefined,
       includeTotal: true,
     });
@@ -157,16 +160,16 @@ describe("Metric log controller", () => {
   it("generates dummy logs via feature", async () => {
     generateDummyExecute.mockResolvedValue([] as any);
     const req: any = {
-      user: { id: "user-1" },
-      body: { metricId: "metric-1", count: 5 },
+      user: { id: userId },
+      body: { metricId, count: 5 },
     };
 
     const res = makeRes();
     await generateDummyMetricLogs(req, res, jest.fn());
 
     expect(generateDummyExecute).toHaveBeenCalledWith({
-      userId: "user-1",
-      metricId: "metric-1",
+      userId,
+      metricId,
       count: 5,
     });
     expect(res.status).toHaveBeenCalledWith(201);

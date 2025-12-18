@@ -1,6 +1,8 @@
 import { jest } from "@jest/globals";
-import { getDashboardVisualization } from "@/features/analytics/application/queries/getDashboardVisualization";
-import { sequelize } from "@/models";
+import { GetDashboardVisualization } from "@/features/analytics/application/queries/GetDashboardVisualization";
+import { VisualizationReadRepoSequelize } from "@/features/analytics/infrastructure/persistence/VisualizationReadRepoSequelize";
+import type { VisualizationCachePort } from "@/features/analytics/application/ports/VisualizationCachePort";
+import { sequelize } from "@/infrastructure/db/models";
 
 const defaultInput = {
   userId: "user-123",
@@ -12,7 +14,27 @@ const defaultInput = {
   limit: 12,
 };
 
-describe("getDashboardVisualization", () => {
+const buildService = () => {
+  const cache: VisualizationCachePort = {
+    async getSingleVisualization() {
+      return null;
+    },
+    async setSingleVisualization() {
+      // no-op for tests
+    },
+    async getDashboardVisualization() {
+      return null;
+    },
+    async setDashboardVisualization() {
+      // no-op for tests
+    },
+  };
+  const repo = new VisualizationReadRepoSequelize(cache);
+  const service = new GetDashboardVisualization(repo);
+  return { service };
+};
+
+describe("GetDashboardVisualization service", () => {
   const querySpy = jest.spyOn(
     sequelize,
     "query"
@@ -69,7 +91,8 @@ describe("getDashboardVisualization", () => {
         },
       ]);
 
-    const result = await getDashboardVisualization(defaultInput);
+    const { service } = buildService();
+    const result = await service.execute(defaultInput);
     expect(result.meta.totalMetrics).toBe(1);
     expect(result.meta.fallbackMetrics).toBe(1);
     expect(result.items).toHaveLength(1);
@@ -122,7 +145,8 @@ describe("getDashboardVisualization", () => {
         },
       ]);
 
-    const first = await getDashboardVisualization(defaultInput);
+    const { service } = buildService();
+    const first = await service.execute(defaultInput);
     expect(first.sync.etagSeed).toBeDefined();
 
     querySpy.mockReset();
@@ -163,7 +187,7 @@ describe("getDashboardVisualization", () => {
         },
       ]);
 
-    const second = await getDashboardVisualization(defaultInput);
+    const second = await service.execute(defaultInput);
     expect(second.sync.etagSeed).toBeDefined();
     expect(second.sync.etagSeed).not.toEqual(first.sync.etagSeed);
     expect(second.meta.totalMetrics).toBe(1);

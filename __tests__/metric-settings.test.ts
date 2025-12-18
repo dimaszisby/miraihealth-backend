@@ -2,7 +2,6 @@ import {
   api,
   authHeader,
   createMetric,
-  createMetricSettings,
   createTestUser,
 } from "./helpers/test-utils";
 
@@ -31,6 +30,12 @@ describe("Metric Settings API", () => {
   });
 
   it("creates metric settings for a metric", async () => {
+    const deleteRes = await api
+      .delete(`/api/v1/metric-settings/${baseSettingsId}`)
+      .set("Authorization", authHeader(token));
+
+    expect(deleteRes.status).toBe(200);
+
     const res = await api
       .post("/api/v1/metric-settings")
       .set("Authorization", authHeader(token))
@@ -56,12 +61,6 @@ describe("Metric Settings API", () => {
   });
 
   it("lists settings via cursor", async () => {
-    await createMetricSettings(token, metricId, {
-      goalEnabled: true,
-      goalType: "incremental",
-      goalValue: 5,
-    });
-
     const res = await api
       .get("/api/v1/metric-settings")
       .set("Authorization", authHeader(token))
@@ -105,19 +104,36 @@ describe("Metric Settings API", () => {
   });
 
   it("deletes metric settings", async () => {
-    const { settings } = await createMetricSettings(token, metricId, {
-      goalEnabled: true,
-      goalType: "incremental",
-      goalValue: 12,
-    });
-
     const res = await api
-      .delete(`/api/v1/metric-settings/${settings.id}`)
+      .delete(`/api/v1/metric-settings/${baseSettingsId}`)
       .set("Authorization", authHeader(token))
       .query({ metricId });
 
     expect(res.status).toBe(200);
-    expect(res.body.message).toBe("Metric Settings deleted successfully");
+    expect(res.body.message).toBe("Metric settings deleted successfully");
+  });
+
+  it("rejects duplicate metric settings for the same metric", async () => {
+    const res = await api
+      .post("/api/v1/metric-settings")
+      .set("Authorization", authHeader(token))
+      .send({
+        metricId,
+        goalEnabled: true,
+        goalType: "cumulative",
+        goalValue: 42,
+        timeFrameEnabled: false,
+        alertEnabled: false,
+        displayOptions: {
+          showOnDashboard: true,
+          priority: 1,
+          chartType: "line",
+          color: "#E897A3",
+        },
+      });
+
+    expect(res.status).toBe(409);
+    expect(res.body.status).toBe("fail");
   });
 
   it("toggles goal achievement", async () => {
@@ -145,7 +161,7 @@ describe("Metric Settings API", () => {
       });
 
     expect(res.status).toBe(200);
-    expect(res.body.data.displayOptions).toMatchObject({
+    expect(res.body.data).toMatchObject({
       showOnDashboard: false,
       priority: 3,
       color: "#654321",
