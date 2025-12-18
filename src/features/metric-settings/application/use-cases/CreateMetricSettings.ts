@@ -25,6 +25,11 @@ export class CreateMetricSettings {
 
     await this.metricAccess.ensureMetricOwnership(userId, metricId);
 
+    const existing = await this.repo.findByMetricId(metricId);
+    if (existing) {
+      throw new AppError("Metric settings already exist for this metric", 409);
+    }
+
     const created = await this.repo.create({
       metricId,
       isActive: input.isActive ?? true,

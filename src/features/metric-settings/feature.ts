@@ -2,12 +2,12 @@ import { MetricSettingsRepositorySequelize } from "./infrastructure/persistence/
 import { MetricSettingsCacheInvalidator } from "./infrastructure/providers/MetricSettingsCacheInvalidator";
 import { MetricAccessSequelize } from "./infrastructure/providers/MetricAccessSequelize";
 import { CreateMetricSettings } from "./application/use-cases/CreateMetricSettings";
-import { GetMetricSettings } from "./application/use-cases/GetMetricSettings";
+import { GetMetricSettings } from "./application/queries/GetMetricSettings";
 import { UpdateMetricSettings } from "./application/use-cases/UpdateMetricSettings";
 import { DeleteMetricSettings } from "./application/use-cases/DeleteMetricSettings";
 import { UpdateGoalAchievement } from "./application/use-cases/UpdateGoalAchievement";
 import { UpdateDisplayOptions } from "./application/use-cases/UpdateDisplayOptions";
-import { ListMetricSettingsViaCursor } from "./application/use-cases/ListMetricSettingsViaCursor";
+import { ListMetricSettingsViaCursor } from "./application/queries/ListMetricSettingsViaCursor";
 
 export const buildMetricSettingsFeature = () => {
   const repo = new MetricSettingsRepositorySequelize();

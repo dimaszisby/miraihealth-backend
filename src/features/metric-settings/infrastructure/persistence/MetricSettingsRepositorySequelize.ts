@@ -10,7 +10,7 @@ import {
   SortField,
   SortParam,
 } from "../../domain/repositories/MetricSettingsRepository";
-import { Op, OrderItem, WhereOptions } from "sequelize";
+import { Op, OrderItem, UniqueConstraintError, WhereOptions } from "sequelize";
 
 const includeMetric = () => [
   {
@@ -51,12 +51,30 @@ export class MetricSettingsRepositorySequelize
   implements MetricSettingsRepository
 {
   async create(data: CreateMetricSettingsDTO): Promise<MetricSettings> {
-    const created = await models.MetricSettings.create({
-      ...data,
-      displayOptions: data.displayOptions,
+    try {
+      const created = await models.MetricSettings.create({
+        ...data,
+        displayOptions: data.displayOptions,
+      });
+      await created.reload({ include: includeMetric() });
+      return toEntity(created);
+    } catch (err) {
+      if (
+        err instanceof UniqueConstraintError &&
+        err.errors.some((e) => e.path === "metric_id" || e.path === "metricId")
+      ) {
+        throw new AppError("Metric settings already exist for this metric", 409);
+      }
+      throw err;
+    }
+  }
+
+  async findByMetricId(metricId: string): Promise<MetricSettings | null> {
+    const row = await models.MetricSettings.findOne({
+      where: { metricId },
+      include: includeMetric(),
     });
-    await created.reload({ include: includeMetric() });
-    return toEntity(created);
+    return row ? toEntity(row) : null;
   }
 
   async findById(
