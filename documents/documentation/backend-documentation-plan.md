@@ -57,3 +57,4 @@
     *   The roles and permissions
     *   The authentication middleware
 10. **Organize the documentation:** I will organize the documentation by category (e.g., API, DB, Domain, DTO).
+11. **Shared Middleware Reference:** Link to `documents/development/architecture/feature-vertical-slice-migration/references/shared-middleware.md` so engineers know where cross-cutting middleware (auth guards, rate limiters, validation, cache, error handling) lives.

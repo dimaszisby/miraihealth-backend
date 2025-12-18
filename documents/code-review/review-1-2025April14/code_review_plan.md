@@ -5,8 +5,8 @@
 *   **Goal:** Identify potential security vulnerabilities, including OWASP Top 10, injection flaws, and authentication/authorization issues.
 *   **Tools:**
     *   `search_files`: Use regex patterns to search for common security vulnerabilities (e.g., SQL injection, XSS).
-    *   `read_file`: Examine authentication and authorization logic in `src/middleware/auth-middleware.ts` and `src/controllers/auth.controller.ts`.
-    *   `read_file`: Review input validation in `src/middleware/validate.ts` and related validator files in `src/validators/`.
+    *   `read_file`: Examine authentication and authorization logic in `src/features/auth/infrastructure/http/authMiddleware.ts` (re-exported via `src/features/auth/infrastructure/http/authMiddleware.ts`) and the feature controllers.
+    *   `read_file`: Review input validation in `src/shared/middleware/validation.ts` and related validator files in `src/validators/`.
 *   **Focus Areas:**
     *   Authentication and authorization mechanisms.
     *   Input validation and sanitization.
@@ -18,8 +18,8 @@
 *   **Goal:** Identify potential performance bottlenecks, including inefficient algorithms, resource leaks, and excessive I/O.
 *   **Tools:**
     *   `search_files`: Search for potentially inefficient algorithms or resource-intensive operations.
-    *   `read_file`: Examine database queries in `src/services/` and `src/models/`.
-    *   `read_file`: Review caching mechanisms in `src/middleware/cache-middleware.ts` and `src/utils/redis-client.ts`.
+    *   `read_file`: Examine database queries in `src/services/` and the feature-owned ORM files (bootstrapped via `src/infrastructure/db/models.ts`).
+    *   `read_file`: Review caching mechanisms in `src/shared/middleware/cache.ts` and `src/utils/redis-client.ts`.
 *   **Focus Areas:**
     *   Database queries and interactions.
     *   Caching strategies.
@@ -61,7 +61,7 @@
 
 *   **Goal:** Identify inadequate or incorrect error handling.
 *   **Tools:**
-    *   `read_file`: Examine error handling logic in `src/middleware/error-handler.ts` and throughout the codebase.
+    *   `read_file`: Examine error handling logic in `src/shared/middleware/error.ts` and throughout the codebase.
 *   **Focus Areas:**
     *   Error handling in critical sections of code.
     *   Logging of errors and exceptions.

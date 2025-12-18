@@ -96,12 +96,12 @@ It assumes:
 ### 4.1 Route Coverage Checklist
 
 For each route module:
-- `src/routes/auth.routes.ts`
+- `src/features/auth/infrastructure/http/router.ts`
 - `src/routes/metric.routes.ts`
 - `src/routes/metric-settings.routes.ts`
 - `src/routes/metric-log.routes.ts`
-- `src/features/metric-category/infrastructure/http/routes.ts`
-- `src/features/analytics/presentation/http/visualization.router.ts`
+- `src/features/metric-category/infrastructure/http/router.ts`
+- `src/features/analytics/infrastructure/http/visualization.router.ts`
 
 Plan:
 - Map each Express route (method + path) to an OpenAPI path object:
@@ -304,7 +304,7 @@ This plan should be kept up to date as the API surface and tooling evolve. When 
   - `scripts/generate-openapi.ts` uses `getOpenApiDocumentation()` and writes to `documents/openapi/lakira-backend-openapi.json`.
   - NPM script `docs:openapi:generate` added and executed successfully.
 - Auth route alignment in OpenAPI:
-  - `/auth/profile` (GET and PUT) documented to match `src/routes/auth.routes.ts`.
+  - `/auth/profile` (GET and PUT) documented to match `src/features/auth/infrastructure/http/router.ts`.
   - `/auth/logout` documented (secured) using the shared success response schema.
 - Documentation exposure:
   - Swagger UI available at `/api/v1/docs`.
@@ -326,4 +326,3 @@ This plan should be kept up to date as the API surface and tooling evolve. When 
   - Optionally add an OpenAPI validation/lint step.
 - Optional client/codegen integration:
   - Use the `/api/v1/docs/openapi.json` endpoint as input for TypeScript client generation (e.g., `openapi-typescript`, `orval`) for frontend or other consumers.
-

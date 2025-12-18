@@ -4,8 +4,8 @@ Based on the code review, here are some performance recommendations:
 
 The following uses of `.map` are potential performance bottlenecks if the number of metrics or metric logs is very large:
 
-*   `src/services/metric.service.ts`: `metrics.map((metric: typeof Metric) => { ... })`
-*   `src/services/metric-log.service.ts`: `logs.map((log: typeof MetricLog) => log.logValue)`
+*   `src/features/metric/infrastructure/http/controller.ts`: `page.items.map((metric) => toMetricLibraryResponseDTO(metric))`
+*   `src/features/metric-log/application/queries/listMetricLogs.ts`: `rows.map(toDomainMetricLog)`
 *   `src/controllers/trend.controller.ts`: `logs.map((log) => ({ date: log.createdAt, ... }))`
 *   `src/utils/mappers/metric-log.mapper.ts`: `logs.map(toDomainMetricLog)` and `logs.map(toMetricLogResponseDTO)`
 *   `src/utils/mappers/metric.mapper.ts`: `metric.MetricLogs.map(toDomainMetricLog)` and `metric.logs.map(toMetricLogResponseDTO)`

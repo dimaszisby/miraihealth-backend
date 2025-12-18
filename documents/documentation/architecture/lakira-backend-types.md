@@ -336,10 +336,10 @@ export const generateDummyMetricsSchema = z.object({
 });
 ```
 
-## src/types/api/zod-user.schema.ts
+## src/features/auth/infrastructure/http/schema.zod.ts
 
 ```typescript
-// src/types/api/zod-user.schema.ts
+// src/features/auth/infrastructure/http/schema.zod.ts
 
 import { z } from "zod";
 import { ZodMessages } from "@/constants/zod-messages";
@@ -395,7 +395,7 @@ export const updateUserSchema = z.object({
 
 export type UpdateUserRequestDTO = z.infer<typeof updateUserSchema.shape.body>;
 
-// src/types/api/zod-user.schema.ts
+// src/features/auth/infrastructure/http/schema.zod.ts
 
 // import { z } from "zod";
 
@@ -1861,13 +1861,13 @@ export type GenerateDummyMetricsRequestDTO = z.infer<
 >;
 ```
 
-## src/types/dtos/user.dto.ts
+## src/features/auth/infrastructure/http/dto.ts
 
 ```typescript
-// src/types/dtos/user.dto.ts
+// src/features/auth/infrastructure/http/dto.ts
 
 /**
- * @file src/types/dtos/user.dto.ts
+ * @file src/features/auth/infrastructure/http/dto.ts
  * @description Defines the Data Transfer Objects (DTOs) for User-related API contracts.
  * These interfaces and types are used for incoming and outgoing API requests and responses,
  * defining the structure of data exchanged between the client and server.

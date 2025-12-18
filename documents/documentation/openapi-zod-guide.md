@@ -51,7 +51,7 @@ Organize your Zod schemas in a dedicated directory, e.g., `src/types/api/`. Each
 
 Use `z.object()` to define schemas for request bodies, query parameters, path parameters, and headers.
 
-**Example: `src/types/api/zod-user.schema.ts`**
+**Example: `src/features/auth/infrastructure/http/schema.zod.ts`**
 ```typescript
 import { z } from 'zod';
 import { ZOD_MESSAGES } from '../../constants/zod-messages'; // Assuming this file exists
@@ -99,7 +99,7 @@ export const ZOD_MESSAGES = {
 
 Define schemas for the structure of your API responses. These can be used for both documentation and potentially for client-side validation or type generation.
 
-**Example: `src/types/api/zod-user.schema.ts` (continued)**
+**Example: `src/features/auth/infrastructure/http/schema.zod.ts` (continued)**
 ```typescript
 // ... (previous schemas)
 
@@ -229,9 +229,9 @@ import {
   UserResponseSchema,
   ListUsersQuerySchema,
   ListUsersResponseSchema,
-} from '../types/api/zod-user.schema';
+} from '../types/api/auth schema';
 import { validate } from '../middleware/validate'; // Custom validation middleware
-import { AuthHeadersSchema } from '../types/api/zod-user.schema'; // For security
+import { AuthHeadersSchema } from '../types/api/auth schema'; // For security
 
 const router = Router();
 
@@ -351,11 +351,11 @@ export default router;
 
 Create a generic middleware to validate incoming requests against Zod schemas.
 
-**`src/middleware/validate.ts`**
+**`src/shared/middleware/validation.ts`**
 ```typescript
 import { Request, Response, NextFunction } from 'express';
 import { AnyZodObject, ZodError, z } from 'zod';
-import { AppError } from '../utils/AppError'; // Custom error class
+import AppError from '@/utils/AppError'; // Custom error class
 
 interface ValidationSchemas {
   body?: AnyZodObject;
@@ -422,10 +422,10 @@ export class AppError extends Error {
 
 ### 4.2 Centralized Error Handling Middleware
 
-**`src/middleware/error-handler.ts`**
+**`src/shared/middleware/error.ts`**
 ```typescript
 import { Request, Response, NextFunction } from 'express';
-import { AppError } from '../utils/AppError';
+import AppError from '@/utils/AppError';
 
 export const errorHandler = (
   err: Error,

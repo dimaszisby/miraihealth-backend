@@ -1,7 +1,7 @@
 # Feature Boundary Rules
 - Timestamp: 2025-12-14T18:13:00+07:00
 - Owners: Platform ENG (feature-slice migration pod)
-- Checklist Link: [Consistency Checklist v2](./review-20251214/lakira-be-feature-slice-migration-consistency-checklist-v2.md)
+- Checklist Link: [Consistency Checklist v2](../reviews/2025-12-14/lakira-be-feature-slice-migration-consistency-checklist-v2.md)
 
 ## Purpose
 This note captures the non-negotiable boundaries every feature slice must honor while the vertical-slice migration is underway. The consistency checklist references these rules during code reviews; keeping them in a standalone doc makes it easier for new contributors (or external auditors) to understand why a change request is blocked.
@@ -17,10 +17,10 @@ This note captures the non-negotiable boundaries every feature slice must honor 
 | D6 | **Cache ports, not friend imports** — Caches invalidate through slice-owned adapters/ports (e.g., `MetricLogCacheRedis` depends on `VisualizationInvalidationPort`). No direct `import` from analytics/visualization infra. | Keeps infra dependencies acyclic so slices can be deployed/tested independently. | Add a port in `src/shared/application/ports` or the owning feature, document in this file, and inject via the feature builder. |
 
 ## Enforcement Workflow
-1. During development, run the [consistency checklist](./review-20251214/lakira-be-feature-slice-migration-consistency-checklist-v2.md) tickets sequentially. Each ticket requires evidence (files touched, commands run, grep proof when relevant).
+1. During development, run the [consistency checklist](../reviews/2025-12-14/lakira-be-feature-slice-migration-consistency-checklist-v2.md) tickets sequentially. Each ticket requires evidence (files touched, commands run, grep proof when relevant).
 2. During PR reviews, copy/paste the relevant guardrail ID (e.g., “D1 violation”) so the author can map the feedback back to this doc.
 3. When we need to change or add a guardrail, update this file first, then reference it from the plan/checklist to keep the historical record intact.
 
 ## Related Documents
 - [Shared Middleware + Cache Spec](./shared-middleware.md)
-- [Consistency Plan v2](./review-20251214/lakira-be-feature-slice-migration-consistency-plan-v2.md)
+- [Consistency Plan v2](../reviews/2025-12-14/lakira-be-feature-slice-migration-consistency-plan-v2.md)

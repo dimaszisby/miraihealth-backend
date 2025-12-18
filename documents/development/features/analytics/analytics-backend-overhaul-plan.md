@@ -64,7 +64,7 @@ Success is measured by:
 | Phase 0 – Alignment | Week 0 | Confirm FE payload contract, update OpenAPI schema draft, document copy needs | Backend + Frontend leads |
 | Phase 1 – Schema & SQL prep | Week 1 | Extend `visualization.dashboard.sql.ts` to produce lifecycle metadata CTEs; write migrations if new indices needed (e.g., on `metric_logs(metric_id, created_at)`) | Data Platform |
 | Phase 2 – Service updates | Week 2 | Update `getDashboardVisualization.ts` to join lifecycle CTE, build fallback range logic, assemble new DTO | Analytics Services |
-| Phase 3 – API contract & caching | Week 3 | Update OpenAPI spec, adjust ETag generator (likely `src/services/metric.service.ts` or middleware), add pagination metadata | Platform Infra |
+| Phase 3 – API contract & caching | Week 3 | Update OpenAPI spec, adjust ETag generator (likely metric feature HTTP middleware under `src/features/metric/infrastructure/http`), add pagination metadata | Platform Infra |
 | Phase 4 – Testing & rollout | Weeks 4-5 | Add integration tests covering empty metrics, fallback, ETag invalidation; release behind toggled version (`?v=2`) for FE to consume | QA + Release |
 
 - **Contract versioning:** `/analytics/dashboard` now accepts optional query parameter `v` (default `1`, send `2` for lifecycle metadata). Documented in `documents/openapi/lakira-backend-openapi.json`.

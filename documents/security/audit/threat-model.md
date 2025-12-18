@@ -34,7 +34,7 @@ Entry points stem from the REST API (JSON bodies), Swagger UI, and infrastructur
 
 | ID | Description | Source Findings | Impact | Mitigations |
 | --- | --- | --- | --- | --- |
-| T1 | **Privilege escalation via signup.** `role` is user-controlled and persisted verbatim (`zod-user.schema`, `auth.service`). Attackers register as admin. | Features log §5.1 | Admin compromise, full data exposure. | Remove `role` from public schema, hard-code server-side defaults, require elevated workflow for admin creation. |
+| T1 | **Privilege escalation via signup.** `role` is user-controlled and persisted verbatim (`auth schema`, auth use case). Attackers register as admin. | Features log §5.1 | Admin compromise, full data exposure. | Remove `role` from public schema, hard-code server-side defaults, require elevated workflow for admin creation. |
 | T2 | **World-writable “public” metrics.** Authorization guards allow access when `isPublic` is true and new metrics default to public, so any authenticated user can mutate another user’s metrics/logs/settings. | Features log §5.2 | Cross-tenant data tampering/exfiltration. | Require owner ID checks on all writes/reads; treat `isPublic` as read-only discovery flag; default to private. |
 | T3 | **Database MITM via lax TLS.** Production/staging set `rejectUnauthorized: false`, so certificates aren’t verified. | Baseline log §5.1 | Credential theft, query manipulation, data breach. | Enforce full TLS verification or tunnel through trusted proxies. |
 | T4 | **Unauthenticated Swagger enumeration.** `/api/v1/docs` exposes full OpenAPI schema without auth. | Baseline log §5.2 | Facilitates recon, parameter discovery for attackers. | Protect docs behind auth, IP allowlists, or remove from prod. |

@@ -5,7 +5,7 @@
 1.  **Review the PRD:** Thoroughly review the Lakira Product Requirements Document (`/documents/project/plan/lakira-prd-doc.md`), paying close attention to the goals, features, UI/UX design principles, technical architecture, performance requirements, security considerations, and legal/compliance aspects.
 2.  **Understand the Codebase:**
     *   Examine the project's file structure in the environment details to identify key components and modules.
-    *   Review the code definitions in `src/models`, `src/controllers`, and `src/services` to understand the data models, API endpoints, and business logic.
+    *   Review the code definitions in the feature-owned ORM files (see `src/infrastructure/db/models.ts` for bootstrap), `src/controllers`, and `src/services` to understand the data models, API endpoints, and business logic.
     *   Analyze the route definitions in `src/routes` to map API endpoints to controller functions.
     *   Since there are no specific UI components or libraries, focus on the overall structure and responsiveness of the UI components.
 
