@@ -2,6 +2,7 @@ import { jest } from "@jest/globals";
 import AppError from "@/utils/AppError";
 import { GetDashboardVisualization } from "@/features/analytics/application/queries/GetDashboardVisualization";
 import type { VisualizationReadRepository } from "@/features/analytics/application/ports/VisualizationReadRepository";
+import { withTestEnv } from "@/tests/env-test-utils";
 
 const makeRepo = () => {
   const repo = {
@@ -34,24 +35,25 @@ describe("GetDashboardVisualization query", () => {
   };
 
   it("delegates to the read repository with bucket spec and clamped limit", async () => {
-    const repo = makeRepo();
-    process.env.VIZ_DASH_MAX_METRICS = "4";
-    const query = new GetDashboardVisualization(repo);
+    await withTestEnv(async () => {
+      const repo = makeRepo();
+      const query = new GetDashboardVisualization(repo);
 
-    await query.execute({ ...baseInput, limit: 999, fill: "zero" });
+      await query.execute({ ...baseInput, limit: 999, fill: "zero" });
 
-    expect(repo.fetchDashboardVisualization).toHaveBeenCalledTimes(1);
-    const payload = (repo.fetchDashboardVisualization as jest.Mock).mock.calls[0][0] as any;
-    expect(payload).toMatchObject({
-      userId: baseInput.userId,
-      startISO: baseInput.startISO,
-      endISO: baseInput.endISO,
-      bucket: baseInput.bucket,
-      tz: baseInput.tz,
-      fill: "zero",
-      limit: 4,
-    });
-    expect(payload.bucketSpec).toMatchObject({ iso: "P1D", approxMs: expect.any(Number) });
+      expect(repo.fetchDashboardVisualization).toHaveBeenCalledTimes(1);
+      const payload = (repo.fetchDashboardVisualization as jest.Mock).mock.calls[0][0] as any;
+      expect(payload).toMatchObject({
+        userId: baseInput.userId,
+        startISO: baseInput.startISO,
+        endISO: baseInput.endISO,
+        bucket: baseInput.bucket,
+        tz: baseInput.tz,
+        fill: "zero",
+        limit: Number(process.env.VIZ_DASH_MAX_METRICS),
+      });
+      expect(payload.bucketSpec).toMatchObject({ iso: "P1D", approxMs: expect.any(Number) });
+    }, { overrides: { VIZ_DASH_MAX_METRICS: "4" } });
   });
 
   it("throws when the requested range is invalid", async () => {
