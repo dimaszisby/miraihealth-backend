@@ -1,7 +1,5 @@
 "use strict";
 
-/** @type {import('sequelize-cli').Migration} */
-
 const upStatements = [
   `CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_metrics_user_created
      ON public.metrics (user_id, created_at DESC)
@@ -32,16 +30,27 @@ const downStatements = [
   `DROP INDEX CONCURRENTLY IF EXISTS idx_metrics_user_created;`,
 ];
 
+/**
+ * @param {import('sequelize').QueryInterface} queryInterface
+ * @param {string[]} statements
+ */
 async function runStatements(queryInterface, statements) {
   for (const statement of statements) {
     await queryInterface.sequelize.query(statement);
   }
 }
 
+/** @type {import('sequelize-cli').Migration} */
 module.exports = {
+  /**
+   * @param {import('sequelize').QueryInterface} queryInterface
+   */
   async up(queryInterface) {
     await runStatements(queryInterface, upStatements);
   },
+  /**
+   * @param {import('sequelize').QueryInterface} queryInterface
+   */
   async down(queryInterface) {
     await runStatements(queryInterface, downStatements);
   },
