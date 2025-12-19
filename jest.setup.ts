@@ -7,7 +7,7 @@ import app from "./src/server.js";
 import sequelize from "./src/config/db.js";
 import { disconnectRedis } from "./src/utils/redis-client.js";
 import request from "supertest";
-import { env } from "./src/config/zodEnv.js";
+import { env } from "./src/config/envManager.js";
 
 const skipDbLifecycle = process.env.SKIP_DB_LIFECYCLE === "true";
 

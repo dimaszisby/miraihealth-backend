@@ -1,5 +1,5 @@
 import express, { Application } from "express";
-import { env } from "./config/zodEnv.js";
+import { env } from "./config/envManager.js";
 import cors from "cors";
 import helmet from "helmet";
 import xssClean from "xss-clean";

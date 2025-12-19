@@ -1,6 +1,6 @@
 import { createClient, RedisClientType } from "redis";
 import logger from "./logger.js"; // Update the import path
-import { env } from "../config/zodEnv.js";
+import { env } from "../config/envManager.js";
 
 // Redis client configuration
 const redisConfig = {

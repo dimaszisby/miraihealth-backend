@@ -1,7 +1,7 @@
 import { Response, NextFunction } from "express";
 import AppError from "@/utils/AppError";
 import logger from "@/utils/logger";
-import { env } from "@/config/zodEnv";
+import { env } from "@/config/envManager";
 import { AuthRequest } from "@/types/request.context";
 
 export const createErrorHandler = () =>

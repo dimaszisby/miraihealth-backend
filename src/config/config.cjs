@@ -30,8 +30,10 @@ function loadValidatedEnv() {
 
     return JSON.parse(output);
   } catch (error) {
+    const message =
+      error instanceof Error ? error.message : String(error);
     throw new Error(
-      `[ERROR] Failed to load validated environment configuration: ${error.message}`
+      `[ERROR] Failed to load validated environment configuration: ${message}`
     );
   }
 }
@@ -86,7 +88,7 @@ const config = {
 
 // Ensure the environment exists
 const activeEnv = env.NODE_ENV;
-if (!config[activeEnv]) {
+if (!Object.prototype.hasOwnProperty.call(config, activeEnv)) {
   throw new Error(
     `[ERROR]: No configuration found for environment: ${activeEnv}`,
   );

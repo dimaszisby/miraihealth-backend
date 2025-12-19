@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { env } from "@/config/zodEnv";
+import { env } from "@/config/envManager";
 import {
   createCategory,
   listCategories,

@@ -133,14 +133,20 @@ const envSchema = z.object({
  */
 type Env = z.infer<typeof envSchema>;
 
+const buildEnv = (): Env => {
+  const parsedEnv: Env = envSchema.parse(process.env);
+
+  if (!parsedEnv.TEST_DATABASE_URL && parsedEnv.NODE_ENV === "test") {
+    throw new Error("[ERROR] TEST_DATABASE_URL is missing in .env.test!");
+  }
+
+  return parsedEnv;
+};
+
 /**
  * Parse and export the validated and type-safe environment object.
  * If validation fails, it will throw an error and terminate the process.
  */
-const env: Env = envSchema.parse(process.env);
+const env: Env = buildEnv();
 
-if (!env.TEST_DATABASE_URL && env.NODE_ENV === "test") {
-  throw new Error("[ERROR] TEST_DATABASE_URL is missing in .env.test!");
-}
-
-export { env, Env };
+export { env, Env, buildEnv };

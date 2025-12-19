@@ -1,5 +1,5 @@
 import jwt, { Secret, SignOptions } from "jsonwebtoken";
-import { env } from "@/config/zodEnv";
+import { env } from "@/config/envManager";
 import { TokenPayload, TokenProvider } from "../../application/ports/TokenProvider";
 
 export class JwtTokenProvider implements TokenProvider {

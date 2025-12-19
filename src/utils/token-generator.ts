@@ -1,6 +1,6 @@
 // src/utils/token-generator.ts
 
-import { env } from "../config/zodEnv.js";
+import { env } from "../config/envManager.js";
 import jwt from "jsonwebtoken";
 import type { UserInstance } from "@/features/auth/infrastructure/persistence/models/user.sequelize";
 

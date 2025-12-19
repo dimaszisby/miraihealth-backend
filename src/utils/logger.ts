@@ -2,7 +2,7 @@
 
 import { createLogger, format, transports, Logger } from "winston";
 const { combine, timestamp, printf, errors, colorize, json, splat } = format;
-import { env } from "../config/zodEnv.js";
+import { env } from "../config/envManager.js";
 
 /**
  * * Winston Logging Utility

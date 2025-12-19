@@ -22,7 +22,7 @@ import {
   getAllMetricsViaCursorSchema,
 } from "./schema.zod";
 import { AuthRequest } from "@/types/request.context";
-import { env } from "@/config/zodEnv";
+import { env } from "@/config/envManager";
 import { buildCursorCacheKey } from "@/shared/cache/keys";
 
 const metricsCacheKey = (req: AuthRequest) => {

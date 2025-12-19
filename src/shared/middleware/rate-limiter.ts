@@ -1,4 +1,4 @@
-import { env } from "@/config/zodEnv";
+import { env } from "@/config/envManager";
 import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
 import { Response, NextFunction } from "express";

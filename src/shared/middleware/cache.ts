@@ -1,7 +1,7 @@
 import { Response, NextFunction } from "express";
 import { redisClient } from "@/utils/redis-client";
 import logger from "@/utils/logger";
-import { env } from "@/config/zodEnv";
+import { env } from "@/config/envManager";
 import { AuthRequest } from "@/types/request.context";
 
 export type KeyGenerator = (req: AuthRequest) => string;

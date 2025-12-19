@@ -1,5 +1,5 @@
 import { Sequelize } from "sequelize";
-import { env } from "./zodEnv.js"; // Use validated env variables
+import { env } from "./envManager.js"; // Use validated env variables
 
 const dbConfig = {
   development: {

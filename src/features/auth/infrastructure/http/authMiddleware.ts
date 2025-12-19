@@ -1,4 +1,4 @@
-import { env } from "@/config/zodEnv";
+import { env } from "@/config/envManager";
 import { Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import AppError from "@/utils/AppError";
