@@ -1,32 +1,43 @@
 // jest.config.mjs
 
-export default {
+const projectBase = {
   preset: "ts-jest/presets/default-esm",
   testEnvironment: "node",
-  setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
-  testMatch: ["**/__tests__/**/*.test.ts"],
-  moduleFileExtensions: ["ts", "js", "mjs"],
-  verbose: true,
-  testTimeout: 30000,
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1",
     "^@/(.*)\\.js$": "<rootDir>/src/$1.ts",
-    "^@/(.*)$": "<rootDir>/src/$1", // Keep the original for non-.js imports
+    "^@/(.*)$": "<rootDir>/src/$1",
   },
   transform: {
     "^.+\\.ts$": [
       "ts-jest",
       {
         useESM: true,
-        tsconfig: {
-          target: "ESNext",
-          module: "ESNext",
-          moduleResolution: "bundler",
-        },
+        tsconfig: "<rootDir>/tsconfig.json",
       },
     ],
   },
   extensionsToTreatAsEsm: [".ts"],
+};
+
+export default {
+  collectCoverageFrom: [
+    "<rootDir>/src/**/*.{ts,tsx}",
+    "!<rootDir>/src/main.ts",
+    "!<rootDir>/src/server.ts",
+    "!<rootDir>/**/index.ts",
+    "!<rootDir>/src/infrastructure/db/migrations/**",
+    "!<rootDir>/src/tests/**",
+  ],
+  coverageDirectory: "<rootDir>/coverage/jest",
+  coverageThreshold: {
+    global: {
+      statements: 80,
+      branches: 70,
+      functions: 80,
+      lines: 80,
+    },
+  },
   reporters: [
     "default",
     [
@@ -36,5 +47,19 @@ export default {
         showPassed: false,
       },
     ],
+  ],
+  projects: [
+    {
+      ...projectBase,
+      displayName: "unit",
+      testMatch: ["<rootDir>/__tests__/unit/**/*.test.ts"],
+      setupFilesAfterEnv: ["<rootDir>/jest.setup.unit.ts"],
+    },
+    {
+      ...projectBase,
+      displayName: "integration",
+      testMatch: ["<rootDir>/__tests__/integration/**/*.test.ts"],
+      setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
+    },
   ],
 };

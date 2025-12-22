@@ -7,7 +7,6 @@ dotenv.config({ path: path.resolve(envFile) });
 function loadEnvFromBuild() {
   const distPath = path.resolve(__dirname, "..", "..", "dist", "config", "envManager.js");
   try {
-    // eslint-disable-next-line import/no-dynamic-require, global-require
     const { loadEnvOrExit } = require(distPath);
     return loadEnvOrExit();
   } catch (error) {

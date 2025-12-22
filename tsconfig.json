@@ -2,9 +2,9 @@
   "extends": "@tsconfig/node18/tsconfig.json",
   "compilerOptions": {
     "target": "esnext",
-    "module": "esnext",
+    "module": "NodeNext",
     "rootDir": ".",
-    "moduleResolution": "node",
+    "moduleResolution": "NodeNext",
     "baseUrl": "src",
     "paths": {
       "@/*": ["./*"],
@@ -35,6 +35,15 @@
       "module": "NodeNext"
     }
   },
-  "include": ["*.ts", "src/**/*", "tests/**/*", "__tests__/**/*.ts", "jest.setup.ts", "jest.config.mjs", "scripts/**/*.cjs"],
+  "include": [
+    "*.ts",
+    "src/**/*",
+    "tests/**/*",
+    "__tests__/**/*.ts",
+    "jest.setup.ts",
+    "jest.setup.unit.ts",
+    "jest.config.mjs",
+    "scripts/**/*.cjs"
+  ],
   "exclude": ["node_modules", "dist"]
 }

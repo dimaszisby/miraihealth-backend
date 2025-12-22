@@ -46,13 +46,20 @@ overrideMetricLogFeatureForTest(
  */
 
 const skipDbBootstrap = process.env.SKIP_DB_LIFECYCLE === "true";
-// * Sequelize
-if (!skipDbBootstrap) {
-  loadModels();
-  await sequelize.authenticate();
-} else {
-  console.log("[SERVER] SKIP_DB_LIFECYCLE enabled — skipping initial DB bootstrap.");
-}
+const initialDbBootstrap = async () => {
+  if (!skipDbBootstrap) {
+    loadModels();
+    await sequelize.authenticate();
+  } else {
+    console.log("[SERVER] SKIP_DB_LIFECYCLE enabled — skipping initial DB bootstrap.");
+  }
+};
+
+const serverBootstrapPromise = initialDbBootstrap().catch((error) => {
+  console.error("[SERVER] Initial database bootstrap failed.", error);
+  throw error;
+});
+export const serverReady = serverBootstrapPromise;
 
 // * Environment Variables
 

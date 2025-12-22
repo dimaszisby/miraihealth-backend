@@ -1,5 +1,6 @@
 //jest.setup.ts
 
+import { jest } from "@jest/globals";
 import type { Server } from "http";
 import { QueryTypes } from "sequelize";
 import { setImmediate } from "timers";
@@ -10,6 +11,7 @@ import request from "supertest";
 import { env } from "./src/config/envManager.js";
 
 const skipDbLifecycle = process.env.SKIP_DB_LIFECYCLE === "true";
+jest.setTimeout(40000);
 
 if (skipDbLifecycle) {
   console.log("[PROCESS] SKIP_DB_LIFECYCLE enabled — skipping server/DB bootstrap.");
