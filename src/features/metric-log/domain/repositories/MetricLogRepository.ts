@@ -1,4 +1,4 @@
-import { MetricLog } from "../entities/MetricLog";
+import { MetricLog } from "../entities/MetricLog.js";
 
 export type CreateMetricLogDTO = {
   metricId: string;

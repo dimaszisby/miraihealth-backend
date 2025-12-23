@@ -1,8 +1,8 @@
-import { models } from "@/infrastructure/db/models";
-import { MetricAccessPort } from "../ports/MetricAccessPort";
-import { CachePort } from "../ports/CachePort";
-import { MetricLogDomain } from "@/types/domain/metric-log.domain";
-import { toDomainMetricLog } from "@/utils/mappers/metric-log.mapper";
+import { models } from "@/infrastructure/db/models.js";
+import { MetricAccessPort } from "../ports/MetricAccessPort.js";
+import { CachePort } from "../ports/CachePort.js";
+import { MetricLogDomain } from "@/types/domain/metric-log.domain.js";
+import { toDomainMetricLog } from "@/utils/mappers/metric-log.mapper.js";
 
 type Input = {
   userId: string;

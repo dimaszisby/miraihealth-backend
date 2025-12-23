@@ -2,14 +2,14 @@ import {
   invalidateCache,
   invalidateCacheByPattern,
   redisClient,
-} from "@/utils/redis-client";
-import { CachePort } from "../../application/ports/CachePort";
-import type { VisualizationInvalidationPort } from "@/shared/application/ports/VisualizationInvalidationPort";
-import { cursorCacheNamespace } from "@/shared/cache/keys";
+} from "@/utils/redis-client.js";
+import { CachePort } from "../../application/ports/CachePort.js";
+import type { VisualizationInvalidationPort } from "@/shared/application/ports/VisualizationInvalidationPort.js";
+import { cursorCacheNamespace } from "@/shared/cache/keys.js";
 import {
   logCacheInvalidation,
   logCacheInvalidationError,
-} from "@/shared/cache/logging";
+} from "@/shared/cache/logging.js";
 
 const METRIC_LOG_CURSOR_NAMESPACE_ALL = cursorCacheNamespace(
   "metric-logs",

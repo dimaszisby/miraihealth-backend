@@ -7,11 +7,11 @@ import {
   getAggregatedStats,
   generateDummyMetricLogs,
   getUserLogLibrariesViaCursor,
-} from "./controller";
-import { authMiddleware } from "@/features/auth/infrastructure/http/authMiddleware";
-import { cacheMiddleware } from "@/shared/middleware/cache";
-import { userRateLimiter } from "@/shared/middleware/rate-limiter";
-import { validate } from "@/shared/middleware/validation";
+} from "./controller.js";
+import { authMiddleware } from "@/features/auth/infrastructure/http/authMiddleware.js";
+import { cacheMiddleware } from "@/shared/middleware/cache.js";
+import { userRateLimiter } from "@/shared/middleware/rate-limiter.js";
+import { validate } from "@/shared/middleware/validation.js";
 import {
   createMetricLogSchema,
   updateMetricLogSchema,
@@ -20,11 +20,11 @@ import {
   getAggregatedStatsSchema,
   generateDummyMetricLogsSchema,
   listMetricLogsViaCursorSchema,
-} from "./schema.zod";
-import { AuthRequest } from "@/types/request.context";
-import { env } from "@/config/envManager";
-import logger from "@/utils/logger";
-import { buildCursorCacheKey } from "@/shared/cache/keys";
+} from "./schema.zod.js";
+import { AuthRequest } from "@/types/request.context.js";
+import { env } from "@/config/envManager.js";
+import logger from "@/utils/logger.js";
+import { buildCursorCacheKey } from "@/shared/cache/keys.js";
 
 const firstNonEmpty = (...vals: unknown[]) =>
   vals.find((v) => typeof v === "string" && v.trim().length > 0) as
@@ -36,7 +36,7 @@ const bool01 = (v: any) => (v === true || v === "true" ? "1" : "0");
 const logCacheKey = (req: AuthRequest) =>
   `log:${req.user?.id}:${req.params.id}`;
 
-const METRIC_LOG_CURSOR_FEATURE = "metric-logs";
+const METRIC_LOG_CURSOR_FEATURE = "metric-logs.js";
 const METRIC_LOG_CURSOR_VERSION = 2;
 
 const logsCursorCacheKey = (req: AuthRequest) => {
@@ -49,18 +49,18 @@ const logsCursorCacheKey = (req: AuthRequest) => {
       q["filter[metricId]"],
       q.metricId,
       req.params?.metricId
-    ) ?? "_";
+    ) ?? "_.js";
 
   const logValueStr =
     firstNonEmpty(
       String(filter.logValue ?? ""),
       String(q["filter[logValue]"] ?? "")
-    ) ?? "_";
+    ) ?? "_.js";
 
   const limit = Number(q.limit ?? 20);
   const sort = String(q.sort ?? "-createdAt");
-  const search = typeof q.q === "string" ? q.q.trim() : "";
-  const after = typeof q.after === "string" ? q.after : "";
+  const search = typeof q.q === "string" ? q.q.trim() : ".js";
+  const after = typeof q.after === "string" ? q.after : ".js";
   const it = bool01(q.includeTotal);
 
   const key = buildCursorCacheKey({

@@ -6,8 +6,8 @@ import {
   NonAttribute,
   BelongsToGetAssociationMixin,
 } from "sequelize";
-import { MetricLogAttributesBase } from "@/types/db/metric-log.types";
-import type { DbModels } from "@/infrastructure/db/types";
+import { MetricLogAttributesBase } from "@/types/db/metric-log.types.js";
+import type { DbModels } from "@/infrastructure/db/types.js";
 import { Metric } from "@/features/metric/infrastructure/persistence/models/metric.sequelize.js";
 
 export interface MetricLogAttributes extends MetricLogAttributesBase {

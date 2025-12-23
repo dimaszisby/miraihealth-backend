@@ -5,9 +5,9 @@ import {
   zPositiveFloat,
   zUUID,
   zISODateTime,
-} from "@/constants/zod/zod-rules";
+} from "@/constants/zod/zod-rules.js";
 import { z } from "zod";
-import { ZodMessages } from "@/constants/zod/zod-messages";
+import { ZodMessages } from "@/constants/zod/zod-messages.js";
 
 extendZodWithOpenApi(z);
 

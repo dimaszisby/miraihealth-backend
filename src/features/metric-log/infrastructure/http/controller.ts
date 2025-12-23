@@ -1,12 +1,12 @@
 import { Response, NextFunction } from "express";
-import AppError from "@/utils/AppError";
-import { successResponse } from "@/utils/response-formatter";
-import catchAsync from "@/utils/catch-async";
-import { AuthRequest } from "@/types/request.context";
+import AppError from "@/utils/AppError.js";
+import { successResponse } from "@/utils/response-formatter.js";
+import catchAsync from "@/utils/catch-async.js";
+import { AuthRequest } from "@/types/request.context.js";
 import {
   toMetricLogListResponseDTO,
   toMetricLogResponseDTO,
-} from "@/utils/mappers/metric-log.mapper";
+} from "@/utils/mappers/metric-log.mapper.js";
 import {
   createMetricLogSchema,
   deleteMetricLogSchema,
@@ -15,11 +15,11 @@ import {
   getMetricLogByIdSchema,
   listMetricLogsViaCursorSchema,
   updateMetricLogSchema,
-} from "./schema.zod";
-import { assertAuthenticated } from "@/utils/auth-guards";
-import logger from "@/utils/logger";
-import { buildMetricLogFeature } from "@/features/metric-log/feature";
-import { pickValidated } from "@/shared/middleware/validated";
+} from "./schema.zod.js";
+import { assertAuthenticated } from "@/utils/auth-guards.js";
+import logger from "@/utils/logger.js";
+import { buildMetricLogFeature } from "@/features/metric-log/feature.js";
+import { pickValidated } from "@/shared/middleware/validated.js";
 
 type MetricLogFeature = ReturnType<typeof buildMetricLogFeature>;
 let metricLogFeature: MetricLogFeature = buildMetricLogFeature();

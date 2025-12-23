@@ -1,11 +1,11 @@
-import AppError from "@/utils/AppError";
+import AppError from "@/utils/AppError.js";
 import type {
   MetricLogQueryPort,
   ListLogsResult,
   ListOpts,
   SortField,
   SortParam,
-} from "../ports/MetricLogQueryPort";
+} from "../ports/MetricLogQueryPort.js";
 
 export class ListMetricLogs {
   constructor(private repo: MetricLogQueryPort) {}

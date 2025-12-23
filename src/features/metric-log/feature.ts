@@ -1,16 +1,16 @@
-import { MetricLogRepoSequelize } from "./infrastructure/persistence/repositories/MetricLogRepoSequelize";
-import { MetricLogCacheRedis } from "./infrastructure/cache/MetricLogCacheRedis";
-import { MetricAccessSequelize } from "./infrastructure/access/MetricAccessSequelize";
-import { CreateMetricLog } from "./application/use-cases/CreateMetricLog";
-import { GetMetricLog } from "./application/queries/GetMetricLog";
-import { UpdateMetricLog } from "./application/use-cases/UpdateMetricLog";
-import { DeleteMetricLog } from "./application/use-cases/DeleteMetricLog";
-import { GetMetricLogStats } from "./application/queries/GetMetricLogStats";
-import { GenerateDummyMetricLogs } from "./application/use-cases/GenerateDummyMetricLogs";
-import { MetricLogQueryRepoSequelize } from "./infrastructure/persistence/repositories/MetricLogQueryRepoSequelize";
-import { ListMetricLogs } from "./application/queries/ListMetricLogs";
-import type { VisualizationInvalidationPort } from "@/shared/application/ports/VisualizationInvalidationPort";
-import { NoopVisualizationInvalidation } from "@/shared/application/ports/VisualizationInvalidationPort";
+import { MetricLogRepoSequelize } from "./infrastructure/persistence/repositories/MetricLogRepoSequelize.js";
+import { MetricLogCacheRedis } from "./infrastructure/cache/MetricLogCacheRedis.js";
+import { MetricAccessSequelize } from "./infrastructure/access/MetricAccessSequelize.js";
+import { CreateMetricLog } from "./application/use-cases/CreateMetricLog.js";
+import { GetMetricLog } from "./application/queries/GetMetricLog.js";
+import { UpdateMetricLog } from "./application/use-cases/UpdateMetricLog.js";
+import { DeleteMetricLog } from "./application/use-cases/DeleteMetricLog.js";
+import { GetMetricLogStats } from "./application/queries/GetMetricLogStats.js";
+import { GenerateDummyMetricLogs } from "./application/use-cases/GenerateDummyMetricLogs.js";
+import { MetricLogQueryRepoSequelize } from "./infrastructure/persistence/repositories/MetricLogQueryRepoSequelize.js";
+import { ListMetricLogs } from "./application/queries/ListMetricLogs.js";
+import type { VisualizationInvalidationPort } from "@/shared/application/ports/VisualizationInvalidationPort.js";
+import { NoopVisualizationInvalidation } from "@/shared/application/ports/VisualizationInvalidationPort.js";
 
 type MetricLogFeatureDeps = {
   visualizationInvalidator?: VisualizationInvalidationPort;

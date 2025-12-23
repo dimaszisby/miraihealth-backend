@@ -1,4 +1,4 @@
-import { MetricLogDomain } from "@/types/domain/metric-log.domain";
+import { MetricLogDomain } from "@/types/domain/metric-log.domain.js";
 
 export type SortField = "createdAt" | "updatedAt" | "logValue" | "loggedAt";
 export type SortParam = SortField | `-${SortField}`;

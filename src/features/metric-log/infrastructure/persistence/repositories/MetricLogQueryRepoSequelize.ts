@@ -1,12 +1,12 @@
-import { models } from "@/infrastructure/db/models";
-import type { MetricLogDomain } from "@/types/domain/metric-log.domain";
+import { models } from "@/infrastructure/db/models.js";
+import type { MetricLogDomain } from "@/types/domain/metric-log.domain.js";
 import type {
   ListLogsResult,
   ListOpts,
   MetricLogQueryPort,
   SortField,
   SortParam,
-} from "../../../application/ports/MetricLogQueryPort";
+} from "../../../application/ports/MetricLogQueryPort.js";
 import { Op, OrderItem, WhereOptions } from "sequelize";
 
 export class MetricLogQueryRepoSequelize implements MetricLogQueryPort {

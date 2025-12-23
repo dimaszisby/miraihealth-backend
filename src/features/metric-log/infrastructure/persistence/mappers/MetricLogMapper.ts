@@ -1,4 +1,4 @@
-import { MetricLog } from "../../../domain/entities/MetricLog";
+import { MetricLog } from "../../../domain/entities/MetricLog.js";
 
 export type MetricLogRow = {
   id: string;

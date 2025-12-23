@@ -1,8 +1,8 @@
-import AppError from "@/utils/AppError";
-import { parseIsoToDate } from "@/utils/date-io";
-import { MetricLogRepository } from "../../domain/repositories/MetricLogRepository";
-import { MetricLog } from "../../domain/entities/MetricLog";
-import { CachePort } from "../ports/CachePort";
+import AppError from "@/utils/AppError.js";
+import { parseIsoToDate } from "@/utils/date-io.js";
+import { MetricLogRepository } from "../../domain/repositories/MetricLogRepository.js";
+import { MetricLog } from "../../domain/entities/MetricLog.js";
+import { CachePort } from "../ports/CachePort.js";
 
 type Input = {
   userId: string;

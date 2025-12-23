@@ -1,12 +1,12 @@
 import { Op } from "sequelize";
-import { models } from "@/infrastructure/db/models";
-import AppError from "@/utils/AppError";
+import { models } from "@/infrastructure/db/models.js";
+import AppError from "@/utils/AppError.js";
 import {
   CreateMetricLogDTO,
   MetricLogRepository,
-} from "../../../domain/repositories/MetricLogRepository";
-import { MetricLog } from "../../../domain/entities/MetricLog";
-import { MetricLogRow, toDomain } from "../mappers/MetricLogMapper";
+} from "../../../domain/repositories/MetricLogRepository.js";
+import { MetricLog } from "../../../domain/entities/MetricLog.js";
+import { MetricLogRow, toDomain } from "../mappers/MetricLogMapper.js";
 
 function toRow(model: any): MetricLogRow {
   return {
