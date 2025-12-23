@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { registerSchema } from "./openapi-config";
+import { registerSchema } from "./openapi-config.js";
 import {
   listMetricQueryDocSchema,
   metricBody,
   metricBodyPartial,
   metricDetailQuery,
-} from "@/features/metric/infrastructure/http/schema.zod";
+} from "@/features/metric/infrastructure/http/schema.zod.js";
 
 // Common Schemas
 export const UuidSchema = registerSchema(

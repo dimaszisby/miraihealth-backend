@@ -1,5 +1,5 @@
 import { OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi";
-import { openApiDocument, registry } from "./openapi-config";
+import { openApiDocument, registry } from "./openapi-config.js";
 import {
   LoginRequestSchema,
   LoginResponseSchema,
@@ -47,12 +47,12 @@ import {
   ErrorSchema,
   ValidationErrorSchema,
   SuccessResponseSchema,
-} from "./openapi-schemas";
+} from "./openapi-schemas.js";
 import {
   GetByIdParamSchema,
   GetTrendParamsSchema,
   GetTrendQuerySchema,
-} from "@/types/api/zod-request-params.schema";
+} from "@/types/api/zod-request-params.schema.js";
 
 // Register all schemas with the OpenAPIRegistry
 // This is done in openapi-schemas.ts directly using registry.register
