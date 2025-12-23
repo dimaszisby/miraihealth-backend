@@ -4,6 +4,7 @@ import { models } from "@/infrastructure/db/models.js";
 import {
   buildMetricDomain,
   createMetricCategoryRow,
+  createMetricRow,
   createUserRow,
   runInTransaction,
 } from "../../helpers/db-fixtures.js";
@@ -11,6 +12,7 @@ import {
 const repo = new MetricRepoSequelize();
 
 describe("MetricRepoSequelize (integration)", () => {
+  // Developer note: happy-path create scenario covering transactional insert + domain mapping.
   it("creates metric rows in a transaction and maps to domain", async () => {
     const user = await createUserRow();
     const category = await createMetricCategoryRow(user.id);
@@ -69,5 +71,52 @@ describe("MetricRepoSequelize (integration)", () => {
   it("throws when saving unknown metric", async () => {
     const metric = buildMetricDomain();
     await expect(repo.save(metric)).rejects.toThrow("Metric not found");
+  });
+
+  it("checks metric existence by name per user boundary", async () => {
+    const owner = await createUserRow();
+    const otherUser = await createUserRow();
+    await createMetricRow({ userId: owner.id, name: "Sleep" });
+    await createMetricRow({ userId: otherUser.id, name: "Sleep" });
+
+    await expect(repo.existsByName(owner.id, "Sleep")).resolves.toBe(true);
+    await expect(repo.existsByName(owner.id, "Run")).resolves.toBe(false);
+  });
+
+  it("finds owned metrics and rejects unauthorized access", async () => {
+    const owner = await createUserRow();
+    const intruder = await createUserRow();
+    const metricRow = await createMetricRow({
+      userId: owner.id,
+      name: "Bench Rows",
+    });
+
+    const found = await repo.findOwnedById(owner.id, metricRow.id);
+    expect(found.id).toBe(metricRow.id);
+    await expect(
+      repo.findOwnedById(intruder.id, metricRow.id),
+    ).rejects.toThrow("Metric not found");
+  });
+
+  it("deletes owned metrics and errors on unknown ids", async () => {
+    const owner = await createUserRow();
+    const metricRow = await createMetricRow({
+      userId: owner.id,
+      name: "Tempo Run",
+      defaultUnit: "km",
+    });
+    const domain = buildMetricDomain({
+      id: metricRow.id,
+      userId: owner.id,
+      name: metricRow.name,
+      defaultUnit: "km",
+    });
+
+    await repo.delete(domain);
+    const deleted = await models.Metric.findByPk(metricRow.id);
+    expect(deleted).toBeNull();
+
+    const phantom = buildMetricDomain({ id: randomUUID(), userId: owner.id });
+    await expect(repo.delete(phantom)).rejects.toThrow("Metric not found");
   });
 });
