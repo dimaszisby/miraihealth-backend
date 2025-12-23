@@ -1,8 +1,8 @@
 import { Response, NextFunction } from "express";
-import { redisClient } from "@/utils/redis-client";
-import logger from "@/utils/logger";
-import { env } from "@/config/envManager";
-import { AuthRequest } from "@/types/request.context";
+import { redisClient } from "@/utils/redis-client.js";
+import logger from "@/utils/logger.js";
+import { env } from "@/config/envManager.js";
+import { AuthRequest } from "@/types/request.context.js";
 
 export type KeyGenerator = (req: AuthRequest) => string;
 

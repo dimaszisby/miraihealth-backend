@@ -1,8 +1,8 @@
 import { Response, NextFunction } from "express";
-import AppError from "@/utils/AppError";
-import logger from "@/utils/logger";
-import { env } from "@/config/envManager";
-import { AuthRequest } from "@/types/request.context";
+import AppError from "@/utils/AppError.js";
+import logger from "@/utils/logger.js";
+import { env } from "@/config/envManager.js";
+import { AuthRequest } from "@/types/request.context.js";
 
 export const createErrorHandler = () =>
   (err: Error, req: AuthRequest, res: Response, next: NextFunction): void => {

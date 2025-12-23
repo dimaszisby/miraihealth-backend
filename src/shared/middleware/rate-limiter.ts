@@ -1,10 +1,10 @@
-import { env } from "@/config/envManager";
+import { env } from "@/config/envManager.js";
 import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
 import { Response, NextFunction } from "express";
-import { redisClient } from "@/utils/redis-client";
-import { AuthRequest } from "@/types/request.context";
-import logger from "@/utils/logger";
+import { redisClient } from "@/utils/redis-client.js";
+import { AuthRequest } from "@/types/request.context.js";
+import logger from "@/utils/logger.js";
 
 const maybeCreateStore = () => {
   if (env.NODE_ENV === "test") return undefined;

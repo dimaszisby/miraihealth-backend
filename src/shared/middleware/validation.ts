@@ -1,4 +1,4 @@
-import { AuthRequest } from "@/types/request.context";
+import { AuthRequest } from "@/types/request.context.js";
 import { Response, NextFunction } from "express";
 import { ZodError, ZodTypeAny } from "zod";
 
