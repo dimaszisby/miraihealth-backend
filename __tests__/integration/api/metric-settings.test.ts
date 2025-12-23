@@ -3,7 +3,7 @@ import {
   authHeader,
   createMetric,
   createTestUser,
-} from "../helpers/test-utils";
+} from "../helpers/test-utils.js";
 
 const today = () => new Date().toISOString().split("T")[0];
 const tomorrow = () =>

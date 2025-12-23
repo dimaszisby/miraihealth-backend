@@ -5,7 +5,7 @@ import {
   createCategory,
   createTestUser,
   uniqueName,
-} from "../helpers/test-utils";
+} from "../helpers/test-utils.js";
 
 describe("Metric Category API", () => {
   let token: string;

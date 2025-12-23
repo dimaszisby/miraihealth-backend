@@ -5,7 +5,7 @@ import {
   createMetric,
   createMetricLog,
   createTestUser,
-} from "../helpers/test-utils";
+} from "../helpers/test-utils.js";
 
 describe("Metric API", () => {
   let token: string;

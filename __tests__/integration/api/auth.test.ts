@@ -3,7 +3,7 @@ import {
   buildUserPayload,
   createTestUser,
   authHeader,
-} from "../helpers/test-utils";
+} from "../helpers/test-utils.js";
 
 describe("Auth API", () => {
   it("registers a new user", async () => {

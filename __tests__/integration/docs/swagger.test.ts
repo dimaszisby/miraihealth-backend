@@ -1,4 +1,4 @@
-import { api, createTestUser, authHeader } from "../helpers/test-utils";
+import { api, createTestUser, authHeader } from "../helpers/test-utils.js";
 
 describe("Swagger documentation routes", () => {
   it("requires authentication for the docs UI", async () => {
