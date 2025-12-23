@@ -1,11 +1,11 @@
-import { z } from "zod.js";
+import { z } from "zod";
 
 // Internal validation schemas
 import {
   createMetricCategorySchema,
   updateMetricCategorySchema,
   generateDummyMetricCategoriesSchema,
-} from "@/features/metric-category/infrastructure/http/schema.zod.js.js";
+} from "@/features/metric-category/infrastructure/http/schema.zod.js";
 
 /**
  * @file src/types/dtos/metric-category.dto.ts
