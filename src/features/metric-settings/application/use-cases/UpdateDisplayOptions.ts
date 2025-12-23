@@ -1,8 +1,8 @@
-import AppError from "@/utils/AppError";
-import { MetricSettingsRepository } from "../../domain/repositories/MetricSettingsRepository";
-import { CacheInvalidationPort } from "../ports/CacheInvalidationPort";
-import { MetricSettings } from "../../domain/entities/MetricSettings";
-import { DisplayOptionsDTO } from "../../infrastructure/http/dto";
+import AppError from "@/utils/AppError.js";
+import { MetricSettingsRepository } from "../../domain/repositories/MetricSettingsRepository.js";
+import { CacheInvalidationPort } from "../ports/CacheInvalidationPort.js";
+import { MetricSettings } from "../../domain/entities/MetricSettings.js";
+import { DisplayOptionsDTO } from "../../infrastructure/http/dto.js";
 
 export class UpdateDisplayOptions {
   constructor(

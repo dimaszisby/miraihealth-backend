@@ -1,6 +1,6 @@
-import AppError from "@/utils/AppError";
-import { MetricSettingsRepository } from "../../domain/repositories/MetricSettingsRepository";
-import { CacheInvalidationPort } from "../ports/CacheInvalidationPort";
+import AppError from "@/utils/AppError.js";
+import { MetricSettingsRepository } from "../../domain/repositories/MetricSettingsRepository.js";
+import { CacheInvalidationPort } from "../ports/CacheInvalidationPort.js";
 
 export class DeleteMetricSettings {
   constructor(

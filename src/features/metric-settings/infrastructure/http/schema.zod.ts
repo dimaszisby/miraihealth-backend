@@ -6,7 +6,7 @@ import {
   zGoalType,
   zAlertThresholds,
   zDisplayOptions,
-} from "@/constants/zod/zod-rules";
+} from "@/constants/zod/zod-rules.js";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 
 extendZodWithOpenApi(z);

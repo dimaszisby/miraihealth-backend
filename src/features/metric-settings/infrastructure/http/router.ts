@@ -7,11 +7,11 @@ import {
   updateGoalAchievement,
   updateDisplayOptions,
   getAllMetricSettingsViaCursor,
-} from "./controller";
-import { authMiddleware } from "@/features/auth/infrastructure/http/authMiddleware";
-import { cacheMiddleware } from "@/shared/middleware/cache";
-import { userRateLimiter } from "@/shared/middleware/rate-limiter";
-import { validate } from "@/shared/middleware/validation";
+} from "./controller.js";
+import { authMiddleware } from "@/features/auth/infrastructure/http/authMiddleware.js";
+import { cacheMiddleware } from "@/shared/middleware/cache.js";
+import { userRateLimiter } from "@/shared/middleware/rate-limiter.js";
+import { validate } from "@/shared/middleware/validation.js";
 import {
   createMetricSettingsSchema,
   updateMetricSettingsSchema,
@@ -20,10 +20,10 @@ import {
   listMetricSettingsViaCursorSchema,
   updateDisplayOptionsSchema,
   goalAchievementSchema,
-} from "./schema.zod";
-import { AuthRequest } from "@/types/request.context";
-import logger from "@/utils/logger";
-import { buildCursorCacheKey } from "@/shared/cache/keys";
+} from "./schema.zod.js";
+import { AuthRequest } from "@/types/request.context.js";
+import logger from "@/utils/logger.js";
+import { buildCursorCacheKey } from "@/shared/cache/keys.js";
 
 const metricSettingsCacheKey = (req: AuthRequest) =>
   `metricSettings:${req.user?.id}:${req.query.metricId || "all"}`;

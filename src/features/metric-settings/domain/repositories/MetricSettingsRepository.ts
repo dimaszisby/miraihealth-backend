@@ -1,4 +1,4 @@
-import { MetricSettings } from "../entities/MetricSettings";
+import { MetricSettings } from "../entities/MetricSettings.js";
 
 export type CreateMetricSettingsDTO = {
   metricId: string;

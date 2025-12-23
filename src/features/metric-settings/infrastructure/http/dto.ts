@@ -2,7 +2,7 @@ import { z } from "zod";
 import {
   createMetricSettingsSchema,
   updateMetricSettingsSchema,
-} from "./schema.zod";
+} from "./schema.zod.js";
 
 export interface DisplayOptionsDTO {
   readonly showOnDashboard: boolean | null;

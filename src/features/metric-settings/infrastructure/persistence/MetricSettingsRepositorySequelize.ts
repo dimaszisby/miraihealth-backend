@@ -1,7 +1,7 @@
-import { models } from "@/infrastructure/db/models";
-import AppError from "@/utils/AppError";
-import logger from "@/utils/logger";
-import { MetricSettings } from "../../domain/entities/MetricSettings";
+import { models } from "@/infrastructure/db/models.js";
+import AppError from "@/utils/AppError.js";
+import logger from "@/utils/logger.js";
+import { MetricSettings } from "../../domain/entities/MetricSettings.js";
 import {
   CreateMetricSettingsDTO,
   ListMetricSettingsOptions,
@@ -9,7 +9,7 @@ import {
   MetricSettingsRepository,
   SortField,
   SortParam,
-} from "../../domain/repositories/MetricSettingsRepository";
+} from "../../domain/repositories/MetricSettingsRepository.js";
 import { Op, OrderItem, UniqueConstraintError, WhereOptions } from "sequelize";
 
 const includeMetric = () => [

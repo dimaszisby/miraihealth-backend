@@ -6,9 +6,9 @@ import {
   BelongsToGetAssociationMixin,
   NonAttribute,
 } from "sequelize";
-import { MetricSettingsAttributesBase } from "@/types/db/metric-settings.types";
-import type { Metric } from "@/features/metric/infrastructure/persistence/models/metric.sequelize";
-import type { DbModels } from "@/infrastructure/db/types";
+import { MetricSettingsAttributesBase } from "@/types/db/metric-settings.types.js";
+import type { Metric } from "@/features/metric/infrastructure/persistence/models/metric.sequelize.js";
+import type { DbModels } from "@/infrastructure/db/types.js";
 
 export interface MetricSettingsAttributes extends MetricSettingsAttributesBase {
   id: string;

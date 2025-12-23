@@ -1,15 +1,15 @@
 import { Request, Response, NextFunction } from "express";
-import { buildMetricSettingsFeature } from "../../feature";
-import catchAsync from "@/utils/catch-async";
-import AppError from "@/utils/AppError";
-import { successResponse } from "@/utils/response-formatter";
-import { AuthRequest } from "@/types/request.context";
-import { assertAuthenticated } from "@/utils/auth-guards";
+import { buildMetricSettingsFeature } from "../../feature.js";
+import catchAsync from "@/utils/catch-async.js";
+import AppError from "@/utils/AppError.js";
+import { successResponse } from "@/utils/response-formatter.js";
+import { AuthRequest } from "@/types/request.context.js";
+import { assertAuthenticated } from "@/utils/auth-guards.js";
 import {
   toDisplayOptionsResponseDTO,
   toMetricSettingsResponseDTO,
-} from "../mappers/MetricSettingsMapper";
-import { DisplayOptionsDTO } from "./dto";
+} from "../mappers/MetricSettingsMapper.js";
+import { DisplayOptionsDTO } from "./dto.js";
 import {
   createMetricSettingsSchema,
   deleteMetricSettingsSchema,
@@ -17,8 +17,8 @@ import {
   listMetricSettingsViaCursorSchema,
   updateMetricSettingsSchema,
   updateDisplayOptionsSchema,
-} from "./schema.zod";
-import { pickValidated } from "@/shared/middleware/validated";
+} from "./schema.zod.js";
+import { pickValidated } from "@/shared/middleware/validated.js";
 
 type Feature = ReturnType<typeof buildMetricSettingsFeature>;
 let feature: Feature = buildMetricSettingsFeature();

@@ -2,12 +2,12 @@ import {
   invalidateCache,
   invalidateCacheByPattern,
   redisClient,
-} from "@/utils/redis-client";
-import { CacheInvalidationPort } from "../../application/ports/CacheInvalidationPort";
+} from "@/utils/redis-client.js";
+import { CacheInvalidationPort } from "../../application/ports/CacheInvalidationPort.js";
 import {
   logCacheInvalidation,
   logCacheInvalidationError,
-} from "@/shared/cache/logging";
+} from "@/shared/cache/logging.js";
 
 export class MetricSettingsCacheInvalidator
   implements CacheInvalidationPort

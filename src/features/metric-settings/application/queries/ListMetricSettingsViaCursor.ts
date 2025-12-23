@@ -1,9 +1,9 @@
-import AppError from "@/utils/AppError";
+import AppError from "@/utils/AppError.js";
 import {
   ListMetricSettingsOptions,
   ListMetricSettingsResult,
   MetricSettingsRepository,
-} from "../../domain/repositories/MetricSettingsRepository";
+} from "../../domain/repositories/MetricSettingsRepository.js";
 
 export class ListMetricSettingsViaCursor {
   constructor(private repo: MetricSettingsRepository) {}

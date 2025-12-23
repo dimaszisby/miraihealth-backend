@@ -1,6 +1,6 @@
 import {
   metricSettingsRouter,
   createMetricSettingsRouter,
-} from "./infrastructure/http/router";
-export { buildMetricSettingsFeature } from "./feature";
+} from "./infrastructure/http/router.js";
+export { buildMetricSettingsFeature } from "./feature.js";
 export { metricSettingsRouter, createMetricSettingsRouter };
