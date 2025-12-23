@@ -1,6 +1,6 @@
 import jwt, { Secret, SignOptions } from "jsonwebtoken";
-import { env } from "@/config/envManager";
-import { TokenPayload, TokenProvider } from "../../application/ports/TokenProvider";
+import { env } from "@/config/envManager.js";
+import { TokenPayload, TokenProvider } from "../../application/ports/TokenProvider.js";
 
 export class JwtTokenProvider implements TokenProvider {
   constructor(

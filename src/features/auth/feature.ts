@@ -1,10 +1,10 @@
-import { UserRepositorySequelize } from "./infrastructure/persistence/UserRepositorySequelize";
-import { BcryptPasswordHasher } from "./infrastructure/providers/BcryptPasswordHasher";
-import { JwtTokenProvider } from "./infrastructure/providers/JwtTokenProvider";
-import { RegisterUser } from "./application/use-cases/RegisterUser";
-import { LoginUser } from "./application/use-cases/LoginUser";
-import { GetProfile } from "./application/queries/GetProfile";
-import { UpdateProfile } from "./application/use-cases/UpdateProfile";
+import { UserRepositorySequelize } from "./infrastructure/persistence/UserRepositorySequelize.js";
+import { BcryptPasswordHasher } from "./infrastructure/providers/BcryptPasswordHasher.js";
+import { JwtTokenProvider } from "./infrastructure/providers/JwtTokenProvider.js";
+import { RegisterUser } from "./application/use-cases/RegisterUser.js";
+import { LoginUser } from "./application/use-cases/LoginUser.js";
+import { GetProfile } from "./application/queries/GetProfile.js";
+import { UpdateProfile } from "./application/use-cases/UpdateProfile.js";
 
 export const buildAuthFeature = () => {
   const repo = new UserRepositorySequelize();

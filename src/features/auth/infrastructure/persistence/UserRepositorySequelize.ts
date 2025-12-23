@@ -1,9 +1,9 @@
-import { models } from "@/infrastructure/db/models";
-import { AuthUser } from "../../domain/entities/AuthUser";
+import { models } from "@/infrastructure/db/models.js";
+import { AuthUser } from "../../domain/entities/AuthUser.js";
 import {
   CreateUserDTO,
   UserRepository,
-} from "../../domain/repositories/UserRepository";
+} from "../../domain/repositories/UserRepository.js";
 
 const toDomain = (row: any): AuthUser =>
   AuthUser.fromPersistence({

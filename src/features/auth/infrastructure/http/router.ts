@@ -5,15 +5,15 @@ import {
   getProfile,
   updateProfile,
   logout,
-} from "./controller";
-import { authMiddleware } from "@/features/auth/infrastructure/http/authMiddleware";
-import { userRateLimiter } from "@/shared/middleware/rate-limiter";
-import { validate } from "@/shared/middleware/validation";
+} from "./controller.js";
+import { authMiddleware } from "@/features/auth/infrastructure/http/authMiddleware.js";
+import { userRateLimiter } from "@/shared/middleware/rate-limiter.js";
+import { validate } from "@/shared/middleware/validation.js";
 import {
   createUserSchema,
   loginUserSchema,
   updateUserSchema,
-} from "./schema.zod";
+} from "./schema.zod.js";
 
 export const createAuthRouter = () => {
   const router = Router();

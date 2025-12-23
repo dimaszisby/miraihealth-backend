@@ -1,8 +1,8 @@
-import AppError from "@/utils/AppError";
-import { UserRepository } from "../../domain/repositories/UserRepository";
-import { PasswordHasher } from "../ports/PasswordHasher";
-import { TokenProvider } from "../ports/TokenProvider";
-import { AuthUser } from "../../domain/entities/AuthUser";
+import AppError from "@/utils/AppError.js";
+import { UserRepository } from "../../domain/repositories/UserRepository.js";
+import { PasswordHasher } from "../ports/PasswordHasher.js";
+import { TokenProvider } from "../ports/TokenProvider.js";
+import { AuthUser } from "../../domain/entities/AuthUser.js";
 
 export type LoginResult = {
   user: AuthUser;

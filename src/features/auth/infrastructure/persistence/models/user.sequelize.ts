@@ -5,8 +5,8 @@ import {
   Optional,
 } from "sequelize";
 import bcrypt from "bcrypt";
-import { UserAttributesBase } from "@/types/db/user.types";
-import type { DbModels } from "@/infrastructure/db/types";
+import { UserAttributesBase } from "@/types/db/user.types.js";
+import type { DbModels } from "@/infrastructure/db/types.js";
 
 const isBcryptHash = (value: unknown): value is string =>
   typeof value === "string" && /^\$2[aby]\$\d{2}\$/.test(value);

@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express";
-import { successResponse } from "@/utils/response-formatter";
-import catchAsync from "@/utils/catch-async";
-import { toUserResponseDTO } from "../../infrastructure/mappers/UserMapper";
-import AppError from "@/utils/AppError";
-import { buildAuthFeature } from "../../feature";
-import { AuthRequest } from "@/types/request.context";
-import { assertAuthenticated } from "@/utils/auth-guards";
+import { successResponse } from "@/utils/response-formatter.js";
+import catchAsync from "@/utils/catch-async.js";
+import { toUserResponseDTO } from "../../infrastructure/mappers/UserMapper.js";
+import AppError from "@/utils/AppError.js";
+import { buildAuthFeature } from "../../feature.js";
+import { AuthRequest } from "@/types/request.context.js";
+import { assertAuthenticated } from "@/utils/auth-guards.js";
 
 type AuthFeature = ReturnType<typeof buildAuthFeature>;
 let feature: AuthFeature = buildAuthFeature();
