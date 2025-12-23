@@ -1,29 +1,29 @@
 import { QueryTypes } from "sequelize";
-import { sequelize } from "@/infrastructure/db/models";
-import { models } from "@/infrastructure/db/models";
-import AppError from "@/utils/AppError";
-import logger from "@/utils/logger";
+import { sequelize } from "@/infrastructure/db/models.js";
+import { models } from "@/infrastructure/db/models.js";
+import AppError from "@/utils/AppError.js";
 import {
   buildDashboardLifecycleSQL,
   buildDashboardSQL,
-} from "../sql/visualization.dashboard.sql";
-import { buildVisualizationSQL } from "../sql/visualization.sql";
+} from "../sql/visualization.dashboard.sql.js";
+import { buildVisualizationSQL } from "../sql/visualization.sql.js";
 import {
   computeFallbackRange,
   type RangeDescriptor,
-} from "../../domain/fallback-range";
+} from "../../domain/fallback-range.js";
 import type {
   VisualizationReadRepository,
   VisualizationQueryParams,
   DashboardVisualizationParams,
   DashboardVizResponse,
-} from "../../application/ports/VisualizationReadRepository";
+  DashboardVizItem,
+} from "../../application/ports/VisualizationReadRepository.js";
 import type {
   VisualizationCachePort,
   SingleVizCacheKey,
   DashboardVizCacheKey,
-} from "../../application/ports/VisualizationCachePort";
-import type { VizResponse } from "../../domain/types";
+} from "../../application/ports/VisualizationCachePort.js";
+import type { VizResponse } from "../../domain/types.js";
 import { createHash } from "node:crypto";
 
 type VizRow = {
@@ -50,6 +50,20 @@ type LifecycleRow = {
   total_logs: number | string | null;
   latest_value: number | string | null;
   latest_bucket_start: string | null;
+};
+
+type DashboardMetricRow = {
+  metric_id: string;
+  name: string;
+  unit: string;
+  category_name: string | null;
+  category_icon: string | null;
+  category_color: string | null;
+  priority: number | null;
+  total_count: number | string | null;
+  metric_updated_at: string | null;
+  metric_settings_updated_at: string | null;
+  category_updated_at: string | null;
 };
 
 export class VisualizationReadRepoSequelize
@@ -82,7 +96,7 @@ export class VisualizationReadRepoSequelize
     if (cached) return cached;
 
     const sql = buildVisualizationSQL(bucketSpec);
-    const rows = await sequelize.query<VizRow>(sql, {
+    const rows = (await sequelize.query<VizRow>(sql, {
       type: QueryTypes.SELECT,
       replacements: {
         metricId,
@@ -90,7 +104,7 @@ export class VisualizationReadRepoSequelize
         end: endISO,
         tz,
       },
-    });
+    })) as VizRow[];
 
     const series = rows.map((r: VizRow) => ({
       bucketStartISO: new Date(r.bucket_start).toISOString(),
@@ -138,7 +152,7 @@ export class VisualizationReadRepoSequelize
     params: DashboardVisualizationParams
   ): Promise<DashboardVizResponse> {
     const metrics = await this.fetchDashboardMetrics(params);
-    const metricIds = metrics.map((m) => m.metric_id).sort();
+    const metricIds = metrics.map((metric) => metric.metric_id).sort();
     const metricIdArrayLiteral = `{${metricIds.join(",")}}`;
     const versionFingerprint = buildVersionFingerprint(metrics);
 
@@ -177,7 +191,7 @@ export class VisualizationReadRepoSequelize
     const seriesSQL = buildDashboardSQL(bucketSpec);
     const lifecycleSQL = buildDashboardLifecycleSQL(bucketSpec);
 
-    const [seriesRows, lifecycleRows] = await Promise.all([
+    const [seriesRows, lifecycleRows] = (await Promise.all([
       sequelize.query<DashboardSeriesRow>(seriesSQL, {
         type: QueryTypes.SELECT,
         replacements: {
@@ -195,13 +209,13 @@ export class VisualizationReadRepoSequelize
           tz: params.tz,
         },
       }),
-    ]);
+    ])) as [DashboardSeriesRow[], LifecycleRow[]];
 
-    const lifecycleByMetric = new Map(
-      lifecycleRows.map((row) => [row.metric_id, row])
+    const lifecycleByMetric = new Map<string, LifecycleRow>(
+      lifecycleRows.map<[string, LifecycleRow]>((row) => [row.metric_id, row])
     );
 
-    const items = await Promise.all(
+    const items: DashboardVizItem[] = await Promise.all(
       metrics.map((metric) =>
         this.buildDashboardItem({
           metric,
@@ -241,20 +255,10 @@ export class VisualizationReadRepoSequelize
     return metric;
   }
 
-  private async fetchDashboardMetrics(params: DashboardVisualizationParams) {
-    return sequelize.query<{
-      metric_id: string;
-      name: string;
-      unit: string;
-      category_name: string | null;
-      category_icon: string | null;
-      category_color: string | null;
-      priority: number | null;
-      total_count: number | string | null;
-      metric_updated_at: string | null;
-      metric_settings_updated_at: string | null;
-      category_updated_at: string | null;
-    }>(
+  private async fetchDashboardMetrics(
+    params: DashboardVisualizationParams
+  ): Promise<DashboardMetricRow[]> {
+    const rows = await sequelize.query<DashboardMetricRow>(
       `
       SELECT ms.metric_id,
              m.name AS name,
@@ -281,6 +285,7 @@ export class VisualizationReadRepoSequelize
         replacements: { userId: params.userId, limit: params.limit },
       }
     );
+    return rows as DashboardMetricRow[];
   }
 
   private async buildDashboardItem({
@@ -290,12 +295,12 @@ export class VisualizationReadRepoSequelize
     input,
     bucketSpec,
   }: {
-    metric: any;
+    metric: DashboardMetricRow;
     seriesRows: DashboardSeriesRow[];
     lifecycleByMetric: Map<string, LifecycleRow>;
     input: DashboardVisualizationParams;
-    bucketSpec: typeof input.bucketSpec;
-  }) {
+    bucketSpec: DashboardVisualizationParams["bucketSpec"];
+  }): Promise<DashboardVizItem> {
     const metricSeries = seriesRows.filter(
       (row) => row.metric_id === metric.metric_id
     );
@@ -321,7 +326,7 @@ export class VisualizationReadRepoSequelize
       (row) => Number(row.cnt ?? 0) > 0
     );
 
-    let effectiveSeries = metricSeries;
+    let effectiveSeries: DashboardSeriesRow[] = metricSeries;
     if (!hasRequestedData && fallbackRange) {
       const fallbackRows = await this.fetchFallbackSeries({
         metricId: metric.metric_id,
@@ -335,7 +340,7 @@ export class VisualizationReadRepoSequelize
       fallbackStrategy = fallbackRange.strategy ?? null;
     }
 
-    const series = effectiveSeries.map((row) => ({
+    const series: DashboardVizItem["series"] = effectiveSeries.map((row) => ({
       bucketStartISO: new Date(row.bucket_start).toISOString(),
       value:
         input.fill === "zero"
@@ -343,7 +348,7 @@ export class VisualizationReadRepoSequelize
           : Number(row.avg_value ?? 0) || null,
     }));
 
-    const stats = {
+    const stats: DashboardVizItem["stats"] = {
       average: effectiveSeries.length
         ? numberFrom(effectiveSeries[0].avg_value, null)
         : null,
@@ -358,7 +363,7 @@ export class VisualizationReadRepoSequelize
         : 0,
     };
 
-    return {
+    const item: DashboardVizItem = {
       metricId: metric.metric_id,
       name: metric.name,
       unit: metric.unit,
@@ -378,6 +383,8 @@ export class VisualizationReadRepoSequelize
       fallbackRangeUsed: fallbackApplied,
       fallbackStrategy,
     };
+
+    return item;
   }
 
   private async fetchFallbackSeries({
@@ -392,7 +399,7 @@ export class VisualizationReadRepoSequelize
     tz: string;
   }): Promise<DashboardSeriesRow[]> {
     const vizSQL = buildVisualizationSQL(bucketSpec);
-    const rows = await sequelize.query<VizRow>(vizSQL, {
+    const rows = (await sequelize.query<VizRow>(vizSQL, {
       type: QueryTypes.SELECT,
       replacements: {
         metricId,
@@ -400,9 +407,9 @@ export class VisualizationReadRepoSequelize
         end: range.endISO,
         tz,
       },
-    });
+    })) as VizRow[];
 
-    return rows.map((row) => ({
+    return rows.map<DashboardSeriesRow>((row) => ({
       metric_id: metricId,
       bucket_start: row.bucket_start,
       avg_value: row.avg_value,
@@ -419,7 +426,7 @@ function numberFrom<T>(value: number | string | null | undefined, fallback: T): 
   return Number.isFinite(n) ? n : fallback;
 }
 
-function buildVersionFingerprint(metrics: any[]) {
+function buildVersionFingerprint(metrics: DashboardMetricRow[]) {
   const entries = metrics.map((m) => [
     m.metric_id,
     m.metric_updated_at ?? "",

@@ -1,6 +1,6 @@
-import { models } from "@/infrastructure/db/models";
-import { validateMetricAccess } from "@/utils/db-helper";
-import AppError from "@/utils/AppError";
+import { models } from "@/infrastructure/db/models.js";
+import { validateMetricAccess } from "@/utils/db-helper.js";
+import AppError from "@/utils/AppError.js";
 import { Op } from "sequelize";
 
 type GetMetricTrendInput = {

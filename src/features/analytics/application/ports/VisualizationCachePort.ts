@@ -1,9 +1,9 @@
-import type { VizResponse } from "../../domain/types";
+import type { VizResponse } from "../../domain/types.js";
 import type {
   DashboardVizResponse,
   DashboardVisualizationParams,
   VisualizationQueryParams,
-} from "./VisualizationReadRepository";
+} from "./VisualizationReadRepository.js";
 
 export type SingleVizCacheKey = Omit<
   VisualizationQueryParams,

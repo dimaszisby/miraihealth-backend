@@ -1,10 +1,10 @@
-import { redisClient } from "@/utils/redis-client";
+import { redisClient } from "@/utils/redis-client.js";
 import crypto from "node:crypto";
 import {
   VisualizationCachePort,
   SingleVizCacheKey,
   DashboardVizCacheKey,
-} from "../../application/ports/VisualizationCachePort";
+} from "../../application/ports/VisualizationCachePort.js";
 
 const TTL = Number(process.env.VIZ_DEFAULT_TTL_SEC ?? 120);
 

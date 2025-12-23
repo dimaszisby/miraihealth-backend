@@ -1,10 +1,10 @@
 import type { Response, NextFunction } from "express";
-import { AuthRequest } from "@/types/request.context";
-import { assertAuthenticated } from "@/utils/auth-guards";
-import { pickValidated } from "@/shared/middleware/validated";
-import { getDashboardVizSchema, getVisualizationSchema } from "./validators";
-import { successResponse } from "@/utils/response-formatter";
-import { buildAnalyticsFeature } from "../../feature";
+import { AuthRequest } from "@/types/request.context.js";
+import { assertAuthenticated } from "@/utils/auth-guards.js";
+import { pickValidated } from "@/shared/middleware/validated.js";
+import { getDashboardVizSchema, getVisualizationSchema } from "./validators.js";
+import { successResponse } from "@/utils/response-formatter.js";
+import { buildAnalyticsFeature } from "../../feature.js";
 
 const DASH_CACHE_MAX_AGE = Number(process.env.VIZ_CACHE_MAX_AGE_SEC ?? 60);
 const DASH_CACHE_STALE_WHILE_REVALIDATE = Number(

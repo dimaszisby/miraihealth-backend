@@ -1,8 +1,8 @@
-import { GetVisualization } from "./application/queries/GetVisualization";
-import { GetDashboardVisualization } from "./application/queries/GetDashboardVisualization";
-import { getMetricTrend } from "./application/queries/getMetricTrend";
-import { VisualizationReadRepoSequelize } from "./infrastructure/persistence/VisualizationReadRepoSequelize";
-import { VisualizationCacheRedis } from "./infrastructure/cache/VisualizationCacheRedis";
+import { GetVisualization } from "./application/queries/GetVisualization.js";
+import { GetDashboardVisualization } from "./application/queries/GetDashboardVisualization.js";
+import { getMetricTrend } from "./application/queries/getMetricTrend.js";
+import { VisualizationReadRepoSequelize } from "./infrastructure/persistence/VisualizationReadRepoSequelize.js";
+import { VisualizationCacheRedis } from "./infrastructure/cache/VisualizationCacheRedis.js";
 
 class GetMetricTrendWrapper {
   async execute(params: Parameters<typeof getMetricTrend>[0]) {

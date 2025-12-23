@@ -1,4 +1,4 @@
-import { resolveBucket, type BucketAlias, type BucketSpec } from "./buckets";
+import { resolveBucket, type BucketAlias, type BucketSpec } from "./buckets.js";
 
 const DEFAULT_HORIZON_MS = 1000 * 60 * 60 * 24 * 180; // 180 days
 const ORDERED_BUCKETS: BucketAlias[] = ["1h", "1d", "1w", "1m", "1y"];

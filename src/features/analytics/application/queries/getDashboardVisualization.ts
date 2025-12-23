@@ -1,14 +1,14 @@
-import AppError from "@/utils/AppError";
-import type { FillMode } from "../../domain/types";
+import AppError from "@/utils/AppError.js";
+import type { FillMode } from "../../domain/types.js";
 import {
   resolveBucket,
   BucketAlias,
   type BucketSpec,
-} from "../../domain/buckets";
+} from "../../domain/buckets.js";
 import type {
   VisualizationReadRepository,
   DashboardVizResponse,
-} from "../ports/VisualizationReadRepository";
+} from "../ports/VisualizationReadRepository.js";
 
 export type GetDashboardVisualizationInput = {
   userId: string;

@@ -1,11 +1,11 @@
-import AppError from "@/utils/AppError";
-import type { FillMode, VizResponse } from "../../domain/types";
+import AppError from "@/utils/AppError.js";
+import type { FillMode, VizResponse } from "../../domain/types.js";
 import {
   resolveBucket,
   BucketAlias,
   type BucketSpec,
-} from "../../domain/buckets";
-import type { VisualizationReadRepository } from "../ports/VisualizationReadRepository";
+} from "../../domain/buckets.js";
+import type { VisualizationReadRepository } from "../ports/VisualizationReadRepository.js";
 
 export type GetVisualizationInput = {
   userId: string;
