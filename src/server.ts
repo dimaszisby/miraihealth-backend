@@ -14,18 +14,18 @@ import { metricRouter } from "./features/metric/index.js";
 import { metricLogRouter } from "./features/metric-log/index.js";
 import { metricSettingsRouter } from "./features/metric-settings/index.js";
 import { metricCategoryRouter } from "./features/metric-category/index.js";
-import { visualizationRouter } from "@/features/analytics/infrastructure/http/router";
+import { visualizationRouter } from "@/features/analytics/infrastructure/http/router.js";
 import { buildMetricLogFeature } from "./features/metric-log/feature.js";
 import { overrideMetricLogFeatureForTest } from "./features/metric-log/infrastructure/http/controller.js";
 import { AnalyticsVisualizationInvalidationAdapter } from "./features/analytics/infrastructure/cache/VisualizationInvalidationAdapter.js";
 
 // Other Setup
-import { globalRateLimiter } from "@/shared/middleware/rate-limiter";
-import { errorHandler } from "@/shared/middleware/error";
+import { globalRateLimiter } from "@/shared/middleware/rate-limiter.js";
+import { errorHandler } from "@/shared/middleware/error.js";
 import { disconnectRedis } from "./utils/redis-client.js";
 import sequelize from "./config/db.js";
 import { loadModels } from "./infrastructure/db/models.js";
-import { authMiddleware } from "./features/auth/infrastructure/http/authMiddleware";
+import { authMiddleware } from "./features/auth/infrastructure/http/authMiddleware.js";
 
 const visualizationInvalidationAdapter =
   new AnalyticsVisualizationInvalidationAdapter();
