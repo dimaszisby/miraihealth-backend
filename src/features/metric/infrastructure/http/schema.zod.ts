@@ -8,7 +8,7 @@ import {
   zMetricDefaultUnit,
   zMetricIsPublic,
   zMetricOriginalId,
-} from "@/constants/zod/zod-rules";
+} from "@/constants/zod/zod-rules.js";
 
 extendZodWithOpenApi(z);
 

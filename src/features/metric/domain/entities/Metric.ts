@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { MetricDomain } from "@/types/domain/metric.domain";
+import { MetricDomain } from "@/types/domain/metric.domain.js";
 
 export type MetricProps = {
   id: string;

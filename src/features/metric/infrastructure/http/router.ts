@@ -8,11 +8,11 @@ import {
   deleteMetric,
   generateDummyMetrics,
   handleMetricTrend,
-} from "./controller";
-import { authMiddleware } from "@/features/auth/infrastructure/http/authMiddleware";
-import { cacheMiddleware } from "@/shared/middleware/cache";
-import { userRateLimiter } from "@/shared/middleware/rate-limiter";
-import { validate } from "@/shared/middleware/validation";
+} from "./controller.js";
+import { authMiddleware } from "@/features/auth/infrastructure/http/authMiddleware.js";
+import { cacheMiddleware } from "@/shared/middleware/cache.js";
+import { userRateLimiter } from "@/shared/middleware/rate-limiter.js";
+import { validate } from "@/shared/middleware/validation.js";
 import {
   createMetricSchema,
   updateMetricSchema,
@@ -20,10 +20,10 @@ import {
   getMetricSchema,
   generateDummyMetricsSchema,
   getAllMetricsViaCursorSchema,
-} from "./schema.zod";
-import { AuthRequest } from "@/types/request.context";
-import { env } from "@/config/envManager";
-import { buildCursorCacheKey } from "@/shared/cache/keys";
+} from "./schema.zod.js";
+import { AuthRequest } from "@/types/request.context.js";
+import { env } from "@/config/envManager.js";
+import { buildCursorCacheKey } from "@/shared/cache/keys.js";
 
 const metricsCacheKey = (req: AuthRequest) => {
   const q = req.query as Record<string, unknown>;

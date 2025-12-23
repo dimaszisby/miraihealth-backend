@@ -6,21 +6,21 @@ import {
   getAllMetricsViaCursorSchema,
   getMetricSchema,
   updateMetricSchema,
-} from "./schema.zod";
-import { buildMetricFeature } from "../../feature";
-import { AuthRequest } from "@/types/request.context";
-import logger from "@/utils/logger";
+} from "./schema.zod.js";
+import { buildMetricFeature } from "../../feature.js";
+import { AuthRequest } from "@/types/request.context.js";
+import logger from "@/utils/logger.js";
 import {
   toMetricLibraryResponseDTO,
   toMetricResponseDTO,
   toUserMetricDetailResponseDTO,
-} from "@/utils/mappers/metric.mapper";
-import AppError from "@/utils/AppError";
-import { successResponse } from "@/utils/response-formatter";
-import catchAsync from "@/utils/catch-async";
-import { assertAuthenticated } from "@/utils/auth-guards";
-import { buildAnalyticsFeature } from "@/features/analytics/feature";
-import { pickValidated } from "@/shared/middleware/validated";
+} from "@/utils/mappers/metric.mapper.js";
+import AppError from "@/utils/AppError.js";
+import { successResponse } from "@/utils/response-formatter.js";
+import catchAsync from "@/utils/catch-async.js";
+import { assertAuthenticated } from "@/utils/auth-guards.js";
+import { buildAnalyticsFeature } from "@/features/analytics/feature.js";
+import { pickValidated } from "@/shared/middleware/validated.js";
 
 type MetricFeature = ReturnType<typeof buildMetricFeature>;
 let metricFeature: MetricFeature = buildMetricFeature();

@@ -1,4 +1,4 @@
-import { PersistenceTransaction } from "./PersistenceTransaction";
+import { PersistenceTransaction } from "./PersistenceTransaction.js";
 
 export interface TransactionPort {
   runInTransaction<T>(

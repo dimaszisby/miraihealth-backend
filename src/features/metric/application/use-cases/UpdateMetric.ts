@@ -1,6 +1,6 @@
-import { UpdateMetricRequestDTO } from "@/types/dtos/metric.dto";
-import { MetricRepository } from "../../domain/repositories/MetricRepository";
-import { CachePort } from "../ports/CachePort";
+import { UpdateMetricRequestDTO } from "@/types/dtos/metric.dto.js";
+import { MetricRepository } from "../../domain/repositories/MetricRepository.js";
+import { CachePort } from "../ports/CachePort.js";
 
 type Input = {
   userId: string;

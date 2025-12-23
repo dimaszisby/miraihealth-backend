@@ -1,12 +1,12 @@
 import {
   invalidateCacheByPattern,
   redisClient,
-} from "@/utils/redis-client";
-import { CachePort } from "../../application/ports/CachePort";
+} from "@/utils/redis-client.js";
+import { CachePort } from "../../application/ports/CachePort.js";
 import {
   logCacheInvalidation,
   logCacheInvalidationError,
-} from "@/shared/cache/logging";
+} from "@/shared/cache/logging.js";
 
 export class MetricCacheRedis implements CachePort {
   isEnabled(): boolean {

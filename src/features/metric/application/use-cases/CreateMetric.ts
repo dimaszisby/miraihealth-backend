@@ -1,12 +1,12 @@
-import AppError from "@/utils/AppError";
-import { Metric } from "../../domain/entities/Metric";
+import AppError from "@/utils/AppError.js";
+import { Metric } from "../../domain/entities/Metric.js";
 import {
   CreateMetricDTO,
   MetricRepository,
-} from "../../domain/repositories/MetricRepository";
-import { CachePort } from "../ports/CachePort";
-import { MetricSettingsPort } from "../ports/MetricSettingsPort";
-import { TransactionPort } from "../ports/TransactionPort";
+} from "../../domain/repositories/MetricRepository.js";
+import { CachePort } from "../ports/CachePort.js";
+import { MetricSettingsPort } from "../ports/MetricSettingsPort.js";
+import { TransactionPort } from "../ports/TransactionPort.js";
 
 type Input = CreateMetricDTO;
 

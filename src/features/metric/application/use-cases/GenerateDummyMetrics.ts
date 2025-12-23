@@ -1,7 +1,7 @@
-import { models } from "@/infrastructure/db/models";
-import { MetricDomain } from "@/types/domain/metric.domain";
-import { toDomainMetric } from "@/utils/mappers/metric.mapper";
-import { CachePort } from "../ports/CachePort";
+import { models } from "@/infrastructure/db/models.js";
+import { MetricDomain } from "@/types/domain/metric.domain.js";
+import { toDomainMetric } from "@/utils/mappers/metric.mapper.js";
+import { CachePort } from "../ports/CachePort.js";
 
 type Input = {
   userId: string;

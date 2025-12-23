@@ -1,5 +1,5 @@
-import { MetricRepository } from "../../domain/repositories/MetricRepository";
-import { CachePort } from "../ports/CachePort";
+import { MetricRepository } from "../../domain/repositories/MetricRepository.js";
+import { CachePort } from "../ports/CachePort.js";
 
 type Input = {
   userId: string;
