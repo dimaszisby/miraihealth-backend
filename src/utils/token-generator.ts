@@ -1,8 +1,6 @@
-// src/utils/token-generator.ts
-
 import { env } from "../config/envManager.js";
 import jwt from "jsonwebtoken";
-import type { UserInstance } from "@/features/auth/infrastructure/persistence/models/user.sequelize";
+import type { UserInstance } from "@/features/auth/infrastructure/persistence/models/user.sequelize.js";
 
 type TokenSubject = Pick<UserInstance, "id" | "email">;
 

@@ -1,5 +1,3 @@
-// src/utils/logger.ts
-
 import { createLogger, format, transports, Logger } from "winston";
 const { combine, timestamp, printf, errors, colorize, json, splat } = format;
 import { env } from "../config/envManager.js";

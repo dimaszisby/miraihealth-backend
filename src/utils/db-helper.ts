@@ -1,13 +1,10 @@
-// src/utils/db-validators.ts
-// Not yet migrated to DDD
-
 import AppError from "./AppError.js";
-import { models } from "@/infrastructure/db/models";
+import { models } from "@/infrastructure/db/models.js";
 
-import type { Metric } from "@/features/metric/infrastructure/persistence/models/metric.sequelize";
-import type { MetricCategory } from "@/features/metric-category/infrastructure/persistence/models/metric-category.sequelize";
-import type { MetricSettings } from "@/features/metric-settings/infrastructure/persistence/models/metric-settings.sequelize";
-import type { MetricLog } from "@/features/metric-log/infrastructure/persistence/models/metric-log.sequelize";
+import type { Metric } from "@/features/metric/infrastructure/persistence/models/metric.sequelize.js";
+import type { MetricCategory } from "@/features/metric-category/infrastructure/persistence/models/metric-category.sequelize.js";
+import type { MetricSettings } from "@/features/metric-settings/infrastructure/persistence/models/metric-settings.sequelize.js";
+import type { MetricLog } from "@/features/metric-log/infrastructure/persistence/models/metric-log.sequelize.js";
 
 /**
  * * Utility function to validate if a metric exists and owned by the requesting user

@@ -1,5 +1,3 @@
-// src/utils/catchAsync.js
-
 import { Request, Response, NextFunction } from "express";
 
 /**

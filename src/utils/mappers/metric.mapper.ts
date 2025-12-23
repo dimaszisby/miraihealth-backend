@@ -1,31 +1,31 @@
-import { Metric } from "@/features/metric/infrastructure/persistence/models/metric.sequelize";
-import { MetricLibraryDomain } from "@/types/domain/metric.domain";
-import { MetricCategory } from "@/features/metric-category/infrastructure/persistence/models/metric-category.sequelize";
+import { Metric } from "@/features/metric/infrastructure/persistence/models/metric.sequelize.js";
+import { MetricLibraryDomain } from "@/types/domain/metric.domain.js";
+import { MetricCategory } from "@/features/metric-category/infrastructure/persistence/models/metric-category.sequelize.js";
 import {
   toDomain as toMetricCategoryDomain,
   toResponseDTO as toMetricCategoryResponseDTO,
   MetricCategoryRow,
-} from "@/features/metric-category/infrastructure/mappers/MetricCategoryMapper";
-import { MetricSettings } from "@/features/metric-settings/infrastructure/persistence/models/metric-settings.sequelize";
-import { MetricLog } from "@/features/metric-log/infrastructure/persistence/models/metric-log.sequelize";
+} from "@/features/metric-category/infrastructure/mappers/MetricCategoryMapper.js";
+import { MetricSettings } from "@/features/metric-settings/infrastructure/persistence/models/metric-settings.sequelize.js";
+import { MetricLog } from "@/features/metric-log/infrastructure/persistence/models/metric-log.sequelize.js";
 import {
   MetricDomain,
   MetricDomainExtended,
   MetricLibraryCategoryInfoDomain,
-} from "@/types/domain/metric.domain";
+} from "@/types/domain/metric.domain.js";
 import {
   MetricPreviewResponseDTO,
   MetricResponseDTO,
   UserMetricDetailResponseDTO,
-} from "@/types/dtos/metric.dto";
-import logger from "../logger";
-import AppError from "@/utils/AppError";
+} from "@/types/dtos/metric.dto.js";
+import logger from "../logger.js";
+import AppError from "@/utils/AppError.js";
 import {
   toMetricSettingsResponseDTO,
   toDomainMetricSettings,
-} from "@/features/metric-settings/infrastructure/mappers/MetricSettingsMapper";
-import { toMetricLogResponseDTO } from "./metric-log.mapper";
-import { toDomainMetricLog } from "./metric-log.mapper";
+} from "@/features/metric-settings/infrastructure/mappers/MetricSettingsMapper.js";
+import { toMetricLogResponseDTO } from "./metric-log.mapper.js";
+import { toDomainMetricLog } from "./metric-log.mapper.js";
 
 const toCategoryRow = (category: Partial<MetricCategoryRow>): MetricCategoryRow => ({
   id: category.id ?? "",
