@@ -1,12 +1,12 @@
-import { CachePort } from "../../application/ports/CachePort";
+import { CachePort } from "../../application/ports/CachePort.js";
 import {
   redisClient,
   invalidateCacheByPattern,
-} from "@/utils/redis-client";
+} from "@/utils/redis-client.js";
 import {
   logCacheInvalidation,
   logCacheInvalidationError,
-} from "@/shared/cache/logging";
+} from "@/shared/cache/logging.js";
 
 export class MetricCategoryCacheRedis implements CachePort {
   constructor(private defaultTtlSeconds = 300) {}

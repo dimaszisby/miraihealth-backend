@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { ZodMessages } from "@/constants/zod/zod-messages";
+import { ZodMessages } from "@/constants/zod/zod-messages.js";
 import {
   zMetricCategoryName,
   zMetricCategoryColor,
   zMetricCategoryIcon,
-} from "@/constants/zod/zod-rules";
+} from "@/constants/zod/zod-rules.js";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 
 extendZodWithOpenApi(z);

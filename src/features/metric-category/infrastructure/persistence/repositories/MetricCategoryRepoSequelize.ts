@@ -6,19 +6,19 @@ import {
   FindAttributeOptions,
   ProjectionAlias,
 } from "sequelize";
-import { models } from "@/infrastructure/db/models";
-import { MetricCategoryRepository } from "../../../domain/repositories/MetricCategoryRepository";
+import { models } from "@/infrastructure/db/models.js";
+import { MetricCategoryRepository } from "../../../domain/repositories/MetricCategoryRepository.js";
 import {
   ListQuery,
   ListResult,
   SortParam,
   SortField,
-} from "../../../domain/types";
-import { MetricCategory } from "../../../domain/entities/MetricCategory";
+} from "../../../domain/types.js";
+import { MetricCategory } from "../../../domain/entities/MetricCategory.js";
 import {
   MetricCategoryRow,
   toDomain,
-} from "../../mappers/MetricCategoryMapper";
+} from "../../mappers/MetricCategoryMapper.js";
 
 const METRIC_COUNT_SQL = `(SELECT COUNT(*) FROM "metrics" m WHERE m."category_id" = "MetricCategory"."id" AND m."deleted_at" IS NULL)`;
 

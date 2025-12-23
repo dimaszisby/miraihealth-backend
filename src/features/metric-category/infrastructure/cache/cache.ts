@@ -1,9 +1,9 @@
-import { invalidateCacheByPattern } from "@/utils/redis-client";
-import { METRIC_CATEGORY_CURSOR_NAMESPACE_ALL } from "@/features/metric-category/application/cache.constants";
+import { invalidateCacheByPattern } from "@/utils/redis-client.js";
+import { METRIC_CATEGORY_CURSOR_NAMESPACE_ALL } from "@/features/metric-category/application/cache.constants.js";
 import {
   logCacheInvalidation,
   logCacheInvalidationError,
-} from "@/shared/cache/logging";
+} from "@/shared/cache/logging.js";
 
 /**
  * Invalidates all cache keys related to a user's category

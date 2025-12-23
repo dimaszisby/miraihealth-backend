@@ -1,20 +1,20 @@
 import { Response } from "express";
-import catchAsync from "@/utils/catch-async";
-import { successResponse } from "@/utils/response-formatter";
-import { AuthRequest } from "@/types/request.context";
-import { assertAuthenticated } from "@/utils/auth-guards";
+import catchAsync from "@/utils/catch-async.js";
+import { successResponse } from "@/utils/response-formatter.js";
+import { AuthRequest } from "@/types/request.context.js";
+import { assertAuthenticated } from "@/utils/auth-guards.js";
 import {
   toResponseDTO,
   toListResponseDTO,
-} from "@/features/metric-category/infrastructure/mappers/MetricCategoryMapper";
+} from "@/features/metric-category/infrastructure/mappers/MetricCategoryMapper.js";
 import {
   createMetricCategorySchema,
   getAllMetricCategoriesSchema,
   updateMetricCategorySchema,
-} from "./schema.zod";
-import { buildMetricCategoryFeature } from "../../feature";
-import { generateDummyMetricCategoriesSchema } from "./schema.zod";
-import { pickValidated } from "@/shared/middleware/validated";
+} from "./schema.zod.js";
+import { buildMetricCategoryFeature } from "../../feature.js";
+import { generateDummyMetricCategoriesSchema } from "./schema.zod.js";
+import { pickValidated } from "@/shared/middleware/validated.js";
 
 type Feature = ReturnType<typeof buildMetricCategoryFeature>;
 let feature: Feature = buildMetricCategoryFeature();
@@ -196,11 +196,11 @@ export const generateDummyCategories = catchAsync(async (req: AuthRequest, res: 
 // // * ========== DDD impl ==========
 
 // // infrastructure/http/controller.ts
-// import { ListCategories } from "../../application/use-cases/ListCategories";
-// import { CreateCategory } from "../../application/use-cases/CreateCategory";
-// import { MetricCategoryRepoSequelize } from "../persistence/repositories/MetricCategoryRepoSequelize";
-// import { RedisCacheAdapter } from "../cache/RedisCacheAdapter";
-// import { toResponseDTOLegacy } from "../../legacies/MetricCategoryLegacy.mapper";
+// import { ListCategories } from "../../application/use-cases/ListCategories.js";
+// import { CreateCategory } from "../../application/use-cases/CreateCategory.js";
+// import { MetricCategoryRepoSequelize } from "../persistence/repositories/MetricCategoryRepoSequelize.js";
+// import { RedisCacheAdapter } from "../cache/RedisCacheAdapter.js";
+// import { toResponseDTOLegacy } from "../../legacies/MetricCategoryLegacy.mapper.js";
 
 // // Construct use-cases via composition root (dependency injection)
 // const listCategoriesUC = new ListCategories(

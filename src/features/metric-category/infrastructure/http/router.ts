@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { env } from "@/config/envManager";
+import { env } from "@/config/envManager.js";
 import {
   createCategory,
   listCategories,
@@ -7,11 +7,11 @@ import {
   updateCategory,
   deleteCategory,
   generateDummyCategories,
-} from "./controller";
-import { authMiddleware } from "@/features/auth/infrastructure/http/authMiddleware";
-import { cacheMiddleware } from "@/shared/middleware/cache";
-import { userRateLimiter } from "@/shared/middleware/rate-limiter";
-import { validate } from "@/shared/middleware/validation";
+} from "./controller.js";
+import { authMiddleware } from "@/features/auth/infrastructure/http/authMiddleware.js";
+import { cacheMiddleware } from "@/shared/middleware/cache.js";
+import { userRateLimiter } from "@/shared/middleware/rate-limiter.js";
+import { validate } from "@/shared/middleware/validation.js";
 import {
   createMetricCategorySchema,
   updateMetricCategorySchema,
@@ -19,17 +19,17 @@ import {
   getAllMetricCategoriesSchema,
   deleteMetricCategorySchema,
   generateDummyMetricCategoriesSchema,
-} from "@/features/metric-category/infrastructure/http/schema.zod";
-import { AuthRequest } from "@/types/request.context";
-import { buildCursorCacheKey } from "@/shared/cache/keys";
+} from "@/features/metric-category/infrastructure/http/schema.zod.js";
+import { AuthRequest } from "@/types/request.context.js";
+import { buildCursorCacheKey } from "@/shared/cache/keys.js";
 import {
   METRIC_CATEGORY_CURSOR_FEATURE,
   METRIC_CATEGORY_CURSOR_VERSION,
-} from "@/features/metric-category/application/cache.constants";
+} from "@/features/metric-category/application/cache.constants.js";
 
 const categoriesCacheKey = (req: AuthRequest) => {
   const { limit = 20, sort = "-createdAt", q, after } = req.query as any;
-  const fname = (req.query["filter[name]"] as string) ?? "";
+  const fname = (req.query["filter[name]"] as string) ?? ".js";
   const includeTotal = String(req.query.includeTotal ?? "false");
   return buildCursorCacheKey({
     feature: METRIC_CATEGORY_CURSOR_FEATURE,

@@ -11,9 +11,9 @@ export type MetricCategoryProps = {
 };
 
 import crypto from "node:crypto";
-import { MetricCategoryName } from "../value-objects/MetricCategoryName";
-import { MetricCategoryColor } from "../value-objects/MetricCategoryColor";
-import { MetricCategoryIcon } from "../value-objects/MetricCategoryIcon";
+import { MetricCategoryName } from "../value-objects/MetricCategoryName.js";
+import { MetricCategoryColor } from "../value-objects/MetricCategoryColor.js";
+import { MetricCategoryIcon } from "../value-objects/MetricCategoryIcon.js";
 
 export class MetricCategory {
   private constructor(private props: MetricCategoryProps) {}

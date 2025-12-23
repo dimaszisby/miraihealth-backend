@@ -1,7 +1,7 @@
-import AppError from "@/utils/AppError";
-import { MetricCategoryRepository } from "../../domain/repositories/MetricCategoryRepository";
-import { CachePort } from "../ports/CachePort";
-import { METRIC_CATEGORY_CURSOR_NAMESPACE_ALL } from "@/features/metric-category/application/cache.constants";
+import AppError from "@/utils/AppError.js";
+import { MetricCategoryRepository } from "../../domain/repositories/MetricCategoryRepository.js";
+import { CachePort } from "../ports/CachePort.js";
+import { METRIC_CATEGORY_CURSOR_NAMESPACE_ALL } from "@/features/metric-category/application/cache.constants.js";
 
 type Input = {
   userId: string;

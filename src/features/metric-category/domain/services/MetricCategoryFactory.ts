@@ -1,7 +1,7 @@
-import { MetricCategory } from "../entities/MetricCategory";
-import { MetricCategoryName } from "../value-objects/MetricCategoryName";
-import { MetricCategoryColor } from "../value-objects/MetricCategoryColor";
-import { MetricCategoryIcon } from "../value-objects/MetricCategoryIcon";
+import { MetricCategory } from "../entities/MetricCategory.js";
+import { MetricCategoryName } from "../value-objects/MetricCategoryName.js";
+import { MetricCategoryColor } from "../value-objects/MetricCategoryColor.js";
+import { MetricCategoryIcon } from "../value-objects/MetricCategoryIcon.js";
 
 export interface MetricCategorySeed {
   userId: string;

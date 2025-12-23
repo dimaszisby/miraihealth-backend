@@ -1,5 +1,5 @@
-import { MetricCategory } from "../entities/MetricCategory";
-import { ListQuery, ListResult } from "../types";
+import { MetricCategory } from "../entities/MetricCategory.js";
+import { ListQuery, ListResult } from "../types.js";
 
 export interface MetricCategoryRepository {
   // GET specific by Id
