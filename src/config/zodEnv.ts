@@ -1,5 +1,3 @@
-// src/config/zodEnv.ts
-
 import "./loadEnv.js";
 import { z } from "zod";
 

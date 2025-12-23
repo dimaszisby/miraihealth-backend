@@ -1,7 +1,5 @@
-// src/validators/zod-rules.ts
-
 import { z } from "zod";
-import { ZodMessages } from "@/constants/zod/zod-messages"; // centralized error messages
+import { ZodMessages } from "@/constants/zod/zod-messages.js"; // centralized error messages
 
 /**
  * Reusable Zod Field Validations
