@@ -5,11 +5,11 @@
     "module": "NodeNext",
     "rootDir": ".",
     "moduleResolution": "NodeNext",
-    "baseUrl": "src",
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"],
-      "@utils/*": ["./utils/*"],
-      "@config/*": ["./config/*"],
+      "@/*": ["src/*"],
+      "@utils/*": ["src/utils/*"],
+      "@config/*": ["src/config/*"]
     },
     "typeRoots": [
       "./node_modules/@types",

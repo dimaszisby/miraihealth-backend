@@ -19,6 +19,9 @@
     "test:e2e": "jest --runInBand --selectProjects e2e",
     "test:unit": "NODE_ENV=test SKIP_DB_LIFECYCLE=true jest --runInBand --selectProjects unit",
     "test:integration": "NODE_ENV=test jest --runInBand --selectProjects integration",
+    "test:unit:coverage": "NODE_ENV=test SKIP_DB_LIFECYCLE=true jest --runInBand --selectProjects unit --coverage",
+    "test:integration:coverage": "NODE_ENV=test jest --runInBand --selectProjects integration --coverage",
+    "test:coverage": "npm run test:unit:coverage && npm run test:integration:coverage",
     "test:contract:local": "node documents/tests/4-contract-tests/postman-newman/scripts/run-contract-local.js",
     "test:contract:staging": "node documents/tests/4-contract-tests/postman-newman/scripts/run-contract-staging.js",
     "migrate": "npx dotenv -e .env.development -- sequelize-cli db:migrate --config src/config/config.cjs",
@@ -38,7 +41,9 @@
     "migrate:production:undo:all": "NODE_ENV=production dotenv -e .env.production -- npx sequelize-cli db:migrate:undo:all --config src/config/config.cjs",
     "docs:openapi:generate": "NODE_ENV=development tsx ./scripts/generate-openapi.ts",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md,yml,yaml}\"",
+    "format:write": "prettier --write \"**/*.{ts,tsx,js,json,md,yml,yaml}\""
   },
   "keywords": [],
   "author": "",
