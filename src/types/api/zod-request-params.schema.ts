@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
-import { UuidSchema } from "@/lib/openapi/openapi-schemas";
+import { UuidSchema } from "@/lib/openapi/openapi-schemas.js";
 
 extendZodWithOpenApi(z);
 
