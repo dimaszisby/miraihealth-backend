@@ -1,5 +1,3 @@
-// src/types/dtos/metric.dto.ts
-
 import { z } from "zod";
 
 // Internal validation schemas
@@ -7,12 +5,12 @@ import {
   createMetricSchema,
   updateMetricSchema,
   generateDummyMetricsSchema,
-} from "@/features/metric/infrastructure/http/schema.zod";
+} from "@/features/metric/infrastructure/http/schema.zod.js";
 
 // Internal DTOs for associations
-import { MetricCategoryResponseDTO } from "../../features/metric-category/infrastructure/http/dto";
-import { MetricSettingsResponseDTO } from "@/features/metric-settings/infrastructure/http/dto";
-import { MetricLogResponseDTO } from "@/features/metric-log/infrastructure/http/dto";
+import { MetricCategoryResponseDTO } from "../../features/metric-category/infrastructure/http/dto.js";
+import { MetricSettingsResponseDTO } from "@/features/metric-settings/infrastructure/http/dto.js";
+import { MetricLogResponseDTO } from "@/features/metric-log/infrastructure/http/dto.js";
 
 /**
  * @file src/types/dtos/metric.dto.ts

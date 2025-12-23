@@ -1,5 +1,3 @@
-
-
 /**
  * @interface MetricDisplayOptions
  * @description Defines options related to how a metric is displayed in the user interface.

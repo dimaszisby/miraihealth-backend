@@ -1,5 +1,3 @@
-// src/types/db/user.types.ts
-
 /**
  * @interface UserAttributesBase
  * @description Defines the core, non-database-specific attributes for a User entity.

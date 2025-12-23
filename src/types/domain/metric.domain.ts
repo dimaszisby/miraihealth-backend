@@ -6,8 +6,8 @@
  * Domain models are often immutable.
  */
 
-import { MetricLogDomain } from "./metric-log.domain";
-import { MetricSettingsDomain } from "./metric-settings.domain";
+import { MetricLogDomain } from "./metric-log.domain.js";
+import { MetricSettingsDomain } from "./metric-settings.domain.js";
 
 /**
  * @interface MetricDomain
