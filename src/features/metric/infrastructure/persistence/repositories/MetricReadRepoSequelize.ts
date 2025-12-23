@@ -1,5 +1,5 @@
-import { models } from "@/infrastructure/db/models";
-import { MetricLibraryDomain, MetricDomainExtended } from "@/types/domain/metric.domain";
+import { models } from "@/infrastructure/db/models.js";
+import { MetricLibraryDomain, MetricDomainExtended } from "@/types/domain/metric.domain.js";
 import {
   MetricReadRepository,
   ListMetricsResult,
@@ -8,8 +8,8 @@ import {
   SortParam,
   MetricDetailQuery,
   Dir,
-} from "../../../application/ports/MetricReadRepository";
-import { toDomainMetricLibrary, toExtendedMetricDomain } from "@/utils/mappers/metric.mapper";
+} from "../../../application/ports/MetricReadRepository.js";
+import { toDomainMetricLibrary, toExtendedMetricDomain } from "@/utils/mappers/metric.mapper.js";
 import {
   FindAttributeOptions,
   ProjectionAlias,
@@ -265,13 +265,13 @@ function buildCursorPredicate(
       return {
         [Op.or]: [
           Sequelize.where(
-            Sequelize.fn("lower", Sequelize.col("name")),
+            Sequelize.fn("lower", Sequelize.col("Metric.name")),
             { [ltgt]: N }
           ),
           {
             [Op.and]: [
               Sequelize.where(
-                Sequelize.fn("lower", Sequelize.col("name")),
+                Sequelize.fn("lower", Sequelize.col("Metric.name")),
                 { [eq]: N }
               ),
               { id: { [ltgt]: cursor.id } },
@@ -302,7 +302,7 @@ function buildOrder(field: SortField, dir: Dir): OrderItem[] {
   switch (field) {
     case "name":
       return [
-        [Sequelize.fn("lower", Sequelize.col("name")), dir],
+        [Sequelize.fn("lower", Sequelize.col("Metric.name")), dir],
         ["id", dir],
       ];
     case "logCount":

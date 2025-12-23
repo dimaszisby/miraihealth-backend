@@ -1,10 +1,10 @@
-import { models } from "@/infrastructure/db/models";
+import { models } from "@/infrastructure/db/models.js";
 import { Transaction } from "sequelize";
-import { CreateMetricDTO, MetricRepository } from "../../../domain/repositories/MetricRepository";
-import { Metric } from "../../../domain/entities/Metric";
-import { PersistenceTransaction } from "../../../application/ports/PersistenceTransaction";
-import { MetricRow, toDomain } from "../mappers/MetricMapper";
-import AppError from "@/utils/AppError";
+import { CreateMetricDTO, MetricRepository } from "../../../domain/repositories/MetricRepository.js";
+import { Metric } from "../../../domain/entities/Metric.js";
+import { PersistenceTransaction } from "../../../application/ports/PersistenceTransaction.js";
+import { MetricRow, toDomain } from "../mappers/MetricMapper.js";
+import AppError from "@/utils/AppError.js";
 
 export class MetricRepoSequelize implements MetricRepository {
   async existsByName(userId: string, name: string): Promise<boolean> {
