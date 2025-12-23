@@ -1,8 +1,8 @@
 import { jest } from "@jest/globals";
-import { GetProfile } from "@/features/auth/application/queries/GetProfile";
-import { UserRepository } from "@/features/auth/domain/repositories/UserRepository";
-import { AuthUser } from "@/features/auth/domain/entities/AuthUser";
-import AppError from "@/utils/AppError";
+import { GetProfile } from "@/features/auth/application/queries/GetProfile.js";
+import { UserRepository } from "@/features/auth/domain/repositories/UserRepository.js";
+import { AuthUser } from "@/features/auth/domain/entities/AuthUser.js";
+import AppError from "@/utils/AppError.js";
 
 const makeUser = () =>
   AuthUser.fromPersistence({

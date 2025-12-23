@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
-import AppError from "@/utils/AppError";
-import { ListMetrics } from "@/features/metric/application/queries/ListMetrics";
-import type { ListMetricsResult } from "@/features/metric/application/ports/MetricReadRepository";
+import AppError from "@/utils/AppError.js";
+import { ListMetrics } from "@/features/metric/application/queries/ListMetrics.js";
+import type { ListMetricsResult } from "@/features/metric/application/ports/MetricReadRepository.js";
 
 describe("ListMetrics query", () => {
   const baseResult: ListMetricsResult = {

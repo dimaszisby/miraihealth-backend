@@ -1,6 +1,6 @@
 import { jest } from "@jest/globals";
-import { models } from "@/infrastructure/db/models";
-import { UserRepositorySequelize } from "@/features/auth/infrastructure/persistence/UserRepositorySequelize";
+import { models } from "@/infrastructure/db/models.js";
+import { UserRepositorySequelize } from "@/features/auth/infrastructure/persistence/UserRepositorySequelize.js";
 
 const makeRow = () => ({
   id: "user-1",

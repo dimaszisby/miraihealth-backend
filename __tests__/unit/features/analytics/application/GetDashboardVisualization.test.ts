@@ -1,8 +1,8 @@
 import { jest } from "@jest/globals";
-import AppError from "@/utils/AppError";
-import { GetDashboardVisualization } from "@/features/analytics/application/queries/GetDashboardVisualization";
-import type { VisualizationReadRepository } from "@/features/analytics/application/ports/VisualizationReadRepository";
-import { withTestEnv } from "@/tests/env-test-utils";
+import AppError from "@/utils/AppError.js";
+import { GetDashboardVisualization } from "@/features/analytics/application/queries/GetDashboardVisualization.js";
+import type { VisualizationReadRepository } from "@/features/analytics/application/ports/VisualizationReadRepository.js";
+import { withTestEnv } from "@/tests/env-test-utils.js";
 
 const makeRepo = () => {
   const repo = {

@@ -1,4 +1,4 @@
-import { AuthUser } from "@/features/auth/domain/entities/AuthUser";
+import { AuthUser } from "@/features/auth/domain/entities/AuthUser.js";
 
 const makeUser = () =>
   AuthUser.fromPersistence({

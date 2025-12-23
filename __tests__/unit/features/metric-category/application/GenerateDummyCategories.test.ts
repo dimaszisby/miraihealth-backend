@@ -1,10 +1,10 @@
 import { jest } from "@jest/globals";
-import { GenerateDummyCategories } from "@/features/metric-category/application/use-cases/GenerateDummyCategories";
+import { GenerateDummyCategories } from "@/features/metric-category/application/use-cases/GenerateDummyCategories.js";
 import {
   MetricCategory,
   MetricCategoryProps,
-} from "@/features/metric-category/domain/entities/MetricCategory";
-import { METRIC_CATEGORY_CURSOR_NAMESPACE_ALL } from "@/features/metric-category/application/cache.constants";
+} from "@/features/metric-category/domain/entities/MetricCategory.js";
+import { METRIC_CATEGORY_CURSOR_NAMESPACE_ALL } from "@/features/metric-category/application/cache.constants.js";
 
 const buildCategory = (overrides: Partial<MetricCategoryProps> = {}) =>
   MetricCategory.fromProps({

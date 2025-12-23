@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
-import AppError from "@/utils/AppError";
-import { GetMetricDetail } from "@/features/metric/application/queries/GetMetricDetail";
-import type { MetricDomainExtended } from "@/types/domain/metric.domain";
+import AppError from "@/utils/AppError.js";
+import { GetMetricDetail } from "@/features/metric/application/queries/GetMetricDetail.js";
+import type { MetricDomainExtended } from "@/types/domain/metric.domain.js";
 
 const sampleMetric: MetricDomainExtended = {
   id: "metric-1",

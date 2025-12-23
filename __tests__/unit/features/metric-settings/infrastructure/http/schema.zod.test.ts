@@ -4,7 +4,7 @@ import {
   updateDisplayOptionsSchema,
   settingsBody,
   settingsBodyPartial,
-} from "@/features/metric-settings/infrastructure/http/schema.zod";
+} from "@/features/metric-settings/infrastructure/http/schema.zod.js";
 
 const uuid = "0b57a95f-6c2b-4af2-87a8-47b594edc1d7";
 

@@ -4,8 +4,8 @@ import {
   loadEnvOrExit,
   maskEnvValue,
   resetEnvCacheForTesting,
-} from "@/config/envManager";
-import { withTestEnv } from "@/tests/env-test-utils";
+} from "@/config/envManager.js";
+import { withTestEnv } from "@/tests/env-test-utils.js";
 
 describe("envManager", () => {
   beforeEach(() => {

@@ -2,9 +2,9 @@ import { jest } from "@jest/globals";
 import type {
   ListLogsResult,
   ListOpts,
-} from "@/features/metric-log/application/ports/MetricLogQueryPort";
+} from "@/features/metric-log/application/ports/MetricLogQueryPort.js";
 type ControllerModule =
-  typeof import("@/features/metric-log/infrastructure/http/controller");
+  typeof import("@/features/metric-log/infrastructure/http/controller.js");
 
 const createLogExecute = jest.fn<(args: any) => Promise<any>>();
 const getLogExecute = jest.fn<(args: any) => Promise<any>>();
@@ -41,7 +41,7 @@ describe("Metric log controller", () => {
       generateDummyMetricLogs,
       getUserLogLibrariesViaCursor,
       overrideMetricLogFeatureForTest,
-    } = await import("@/features/metric-log/infrastructure/http/controller"));
+    } = await import("@/features/metric-log/infrastructure/http/controller.js"));
   });
 
   beforeEach(() => {

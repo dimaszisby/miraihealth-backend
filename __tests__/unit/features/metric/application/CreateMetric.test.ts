@@ -1,11 +1,11 @@
 import { jest } from "@jest/globals";
-import { CreateMetric } from "@/features/metric/application/use-cases/CreateMetric";
-import { MetricRepository } from "@/features/metric/domain/repositories/MetricRepository";
-import { Metric } from "@/features/metric/domain/entities/Metric";
-import { MetricSettingsPort } from "@/features/metric/application/ports/MetricSettingsPort";
-import { CachePort } from "@/features/metric/application/ports/CachePort";
-import { TransactionPort } from "@/features/metric/application/ports/TransactionPort";
-import AppError from "@/utils/AppError";
+import { CreateMetric } from "@/features/metric/application/use-cases/CreateMetric.js";
+import { MetricRepository } from "@/features/metric/domain/repositories/MetricRepository.js";
+import { Metric } from "@/features/metric/domain/entities/Metric.js";
+import { MetricSettingsPort } from "@/features/metric/application/ports/MetricSettingsPort.js";
+import { CachePort } from "@/features/metric/application/ports/CachePort.js";
+import { TransactionPort } from "@/features/metric/application/ports/TransactionPort.js";
+import AppError from "@/utils/AppError.js";
 
 type RepoMock = jest.Mocked<MetricRepository>;
 type SettingsMock = jest.Mocked<MetricSettingsPort>;

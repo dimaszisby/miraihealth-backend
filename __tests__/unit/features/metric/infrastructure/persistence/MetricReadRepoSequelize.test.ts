@@ -1,6 +1,6 @@
 import { jest } from "@jest/globals";
-import { MetricReadRepoSequelize } from "@/features/metric/infrastructure/persistence/repositories/MetricReadRepoSequelize";
-import { models } from "@/infrastructure/db/models";
+import { MetricReadRepoSequelize } from "@/features/metric/infrastructure/persistence/repositories/MetricReadRepoSequelize.js";
+import { models } from "@/infrastructure/db/models.js";
 describe("MetricReadRepoSequelize", () => {
   afterEach(() => {
     jest.restoreAllMocks();

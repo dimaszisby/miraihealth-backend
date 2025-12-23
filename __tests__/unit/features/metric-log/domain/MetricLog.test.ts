@@ -1,4 +1,4 @@
-import { MetricLog } from "@/features/metric-log/domain/entities/MetricLog";
+import { MetricLog } from "@/features/metric-log/domain/entities/MetricLog.js";
 
 const baseProps = {
   id: "log-1",

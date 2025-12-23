@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
-import { MetricLogRepoSequelize } from "@/features/metric-log/infrastructure/persistence/repositories/MetricLogRepoSequelize";
-import { MetricLog } from "@/features/metric-log/domain/entities/MetricLog";
-import { models } from "@/infrastructure/db/models";
+import { MetricLogRepoSequelize } from "@/features/metric-log/infrastructure/persistence/repositories/MetricLogRepoSequelize.js";
+import { MetricLog } from "@/features/metric-log/domain/entities/MetricLog.js";
+import { models } from "@/infrastructure/db/models.js";
 
 const makeInstance = () => {
   const row = {

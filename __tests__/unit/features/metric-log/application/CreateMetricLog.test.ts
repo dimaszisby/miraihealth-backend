@@ -1,10 +1,10 @@
 import { jest } from "@jest/globals";
-import { CreateMetricLog } from "@/features/metric-log/application/use-cases/CreateMetricLog";
-import { MetricLogRepository } from "@/features/metric-log/domain/repositories/MetricLogRepository";
-import { MetricAccessPort } from "@/features/metric-log/application/ports/MetricAccessPort";
-import { CachePort } from "@/features/metric-log/application/ports/CachePort";
-import { MetricLog } from "@/features/metric-log/domain/entities/MetricLog";
-import AppError from "@/utils/AppError";
+import { CreateMetricLog } from "@/features/metric-log/application/use-cases/CreateMetricLog.js";
+import { MetricLogRepository } from "@/features/metric-log/domain/repositories/MetricLogRepository.js";
+import { MetricAccessPort } from "@/features/metric-log/application/ports/MetricAccessPort.js";
+import { CachePort } from "@/features/metric-log/application/ports/CachePort.js";
+import { MetricLog } from "@/features/metric-log/domain/entities/MetricLog.js";
+import AppError from "@/utils/AppError.js";
 
 const buildLog = () =>
   MetricLog.fromProps({

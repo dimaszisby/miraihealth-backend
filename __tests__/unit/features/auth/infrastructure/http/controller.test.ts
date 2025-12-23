@@ -1,10 +1,10 @@
 import { jest } from "@jest/globals";
 import type { Response, NextFunction } from "express";
-import type { AuthRequest } from "@/types/request.context";
-import type { buildAuthFeature } from "@/features/auth";
+import type { AuthRequest } from "@/types/request.context.js";
+import type { buildAuthFeature } from "@/features/auth/feature.js";
 
 type ControllerModule =
-  typeof import("@/features/auth/infrastructure/http/controller");
+  typeof import("@/features/auth/infrastructure/http/controller.js");
 let register: ControllerModule["register"];
 let login: ControllerModule["login"];
 let getProfile: ControllerModule["getProfile"];
@@ -29,7 +29,7 @@ jest.unstable_mockModule("@/utils/auth-guards", () => ({
 
 const loadController = async () => {
   const controller = await import(
-    "@/features/auth/infrastructure/http/controller"
+    "@/features/auth/infrastructure/http/controller.js"
   );
   register = controller.register;
   login = controller.login;
@@ -57,7 +57,7 @@ const next: NextFunction = jest.fn();
 
 beforeAll(async () => {
   await loadController();
-  await import("@/utils/auth-guards");
+  await import("@/utils/auth-guards.js");
 });
 
 describe("Auth HTTP controller", () => {

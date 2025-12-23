@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
-import AppError from "@/utils/AppError";
-import { ListMetricLogs } from "@/features/metric-log/application/queries/ListMetricLogs";
-import type { ListLogsResult } from "@/features/metric-log/application/ports/MetricLogQueryPort";
+import AppError from "@/utils/AppError.js";
+import { ListMetricLogs } from "@/features/metric-log/application/queries/ListMetricLogs.js";
+import type { ListLogsResult } from "@/features/metric-log/application/ports/MetricLogQueryPort.js";
 
 describe("ListMetricLogs query", () => {
   const response: ListLogsResult = {

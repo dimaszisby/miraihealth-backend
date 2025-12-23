@@ -1,5 +1,5 @@
-import { MetricSettings } from "@/features/metric-settings/domain/entities/MetricSettings";
-import AppError from "@/utils/AppError";
+import { MetricSettings } from "@/features/metric-settings/domain/entities/MetricSettings.js";
+import AppError from "@/utils/AppError.js";
 
 const makeSettings = () =>
   MetricSettings.fromPersistence({

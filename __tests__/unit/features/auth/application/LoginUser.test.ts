@@ -1,10 +1,10 @@
 import { jest } from "@jest/globals";
-import { LoginUser } from "@/features/auth/application/use-cases/LoginUser";
-import { UserRepository } from "@/features/auth/domain/repositories/UserRepository";
-import { PasswordHasher } from "@/features/auth/application/ports/PasswordHasher";
-import { TokenProvider } from "@/features/auth/application/ports/TokenProvider";
-import { AuthUser } from "@/features/auth/domain/entities/AuthUser";
-import AppError from "@/utils/AppError";
+import { LoginUser } from "@/features/auth/application/use-cases/LoginUser.js";
+import { UserRepository } from "@/features/auth/domain/repositories/UserRepository.js";
+import { PasswordHasher } from "@/features/auth/application/ports/PasswordHasher.js";
+import { TokenProvider } from "@/features/auth/application/ports/TokenProvider.js";
+import { AuthUser } from "@/features/auth/domain/entities/AuthUser.js";
+import AppError from "@/utils/AppError.js";
 
 const makeUser = () =>
   AuthUser.fromPersistence({

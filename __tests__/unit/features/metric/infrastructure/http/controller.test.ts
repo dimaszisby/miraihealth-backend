@@ -1,10 +1,10 @@
 import { jest } from "@jest/globals";
 import type { Response, NextFunction } from "express";
-import type { AuthRequest } from "@/types/request.context";
-import type { buildMetricFeature } from "@/features/metric";
+import type { AuthRequest } from "@/types/request.context.js";
+import type { buildMetricFeature } from "@/features/metric/feature.js";
 
 type ControllerModule =
-  typeof import("@/features/metric/infrastructure/http/controller");
+  typeof import("@/features/metric/infrastructure/http/controller.js");
 let createMetric: ControllerModule["createMetric"];
 let getUserDetailMetricById: ControllerModule["getUserDetailMetricById"];
 let deleteMetric: ControllerModule["deleteMetric"];
@@ -32,7 +32,7 @@ const buildFeatureMocks = (): MetricFeature =>
 
 const loadController = async () => {
   const controller = await import(
-    "@/features/metric/infrastructure/http/controller"
+    "@/features/metric/infrastructure/http/controller.js"
   );
   createMetric = controller.createMetric;
   getUserDetailMetricById = controller.getUserDetailMetricById;

@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
-import { VisualizationReadRepoSequelize } from "@/features/analytics/infrastructure/persistence/VisualizationReadRepoSequelize";
-import { models, sequelize } from "@/infrastructure/db/models";
-import AppError from "@/utils/AppError";
+import { VisualizationReadRepoSequelize } from "@/features/analytics/infrastructure/persistence/VisualizationReadRepoSequelize.js";
+import { models, sequelize } from "@/infrastructure/db/models.js";
+import AppError from "@/utils/AppError.js";
 
 const bucketSpec = {
   unit: "day",
