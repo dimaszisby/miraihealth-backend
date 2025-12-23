@@ -1,4 +1,4 @@
-import { Metric } from "@/features/metric/domain/entities/Metric";
+import { Metric } from "@/features/metric/domain/entities/Metric.js";
 
 const baseProps = {
   id: "metric-1",

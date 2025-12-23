@@ -1,4 +1,4 @@
-import { computeFallbackRange } from "@/features/analytics/domain/fallback-range";
+import { computeFallbackRange } from "@/features/analytics/domain/fallback-range.js";
 
 describe("computeFallbackRange", () => {
   const requested = {

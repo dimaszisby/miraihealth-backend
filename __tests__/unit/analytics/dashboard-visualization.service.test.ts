@@ -1,8 +1,8 @@
 import { jest } from "@jest/globals";
-import { GetDashboardVisualization } from "@/features/analytics/application/queries/GetDashboardVisualization";
-import { VisualizationReadRepoSequelize } from "@/features/analytics/infrastructure/persistence/VisualizationReadRepoSequelize";
-import type { VisualizationCachePort } from "@/features/analytics/application/ports/VisualizationCachePort";
-import { sequelize } from "@/infrastructure/db/models";
+import { GetDashboardVisualization } from "@/features/analytics/application/queries/GetDashboardVisualization.js";
+import { VisualizationReadRepoSequelize } from "@/features/analytics/infrastructure/persistence/VisualizationReadRepoSequelize.js";
+import type { VisualizationCachePort } from "@/features/analytics/application/ports/VisualizationCachePort.js";
+import { sequelize } from "@/infrastructure/db/models.js";
 
 const defaultInput = {
   userId: "user-123",
