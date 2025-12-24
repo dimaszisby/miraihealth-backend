@@ -14,12 +14,12 @@
 
 ## Phase 2 – CI alignment & automation
 
-- [x] Update backend CI workflow to run `lint`, `typecheck`, and `format:check` before unit tests; link job references in `decisions.md`. (commit: 5172159 — backend CI workflow updated with static stage + format check)
-- [ ] Add Husky/lint-staged or equivalent automation; document setup/opt-out instructions.
+- [x] Update backend CI workflow to run `lint`, `typecheck`, and `format:check` before unit tests; link job references in `decisions.md`. (commit: c1337db — `.github/workflows/backend-ci.yml` runs lint → format:check → typecheck in the `checks` job)
+- [x] Add Husky/lint-staged or equivalent automation; document setup/opt-out instructions. (commit: c1337db — Husky pre-commit runs `npm run lint-staged`; lint-staged config applies ESLint + Prettier on staged files)
 - [x] Enable ESLint cache/TS incremental builds in CI for stable runtimes; record improvements in `metrics-tracker.md`. (commit: 5172159 — CI now caches `node_modules/.cache/eslint` and `tsconfig.tsbuildinfo`)
 
 ## Phase 3 – Extended checks & metrics
 
-- [ ] Integrate OpenAPI/Zod schema validation into the static stage and reference scripts in README.
-- [ ] Define KPIs (max runtime, zero warnings) and automate reporting via `metrics-tracker.md`.
-- [ ] Schedule quarterly/annual review of static tooling; log agenda/outcomes in `decisions.md`.
+- [x] Integrate OpenAPI/Zod schema validation into the static stage and reference scripts in README. (commit: c1337db — added `npm run docs:openapi:check`, CI step, README update)
+- [x] Define KPIs (max runtime, zero warnings) and automate reporting via `metrics-tracker.md`. (commit: c1337db — README “KPIs & Maintenance” + metrics tracker rows for lint/typecheck/format/OpenAPI)
+- [x] Schedule quarterly/annual review of static tooling; log agenda/outcomes in `decisions.md`. (commit: c1337db — README documents quarterly cadence; future outcomes to be captured in `decisions.md`)

@@ -16,13 +16,13 @@
    - Introduce Prettier scripts (`format:check`, `format:write`) and document file globs. ✅
    - Clarify local expectations (when to run which command, minimal Node/npm versions). ✅
 3. **Phase 2 – CI alignment & automation (in progress)**
-   - Update backend CI workflow to run lint/typecheck/format before tests; publish logs/artifacts. ✅
-   - Add Husky/lint-staged (or a lightweight `pre-commit` script) tailored for a solo maintainer. 🔄
+   - Update backend CI workflow to run lint/typecheck/format before tests; publish logs/artifacts. ✅ (`.github/workflows/backend-ci.yml` now runs lint → format:check → typecheck in the `checks` job.)
+   - Add Husky/lint-staged (or a lightweight `pre-commit` script) tailored for a solo maintainer. ✅ (pre-commit hook runs lint-staged → ESLint + Prettier on staged files.)
    - Cache ESLint/tsc outputs in CI to keep runtimes under the target threshold. ✅
-4. **Phase 3 – Extended checks & metrics**
-   - Integrate OpenAPI/Zod schema validation and other static analyzers (e.g., dep check).
-   - Track and publish metrics (lint duration, # of lint rules, typecheck errors) per release.
-   - Revisit thresholds annually and add ADRs when tools/rules change materially.
+4. **Phase 3 – Extended checks & metrics (in progress)**
+   - Integrate OpenAPI/Zod schema validation and other static analyzers (e.g., dep check). ✅ (`npm run docs:openapi:check` regenerates the spec and fails if diffs exist; CI runs it in the checks job.)
+   - Track and publish metrics (lint duration, # of lint rules, typecheck errors) per release. ✅ (metrics tracker now captures lint/typecheck/format/OpenAPI KPIs; README documents targets.)
+   - Revisit thresholds annually and add ADRs when tools/rules change materially. 🔄 (Quarterly cadence documented in README + metrics tracker; next action is to record outcomes in `decisions.md`.)
 
 ## Success Criteria
 
@@ -48,4 +48,5 @@
 - `npm run lint` now passes in ~7.5 seconds after deleting the stray compiled `__tests__/unit/config/envManager.test.js`; CI caches should keep runtimes low once wired.
 - `npm run typecheck` now passes in ~9.14 seconds after the `.js` specifier rollout and updated `tsconfig.json`.
 - ESLint already runs in type-aware mode (shared parser/project + Prettier plugin). We’ll need to document Node 18 + npm 11 prerequisites and potentially enable caching to keep runtimes low once static checks gate CI (CI cache now stores ESLint + TS artifacts).
-- Prettier scripts (`format:check`, `format:write`) plus `.prettierignore` landed as part of Phase 1; `format:check` now passes after repo-wide formatting, so CI can rely on it once wired.
+- Prettier scripts (`format:check`, `format:write`) plus `.prettierignore` landed as part of Phase 1; `format:check` now passes after repo-wide formatting and is executed in CI alongside lint/typecheck.
+- The static stage now includes `npm run docs:openapi:check`, which regenerates the OpenAPI spec and fails the pipeline if changes aren’t committed, ensuring schema drift is caught early.

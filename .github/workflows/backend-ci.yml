@@ -50,8 +50,14 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Format check
+        run: npm run format:check
+
       - name: Typecheck
         run: npm run typecheck
+
+      - name: OpenAPI spec consistency
+        run: npm run docs:openapi:check
 
   tests:
     name: Unit & Integration Tests

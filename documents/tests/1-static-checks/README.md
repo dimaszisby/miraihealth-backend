@@ -19,7 +19,9 @@
 - _Current status:_ `npm run typecheck` now passes (~9.1 s) after the `.js` specifier rollout.
 - `npm run format:check` — runs Prettier in check mode across `ts|tsx|js|json|md|yml|yaml`, honoring `.prettierignore`. _Current status:_ passes after `npm run format:write` cleaned up pending files.
 - `npm run format:write` — formats the same set of files in-place; recommended before committing.
-- Planned: `npm run format:check` and `npm run format:write` (Prettier), OpenAPI schema validation script, lint-staged/Husky pre-commit hook.
+- Husky + lint-staged pre-commit hook — automatically runs ESLint (`--fix --max-warnings=0`) and Prettier on staged files via `npm run lint-staged`.
+- `npm run docs:openapi:check` — regenerates the OpenAPI spec (`documents/openapi/lakira-backend-openapi.json`) and fails if uncommitted diffs are detected; CI runs this to catch schema drift.
+- Planned: OpenAPI schema validation script and additional static analyzers as captured in the plan.
 - Environment & prerequisites:
   - Node 18 LTS (repo aligns to `@tsconfig/node18`); verify via `node -v` before running scripts.
   - npm 11.x (current tooling tested on npm 11.6+); reinstall deps via `npm install` after upgrades.
@@ -31,6 +33,15 @@
 - Run `npm run lint && npm run typecheck` locally before pushing.
 - CI backend workflow (see `documents/ci-cd/backend/`) must run static checks ahead of unit/integration jobs and fail fast on violations.
 - Formatting/scripts produce zero diffs when repo is compliant; Prettier check should be part of CI once added.
+- `npm run docs:openapi:check` should be green locally (no git diff) before a PR.
+
+## KPIs & Maintenance
+
+- **Lint runtime:** ≤ 3 minutes locally, ≤ 2 minutes in CI (see `metrics-tracker.md`).
+- **Typecheck runtime:** ≤ 4 minutes locally, ≤ 3 minutes in CI.
+- **Format violations:** 0; `format:check` must pass locally/CI.
+- **OpenAPI drift:** 0; `docs:openapi:check` must leave the spec unchanged unless intentionally updated.
+- **Cadence:** Review metrics + thresholds on the first business day of each quarter and log any adjustments/decisions in `decisions.md`.
 
 ## References
 
