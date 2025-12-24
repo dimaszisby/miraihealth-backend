@@ -1,9 +1,6 @@
 import { UserRepositorySequelize } from "@/features/auth/infrastructure/persistence/UserRepositorySequelize.js";
 import { models } from "@/infrastructure/db/models.js";
-import {
-  createUserRow,
-  truncateAllTables,
-} from "../../helpers/db-fixtures.js";
+import { createUserRow, truncateAllTables } from "../../helpers/db-fixtures.js";
 
 const repo = new UserRepositorySequelize();
 

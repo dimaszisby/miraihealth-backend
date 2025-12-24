@@ -126,8 +126,10 @@ export class VisualizationReadRepoSequelize
       const max = row.max_value ?? null;
       stats.count += Number(row.cnt ?? 0);
       if (numeric(avg)) stats.average = avg;
-      if (numeric(min)) stats.min = stats.min == null ? min : Math.min(stats.min, min);
-      if (numeric(max)) stats.max = stats.max == null ? max : Math.max(stats.max, max);
+      if (numeric(min))
+        stats.min = stats.min == null ? min : Math.min(stats.min, min);
+      if (numeric(max))
+        stats.max = stats.max == null ? max : Math.max(stats.max, max);
     }
 
     const result: VizResponse = {
@@ -149,7 +151,7 @@ export class VisualizationReadRepoSequelize
   }
 
   async fetchDashboardVisualization(
-    params: DashboardVisualizationParams
+    params: DashboardVisualizationParams,
   ): Promise<DashboardVizResponse> {
     const metrics = await this.fetchDashboardMetrics(params);
     const metricIds = metrics.map((metric) => metric.metric_id).sort();
@@ -212,7 +214,7 @@ export class VisualizationReadRepoSequelize
     ])) as [DashboardSeriesRow[], LifecycleRow[]];
 
     const lifecycleByMetric = new Map<string, LifecycleRow>(
-      lifecycleRows.map<[string, LifecycleRow]>((row) => [row.metric_id, row])
+      lifecycleRows.map<[string, LifecycleRow]>((row) => [row.metric_id, row]),
     );
 
     const items: DashboardVizItem[] = await Promise.all(
@@ -223,8 +225,8 @@ export class VisualizationReadRepoSequelize
           lifecycleByMetric,
           input: params,
           bucketSpec,
-        })
-      )
+        }),
+      ),
     );
 
     const response: DashboardVizResponse = {
@@ -235,7 +237,9 @@ export class VisualizationReadRepoSequelize
         range: { startISO: params.startISO, endISO: params.endISO },
         count: items.length,
         totalMetrics:
-          metrics.length > 0 ? numberFrom(metrics[0].total_count, metrics.length) : 0,
+          metrics.length > 0
+            ? numberFrom(metrics[0].total_count, metrics.length)
+            : 0,
         fallbackMetrics: items.filter((item) => item.fallbackRangeUsed).length,
       },
       sync: {
@@ -256,7 +260,7 @@ export class VisualizationReadRepoSequelize
   }
 
   private async fetchDashboardMetrics(
-    params: DashboardVisualizationParams
+    params: DashboardVisualizationParams,
   ): Promise<DashboardMetricRow[]> {
     const rows = await sequelize.query<DashboardMetricRow>(
       `
@@ -283,7 +287,7 @@ export class VisualizationReadRepoSequelize
       {
         type: QueryTypes.SELECT,
         replacements: { userId: params.userId, limit: params.limit },
-      }
+      },
     );
     return rows as DashboardMetricRow[];
   }
@@ -302,7 +306,7 @@ export class VisualizationReadRepoSequelize
     bucketSpec: DashboardVisualizationParams["bucketSpec"];
   }): Promise<DashboardVizItem> {
     const metricSeries = seriesRows.filter(
-      (row) => row.metric_id === metric.metric_id
+      (row) => row.metric_id === metric.metric_id,
     );
 
     const lifecycle = lifecycleByMetric.get(metric.metric_id);
@@ -323,7 +327,7 @@ export class VisualizationReadRepoSequelize
     let fallbackStrategy: string | null = null;
 
     const hasRequestedData = metricSeries.some(
-      (row) => Number(row.cnt ?? 0) > 0
+      (row) => Number(row.cnt ?? 0) > 0,
     );
 
     let effectiveSeries: DashboardSeriesRow[] = metricSeries;
@@ -358,9 +362,7 @@ export class VisualizationReadRepoSequelize
       max: effectiveSeries.length
         ? numberFrom(effectiveSeries[0].max_value, null)
         : null,
-      count: effectiveSeries.length
-        ? numberFrom(effectiveSeries[0].cnt, 0)
-        : 0,
+      count: effectiveSeries.length ? numberFrom(effectiveSeries[0].cnt, 0) : 0,
     };
 
     const item: DashboardVizItem = {
@@ -420,7 +422,10 @@ export class VisualizationReadRepoSequelize
   }
 }
 
-function numberFrom<T>(value: number | string | null | undefined, fallback: T): number | T {
+function numberFrom<T>(
+  value: number | string | null | undefined,
+  fallback: T,
+): number | T {
   if (value == null) return fallback;
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
@@ -438,7 +443,7 @@ function buildVersionFingerprint(metrics: DashboardMetricRow[]) {
 
 function deriveEtagSeed(
   params: DashboardVizCacheKey,
-  versionFingerprint: string
+  versionFingerprint: string,
 ) {
   const raw = JSON.stringify({
     ...params,

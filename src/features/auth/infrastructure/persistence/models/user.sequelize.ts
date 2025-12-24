@@ -1,9 +1,4 @@
-import {
-  Model,
-  DataTypes,
-  Sequelize,
-  Optional,
-} from "sequelize";
+import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import bcrypt from "bcrypt";
 import { UserAttributesBase } from "@/types/db/user.types.js";
 import type { DbModels } from "@/infrastructure/db/types.js";
@@ -103,7 +98,7 @@ export class User
             }
           },
         },
-      }
+      },
     );
 
     return User;

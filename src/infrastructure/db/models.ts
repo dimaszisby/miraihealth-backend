@@ -50,7 +50,9 @@ export const loadModels = () => {
   }
 
   const partial: Partial<DbModels> = {};
-  registerFns.forEach((register) => Object.assign(partial, register(sequelize)));
+  registerFns.forEach((register) =>
+    Object.assign(partial, register(sequelize)),
+  );
   const models = partial as DbModels;
   associateFns.forEach((associate) => associate(models));
   cachedModels = models;

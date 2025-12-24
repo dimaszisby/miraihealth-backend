@@ -11,7 +11,7 @@ type Input = {
 export class DeleteMetricLog {
   constructor(
     private repo: MetricLogRepository,
-    private cache: CachePort
+    private cache: CachePort,
   ) {}
 
   async execute({ userId, logId }: Input): Promise<MetricLog> {

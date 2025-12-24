@@ -15,7 +15,7 @@ const FilterSchema = z.object({
   ["filter[logValue]"]: z.number().min(1).optional(),
   ["filter[metricId]"]: z.preprocess(
     (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-    zUUID.optional()
+    zUUID.optional(),
   ),
   filter: z
     .object({
@@ -71,7 +71,7 @@ export const listMetricQueryViaCursor = z
       .default("-createdAt"),
     q: z.preprocess(
       (v) => (typeof v === "string" ? v.trim() : v),
-      z.string().min(1).optional()
+      z.string().min(1).optional(),
     ),
     after: z.string().optional(),
     includeTotal: z.coerce.boolean().default(false),
@@ -121,7 +121,9 @@ export const listMetricLogsViaCursorSchema = z.object({
   query: listMetricQueryViaCursor,
 });
 export const deleteMetricLogSchema = z.object({ params: metricLogParams });
-export const getAggregatedStatsSchema = z.object({ query: aggregatedStatsQuery });
+export const getAggregatedStatsSchema = z.object({
+  query: aggregatedStatsQuery,
+});
 
 export const generateDummyMetricLogsBody = z.object({
   metricId: zUUID,

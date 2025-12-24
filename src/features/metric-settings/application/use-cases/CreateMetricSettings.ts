@@ -16,7 +16,7 @@ export class CreateMetricSettings {
   constructor(
     private repo: MetricSettingsRepository,
     private cache: CacheInvalidationPort,
-    private metricAccess: MetricAccessPort
+    private metricAccess: MetricAccessPort,
   ) {}
 
   async execute(input: CreateMetricSettingsInput): Promise<MetricSettings> {

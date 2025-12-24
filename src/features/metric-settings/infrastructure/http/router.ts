@@ -50,7 +50,7 @@ const metricSettingsCursorCacheKey = (req: AuthRequest) => {
       filter.metricId,
       q["filter[metricId]"],
       q.metricId,
-      req.params?.metricId
+      req.params?.metricId,
     ) ?? "_";
 
   const limit = Number(q.limit ?? 20);
@@ -83,49 +83,49 @@ export const createMetricSettingsRouter = () => {
     "/",
     validate(listMetricSettingsViaCursorSchema),
     cacheMiddleware(metricSettingsCursorCacheKey, 300),
-    getAllMetricSettingsViaCursor
+    getAllMetricSettingsViaCursor,
   );
 
   router.get(
     "/:id",
     validate(getMetricSettingsSchema),
     cacheMiddleware(metricSettingCacheKey, 300),
-    getMetricSettingsById
+    getMetricSettingsById,
   );
 
   router.post(
     "/",
     userRateLimiter,
     validate(createMetricSettingsSchema),
-    createMetricSettings
+    createMetricSettings,
   );
 
   router.put(
     "/:id",
     userRateLimiter,
     validate(updateMetricSettingsSchema),
-    updateMetricSettings
+    updateMetricSettings,
   );
 
   router.delete(
     "/:id",
     userRateLimiter,
     validate(deleteMetricSettingsSchema),
-    deleteMetricSettings
+    deleteMetricSettings,
   );
 
   router.patch(
     "/:id/achieve",
     userRateLimiter,
     validate(goalAchievementSchema),
-    updateGoalAchievement
+    updateGoalAchievement,
   );
 
   router.patch(
     "/:id/display",
     userRateLimiter,
     validate(updateDisplayOptionsSchema),
-    updateDisplayOptions
+    updateDisplayOptions,
   );
 
   return router;

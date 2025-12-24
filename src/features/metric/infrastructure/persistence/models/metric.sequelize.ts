@@ -98,7 +98,7 @@ export class Metric
         paranoid: true,
         underscored: true,
         schema: "public",
-      }
+      },
     );
 
     return Metric;

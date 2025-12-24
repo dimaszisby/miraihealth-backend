@@ -151,7 +151,7 @@ export interface MetricPreviewResponseDTO {
    * @property {MetricPreviewCategoryDTO} [category] - Optional summarized information about the metric's category.
    * @readonly
    */
-  readonly category: MetricPreviewCategoryDTO |null;
+  readonly category: MetricPreviewCategoryDTO | null;
 
   /**
    * @property {string} [goalType] - Optional goal type associated with the metric's settings (e.g., 'cumulative', 'incremental').

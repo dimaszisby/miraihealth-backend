@@ -19,12 +19,12 @@ Treat this as the **single source of truth** when wiring CI, Render, and Postman
 
 ### 2.1 Summary Table
 
-| Env        | Purpose                                      | Backend Host / Base URL                     | DB Name        | Redis            | Postman Env File                             |
-|-----------|----------------------------------------------|---------------------------------------------|---------------|------------------|----------------------------------------------|
-| `local`   | Dev machine / Docker Compose                 | `http://localhost:4000`                     | `lakira_local` | `redis://localhost:6379` | `lakira-local.postman_environment.json`   |
-| `ci`      | GitHub Actions test & contract pipelines     | `http://localhost:4000` (service container) | `lakira_ci`    | `redis://redis:6379`    | `lakira-local.postman_environment.json`   |
-| `staging` | Public “portfolio” environment on Render     | `https://api-staging.lakira.yourdomain.com` | `lakira_stage` | Managed Redis (optional) | `lakira-staging.postman_environment.json` |
-| `prod`*   | Optional future production environment       | `https://api.lakira.yourdomain.com`         | `lakira_prod`  | Managed Redis (optional) | (TBD)                                     |
+| Env       | Purpose                                  | Backend Host / Base URL                     | DB Name        | Redis                    | Postman Env File                          |
+| --------- | ---------------------------------------- | ------------------------------------------- | -------------- | ------------------------ | ----------------------------------------- |
+| `local`   | Dev machine / Docker Compose             | `http://localhost:4000`                     | `lakira_local` | `redis://localhost:6379` | `lakira-local.postman_environment.json`   |
+| `ci`      | GitHub Actions test & contract pipelines | `http://localhost:4000` (service container) | `lakira_ci`    | `redis://redis:6379`     | `lakira-local.postman_environment.json`   |
+| `staging` | Public “portfolio” environment on Render | `https://api-staging.lakira.yourdomain.com` | `lakira_stage` | Managed Redis (optional) | `lakira-staging.postman_environment.json` |
+| `prod`\*  | Optional future production environment   | `https://api.lakira.yourdomain.com`         | `lakira_prod`  | Managed Redis (optional) | (TBD)                                     |
 
 \* For a portfolio project, `staging` may effectively act as “production”. Keep `prod` documented as a future option.
 
@@ -114,15 +114,18 @@ Postman / Newman in CI:
   - Render default: `https://lakira-backend-staging.onrender.com`
   - Optional custom: `https://api-staging.lakira.yourdomain.com`
 - **Health endpoint:**
+
   - `GET /api/v1/health` → 200 + `{ "status": "ok" }`
 
 - **Database:**
+
   - Hosted Postgres on Render or managed provider
   - DB name: `lakira_stage`
   - Connection string stored as:
     - `DATABASE_URL` Render env var.
 
 - **Redis (optional):**
+
   - If used, connection string stored as:
     - `REDIS_URL` Render env var.
 

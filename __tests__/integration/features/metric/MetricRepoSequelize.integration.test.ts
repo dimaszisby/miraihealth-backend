@@ -93,9 +93,9 @@ describe("MetricRepoSequelize (integration)", () => {
 
     const found = await repo.findOwnedById(owner.id, metricRow.id);
     expect(found.id).toBe(metricRow.id);
-    await expect(
-      repo.findOwnedById(intruder.id, metricRow.id),
-    ).rejects.toThrow("Metric not found");
+    await expect(repo.findOwnedById(intruder.id, metricRow.id)).rejects.toThrow(
+      "Metric not found",
+    );
   });
 
   it("deletes owned metrics and errors on unknown ids", async () => {

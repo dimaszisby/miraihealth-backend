@@ -13,7 +13,7 @@ export class GenerateDummyCategories {
   constructor(
     private repo: MetricCategoryRepository,
     private cache: CachePort,
-    private factory: MetricCategoryFactory
+    private factory: MetricCategoryFactory,
   ) {}
 
   async execute({ userId, count }: Input): Promise<MetricCategory[]> {
@@ -31,7 +31,7 @@ export class GenerateDummyCategories {
 
     if (this.cache.isEnabled()) {
       await this.cache.delByPattern(
-        `${METRIC_CATEGORY_CURSOR_NAMESPACE_ALL}:${userId}:*`
+        `${METRIC_CATEGORY_CURSOR_NAMESPACE_ALL}:${userId}:*`,
       );
     }
 

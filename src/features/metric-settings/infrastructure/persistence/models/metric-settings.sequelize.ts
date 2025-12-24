@@ -108,7 +108,7 @@ export class MetricSettings
                 const deadline = new Date(value as string);
                 if (deadline <= startDate) {
                   throw new Error(
-                    "Deadline date must be after the start date."
+                    "Deadline date must be after the start date.",
                   );
                 }
               }
@@ -191,7 +191,7 @@ export class MetricSettings
             }
           },
         },
-      }
+      },
     );
 
     return MetricSettings;

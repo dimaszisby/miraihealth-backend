@@ -13,7 +13,7 @@ export const zUUID = z
 export const zDateOptional = z
   .preprocess(
     (val) => (typeof val === "string" && val.trim() === "" ? undefined : val),
-    z.coerce.date().optional()
+    z.coerce.date().optional(),
   )
   .refine((date) => date === undefined || !isNaN(date.getTime()), {
     message: ZodMessages.common.invalidDate,

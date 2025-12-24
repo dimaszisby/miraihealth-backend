@@ -13,7 +13,7 @@ export const UuidSchema = registerSchema(
   z.string().uuid().openapi({
     description: "A UUID identifier",
     example: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
-  })
+  }),
 );
 
 export const ErrorSchema = registerSchema(
@@ -21,7 +21,7 @@ export const ErrorSchema = registerSchema(
   z.object({
     status: z.string().openapi({ example: "fail" }),
     message: z.string().openapi({ example: "Error message" }),
-  })
+  }),
 );
 
 export const ValidationErrorSchema = registerSchema(
@@ -33,9 +33,9 @@ export const ValidationErrorSchema = registerSchema(
       z.object({
         path: z.array(z.string()).openapi({ example: ["body", "email"] }),
         message: z.string().openapi({ example: "Invalid email format" }),
-      })
+      }),
     ),
-  })
+  }),
 );
 
 export const SuccessResponseSchema = registerSchema(
@@ -44,13 +44,13 @@ export const SuccessResponseSchema = registerSchema(
     status: z.string().openapi({ example: "success" }),
     message: z.string().optional().openapi({ example: "Operation successful" }),
     data: z.any().optional().openapi({ description: "Response data" }),
-  })
+  }),
 );
 
 const queryParamMetadata = (
   name: string,
   description: string,
-  required = false
+  required = false,
 ) => ({
   param: {
     name,
@@ -66,10 +66,10 @@ export const MetricIdQuerySchema = registerSchema(
     metricId: UuidSchema.optional().openapi(
       queryParamMetadata(
         "metricId",
-        "Optional metric identifier to scope the request"
-      )
+        "Optional metric identifier to scope the request",
+      ),
     ),
-  })
+  }),
 );
 
 export const MetricIdRequiredQuerySchema = registerSchema(
@@ -79,46 +79,52 @@ export const MetricIdRequiredQuerySchema = registerSchema(
       queryParamMetadata(
         "metricId",
         "Metric identifier required for ownership validation",
-        true
-      )
+        true,
+      ),
     ),
-  })
+  }),
 );
 
 const cursorLimitParam = queryParamMetadata(
   "limit",
-  "Maximum number of records to return (1-100)"
+  "Maximum number of records to return (1-100)",
 );
 
 const cursorSortParam = (
   name = "sort",
-  description = "Sort field (prefix with - for DESC)"
+  description = "Sort field (prefix with - for DESC)",
 ) => queryParamMetadata(name, description);
 
 const cursorAfterParam = queryParamMetadata(
   "after",
-  "Opaque cursor returned from the previous page"
+  "Opaque cursor returned from the previous page",
 );
 
 const cursorIncludeTotalParam = queryParamMetadata(
   "includeTotal",
-  "Set to true to include totalCount in the response"
+  "Set to true to include totalCount in the response",
 );
 
 const cursorSearchParam = queryParamMetadata(
   "q",
-  "Optional free-text search term"
+  "Optional free-text search term",
 );
 
 export const MetricCursorQueryParamsSchema = registerSchema(
   "MetricCursorQueryParams",
-  listMetricQueryDocSchema
+  listMetricQueryDocSchema,
 );
 
 export const MetricCategoryCursorQueryParamsSchema = registerSchema(
   "MetricCategoryCursorQueryParams",
   z.object({
-    limit: z.number().int().min(1).max(100).optional().openapi(cursorLimitParam),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .optional()
+      .openapi(cursorLimitParam),
     sort: z
       .enum([
         "createdAt",
@@ -139,13 +145,19 @@ export const MetricCategoryCursorQueryParamsSchema = registerSchema(
       .string()
       .optional()
       .openapi(queryParamMetadata("filter[name]", "Filter categories by name")),
-  })
+  }),
 );
 
 export const MetricLogCursorQueryParamsSchema = registerSchema(
   "MetricLogCursorQueryParams",
   z.object({
-    limit: z.number().int().min(1).max(100).optional().openapi(cursorLimitParam),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .optional()
+      .openapi(cursorLimitParam),
     sort: z
       .enum([
         "createdAt",
@@ -165,13 +177,16 @@ export const MetricLogCursorQueryParamsSchema = registerSchema(
       .openapi(
         queryParamMetadata(
           "q",
-          "Optional search term applied to log notes/metadata"
-        )
+          "Optional search term applied to log notes/metadata",
+        ),
       ),
     after: z.string().optional().openapi(cursorAfterParam),
     includeTotal: z.boolean().optional().openapi(cursorIncludeTotalParam),
     ["filter[metricId]"]: UuidSchema.optional().openapi(
-      queryParamMetadata("filter[metricId]", "Filter logs by metric identifier")
+      queryParamMetadata(
+        "filter[metricId]",
+        "Filter logs by metric identifier",
+      ),
     ),
     ["filter[logValue]"]: z
       .number()
@@ -179,18 +194,31 @@ export const MetricLogCursorQueryParamsSchema = registerSchema(
       .openapi(
         queryParamMetadata(
           "filter[logValue]",
-          "Filter logs by an exact log value"
-        )
+          "Filter logs by an exact log value",
+        ),
       ),
-  })
+  }),
 );
 
 export const MetricSettingsCursorQueryParamsSchema = registerSchema(
   "MetricSettingsCursorQueryParams",
   z.object({
-    limit: z.number().int().min(1).max(100).optional().openapi(cursorLimitParam),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .optional()
+      .openapi(cursorLimitParam),
     sort: z
-      .enum(["createdAt", "-createdAt", "updatedAt", "-updatedAt", "isActive", "-isActive"] as const)
+      .enum([
+        "createdAt",
+        "-createdAt",
+        "updatedAt",
+        "-updatedAt",
+        "isActive",
+        "-isActive",
+      ] as const)
       .optional()
       .openapi(cursorSortParam()),
     q: z.string().optional().openapi(cursorSearchParam),
@@ -199,16 +227,19 @@ export const MetricSettingsCursorQueryParamsSchema = registerSchema(
     ["filter[metricId]"]: UuidSchema.optional().openapi(
       queryParamMetadata(
         "filter[metricId]",
-        "Filter settings by metric identifier"
-      )
+        "Filter settings by metric identifier",
+      ),
     ),
     ["filter[isActive]"]: z
       .boolean()
       .optional()
       .openapi(
-        queryParamMetadata("filter[isActive]", "Filter settings by active status")
+        queryParamMetadata(
+          "filter[isActive]",
+          "Filter settings by active status",
+        ),
       ),
-  })
+  }),
 );
 
 // Auth Schemas
@@ -217,7 +248,7 @@ export const LoginRequestSchema = registerSchema(
   z.object({
     email: z.string().email().openapi({ example: "user@example.com" }),
     password: z.string().min(6).openapi({ example: "password123" }),
-  })
+  }),
 );
 
 export const LoginResponseSchema = registerSchema(
@@ -226,8 +257,7 @@ export const LoginResponseSchema = registerSchema(
     status: z.string().openapi({ example: "success" }),
     message: z.string().openapi({ example: "Login successful" }),
     token: z.string().openapi({
-      example:
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     }),
     user: z.object({
       id: UuidSchema,
@@ -235,25 +265,44 @@ export const LoginResponseSchema = registerSchema(
       email: z.string().email().openapi({ example: "test@example.com" }),
       isPublicProfile: z.boolean().openapi({ example: true }),
       role: z.enum(["user", "admin"]).openapi({ example: "user" }),
-      createdAt: z.string().datetime().openapi({ example: "2023-01-01T12:00:00Z" }),
-      updatedAt: z.string().datetime().openapi({ example: "2023-01-01T12:00:00Z" }),
+      createdAt: z
+        .string()
+        .datetime()
+        .openapi({ example: "2023-01-01T12:00:00Z" }),
+      updatedAt: z
+        .string()
+        .datetime()
+        .openapi({ example: "2023-01-01T12:00:00Z" }),
     }),
-  })
+  }),
 );
 
 export const RegisterRequestSchema = registerSchema(
   "RegisterRequest",
-  z.object({
-    username: z.string().min(3).openapi({ example: "newuser" }),
-    email: z.string().email().openapi({ example: "newuser@example.com" }),
-    password: z.string().min(6).openapi({ example: "newpassword123" }),
-    passwordConfirmation: z.string().min(6).openapi({ example: "newpassword123" }),
-    isPublicProfile: z.boolean().optional().default(true).openapi({ example: true }),
-    role: z.enum(["user", "admin"]).optional().default("user").openapi({ example: "user" }),
-  }).refine((data) => data.password === data.passwordConfirmation, {
-    message: "Passwords do not match",
-    path: ["passwordConfirmation"],
-  })
+  z
+    .object({
+      username: z.string().min(3).openapi({ example: "newuser" }),
+      email: z.string().email().openapi({ example: "newuser@example.com" }),
+      password: z.string().min(6).openapi({ example: "newpassword123" }),
+      passwordConfirmation: z
+        .string()
+        .min(6)
+        .openapi({ example: "newpassword123" }),
+      isPublicProfile: z
+        .boolean()
+        .optional()
+        .default(true)
+        .openapi({ example: true }),
+      role: z
+        .enum(["user", "admin"])
+        .optional()
+        .default("user")
+        .openapi({ example: "user" }),
+    })
+    .refine((data) => data.password === data.passwordConfirmation, {
+      message: "Passwords do not match",
+      path: ["passwordConfirmation"],
+    }),
 );
 
 export const UserResponseSchema = registerSchema(
@@ -264,20 +313,34 @@ export const UserResponseSchema = registerSchema(
     email: z.string().email().openapi({ example: "test@example.com" }),
     isPublicProfile: z.boolean().openapi({ example: true }),
     role: z.enum(["user", "admin"]).openapi({ example: "user" }),
-    createdAt: z.string().datetime().openapi({ example: "2023-01-01T12:00:00Z" }),
-    updatedAt: z.string().datetime().openapi({ example: "2023-01-01T12:00:00Z" }),
-  })
+    createdAt: z
+      .string()
+      .datetime()
+      .openapi({ example: "2023-01-01T12:00:00Z" }),
+    updatedAt: z
+      .string()
+      .datetime()
+      .openapi({ example: "2023-01-01T12:00:00Z" }),
+  }),
 );
 
 export const UpdateUserRequestSchema = registerSchema(
   "UpdateUserRequest",
   z.object({
     username: z.string().min(3).optional().openapi({ example: "updateduser" }),
-    email: z.string().email().optional().openapi({ example: "updated@example.com" }),
-    password: z.string().min(6).optional().openapi({ example: "updatedpassword" }),
+    email: z
+      .string()
+      .email()
+      .optional()
+      .openapi({ example: "updated@example.com" }),
+    password: z
+      .string()
+      .min(6)
+      .optional()
+      .openapi({ example: "updatedpassword" }),
     isPublicProfile: z.boolean().optional().openapi({ example: false }),
     role: z.enum(["user", "admin"]).optional().openapi({ example: "admin" }),
-  })
+  }),
 );
 
 // Metric Category Schemas
@@ -290,9 +353,15 @@ export const MetricCategorySchema = registerSchema(
     icon: z.string().openapi({ example: "🏃" }),
     userId: UuidSchema,
     metricCount: z.number().openapi({ example: 4 }),
-    createdAt: z.string().datetime().openapi({ example: "2023-01-01T12:00:00Z" }),
-    updatedAt: z.string().datetime().openapi({ example: "2023-01-01T12:00:00Z" }),
-  })
+    createdAt: z
+      .string()
+      .datetime()
+      .openapi({ example: "2023-01-01T12:00:00Z" }),
+    updatedAt: z
+      .string()
+      .datetime()
+      .openapi({ example: "2023-01-01T12:00:00Z" }),
+  }),
 );
 
 export const CreateMetricCategoryRequestSchema = registerSchema(
@@ -301,7 +370,7 @@ export const CreateMetricCategoryRequestSchema = registerSchema(
     name: z.string().openapi({ example: "New Category" }),
     color: z.string().openapi({ example: "#123456" }),
     icon: z.string().openapi({ example: "✨" }),
-  })
+  }),
 );
 
 export const UpdateMetricCategoryRequestSchema = registerSchema(
@@ -310,22 +379,23 @@ export const UpdateMetricCategoryRequestSchema = registerSchema(
     name: z.string().optional().openapi({ example: "Updated Category Name" }),
     color: z.string().optional().openapi({ example: "#654321" }),
     icon: z.string().optional().openapi({ example: "🌟" }),
-  })
+  }),
 );
 
 export const MetricCategoryListResponseSchema = registerSchema(
   "MetricCategoryListResponse",
-  z.array(MetricCategorySchema)
+  z.array(MetricCategorySchema),
 );
 
 const CursorMetaSchema = {
-  nextCursor: z
-    .string()
-    .nullable()
-    .openapi({ example: "eyJpZCI6IjEyMyJ9", description: "Opaque cursor for the next page" }),
-  sort: z
-    .string()
-    .openapi({ example: "-createdAt", description: "Sort applied to the collection" }),
+  nextCursor: z.string().nullable().openapi({
+    example: "eyJpZCI6IjEyMyJ9",
+    description: "Opaque cursor for the next page",
+  }),
+  sort: z.string().openapi({
+    example: "-createdAt",
+    description: "Sort applied to the collection",
+  }),
   limit: z
     .number()
     .int()
@@ -338,13 +408,11 @@ const CursorMetaSchema = {
     .record(z.any())
     .optional()
     .openapi({ description: "Normalized filters applied to the query" }),
-  totalCount: z
-    .number()
-    .optional()
-    .openapi({
-      example: 120,
-      description: "Total number of records (present only when includeTotal=true)",
-    }),
+  totalCount: z.number().optional().openapi({
+    example: 120,
+    description:
+      "Total number of records (present only when includeTotal=true)",
+  }),
 };
 
 const MetricPreviewCategorySchema = z.object({
@@ -359,13 +427,16 @@ export const MetricPreviewSchema = registerSchema(
   z.object({
     id: UuidSchema,
     name: z.string().openapi({ example: "Sleep Hours" }),
-    description: z.string().nullable().openapi({ example: "Hours slept per day" }),
+    description: z
+      .string()
+      .nullable()
+      .openapi({ example: "Hours slept per day" }),
     defaultUnit: z.string().openapi({ example: "hours" }),
     isPublic: z.boolean().openapi({ example: false }),
     goalType: z.string().openapi({ example: "Not Set" }),
     logCount: z.number().openapi({ example: 42 }),
     category: MetricPreviewCategorySchema.nullable(),
-  })
+  }),
 );
 
 export const MetricCursorResponseSchema = registerSchema(
@@ -373,12 +444,12 @@ export const MetricCursorResponseSchema = registerSchema(
   z.object({
     items: z.array(MetricPreviewSchema),
     ...CursorMetaSchema,
-  })
+  }),
 );
 
 export const MetricDetailQueryParamsSchema = registerSchema(
   "MetricDetailQueryParams",
-  metricDetailQuery
+  metricDetailQuery,
 );
 
 export const MetricCategoryCursorResponseSchema = registerSchema(
@@ -386,7 +457,7 @@ export const MetricCategoryCursorResponseSchema = registerSchema(
   z.object({
     items: z.array(MetricCategorySchema),
     ...CursorMetaSchema,
-  })
+  }),
 );
 
 // Metric Schemas
@@ -398,27 +469,37 @@ export const MetricSchema = registerSchema(
     originalMetricId: UuidSchema.optional().nullable(),
     categoryId: UuidSchema.optional().nullable(),
     name: z.string().openapi({ example: "Daily Steps" }),
-    description: z.string().optional().nullable().openapi({ example: "Number of steps walked per day" }),
+    description: z
+      .string()
+      .optional()
+      .nullable()
+      .openapi({ example: "Number of steps walked per day" }),
     defaultUnit: z.string().openapi({ example: "steps" }),
     isPublic: z.boolean().openapi({ example: false }),
-    createdAt: z.string().datetime().openapi({ example: "2023-01-01T12:00:00Z" }),
-    updatedAt: z.string().datetime().openapi({ example: "2023-01-01T12:00:00Z" }),
-  })
+    createdAt: z
+      .string()
+      .datetime()
+      .openapi({ example: "2023-01-01T12:00:00Z" }),
+    updatedAt: z
+      .string()
+      .datetime()
+      .openapi({ example: "2023-01-01T12:00:00Z" }),
+  }),
 );
 
 export const CreateMetricRequestSchema = registerSchema(
   "CreateMetricRequest",
-  metricBody
+  metricBody,
 );
 
 export const UpdateMetricRequestSchema = registerSchema(
   "UpdateMetricRequest",
-  metricBodyPartial
+  metricBodyPartial,
 );
 
 export const MetricListResponseSchema = registerSchema(
   "MetricListResponse",
-  z.array(MetricSchema)
+  z.array(MetricSchema),
 );
 
 // Metric Log Schemas
@@ -429,10 +510,19 @@ export const MetricLogSchema = registerSchema(
     metricId: UuidSchema,
     type: z.enum(["manual", "automatic"]).openapi({ example: "manual" }),
     logValue: z.number().openapi({ example: 10000 }),
-    loggedAt: z.string().datetime().openapi({ example: "2023-01-01T12:00:00Z" }),
-    createdAt: z.string().datetime().openapi({ example: "2023-01-01T12:00:00Z" }),
-    updatedAt: z.string().datetime().openapi({ example: "2023-01-01T12:00:00Z" }),
-  })
+    loggedAt: z
+      .string()
+      .datetime()
+      .openapi({ example: "2023-01-01T12:00:00Z" }),
+    createdAt: z
+      .string()
+      .datetime()
+      .openapi({ example: "2023-01-01T12:00:00Z" }),
+    updatedAt: z
+      .string()
+      .datetime()
+      .openapi({ example: "2023-01-01T12:00:00Z" }),
+  }),
 );
 
 export const CreateMetricLogRequestSchema = registerSchema(
@@ -440,23 +530,37 @@ export const CreateMetricLogRequestSchema = registerSchema(
   z.object({
     metricId: UuidSchema,
     logValue: z.number().openapi({ example: 5000 }),
-    type: z.enum(["manual", "automatic"]).optional().openapi({ example: "manual" }),
-    loggedAt: z.string().datetime().optional().openapi({ example: "2023-01-01T10:00:00Z" }),
-  })
+    type: z
+      .enum(["manual", "automatic"])
+      .optional()
+      .openapi({ example: "manual" }),
+    loggedAt: z
+      .string()
+      .datetime()
+      .optional()
+      .openapi({ example: "2023-01-01T10:00:00Z" }),
+  }),
 );
 
 export const UpdateMetricLogRequestSchema = registerSchema(
   "UpdateMetricLogRequest",
   z.object({
     logValue: z.number().optional().openapi({ example: 12000 }),
-    type: z.enum(["manual", "automatic"]).optional().openapi({ example: "manual" }),
-    loggedAt: z.string().datetime().optional().openapi({ example: "2023-01-01T13:00:00Z" }),
-  })
+    type: z
+      .enum(["manual", "automatic"])
+      .optional()
+      .openapi({ example: "manual" }),
+    loggedAt: z
+      .string()
+      .datetime()
+      .optional()
+      .openapi({ example: "2023-01-01T13:00:00Z" }),
+  }),
 );
 
 export const MetricLogListResponseSchema = registerSchema(
   "MetricLogListResponse",
-  z.array(MetricLogSchema)
+  z.array(MetricLogSchema),
 );
 
 export const MetricLogStatsResponseSchema = registerSchema(
@@ -465,7 +569,7 @@ export const MetricLogStatsResponseSchema = registerSchema(
     average: z.number().openapi({ example: 80 }),
     min: z.number().openapi({ example: 10 }),
     max: z.number().openapi({ example: 150 }),
-  })
+  }),
 );
 
 export const MetricLogCursorResponseSchema = registerSchema(
@@ -473,7 +577,7 @@ export const MetricLogCursorResponseSchema = registerSchema(
   z.object({
     items: z.array(MetricLogSchema),
     ...CursorMetaSchema,
-  })
+  }),
 );
 
 // Metric Settings Schemas
@@ -491,18 +595,35 @@ export const MetricSettingsSchema = registerSchema(
     metricId: UuidSchema,
     isActive: z.boolean().openapi({ example: true }),
     goalEnabled: z.boolean().openapi({ example: true }),
-    goalType: z.enum(["cumulative", "incremental"]).nullable().openapi({ example: "cumulative" }),
+    goalType: z
+      .enum(["cumulative", "incremental"])
+      .nullable()
+      .openapi({ example: "cumulative" }),
     goalValue: z.number().nullable().openapi({ example: 10000 }),
     timeFrameEnabled: z.boolean().openapi({ example: false }),
-    startDate: z.string().datetime().nullable().openapi({ example: "2023-01-01T00:00:00Z" }),
-    deadlineDate: z.string().datetime().nullable().openapi({ example: "2023-02-01T00:00:00Z" }),
+    startDate: z
+      .string()
+      .datetime()
+      .nullable()
+      .openapi({ example: "2023-01-01T00:00:00Z" }),
+    deadlineDate: z
+      .string()
+      .datetime()
+      .nullable()
+      .openapi({ example: "2023-02-01T00:00:00Z" }),
     alertEnabled: z.boolean().openapi({ example: false }),
     alertThresholds: z.number().nullable().openapi({ example: 80 }),
     isAchieved: z.boolean().openapi({ example: false }),
     displayOptions: MetricDisplayOptionsSchema,
-    createdAt: z.string().datetime().openapi({ example: "2023-01-01T12:00:00Z" }),
-    updatedAt: z.string().datetime().openapi({ example: "2023-01-01T12:00:00Z" }),
-  })
+    createdAt: z
+      .string()
+      .datetime()
+      .openapi({ example: "2023-01-01T12:00:00Z" }),
+    updatedAt: z
+      .string()
+      .datetime()
+      .openapi({ example: "2023-01-01T12:00:00Z" }),
+  }),
 );
 
 export const CreateMetricSettingsRequestSchema = registerSchema(
@@ -518,7 +639,7 @@ export const CreateMetricSettingsRequestSchema = registerSchema(
     alertEnabled: z.boolean().optional(),
     alertThresholds: z.number().nullable().optional(),
     displayOptions: MetricDisplayOptionsSchema.partial().optional(),
-  })
+  }),
 );
 
 export const UpdateMetricSettingsRequestSchema = registerSchema(
@@ -533,7 +654,7 @@ export const UpdateMetricSettingsRequestSchema = registerSchema(
     alertEnabled: z.boolean().optional(),
     alertThresholds: z.number().nullable().optional(),
     displayOptions: MetricDisplayOptionsSchema.partial().optional(),
-  })
+  }),
 );
 
 export const UpdateDisplayOptionsRequestSchema = registerSchema(
@@ -547,12 +668,12 @@ export const UpdateDisplayOptionsRequestSchema = registerSchema(
         color: "#00FFAA",
       },
     }),
-  })
+  }),
 );
 
 export const MetricSettingsListResponseSchema = registerSchema(
   "MetricSettingsListResponse",
-  z.array(MetricSettingsSchema)
+  z.array(MetricSettingsSchema),
 );
 
 export const MetricSettingsCursorResponseSchema = registerSchema(
@@ -560,7 +681,7 @@ export const MetricSettingsCursorResponseSchema = registerSchema(
   z.object({
     items: z.array(MetricSettingsSchema),
     ...CursorMetaSchema,
-  })
+  }),
 );
 
 export const MetricDetailResponseSchema = registerSchema(
@@ -569,7 +690,7 @@ export const MetricDetailResponseSchema = registerSchema(
     category: MetricCategorySchema.nullable(),
     settings: MetricSettingsSchema.nullable(),
     logs: z.array(MetricLogSchema).nullable(),
-  })
+  }),
 );
 
 // Trend Schemas
@@ -578,7 +699,7 @@ export const TrendDataPointSchema = registerSchema(
   z.object({
     date: z.string().openapi({ example: "2023-01-01" }),
     value: z.number().openapi({ example: 7500 }),
-  })
+  }),
 );
 
 export const TrendResponseSchema = registerSchema(
@@ -586,7 +707,7 @@ export const TrendResponseSchema = registerSchema(
   z.object({
     metricId: UuidSchema,
     trend: z.array(TrendDataPointSchema),
-  })
+  }),
 );
 
 export const GetTrendRequestSchema = registerSchema(
@@ -596,16 +717,30 @@ export const GetTrendRequestSchema = registerSchema(
       metricId: UuidSchema,
     }),
     query: z.object({
-      startDate: z.string().datetime().optional().openapi({ example: "2023-01-01T00:00:00Z" }),
-      endDate: z.string().datetime().optional().openapi({ example: "2023-01-31T23:59:59Z" }),
-      interval: z.enum(["daily", "weekly", "monthly"]).optional().openapi({ example: "daily" }),
+      startDate: z
+        .string()
+        .datetime()
+        .optional()
+        .openapi({ example: "2023-01-01T00:00:00Z" }),
+      endDate: z
+        .string()
+        .datetime()
+        .optional()
+        .openapi({ example: "2023-01-31T23:59:59Z" }),
+      interval: z
+        .enum(["daily", "weekly", "monthly"])
+        .optional()
+        .openapi({ example: "daily" }),
     }),
-  })
+  }),
 );
 
 // Analytics Schemas
 const VisualizationSeriesSchema = z.object({
-  bucketStartISO: z.string().datetime().openapi({ example: "2023-01-01T00:00:00Z" }),
+  bucketStartISO: z
+    .string()
+    .datetime()
+    .openapi({ example: "2023-01-01T00:00:00Z" }),
   value: z.number().nullable().openapi({ example: 42.5 }),
 });
 
@@ -633,7 +768,7 @@ export const VisualizationResponseSchema = registerSchema(
     series: z.array(VisualizationSeriesSchema),
     stats: VisualizationStatsSchema,
     meta: VisualizationMetaSchema,
-  })
+  }),
 );
 
 const DashboardVisualizationItemSchema = z.object({
@@ -661,7 +796,7 @@ export const DashboardVisualizationResponseSchema = registerSchema(
       }),
       count: z.number().openapi({ example: 5 }),
     }),
-  })
+  }),
 );
 
 const BucketEnumSchema = z.enum(["1h", "1d", "1w", "1m", "1y"]);
@@ -678,14 +813,17 @@ export const VisualizationQueryParamsSchema = registerSchema(
         description: "Aggregation bucket size",
       },
     }),
-    tz: z.string().optional().openapi({
-      param: {
-        name: "tz",
-        in: "query",
-        required: false,
-        description: "IANA timezone (e.g. Asia/Jakarta)",
-      },
-    }),
+    tz: z
+      .string()
+      .optional()
+      .openapi({
+        param: {
+          name: "tz",
+          in: "query",
+          required: false,
+          description: "IANA timezone (e.g. Asia/Jakarta)",
+        },
+      }),
     fill: FillEnumSchema.optional().openapi({
       param: {
         name: "fill",
@@ -694,43 +832,60 @@ export const VisualizationQueryParamsSchema = registerSchema(
         description: "Missing bucket fill strategy",
       },
     }),
-    start: z.string().datetime().optional().openapi({
-      param: {
-        name: "start",
-        in: "query",
-        required: false,
-        description: "Absolute start ISO timestamp",
-      },
-    }),
-    end: z.string().datetime().optional().openapi({
-      param: {
-        name: "end",
-        in: "query",
-        required: false,
-        description: "Absolute end ISO timestamp",
-      },
-    }),
-    last: z.string().optional().openapi({
-      param: {
-        name: "last",
-        in: "query",
-        required: false,
-        description: "Relative range such as 7d or 12m",
-      },
-    }),
-  })
+    start: z
+      .string()
+      .datetime()
+      .optional()
+      .openapi({
+        param: {
+          name: "start",
+          in: "query",
+          required: false,
+          description: "Absolute start ISO timestamp",
+        },
+      }),
+    end: z
+      .string()
+      .datetime()
+      .optional()
+      .openapi({
+        param: {
+          name: "end",
+          in: "query",
+          required: false,
+          description: "Absolute end ISO timestamp",
+        },
+      }),
+    last: z
+      .string()
+      .optional()
+      .openapi({
+        param: {
+          name: "last",
+          in: "query",
+          required: false,
+          description: "Relative range such as 7d or 12m",
+        },
+      }),
+  }),
 );
 
 export const DashboardVisualizationQueryParamsSchema = registerSchema(
   "DashboardVisualizationQueryParams",
   VisualizationQueryParamsSchema.extend({
-    limit: z.number().int().min(1).max(48).optional().openapi({
-      param: {
-        name: "limit",
-        in: "query",
-        required: false,
-        description: "Maximum number of metrics to include",
-      },
-    }),
-  })
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(48)
+      .optional()
+      .openapi({
+        param: {
+          name: "limit",
+          in: "query",
+          required: false,
+          description: "Maximum number of metrics to include",
+        },
+      }),
+  }),
 );

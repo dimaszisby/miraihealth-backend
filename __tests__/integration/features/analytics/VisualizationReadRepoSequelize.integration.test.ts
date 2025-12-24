@@ -77,7 +77,10 @@ describe("VisualizationReadRepoSequelize (integration)", () => {
   // Developer note: happy-path single-metric visualization fetch covering SQL + cache hydration.
   it("fetches single metric visualization with averages and caches subsequent calls", async () => {
     const user = await createUserRow();
-    const metric = await createMetricRow({ userId: user.id, defaultUnit: "km" });
+    const metric = await createMetricRow({
+      userId: user.id,
+      defaultUnit: "km",
+    });
 
     await createMetricLogRow({
       metricId: metric.id,

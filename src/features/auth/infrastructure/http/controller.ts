@@ -27,7 +27,7 @@ export const register = catchAsync(async (req: Request, res: Response) => {
     res,
     201,
     { token: result.token, user: toUserResponseDTO(result.user) },
-    "User created successfully"
+    "User created successfully",
   );
 });
 
@@ -45,7 +45,7 @@ export const getProfile = catchAsync(
     assertAuthenticated(req);
     const user = await feature.getProfile.execute(req.user.id);
     successResponse(res, 200, toUserResponseDTO(user));
-  }
+  },
 );
 
 export const updateProfile = catchAsync(
@@ -58,8 +58,13 @@ export const updateProfile = catchAsync(
       password: req.body.password,
       isPublicProfile: req.body.isPublicProfile,
     });
-    successResponse(res, 200, { user: toUserResponseDTO(updated) }, "Profile updated successfully");
-  }
+    successResponse(
+      res,
+      200,
+      { user: toUserResponseDTO(updated) },
+      "Profile updated successfully",
+    );
+  },
 );
 
 export const logout = (req: Request, res: Response): void => {

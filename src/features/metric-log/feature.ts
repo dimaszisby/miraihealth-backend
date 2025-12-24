@@ -16,9 +16,7 @@ type MetricLogFeatureDeps = {
   visualizationInvalidator?: VisualizationInvalidationPort;
 };
 
-export const buildMetricLogFeature = (
-  deps: MetricLogFeatureDeps = {}
-) => {
+export const buildMetricLogFeature = (deps: MetricLogFeatureDeps = {}) => {
   const repo = new MetricLogRepoSequelize();
   const visualizationInvalidator =
     deps.visualizationInvalidator ?? new NoopVisualizationInvalidation();

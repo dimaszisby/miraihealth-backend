@@ -128,7 +128,7 @@ export async function createMetricRow(data: MetricRowOverrides = {}) {
     createdAt: data.createdAt ?? new Date(),
     updatedAt: data.updatedAt ?? new Date(),
     deletedAt:
-      typeof data.deletedAt === "undefined" ? null : data.deletedAt ?? null,
+      typeof data.deletedAt === "undefined" ? null : (data.deletedAt ?? null),
   });
 }
 

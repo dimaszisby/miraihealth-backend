@@ -143,9 +143,7 @@ describe("MetricReadRepoSequelize (integration)", () => {
     });
     expect(secondPage.items).toHaveLength(1);
     expect(
-      ["Metric A", "Metric B", "Metric C"].includes(
-        secondPage.items[0].name,
-      ),
+      ["Metric A", "Metric B", "Metric C"].includes(secondPage.items[0].name),
     ).toBe(true);
   });
 
@@ -244,9 +242,7 @@ describe("MetricReadRepoSequelize (integration)", () => {
     });
 
     expect(detailed?.logs).toHaveLength(2);
-    expect(
-      (detailed?.logs ?? []).map((log) => log.logValue),
-    ).toEqual([30, 20]);
+    expect((detailed?.logs ?? []).map((log) => log.logValue)).toEqual([30, 20]);
   });
 
   it("omits soft-deleted metrics from list results", async () => {

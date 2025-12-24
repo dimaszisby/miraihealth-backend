@@ -67,7 +67,7 @@ type Input = { userId: string; name: string; color?: string; icon?: string };
 export class CreateCategory {
   constructor(
     private repo: MetricCategoryRepository,
-    private cache: CachePort
+    private cache: CachePort,
   ) {}
 
   async execute({ userId, name, color, icon }: Input) {
@@ -92,7 +92,7 @@ import { CachePort } from "../ports/CachePort";
 export class DeleteCategory {
   constructor(
     private repo: MetricCategoryRepository,
-    private cache: CachePort
+    private cache: CachePort,
   ) {}
 
   async execute(userId: string, categoryId: string) {
@@ -139,7 +139,7 @@ import { MetricCategory } from "../../domain/entities/MetricCategory";
 export class ListCategories {
   constructor(
     private repo: MetricCategoryRepository,
-    private cache: CachePort
+    private cache: CachePort,
   ) {}
 
   async execute(q: ListQuery): Promise<ListResult<MetricCategory>> {
@@ -172,7 +172,7 @@ type Input = {
 export class UpdateCategory {
   constructor(
     private repo: MetricCategoryRepository,
-    private cache: CachePort
+    private cache: CachePort,
   ) {}
 
   async execute({ userId, categoryId, name, color, icon }: Input) {
@@ -230,7 +230,10 @@ export class MetricCategory {
     return new MetricCategory(p);
   }
 
-  static create(userId: string, params: { name: string; color?: string; icon?: string }) {
+  static create(
+    userId: string,
+    params: { name: string; color?: string; icon?: string },
+  ) {
     return new MetricCategory({
       id: crypto.randomUUID(),
       userId,
@@ -315,14 +318,14 @@ export interface MetricCategoryRepository {
   // CREATE
   create(
     userId: string,
-    data: { name: string; color?: string; icon?: string }
+    data: { name: string; color?: string; icon?: string },
   ): Promise<MetricCategory>;
 
   // UPDATE
   update(
     userId: string,
     id: string,
-    patch: Partial<{ name: string; color: string; icon: string }>
+    patch: Partial<{ name: string; color: string; icon: string }>,
   ): Promise<MetricCategory>;
 
   // DELETE
@@ -500,10 +503,7 @@ export { buildMetricCategoryFeature } from "./feature";
 ```ts
 // file:src/features/metric-category/infrastructure/cache/MetricCategoryCacheRedis.ts
 import { CachePort } from "../../application/ports/CachePort";
-import {
-  redisClient,
-  invalidateCacheByPattern,
-} from "@/utils/redis-client";
+import { redisClient, invalidateCacheByPattern } from "@/utils/redis-client";
 import logger from "@/utils/logger";
 
 export class MetricCategoryCacheRedis implements CachePort {
@@ -524,7 +524,7 @@ export class MetricCategoryCacheRedis implements CachePort {
     await redisClient.setEx(
       key,
       ttlSec ?? this.defaultTtlSeconds,
-      JSON.stringify(value)
+      JSON.stringify(value),
     );
   }
 
@@ -574,10 +574,10 @@ import { invalidateCacheByPattern } from "@/utils/redis-client";
  */
 export async function invalidateAllMetricCategoryCache(
   userId: string,
-  categoryId?: string
+  categoryId?: string,
 ) {
   logger.info(
-    `♻️ [CACHE] Invalidating category for user=${userId}, category=${categoryId ?? "-"}`
+    `♻️ [CACHE] Invalidating category for user=${userId}, category=${categoryId ?? "-"}`,
   );
 
   // Invalidate "all category" list (user dashboard or similar)
@@ -589,7 +589,7 @@ export async function invalidateAllMetricCategoryCache(
   }
 
   logger.info(
-    `♻️ [CACHE] Cache invalidated for user:${userId}, and categor:${categoryId ?? "-"}`
+    `♻️ [CACHE] Cache invalidated for user:${userId}, and categor:${categoryId ?? "-"}`,
   );
 }
 ```
@@ -624,127 +624,149 @@ export const overrideMetricCategoryFeature = (custom: Feature) => {
   feature = custom;
 };
 
-export const createCategory = catchAsync(async (req: AuthRequest, res: Response) => {
-  assertAuthenticated(req);
-  const payload = createMetricCategorySchema.body.parse(req.body);
-  const category = await feature.createCategory.execute({
-    userId: req.user.id,
-    name: payload.name,
-    color: payload.color,
-    icon: payload.icon,
-  });
+export const createCategory = catchAsync(
+  async (req: AuthRequest, res: Response) => {
+    assertAuthenticated(req);
+    const payload = createMetricCategorySchema.body.parse(req.body);
+    const category = await feature.createCategory.execute({
+      userId: req.user.id,
+      name: payload.name,
+      color: payload.color,
+      icon: payload.icon,
+    });
 
-  successResponse(
-    res,
-    201,
-    toResponseDTO(category),
-    "Category created successfully"
-  );
-});
+    successResponse(
+      res,
+      201,
+      toResponseDTO(category),
+      "Category created successfully",
+    );
+  },
+);
 
-export const listCategories = catchAsync(async (req: AuthRequest, res: Response) => {
-  assertAuthenticated(req);
-  const parsed = listCategoriesQuery.parse(req.query);
-  const { limit, sort, q, after, includeTotal } = parsed;
-  const filter =
-    parsed["filter[name]"] && parsed["filter[name]"]!.trim().length > 0
-      ? { name: parsed["filter[name]"]!.trim() }
-      : undefined;
+export const listCategories = catchAsync(
+  async (req: AuthRequest, res: Response) => {
+    assertAuthenticated(req);
+    const parsed = listCategoriesQuery.parse(req.query);
+    const { limit, sort, q, after, includeTotal } = parsed;
+    const filter =
+      parsed["filter[name]"] && parsed["filter[name]"]!.trim().length > 0
+        ? { name: parsed["filter[name]"]!.trim() }
+        : undefined;
 
-  const page = await feature.listCategories.execute({
-    userId: req.user.id,
-    limit,
-    sort,
-    q,
-    filter,
-    after,
-    includeTotal,
-  });
+    const page = await feature.listCategories.execute({
+      userId: req.user.id,
+      limit,
+      sort,
+      q,
+      filter,
+      after,
+      includeTotal,
+    });
 
-  const dto = {
-    items: toListResponseDTO(page.items),
-    nextCursor: page.nextCursor,
-    sort: page.sort,
-    limit: page.limit,
-    ...(page.q ? { q: page.q } : {}),
-    ...(page.filter ? { filter: page.filter } : {}),
-    ...(includeTotal ? { totalCount: page.totalCount ?? 0 } : {}),
-  };
+    const dto = {
+      items: toListResponseDTO(page.items),
+      nextCursor: page.nextCursor,
+      sort: page.sort,
+      limit: page.limit,
+      ...(page.q ? { q: page.q } : {}),
+      ...(page.filter ? { filter: page.filter } : {}),
+      ...(includeTotal ? { totalCount: page.totalCount ?? 0 } : {}),
+    };
 
-  successResponse(res, 200, dto, "Categories list retrieved successfully");
-});
+    successResponse(res, 200, dto, "Categories list retrieved successfully");
+  },
+);
 
-export const getCategory = catchAsync(async (req: AuthRequest, res: Response) => {
-  assertAuthenticated(req);
-  const category = await feature.getCategory.execute(req.user.id, req.params.id);
-  successResponse(res, 200, toResponseDTO(category), "Category retrieved successfully");
-});
+export const getCategory = catchAsync(
+  async (req: AuthRequest, res: Response) => {
+    assertAuthenticated(req);
+    const category = await feature.getCategory.execute(
+      req.user.id,
+      req.params.id,
+    );
+    successResponse(
+      res,
+      200,
+      toResponseDTO(category),
+      "Category retrieved successfully",
+    );
+  },
+);
 
-export const updateCategory = catchAsync(async (req: AuthRequest, res: Response) => {
-  assertAuthenticated(req);
-  const payload = updateMetricCategorySchema.body.parse(req.body);
-  const category = await feature.updateCategory.execute({
-    userId: req.user.id,
-    categoryId: req.params.id,
-    name: payload.name,
-    color: payload.color,
-    icon: payload.icon,
-  });
+export const updateCategory = catchAsync(
+  async (req: AuthRequest, res: Response) => {
+    assertAuthenticated(req);
+    const payload = updateMetricCategorySchema.body.parse(req.body);
+    const category = await feature.updateCategory.execute({
+      userId: req.user.id,
+      categoryId: req.params.id,
+      name: payload.name,
+      color: payload.color,
+      icon: payload.icon,
+    });
 
-  successResponse(
-    res,
-    200,
-    toResponseDTO(category),
-    "Category updated successfully"
-  );
-});
+    successResponse(
+      res,
+      200,
+      toResponseDTO(category),
+      "Category updated successfully",
+    );
+  },
+);
 
-export const deleteCategory = catchAsync(async (req: AuthRequest, res: Response) => {
-  assertAuthenticated(req);
-  await feature.deleteCategory.execute(req.user.id, req.params.id);
-  successResponse(res, 200, null, "Category deleted successfully");
-});
+export const deleteCategory = catchAsync(
+  async (req: AuthRequest, res: Response) => {
+    assertAuthenticated(req);
+    await feature.deleteCategory.execute(req.user.id, req.params.id);
+    successResponse(res, 200, null, "Category deleted successfully");
+  },
+);
 
 const factory = new MetricCategoryFactory();
 const categoryCache = new MetricCategoryCacheRedis();
 
-export const generateDummyCategories = catchAsync(async (req: AuthRequest, res: Response) => {
-  assertAuthenticated(req);
-  const payload = req.body as GenerateDummyMetricCategoriesRequestDTO;
-  const created = [];
-  for (let i = 0; i < payload.count; i++) {
-    const aggregate = factory.generate({ userId: req.user.id });
-    const saved = await models.MetricCategory.create({
-      userId: aggregate.userId,
-      name: aggregate.name,
-      color: aggregate.color,
-      icon: aggregate.icon,
-    });
-    created.push(saved);
-  }
+export const generateDummyCategories = catchAsync(
+  async (req: AuthRequest, res: Response) => {
+    assertAuthenticated(req);
+    const payload = req.body as GenerateDummyMetricCategoriesRequestDTO;
+    const created = [];
+    for (let i = 0; i < payload.count; i++) {
+      const aggregate = factory.generate({ userId: req.user.id });
+      const saved = await models.MetricCategory.create({
+        userId: aggregate.userId,
+        name: aggregate.name,
+        color: aggregate.color,
+        icon: aggregate.icon,
+      });
+      created.push(saved);
+    }
 
-  if (categoryCache.isEnabled()) {
-    await categoryCache.delByPattern(`categories:${req.user.id}:*`);
-  }
+    if (categoryCache.isEnabled()) {
+      await categoryCache.delByPattern(`categories:${req.user.id}:*`);
+    }
 
-  successResponse(
-    res,
-    201,
-    toListResponseDTO(created.map((row: any) =>
-      toDomain({
-        id: row.id,
-        userId: row.userId,
-        name: row.name,
-        color: row.color,
-        icon: row.icon,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-        metricCount: 0,
-      })
-    )),
-    `${payload.count} dummy metric categories generated successfully`
-  );
-});
+    successResponse(
+      res,
+      201,
+      toListResponseDTO(
+        created.map((row: any) =>
+          toDomain({
+            id: row.id,
+            userId: row.userId,
+            name: row.name,
+            color: row.color,
+            icon: row.icon,
+            createdAt: row.createdAt,
+            updatedAt: row.updatedAt,
+            metricCount: 0,
+          }),
+        ),
+      ),
+      `${payload.count} dummy metric categories generated successfully`,
+    );
+  },
+);
 
 // /**
 //  * * Update Category
@@ -760,7 +782,7 @@ export const generateDummyCategories = catchAsync(async (req: AuthRequest, res: 
 //         req.params.id,
 //         req.body
 //       );
-      
+
 //     successResponse(
 //       res,
 //       200,
@@ -1031,35 +1053,35 @@ export const createMetricCategoryRouter = () => {
     "/",
     userRateLimiter,
     validate(createMetricCategorySchema),
-    createCategory
+    createCategory,
   );
 
   router.get(
     "/",
     validate(getAllMetricCategoriesSchema),
     cacheMiddleware(categoriesCacheKey, 300),
-    listCategories
+    listCategories,
   );
 
   router.get(
     "/:id",
     validate(getMetricCategorySchema),
     cacheMiddleware(categoryCacheKey, 600),
-    getCategory
+    getCategory,
   );
 
   router.put(
     "/:id",
     userRateLimiter,
     validate(updateMetricCategorySchema),
-    updateCategory
+    updateCategory,
   );
 
   router.delete(
     "/:id",
     userRateLimiter,
     validate(deleteMetricCategorySchema),
-    deleteCategory
+    deleteCategory,
   );
 
   if (env.ENABLE_DUMMY_ENDPOINTS) {
@@ -1067,7 +1089,7 @@ export const createMetricCategoryRouter = () => {
       "/dummy",
       userRateLimiter,
       validate(generateDummyMetricCategoriesSchema),
-      generateDummyCategories
+      generateDummyCategories,
     );
   }
 
@@ -1184,14 +1206,14 @@ export const toDomain = (row: MetricCategoryRow): MetricCategoryDomain =>
  */
 // Dev Note Update: ADDED
 export const toListDomain = (
-  rows: MetricCategoryRow[]
+  rows: MetricCategoryRow[],
 ): MetricCategoryDomain[] => rows.map(toDomain);
 
 /**
  * * Mapper: Domain → DTO (for responses)
  */
 export const toResponseDTO = (
-  metricCategory: MetricCategoryDomain
+  metricCategory: MetricCategoryDomain,
 ): MetricCategoryResponseDTO => ({
   id: metricCategory.id,
   name: metricCategory.name,
@@ -1203,7 +1225,7 @@ export const toResponseDTO = (
 });
 
 export const toListResponseDTO = (
-  metricCategories: MetricCategoryDomain[]
+  metricCategories: MetricCategoryDomain[],
 ): MetricCategoryResponseDTO[] => {
   return metricCategories.map(toResponseDTO);
 };
@@ -1335,7 +1357,7 @@ export class MetricCategory
         paranoid: true,
         underscored: true,
         schema: "public",
-      }
+      },
     );
 
     return MetricCategory;
@@ -1428,7 +1450,7 @@ export class MetricCategoryRepoSequelize implements MetricCategoryRepository {
 
   async create(
     userId: string,
-    data: { name: string; color?: string; icon?: string }
+    data: { name: string; color?: string; icon?: string },
   ) {
     const created = await models.MetricCategory.create({
       userId,
@@ -1451,7 +1473,7 @@ export class MetricCategoryRepoSequelize implements MetricCategoryRepository {
   async update(
     userId: string,
     id: string,
-    patch: Partial<{ name: string; color: string; icon: string }>
+    patch: Partial<{ name: string; color: string; icon: string }>,
   ) {
     const row = await models.MetricCategory.findOne({
       where: { id, userId, deletedAt: null },
@@ -1558,7 +1580,7 @@ function normalizeSort(sort: SortParam): { field: SortField; dir: Dir } {
 function buildWhere(
   userId: string,
   q?: string,
-  filter?: { name?: string }
+  filter?: { name?: string },
 ): WhereOptions {
   const like = (v: string) => ({ [Op.iLike]: `%${v}%` });
   const and: any[] = [{ userId }, { deletedAt: null }];
@@ -1569,7 +1591,7 @@ function buildWhere(
 function buildCursorPredicate(
   c: CursorPayload,
   field: SortField,
-  dir: Dir
+  dir: Dir,
 ): WhereOptions {
   const ltgt = dir === "DESC" ? Op.lt : Op.gt,
     eq = Op.eq;

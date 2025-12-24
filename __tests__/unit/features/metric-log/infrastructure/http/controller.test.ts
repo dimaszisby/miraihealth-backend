@@ -41,7 +41,9 @@ describe("Metric log controller", () => {
       generateDummyMetricLogs,
       getUserLogLibrariesViaCursor,
       overrideMetricLogFeatureForTest,
-    } = await import("@/features/metric-log/infrastructure/http/controller.js"));
+    } = await import(
+      "@/features/metric-log/infrastructure/http/controller.js"
+    ));
   });
 
   beforeEach(() => {

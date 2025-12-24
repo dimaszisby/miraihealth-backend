@@ -132,11 +132,11 @@ export const settingsBodyPartial = settingsBodyBase
 const MetricSettingsFilterSchema = z.object({
   ["filter[metricId]"]: z.preprocess(
     (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-    zUUID.optional()
+    zUUID.optional(),
   ),
   ["filter[isActive]"]: z.preprocess(
     (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-    z.coerce.boolean().optional()
+    z.coerce.boolean().optional(),
   ),
   filter: z
     .object({
@@ -160,11 +160,18 @@ const listMetricSettingsViaCursorQuery = z
   .object({
     limit: z.coerce.number().int().min(1).max(100).default(20),
     sort: z
-      .enum(["createdAt", "-createdAt", "updatedAt", "-updatedAt", "isActive", "-isActive"] as const)
+      .enum([
+        "createdAt",
+        "-createdAt",
+        "updatedAt",
+        "-updatedAt",
+        "isActive",
+        "-isActive",
+      ] as const)
       .default("-createdAt"),
     q: z.preprocess(
       (v) => (typeof v === "string" ? v.trim() : v),
-      z.string().min(1).optional()
+      z.string().min(1).optional(),
     ),
     after: z.string().optional(),
     includeTotal: z.coerce.boolean().default(false),

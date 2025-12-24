@@ -9,7 +9,7 @@ type Input = {
 export class DeleteMetric {
   constructor(
     private repo: MetricRepository,
-    private cache: CachePort
+    private cache: CachePort,
   ) {}
 
   async execute({ userId, metricId }: Input) {

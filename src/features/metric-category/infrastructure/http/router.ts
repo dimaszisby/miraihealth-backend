@@ -57,35 +57,35 @@ export const createMetricCategoryRouter = () => {
     "/",
     userRateLimiter,
     validate(createMetricCategorySchema),
-    createCategory
+    createCategory,
   );
 
   router.get(
     "/",
     validate(getAllMetricCategoriesSchema),
     cacheMiddleware(categoriesCacheKey, 300),
-    listCategories
+    listCategories,
   );
 
   router.get(
     "/:id",
     validate(getMetricCategorySchema),
     cacheMiddleware(categoryCacheKey, 600),
-    getCategory
+    getCategory,
   );
 
   router.put(
     "/:id",
     userRateLimiter,
     validate(updateMetricCategorySchema),
-    updateCategory
+    updateCategory,
   );
 
   router.delete(
     "/:id",
     userRateLimiter,
     validate(deleteMetricCategorySchema),
-    deleteCategory
+    deleteCategory,
   );
 
   if (env.ENABLE_DUMMY_ENDPOINTS) {
@@ -93,7 +93,7 @@ export const createMetricCategoryRouter = () => {
       "/dummy",
       userRateLimiter,
       validate(generateDummyMetricCategoriesSchema),
-      generateDummyCategories
+      generateDummyCategories,
     );
   }
 

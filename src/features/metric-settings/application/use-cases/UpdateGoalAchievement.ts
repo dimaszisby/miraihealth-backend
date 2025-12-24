@@ -6,7 +6,7 @@ import { MetricSettings } from "../../domain/entities/MetricSettings.js";
 export class UpdateGoalAchievement {
   constructor(
     private repo: MetricSettingsRepository,
-    private cache: CacheInvalidationPort
+    private cache: CacheInvalidationPort,
   ) {}
 
   async execute(userId: string, settingsId: string): Promise<MetricSettings> {

@@ -188,10 +188,7 @@
             "example": "Error message"
           }
         },
-        "required": [
-          "status",
-          "message"
-        ]
+        "required": ["status", "message"]
       },
       "ValidationError": {
         "type": "object",
@@ -214,28 +211,18 @@
                   "items": {
                     "type": "string"
                   },
-                  "example": [
-                    "body",
-                    "email"
-                  ]
+                  "example": ["body", "email"]
                 },
                 "message": {
                   "type": "string",
                   "example": "Invalid email format"
                 }
               },
-              "required": [
-                "path",
-                "message"
-              ]
+              "required": ["path", "message"]
             }
           }
         },
-        "required": [
-          "status",
-          "message",
-          "errors"
-        ]
+        "required": ["status", "message", "errors"]
       },
       "SuccessResponse": {
         "type": "object",
@@ -253,9 +240,7 @@
             "description": "Response data"
           }
         },
-        "required": [
-          "status"
-        ]
+        "required": ["status"]
       },
       "MetricIdQuery": {
         "type": "object",
@@ -272,9 +257,7 @@
             "$ref": "#/components/schemas/Uuid"
           }
         },
-        "required": [
-          "metricId"
-        ]
+        "required": ["metricId"]
       },
       "MetricCursorQueryParams": {
         "type": "object",
@@ -457,10 +440,7 @@
             "example": "password123"
           }
         },
-        "required": [
-          "email",
-          "password"
-        ]
+        "required": ["email", "password"]
       },
       "LoginResponse": {
         "type": "object",
@@ -498,10 +478,7 @@
               },
               "role": {
                 "type": "string",
-                "enum": [
-                  "user",
-                  "admin"
-                ],
+                "enum": ["user", "admin"],
                 "example": "user"
               },
               "createdAt": {
@@ -526,12 +503,7 @@
             ]
           }
         },
-        "required": [
-          "status",
-          "message",
-          "token",
-          "user"
-        ]
+        "required": ["status", "message", "token", "user"]
       },
       "RegisterRequest": {
         "type": "object",
@@ -563,20 +535,12 @@
           },
           "role": {
             "type": "string",
-            "enum": [
-              "user",
-              "admin"
-            ],
+            "enum": ["user", "admin"],
             "default": "user",
             "example": "user"
           }
         },
-        "required": [
-          "username",
-          "email",
-          "password",
-          "passwordConfirmation"
-        ]
+        "required": ["username", "email", "password", "passwordConfirmation"]
       },
       "UserResponse": {
         "type": "object",
@@ -599,10 +563,7 @@
           },
           "role": {
             "type": "string",
-            "enum": [
-              "user",
-              "admin"
-            ],
+            "enum": ["user", "admin"],
             "example": "user"
           },
           "createdAt": {
@@ -650,10 +611,7 @@
           },
           "role": {
             "type": "string",
-            "enum": [
-              "user",
-              "admin"
-            ],
+            "enum": ["user", "admin"],
             "example": "admin"
           }
         }
@@ -721,11 +679,7 @@
             "example": "✨"
           }
         },
-        "required": [
-          "name",
-          "color",
-          "icon"
-        ]
+        "required": ["name", "color", "icon"]
       },
       "UpdateMetricCategoryRequest": {
         "type": "object",
@@ -801,12 +755,7 @@
                 "example": "#FF0000"
               }
             },
-            "required": [
-              "id",
-              "name",
-              "icon",
-              "color"
-            ]
+            "required": ["id", "name", "icon", "color"]
           }
         },
         "required": [
@@ -863,12 +812,7 @@
             "example": 120
           }
         },
-        "required": [
-          "items",
-          "nextCursor",
-          "sort",
-          "limit"
-        ]
+        "required": ["items", "nextCursor", "sort", "limit"]
       },
       "MetricDetailQueryParams": {
         "type": "object",
@@ -877,10 +821,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "enum": [
-                  "flat",
-                  "full"
-                ]
+                "enum": ["flat", "full"]
               },
               {
                 "type": "string",
@@ -940,12 +881,7 @@
             "example": 120
           }
         },
-        "required": [
-          "items",
-          "nextCursor",
-          "sort",
-          "limit"
-        ]
+        "required": ["items", "nextCursor", "sort", "limit"]
       },
       "Metric": {
         "type": "object",
@@ -1043,10 +979,7 @@
             "default": false
           }
         },
-        "required": [
-          "name",
-          "defaultUnit"
-        ]
+        "required": ["name", "defaultUnit"]
       },
       "UpdateMetricRequest": {
         "type": "object",
@@ -1095,10 +1028,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "manual",
-              "automatic"
-            ],
+            "enum": ["manual", "automatic"],
             "example": "manual"
           },
           "logValue": {
@@ -1143,10 +1073,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "manual",
-              "automatic"
-            ],
+            "enum": ["manual", "automatic"],
             "example": "manual"
           },
           "loggedAt": {
@@ -1155,10 +1082,7 @@
             "example": "2023-01-01T10:00:00Z"
           }
         },
-        "required": [
-          "metricId",
-          "logValue"
-        ]
+        "required": ["metricId", "logValue"]
       },
       "UpdateMetricLogRequest": {
         "type": "object",
@@ -1169,10 +1093,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "manual",
-              "automatic"
-            ],
+            "enum": ["manual", "automatic"],
             "example": "manual"
           },
           "loggedAt": {
@@ -1204,11 +1125,7 @@
             "example": 150
           }
         },
-        "required": [
-          "average",
-          "min",
-          "max"
-        ]
+        "required": ["average", "min", "max"]
       },
       "MetricLogCursorResponse": {
         "type": "object",
@@ -1253,12 +1170,7 @@
             "example": 120
           }
         },
-        "required": [
-          "items",
-          "nextCursor",
-          "sort",
-          "limit"
-        ]
+        "required": ["items", "nextCursor", "sort", "limit"]
       },
       "MetricSettings": {
         "type": "object",
@@ -1280,10 +1192,7 @@
           "goalType": {
             "type": "string",
             "nullable": true,
-            "enum": [
-              "cumulative",
-              "incremental"
-            ],
+            "enum": ["cumulative", "incremental"],
             "example": "cumulative"
           },
           "goalValue": {
@@ -1343,12 +1252,7 @@
                 "example": "#E897A3"
               }
             },
-            "required": [
-              "showOnDashboard",
-              "priority",
-              "chartType",
-              "color"
-            ]
+            "required": ["showOnDashboard", "priority", "chartType", "color"]
           },
           "createdAt": {
             "type": "string",
@@ -1392,10 +1296,7 @@
           "goalType": {
             "type": "string",
             "nullable": true,
-            "enum": [
-              "cumulative",
-              "incremental"
-            ]
+            "enum": ["cumulative", "incremental"]
           },
           "goalValue": {
             "type": "number",
@@ -1446,9 +1347,7 @@
             }
           }
         },
-        "required": [
-          "metricId"
-        ]
+        "required": ["metricId"]
       },
       "UpdateMetricSettingsRequest": {
         "type": "object",
@@ -1459,10 +1358,7 @@
           "goalType": {
             "type": "string",
             "nullable": true,
-            "enum": [
-              "cumulative",
-              "incremental"
-            ]
+            "enum": ["cumulative", "incremental"]
           },
           "goalValue": {
             "type": "number",
@@ -1548,9 +1444,7 @@
             }
           }
         },
-        "required": [
-          "displayOptions"
-        ]
+        "required": ["displayOptions"]
       },
       "MetricSettingsListResponse": {
         "type": "array",
@@ -1601,12 +1495,7 @@
             "example": 120
           }
         },
-        "required": [
-          "items",
-          "nextCursor",
-          "sort",
-          "limit"
-        ]
+        "required": ["items", "nextCursor", "sort", "limit"]
       },
       "MetricDetailResponse": {
         "allOf": [
@@ -1644,11 +1533,7 @@
                 }
               }
             },
-            "required": [
-              "category",
-              "settings",
-              "logs"
-            ]
+            "required": ["category", "settings", "logs"]
           }
         ]
       },
@@ -1664,10 +1549,7 @@
             "example": 7500
           }
         },
-        "required": [
-          "date",
-          "value"
-        ]
+        "required": ["date", "value"]
       },
       "TrendResponse": {
         "type": "object",
@@ -1682,10 +1564,7 @@
             }
           }
         },
-        "required": [
-          "metricId",
-          "trend"
-        ]
+        "required": ["metricId", "trend"]
       },
       "GetTrendRequest": {
         "type": "object",
@@ -1697,9 +1576,7 @@
                 "$ref": "#/components/schemas/Uuid"
               }
             },
-            "required": [
-              "metricId"
-            ]
+            "required": ["metricId"]
           },
           "query": {
             "type": "object",
@@ -1716,20 +1593,13 @@
               },
               "interval": {
                 "type": "string",
-                "enum": [
-                  "daily",
-                  "weekly",
-                  "monthly"
-                ],
+                "enum": ["daily", "weekly", "monthly"],
                 "example": "daily"
               }
             }
           }
         },
-        "required": [
-          "params",
-          "query"
-        ]
+        "required": ["params", "query"]
       },
       "VisualizationResponse": {
         "type": "object",
@@ -1750,10 +1620,7 @@
                   "example": 42.5
                 }
               },
-              "required": [
-                "bucketStartISO",
-                "value"
-              ]
+              "required": ["bucketStartISO", "value"]
             }
           },
           "stats": {
@@ -1779,12 +1646,7 @@
                 "example": 120
               }
             },
-            "required": [
-              "average",
-              "min",
-              "max",
-              "count"
-            ]
+            "required": ["average", "min", "max", "count"]
           },
           "meta": {
             "type": "object",
@@ -1816,26 +1678,13 @@
                     "format": "date-time"
                   }
                 },
-                "required": [
-                  "startISO",
-                  "endISO"
-                ]
+                "required": ["startISO", "endISO"]
               }
             },
-            "required": [
-              "metricId",
-              "unit",
-              "bucket",
-              "tz",
-              "range"
-            ]
+            "required": ["metricId", "unit", "bucket", "tz", "range"]
           }
         },
-        "required": [
-          "series",
-          "stats",
-          "meta"
-        ]
+        "required": ["series", "stats", "meta"]
       },
       "DashboardVisualizationResponse": {
         "type": "object",
@@ -1892,10 +1741,7 @@
                         "example": 42.5
                       }
                     },
-                    "required": [
-                      "bucketStartISO",
-                      "value"
-                    ]
+                    "required": ["bucketStartISO", "value"]
                   }
                 },
                 "stats": {
@@ -1921,12 +1767,7 @@
                       "example": 120
                     }
                   },
-                  "required": [
-                    "average",
-                    "min",
-                    "max",
-                    "count"
-                  ]
+                  "required": ["average", "min", "max", "count"]
                 }
               },
               "required": [
@@ -1965,52 +1806,31 @@
                     "format": "date-time"
                   }
                 },
-                "required": [
-                  "startISO",
-                  "endISO"
-                ]
+                "required": ["startISO", "endISO"]
               },
               "count": {
                 "type": "number",
                 "example": 5
               }
             },
-            "required": [
-              "bucket",
-              "tz",
-              "range",
-              "count"
-            ]
+            "required": ["bucket", "tz", "range", "count"]
           }
         },
-        "required": [
-          "items",
-          "meta"
-        ]
+        "required": ["items", "meta"]
       },
       "VisualizationQueryParams": {
         "type": "object",
         "properties": {
           "bucket": {
             "type": "string",
-            "enum": [
-              "1h",
-              "1d",
-              "1w",
-              "1m",
-              "1y"
-            ]
+            "enum": ["1h", "1d", "1w", "1m", "1y"]
           },
           "tz": {
             "type": "string"
           },
           "fill": {
             "type": "string",
-            "enum": [
-              "none",
-              "zero",
-              "nan"
-            ]
+            "enum": ["none", "zero", "nan"]
           },
           "start": {
             "type": "string",
@@ -2048,9 +1868,7 @@
   "paths": {
     "/auth/register": {
       "post": {
-        "tags": [
-          "Auth"
-        ],
+        "tags": ["Auth"],
         "summary": "Register a new user",
         "requestBody": {
           "content": {
@@ -2083,9 +1901,7 @@
     },
     "/auth/login": {
       "post": {
-        "tags": [
-          "Auth"
-        ],
+        "tags": ["Auth"],
         "summary": "Log in a user",
         "requestBody": {
           "content": {
@@ -2121,9 +1937,7 @@
     },
     "/auth/profile": {
       "get": {
-        "tags": [
-          "Auth"
-        ],
+        "tags": ["Auth"],
         "summary": "Get current user's profile",
         "security": [
           {
@@ -2150,9 +1964,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Auth"
-        ],
+        "tags": ["Auth"],
         "summary": "Update current user's profile",
         "security": [
           {
@@ -2193,9 +2005,7 @@
     },
     "/auth/logout": {
       "post": {
-        "tags": [
-          "Auth"
-        ],
+        "tags": ["Auth"],
         "summary": "Log out the current user",
         "security": [
           {
@@ -2224,9 +2034,7 @@
     },
     "/metric-categories": {
       "post": {
-        "tags": [
-          "Metric Categories"
-        ],
+        "tags": ["Metric Categories"],
         "summary": "Create a new metric category",
         "security": [
           {
@@ -2265,9 +2073,7 @@
         }
       },
       "get": {
-        "tags": [
-          "Metric Categories"
-        ],
+        "tags": ["Metric Categories"],
         "summary": "Get all metric categories for the authenticated user",
         "security": [
           {
@@ -2364,9 +2170,7 @@
     },
     "/metric-categories/{id}": {
       "get": {
-        "tags": [
-          "Metric Categories"
-        ],
+        "tags": ["Metric Categories"],
         "summary": "Get a single metric category by ID",
         "security": [
           {
@@ -2410,9 +2214,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Metric Categories"
-        ],
+        "tags": ["Metric Categories"],
         "summary": "Update a metric category by ID",
         "security": [
           {
@@ -2465,9 +2267,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Metric Categories"
-        ],
+        "tags": ["Metric Categories"],
         "summary": "Delete a metric category by ID",
         "security": [
           {
@@ -2506,9 +2306,7 @@
     },
     "/metrics": {
       "post": {
-        "tags": [
-          "Metrics"
-        ],
+        "tags": ["Metrics"],
         "summary": "Create a new metric",
         "security": [
           {
@@ -2547,9 +2345,7 @@
         }
       },
       "get": {
-        "tags": [
-          "Metrics"
-        ],
+        "tags": ["Metrics"],
         "summary": "Get all metrics for the authenticated user",
         "security": [
           {
@@ -2673,9 +2469,7 @@
     },
     "/metrics/{id}": {
       "get": {
-        "tags": [
-          "Metrics"
-        ],
+        "tags": ["Metrics"],
         "summary": "Get a single metric by ID",
         "security": [
           {
@@ -2697,10 +2491,7 @@
               "anyOf": [
                 {
                   "type": "string",
-                  "enum": [
-                    "flat",
-                    "full"
-                  ]
+                  "enum": ["flat", "full"]
                 },
                 {
                   "type": "string",
@@ -2751,9 +2542,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Metrics"
-        ],
+        "tags": ["Metrics"],
         "summary": "Update a metric by ID",
         "security": [
           {
@@ -2806,9 +2595,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Metrics"
-        ],
+        "tags": ["Metrics"],
         "summary": "Delete a metric by ID",
         "security": [
           {
@@ -2847,9 +2634,7 @@
     },
     "/metric-logs": {
       "post": {
-        "tags": [
-          "Metric Logs"
-        ],
+        "tags": ["Metric Logs"],
         "summary": "Create a new metric log",
         "security": [
           {
@@ -2888,9 +2673,7 @@
         }
       },
       "get": {
-        "tags": [
-          "Metric Logs"
-        ],
+        "tags": ["Metric Logs"],
         "summary": "Get all metric logs for the authenticated user",
         "security": [
           {
@@ -2996,9 +2779,7 @@
     },
     "/metric-logs/stats": {
       "get": {
-        "tags": [
-          "Metric Logs"
-        ],
+        "tags": ["Metric Logs"],
         "summary": "Get aggregated statistics for metric logs",
         "security": [
           {
@@ -3038,9 +2819,7 @@
     },
     "/metric-logs/{id}": {
       "get": {
-        "tags": [
-          "Metric Logs"
-        ],
+        "tags": ["Metric Logs"],
         "summary": "Get a single metric log by ID",
         "security": [
           {
@@ -3093,9 +2872,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Metric Logs"
-        ],
+        "tags": ["Metric Logs"],
         "summary": "Update a metric log by ID",
         "security": [
           {
@@ -3148,9 +2925,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Metric Logs"
-        ],
+        "tags": ["Metric Logs"],
         "summary": "Delete a metric log by ID",
         "security": [
           {
@@ -3189,9 +2964,7 @@
     },
     "/metric-settings": {
       "post": {
-        "tags": [
-          "Metric Settings"
-        ],
+        "tags": ["Metric Settings"],
         "summary": "Create new metric settings",
         "security": [
           {
@@ -3230,9 +3003,7 @@
         }
       },
       "get": {
-        "tags": [
-          "Metric Settings"
-        ],
+        "tags": ["Metric Settings"],
         "summary": "Get all metric settings for the authenticated user",
         "security": [
           {
@@ -3336,9 +3107,7 @@
     },
     "/metric-settings/{id}": {
       "get": {
-        "tags": [
-          "Metric Settings"
-        ],
+        "tags": ["Metric Settings"],
         "summary": "Get single metric settings by ID",
         "security": [
           {
@@ -3391,9 +3160,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Metric Settings"
-        ],
+        "tags": ["Metric Settings"],
         "summary": "Update metric settings by ID",
         "security": [
           {
@@ -3455,9 +3222,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Metric Settings"
-        ],
+        "tags": ["Metric Settings"],
         "summary": "Delete metric settings by ID",
         "security": [
           {
@@ -3505,9 +3270,7 @@
     },
     "/metric-settings/{id}/achieve": {
       "patch": {
-        "tags": [
-          "Metric Settings"
-        ],
+        "tags": ["Metric Settings"],
         "summary": "Toggle goal achievement for metric settings",
         "security": [
           {
@@ -3562,9 +3325,7 @@
     },
     "/metric-settings/{id}/display": {
       "patch": {
-        "tags": [
-          "Metric Settings"
-        ],
+        "tags": ["Metric Settings"],
         "summary": "Update metric settings display options",
         "security": [
           {
@@ -3628,9 +3389,7 @@
     },
     "/metrics/{metricId}/trends": {
       "get": {
-        "tags": [
-          "Trends"
-        ],
+        "tags": ["Trends"],
         "summary": "Get trend data for a specific metric",
         "security": [
           {
@@ -3672,11 +3431,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "daily",
-                "weekly",
-                "monthly"
-              ]
+              "enum": ["daily", "weekly", "monthly"]
             },
             "required": false,
             "description": "Aggregation interval for trend data",
@@ -3713,9 +3468,7 @@
     },
     "/analytics/dashboard": {
       "get": {
-        "tags": [
-          "Analytics"
-        ],
+        "tags": ["Analytics"],
         "summary": "Get aggregated dashboard visualizations",
         "security": [
           {
@@ -3726,13 +3479,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "1h",
-                "1d",
-                "1w",
-                "1m",
-                "1y"
-              ]
+              "enum": ["1h", "1d", "1w", "1m", "1y"]
             },
             "required": false,
             "description": "Aggregation bucket size",
@@ -3751,11 +3498,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "none",
-                "zero",
-                "nan"
-              ]
+              "enum": ["none", "zero", "nan"]
             },
             "required": false,
             "description": "Missing bucket fill strategy",
@@ -3828,9 +3571,7 @@
     },
     "/analytics/metrics/{metricId}": {
       "get": {
-        "tags": [
-          "Analytics"
-        ],
+        "tags": ["Analytics"],
         "summary": "Get visualization data for a metric",
         "security": [
           {
@@ -3850,13 +3591,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "1h",
-                "1d",
-                "1w",
-                "1m",
-                "1y"
-              ]
+              "enum": ["1h", "1d", "1w", "1m", "1y"]
             },
             "required": false,
             "description": "Aggregation bucket size",
@@ -3875,11 +3610,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "none",
-                "zero",
-                "nan"
-              ]
+              "enum": ["none", "zero", "nan"]
             },
             "required": false,
             "description": "Missing bucket fill strategy",

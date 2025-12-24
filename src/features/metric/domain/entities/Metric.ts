@@ -26,7 +26,9 @@ export class Metric implements MetricDomain {
     return new Metric(props);
   }
 
-  static createDraft(props: Omit<MetricProps, "id" | "createdAt" | "updatedAt">) {
+  static createDraft(
+    props: Omit<MetricProps, "id" | "createdAt" | "updatedAt">,
+  ) {
     const now = new Date();
     return new Metric({
       ...props,
@@ -75,7 +77,15 @@ export class Metric implements MetricDomain {
     this.props.deletedAt = new Date();
   }
 
-  update(data: Partial<{ name: string; description: string | null; defaultUnit: string; categoryId: string | null; isPublic: boolean }>) {
+  update(
+    data: Partial<{
+      name: string;
+      description: string | null;
+      defaultUnit: string;
+      categoryId: string | null;
+      isPublic: boolean;
+    }>,
+  ) {
     if (data.name !== undefined) this.rename(data.name);
     if (data.description !== undefined) this.describe(data.description);
     if (data.defaultUnit !== undefined) this.setDefaultUnit(data.defaultUnit);

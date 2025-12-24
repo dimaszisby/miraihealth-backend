@@ -49,7 +49,8 @@ The `backend-ci` workflow should be triggered on:
   4. `npm run lint`
   5. `npm run typecheck`
 
-**Dependencies:**  
+**Dependencies:**
+
 - None (first job in the pipeline).
 
 ---
@@ -75,10 +76,9 @@ The `backend-ci` workflow should be triggered on:
   4. Run DB migrations for test DB (e.g. `npm run db:migrate:test`).
   5. `npm run test:unit`
   6. `npm run test:integration`
-
-Optional:
-
-- Collect Jest coverage reports and upload as artifacts.
+  7. `npm run test:unit:coverage` → rename/move `coverage/jest` to `coverage/jest-unit`.
+  8. `npm run test:integration:coverage` → rename/move `coverage/jest` to `coverage/jest-integration`.
+  9. Upload the `coverage/` directory (containing both coverage folders) as an artifact.
 
 ---
 
@@ -103,7 +103,7 @@ Optional:
   4. Run DB migrations for contract DB (can reuse `db:migrate:test`).
   5. Start backend in background (e.g. `npm run start:test`).
   6. Wait for server to boot (e.g. `npx wait-on http://localhost:4000/api/v1/health`).
-  7. `npm run test:contract:local`  
+  7. `npm run test:contract:local`
      - This script should:
        - Run Newman with `lakira-local.postman_environment.json`.
        - Execute all relevant contract collections.
@@ -168,13 +168,14 @@ Optional:
 
 - **Migrations:** choose and document one of these approaches:
 
-  1. **On-startup migrations**  
+  1. **On-startup migrations**
+
      - Render’s start command runs a migration script before starting the app, for example:  
        `npm run db:migrate:production && node dist/server.js`.
      - Pros: simple; each new deploy migrates automatically.
      - Cons: if migration fails, the app never starts (health check stays red).
 
-  2. **Separate migration job**  
+  2. **Separate migration job**
      - Use a dedicated Render job or admin script that runs migrations before promoting a new version.
      - Pros: more control; you can validate migrations separately.
      - Cons: more moving parts.
@@ -207,13 +208,16 @@ Optional:
 **Steps:**
 
 1. **Checkout repository**
+
    - Use `actions/checkout@v4` to obtain collections, environment files, and scripts.
 
 2. **Setup Node & dependencies**
+
    - Use `actions/setup-node@v4` (Node 20, npm cache).
    - Run `npm ci`.
 
 3. **Run staging contract tests**
+
    - Execute:
 
      ```bash
@@ -227,7 +231,7 @@ Optional:
      - Generate:
        - JUnit XML report,
        - HTML summary report,
-       under `documents/tests/4-contract-tests/postman-newman/reports/staging/**`.
+         under `documents/tests/4-contract-tests/postman-newman/reports/staging/**`.
 
 4. **Upload reports as artifacts**
 
@@ -278,6 +282,7 @@ The following scripts should exist and be consistent:
 ## 5. Artifacts & Reporting
 
 - Unit/Integration tests:
+
   - Optionally generate Jest JUnit reports and upload.
 
 - Contract tests:

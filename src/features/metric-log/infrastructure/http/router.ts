@@ -48,13 +48,13 @@ const logsCursorCacheKey = (req: AuthRequest) => {
       filter.metricId,
       q["filter[metricId]"],
       q.metricId,
-      req.params?.metricId
+      req.params?.metricId,
     ) ?? "_.js";
 
   const logValueStr =
     firstNonEmpty(
       String(filter.logValue ?? ""),
-      String(q["filter[logValue]"] ?? "")
+      String(q["filter[logValue]"] ?? ""),
     ) ?? "_.js";
 
   const limit = Number(q.limit ?? 20);
@@ -95,37 +95,42 @@ export const createMetricLogRouter = () => {
     "/",
     validate(listMetricLogsViaCursorSchema),
     cacheMiddleware(logsCursorCacheKey, 300),
-    getUserLogLibrariesViaCursor
+    getUserLogLibrariesViaCursor,
   );
 
   router.get(
     "/stats",
     validate(getAggregatedStatsSchema),
     cacheMiddleware(logStatsCacheKey, 300),
-    getAggregatedStats
+    getAggregatedStats,
   );
 
   router.get(
     "/:id",
     validate(getMetricLogByIdSchema),
     cacheMiddleware(logCacheKey, 300),
-    getLogById
+    getLogById,
   );
 
   router.post(
     "/",
     userRateLimiter,
     validate(createMetricLogSchema),
-    createMetricLog
+    createMetricLog,
   );
 
-  router.put("/:id", userRateLimiter, validate(updateMetricLogSchema), updateLog);
+  router.put(
+    "/:id",
+    userRateLimiter,
+    validate(updateMetricLogSchema),
+    updateLog,
+  );
 
   router.delete(
     "/:id",
     userRateLimiter,
     validate(deleteMetricLogSchema),
-    deleteLog
+    deleteLog,
   );
 
   if (env.ENABLE_DUMMY_ENDPOINTS) {
@@ -133,7 +138,7 @@ export const createMetricLogRouter = () => {
       "/:metricId/dummy",
       userRateLimiter,
       validate(generateDummyMetricLogsSchema),
-      generateDummyMetricLogs
+      generateDummyMetricLogs,
     );
   }
 

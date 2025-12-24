@@ -18,7 +18,7 @@ export class ListMetricLogs {
 
 export type {
   MetricLogQueryPort,
-  ListLogsResult, 
+  ListLogsResult,
   ListOpts,
   SortField,
   SortParam,

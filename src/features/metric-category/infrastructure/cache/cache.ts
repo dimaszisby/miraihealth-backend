@@ -13,11 +13,11 @@ import {
  */
 export async function invalidateAllMetricCategoryCache(
   userId: string,
-  categoryId?: string
+  categoryId?: string,
 ) {
   try {
     await invalidateCacheByPattern(
-      `${METRIC_CATEGORY_CURSOR_NAMESPACE_ALL}:${userId}:*`
+      `${METRIC_CATEGORY_CURSOR_NAMESPACE_ALL}:${userId}:*`,
     );
 
     if (categoryId) {

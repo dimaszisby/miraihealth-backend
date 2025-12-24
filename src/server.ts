@@ -32,7 +32,7 @@ const visualizationInvalidationAdapter =
 overrideMetricLogFeatureForTest(
   buildMetricLogFeature({
     visualizationInvalidator: visualizationInvalidationAdapter,
-  })
+  }),
 );
 
 /**
@@ -51,7 +51,9 @@ const initialDbBootstrap = async () => {
     loadModels();
     await sequelize.authenticate();
   } else {
-    console.log("[SERVER] SKIP_DB_LIFECYCLE enabled — skipping initial DB bootstrap.");
+    console.log(
+      "[SERVER] SKIP_DB_LIFECYCLE enabled — skipping initial DB bootstrap.",
+    );
   }
 };
 
@@ -69,7 +71,7 @@ const app: Application = express();
 app.use(
   express.json({
     limit: env.REQUEST_BODY_LIMIT,
-  })
+  }),
 );
 
 // Security Enhancements
@@ -83,7 +85,7 @@ app.use(
     origin: env.CORS_ORIGIN || "http://localhost:3000",
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true, // Allow cookies and auth headers
-  })
+  }),
 );
 
 // Global Rate Limiter (Uncomment when needed)
@@ -112,7 +114,7 @@ app.use(
   "/api/v1/docs",
   ...swaggerGuards,
   swaggerUi.serve,
-  swaggerUi.setup(openApiDocument)
+  swaggerUi.setup(openApiDocument),
 );
 
 // * Global Error Handler
@@ -142,7 +144,7 @@ const startServer = async () => {
     });
   } catch (error) {
     console.error("[SERVER ERROR] Server initialization failed:", error);
-    process.exit(1); 
+    process.exit(1);
   }
 };
 
@@ -180,7 +182,7 @@ const shutdown = async (signal: string) => {
 
 // Handle termination signals
 ["SIGTERM", "SIGINT"].forEach((signal) =>
-  process.on(signal, () => shutdown(signal))
+  process.on(signal, () => shutdown(signal)),
 );
 
 // Handle uncaught exceptions and promise rejections
@@ -194,7 +196,7 @@ process.on("unhandledRejection", (reason, promise) => {
     "[SERVER ERROR] Unhandled Promise Rejection at:",
     promise,
     "reason:",
-    reason
+    reason,
   );
   shutdown("Unhandled Rejection");
 });

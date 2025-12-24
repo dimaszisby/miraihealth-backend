@@ -20,7 +20,7 @@ export class RegisterUser {
   constructor(
     private repo: UserRepository,
     private hasher: PasswordHasher,
-    private tokenProvider: TokenProvider
+    private tokenProvider: TokenProvider,
   ) {}
 
   async execute(input: RegisterInput): Promise<AuthResult> {

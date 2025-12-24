@@ -8,7 +8,7 @@ type Input = { userId: string; name: string; color?: string; icon?: string };
 export class CreateCategory {
   constructor(
     private repo: MetricCategoryRepository,
-    private cache: CachePort
+    private cache: CachePort,
   ) {}
 
   async execute({ userId, name, color, icon }: Input) {
@@ -18,7 +18,7 @@ export class CreateCategory {
     const category = await this.repo.create(userId, { name, color, icon });
     if (this.cache.isEnabled()) {
       await this.cache.delByPattern(
-        `${METRIC_CATEGORY_CURSOR_NAMESPACE_ALL}:${userId}:*`
+        `${METRIC_CATEGORY_CURSOR_NAMESPACE_ALL}:${userId}:*`,
       ); // invalidate lists
     }
     return category;

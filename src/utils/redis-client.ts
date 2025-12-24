@@ -28,7 +28,7 @@ redisClient.on("error", (err: Error) => {
 
 redisClient.on("connect", () => logger.info("[REDIS] Connected to Redis"));
 redisClient.on("reconnecting", () =>
-  logger.warn("[REDIS] Reconnecting to Redis...")
+  logger.warn("[REDIS] Reconnecting to Redis..."),
 );
 redisClient.on("end", () => logger.warn("[REDIS] Redis connection closed."));
 

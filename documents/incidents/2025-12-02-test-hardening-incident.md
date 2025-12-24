@@ -4,6 +4,7 @@
 > Context: `npm run test:dev` against Docker-backed Postgres/Redis (host-overrides for DB/Redis)
 
 ## 1. `__tests__/analytics/dashboard-visualization.service.test.ts`
+
 - **Failure mode:** TypeScript compilation halts because mocked `.query` calls return plain arrays whose shape (`{ metric_id: ... }`) does not match the inferred `[unknown[], unknown]` tuple signature.
 - **Impact:** Entire suite never executes; other suites depending on `ts-jest` stop at compile error.
 - **Log snapshot (07:30 UTC):**
@@ -19,9 +20,11 @@
   - [x] 2025-12-02 09:25 UTC – Re-ran `DB_HOST=127.0.0.1 REDIS_REQUIRED=false NODE_ENV=test npm run jest -- __tests__/analytics/dashboard-visualization.service.test.ts --runInBand`; suite now passes (see PASS log in terminal snippet above).
 
 ## 2. `__tests__/analytics/fallback-range.test.ts`
+
 - **Failure mode:** `computeFallbackRange` returns a ~30-day interval (`2592000000ms`) while the spec expects ≤5 days (`432001000ms`) when clamping after bucket coarsening.
 - **Impact:** Regression coverage for fallback guard is broken; actual API may now exceed FE constraints.
 - **Log snapshot:**
+
   ```text
   expect(received).toBeLessThanOrEqual(expected)
 
@@ -32,11 +35,13 @@
     44 |         new Date(result!.range.startISO).getTime()
   > 45 |     ).toBeLessThanOrEqual(5 * 24 * 60 * 60 * 1000 + 1000);
   ```
+
 - **Plan**
   - [x] 2025-12-02 09:18 UTC – Added a guard-span clamp (`guardBuckets * requestedBucket.approxMs`) after bucket coarsening so the actual window never exceeds the guard, then recalculated `estimatedBuckets`.
   - [x] 2025-12-02 09:18 UTC – Re-ran `npm run jest -- __tests__/analytics/fallback-range.test.ts --runInBand`; all three unit cases now pass.
 
 ## 3. API Integration Suites (`auth`, `metric*`, `analytics`)
+
 - **Failure mode:** `createTestUser` hits `/api/v1/auth/register` but the controller throws a Sequelize error before inserts run (stack traces from `auth.service.ts:41`). Subsequent tests fail due to missing seed user or token.
 - **Likely cause:** Test database lacks migrated tables or baseline seed data—`scripts/test-ci.sh` runs migrations, but the host workflow skipped `npx sequelize-cli db:migrate --config src/config/config.cjs`.
 - **Impact:** 46/50 tests fail; no coverage for business endpoints.
@@ -54,6 +59,7 @@
   - [x] 2025-12-02 09:35 UTC – Documented the host override + CLI command in `documents/docker/postgres-docker-guide.md` and referenced it from the analytics testing checklist.
 
 ## 4. Redis teardown noise
+
 - **Failure mode:** `jest.setup.ts` calls `disconnectRedis()` during `afterAll`, but in host runs Redis never connected (`REDIS_REQUIRED=false`), so `redisClient.quit()` throws “The client is closed.”
 - **Impact:** Non-fatal noise and confusing stack traces appended to every suite failure.
 - **Log snapshot:**
@@ -69,6 +75,7 @@
   - [ ] [Optional] Backfill a small unit test around the helper; low priority since Jest logs now confirm “[PROCESS] Redis client already closed.”
 
 ## 5. General Observability / Debugging Aids
+
 - [x] 2025-12-02 09:40 UTC – Added an auth controller log hook that records `[AUTH] Registration failed` with the incoming email + error message before bubbling to the error handler.
 - [x] 2025-12-02 09:37 UTC – Removed `globals["ts-jest"]` usage in `jest.config.mjs` and relied solely on the `transform` block per ts-jest deprecation notice.
 

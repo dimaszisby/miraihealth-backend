@@ -1,7 +1,4 @@
-import {
-  invalidateCacheByPattern,
-  redisClient,
-} from "@/utils/redis-client.js";
+import { invalidateCacheByPattern, redisClient } from "@/utils/redis-client.js";
 import { CachePort } from "../../application/ports/CachePort.js";
 import {
   logCacheInvalidation,
@@ -25,14 +22,10 @@ export class MetricCacheRedis implements CachePort {
         metricId: metricId ?? "-",
       });
     } catch (error) {
-      logCacheInvalidationError(
-        "metric-cache",
-        error,
-        {
-          userId,
-          metricId: metricId ?? "-",
-        }
-      );
+      logCacheInvalidationError("metric-cache", error, {
+        userId,
+        metricId: metricId ?? "-",
+      });
     }
   }
 }

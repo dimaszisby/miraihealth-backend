@@ -17,7 +17,7 @@ type Input = {
 export class UpdateMetricLog {
   constructor(
     private repo: MetricLogRepository,
-    private cache: CachePort
+    private cache: CachePort,
   ) {}
 
   async execute({ userId, logId, updates }: Input): Promise<MetricLog> {
@@ -38,12 +38,10 @@ export class UpdateMetricLog {
       if (Number.isNaN(timestamp.getTime())) {
         throw new AppError("loggedAt is invalid", 400);
       }
-      if (
-        await this.repo.existsAtTimestamp(log.metricId, timestamp, log.id)
-      ) {
+      if (await this.repo.existsAtTimestamp(log.metricId, timestamp, log.id)) {
         throw new AppError(
           "A log entry already exists for this timestamp for this metric",
-          400
+          400,
         );
       }
       log.setLoggedAt(timestamp);

@@ -48,7 +48,9 @@ export const updateMetricCategorySchema = z.object({
   params: metricCategoryParams,
   body: metricCategoryBody.partial(),
 });
-export const getMetricCategorySchema = z.object({ params: metricCategoryParams });
+export const getMetricCategorySchema = z.object({
+  params: metricCategoryParams,
+});
 export const deleteMetricCategorySchema = z.object({
   params: metricCategoryParams,
 });

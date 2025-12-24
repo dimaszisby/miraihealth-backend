@@ -31,7 +31,7 @@ export class VisualizationCacheRedis implements VisualizationCachePort {
 
   async setDashboardVisualization(
     params: DashboardVizCacheKey,
-    value: unknown
+    value: unknown,
   ) {
     if (!redisClient.isOpen) return;
     const key = vizDashKey(params);

@@ -1,11 +1,13 @@
 # Feature Vertical Slice Migration – In-Depth Review
 
 > Generated with Codex using `feature-vertical-slice-migration-review-overview.md` as the architectural contract.  
-> Supporting references:  
-> - `documents/development/architecture/feature-vertical-slice-migration/checklists/feature-vertical-slice-migration-checklist.md`  
+> Supporting references:
+>
+> - `documents/development/architecture/feature-vertical-slice-migration/checklists/feature-vertical-slice-migration-checklist.md`
 > - `documents/development/architecture/feature-vertical-slice-migration/plans/feature-vertical-slice-migration-plan.md`
 
 ## How to Use This Document
+
 1. Inspect the feature’s code under `src/features/<name>` plus shared dependencies.
 2. Capture observations under **Summary** (narrative) and **Strengths** (what already matches the pattern).
 3. Record every deviation as a **Finding** with a stable ID and severity.
@@ -13,14 +15,16 @@
 5. Once completed for all features, hand this document to the planning phase.
 
 ### Severity Scale
-| Level | Definition | Action Expectation |
-| --- | --- | --- |
-| **Blocker** | Prevents migration or causes critical production risk | Must be addressed before Gold review |
-| **High** | Significant drift that risks maintainability or correctness | Include in stabilization plan |
-| **Medium** | Non-blocking but notable inconsistency | Plan if effort is low / combine with related work |
-| **Low** | Cosmetic or documentation gaps | Optional; note for later |
+
+| Level       | Definition                                                  | Action Expectation                                |
+| ----------- | ----------------------------------------------------------- | ------------------------------------------------- |
+| **Blocker** | Prevents migration or causes critical production risk       | Must be addressed before Gold review              |
+| **High**    | Significant drift that risks maintainability or correctness | Include in stabilization plan                     |
+| **Medium**  | Non-blocking but notable inconsistency                      | Plan if effort is low / combine with related work |
+| **Low**     | Cosmetic or documentation gaps                              | Optional; note for later                          |
 
 ### Finding Template
+
 Use the following structure for each finding:
 
 ```
@@ -33,6 +37,7 @@ Use the following structure for each finding:
 ```
 
 ### Global Observations
+
 Capture issues that span multiple features here.
 
 ```markdown
@@ -49,14 +54,18 @@ Capture issues that span multiple features here.
 ## Feature: analytics
 
 ### Summary
+
 Analytics still mixes legacy service patterns (raw SQL + Redis cache helpers) with the new vertical-slice layout. Queries execute SQL directly via Sequelize, caching is wired to a concrete Redis helper, and there is no `feature.ts` composition point, so controllers call static functions.
 
 ### Strengths
+
 - Domain-centric helpers (`domain/buckets.ts`, `domain/fallback-range.ts`) consolidate complex time-bucket logic.
 - Presentation validators (`infrastructure/http/validators.ts`) enforce nuanced query constraints (date ranges, time zones, relative windows).
 
 ### Findings
+
 - **AN-01 – Queries import Sequelize and raw SQL directly**
+
   - Severity: High
   - Description: `getDashboardVisualization` imports `sequelize`, `QueryTypes`, and SQL builders from `infrastructure/sql` inside the application layer.
   - Impact: The query cannot be tested or reused without booting the DB layer, and it violates the “application depends on ports only” rule from the standard.
@@ -64,6 +73,7 @@ Analytics still mixes legacy service patterns (raw SQL + Redis cache helpers) wi
   - Evidence: `src/features/analytics/application/queries/getDashboardVisualization.ts:1-21`
 
 - **AN-02 – Cache access bypasses a CachePort**
+
   - Severity: Medium
   - Description: The same query calls `vizDashKey`, `getCachedViz`, and `setCachedViz` from `infrastructure/cache/vizCache` directly instead of going through a cache port.
   - Impact: Couples the application layer to Redis-specific semantics (key formats, TTL) and prevents swapping cache providers or faking cache access in tests.
@@ -82,14 +92,18 @@ Analytics still mixes legacy service patterns (raw SQL + Redis cache helpers) wi
 ## Feature: auth
 
 ### Summary
+
 Auth is close to the target slice: domain entities, ports (PasswordHasher/TokenProvider), a `feature.ts`, and HTTP wiring live inside the feature. Remaining gaps are mostly DTO/validator ownership.
 
 ### Strengths
+
 - Feature builder wires concrete adapters (`UserRepositorySequelize`, `BcryptPasswordHasher`, `JwtTokenProvider`) cleanly.
 - Use-cases depend purely on domain repositories and ports, keeping infrastructure out of the application layer.
 
 ### Findings
+
 - **AUTH-01 – Zod schemas live in global `/types` instead of the feature**
+
   - Severity: Medium
   - Description: The router pulls validators from `@/features/auth/infrastructure/http/schema.zod` rather than a feature-local schema module, unlike other slices.
   - Impact: Changes to auth validation now require editing a global types directory, increases coupling, and makes it harder to reason about feature ownership.
@@ -108,14 +122,18 @@ Auth is close to the target slice: domain entities, ports (PasswordHasher/TokenP
 ## Feature: metric
 
 ### Summary
+
 Metric has partial verticalization (feature builder, cache/transaction ports) but read paths and DTOs still depend heavily on legacy global helpers and Sequelize models.
 
 ### Strengths
+
 - `feature.ts` wires repositories, cache, and transaction ports, making mutation use-cases easy to compose.
 - Domain entity (`domain/entities/Metric.ts`) and repository interface encapsulate create semantics.
 
 ### Findings
+
 - **M-01 – `ListMetrics` query depends on global models and mappers**
+
   - Severity: High
   - Description: The query imports `models` from `@/infrastructure/db/models`, `Sequelize` internals, and DTO mappers from `@/utils`.
   - Impact: Violates the application-layer boundary, making it impossible to stub persistence and forcing CQRS logic to live alongside ORM specifics.
@@ -123,6 +141,7 @@ Metric has partial verticalization (feature builder, cache/transaction ports) bu
   - Evidence: `src/features/metric/application/queries/ListMetrics.ts:1-24`
 
 - **M-02 – `GetMetricDetail` bypasses ports and performs ORM logic inline**
+
   - Severity: High
   - Description: This class constructs Sequelize includes and invokes `models.Metric.findOne` directly, even though the feature already defines repositories.
   - Impact: Couples the use-case to Sequelize, leaks include shapes into the application layer, and duplicates mapping logic (`toExtendedMetricDomain`) from shared utils.
@@ -141,14 +160,18 @@ Metric has partial verticalization (feature builder, cache/transaction ports) bu
 ## Feature: metric-category
 
 ### Summary
+
 Metric-category is mostly aligned (rich domain model, cache port, persistence repo) but the HTTP layer still reaches into infrastructure for certain routes and read flows stay in `use-cases`.
 
 ### Strengths
+
 - Domain entity leverages value objects (`MetricCategoryName`, `MetricCategoryColor`, `MetricCategoryIcon`) to enforce invariants.
 - Cache port and repository abstractions are injected via `feature.ts`, enabling reuse across list/create/update/delete flows.
 
 ### Findings
+
 - **MC-01 – Dummy endpoint bypasses the application layer**
+
   - Severity: Medium
   - Description: `generateDummyCategories` instantiates `MetricCategoryFactory`, writes directly through `models.MetricCategory`, and invalidates Redis via `MetricCategoryCacheRedis` inside the controller.
   - Impact: Breaks layering (HTTP -> infrastructure) and duplicates persistence logic, so changes to repositories/cache invalidation won’t apply to this route.
@@ -167,14 +190,18 @@ Metric-category is mostly aligned (rich domain model, cache port, persistence re
 ## Feature: metric-log
 
 ### Summary
+
 Metric-log owns its mutation flows (create/update/delete/stats) but cursor listing and DTO handling still live in legacy shared modules, so the slice isn’t fully self-contained.
 
 ### Strengths
+
 - Domain entity (`MetricLog`) guards value ranges and timestamp validity.
 - Cache and metric-access ports decouple write flows from Redis + ownership checks.
 
 ### Findings
+
 - **ML-01 – Cursor query ties directly to shared DTOs and ORM models**
+
   - Severity: High
   - Description: `listMetricLogs.ts` imports `models`, DTOs, mappers, and Sequelize operators inside the application folder instead of delegating to an adapter.
   - Impact: Forces consumers to pull in Sequelize + global DTOs for any read, and makes pagination logic impossible to reuse across persistence strategies.
@@ -193,14 +220,18 @@ Metric-log owns its mutation flows (create/update/delete/stats) but cursor listi
 ## Feature: metric-settings
 
 ### Summary
+
 Metric-settings has a solid domain + repository setup, yet its HTTP layer still relies on shared DTOs/mappers and lacks feature-owned validation for request payloads/query params.
 
 ### Strengths
+
 - Repository interface encapsulates cursor pagination while use-cases remain thin.
 - Cache invalidation and metric-ownership ports are injected through `feature.ts`, encouraging clear boundaries.
 
 ### Findings
+
 - **MS-01 – Controllers use shared DTOs/mappers**
+
   - Severity: Medium
   - Description: `controller.ts` imports `toMetricSettingsResponseDTO`/`toDisplayOptionsResponseDTO` and DTO types from `@/utils` and `@/types/dtos`.
   - Impact: Couples the feature to shared folders, so modifying response shapes requires edits outside the slice and risks breaking other consumers of the shared mapper.
@@ -219,12 +250,15 @@ Metric-settings has a solid domain + repository setup, yet its HTTP layer still 
 ## Feature: shared
 
 ### Summary
+
 `src/shared/middleware` currently serves as a grab bag of middleware/utilities (cache, rate limiter, validation) rather than a structured feature slice with domain/application layers.
 
 ### Strengths
+
 - Centralizes widely used middleware such as `rate-limiter` and validation helpers to avoid duplication across routers.
 
 ### Findings
+
 - **SH-01 – Shared “feature” does not follow the canonical layout**
   - Severity: Medium
   - Description: Files like `cache.ts` export Express middleware that touch Redis/loggers directly, but there is no `feature.ts`, domain, or application structure under `src/shared/middleware`.

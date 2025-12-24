@@ -35,14 +35,14 @@ export const toDomain = (row: MetricCategoryRow): MetricCategoryDomain =>
  */
 // Dev Note Update: ADDED
 export const toListDomain = (
-  rows: MetricCategoryRow[]
+  rows: MetricCategoryRow[],
 ): MetricCategoryDomain[] => rows.map(toDomain);
 
 /**
  * * Mapper: Domain → DTO (for responses)
  */
 export const toResponseDTO = (
-  metricCategory: MetricCategoryDomain
+  metricCategory: MetricCategoryDomain,
 ): MetricCategoryResponseDTO => ({
   id: metricCategory.id,
   name: metricCategory.name,
@@ -54,7 +54,7 @@ export const toResponseDTO = (
 });
 
 export const toListResponseDTO = (
-  metricCategories: MetricCategoryDomain[]
+  metricCategories: MetricCategoryDomain[],
 ): MetricCategoryResponseDTO[] => {
   return metricCategories.map(toResponseDTO);
 };

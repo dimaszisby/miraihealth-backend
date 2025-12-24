@@ -11,7 +11,7 @@ export interface MetricLogRepository {
   existsAtTimestamp(
     metricId: string,
     loggedAt: Date,
-    excludeLogId?: string
+    excludeLogId?: string,
   ): Promise<boolean>;
   create(data: CreateMetricLogDTO): Promise<MetricLog>;
   findById(userId: string, logId: string): Promise<MetricLog | null>;

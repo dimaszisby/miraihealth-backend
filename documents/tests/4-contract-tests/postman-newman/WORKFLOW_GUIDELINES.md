@@ -35,10 +35,12 @@ Update the contract tests whenever any of the following occur in the **core API 
 Use this flow whenever making backend changes that affect APIs.
 
 1. **Design / Discuss the Change**
+
    - Clarify expected behaviour with FE for breaking changes.
    - Decide whether versioning is needed (e.g. new dashboard version).
 
 2. **Update OpenAPI Spec**
+
    - Edit `documents/openapi/lakira-backend-openapi.json`:
      - Paths and methods.
      - Parameters and request body schemas.
@@ -46,6 +48,7 @@ Use this flow whenever making backend changes that affect APIs.
      - Error response shapes.
 
 3. **Update Backend Implementation**
+
    - Implement or update controllers, services, and DTO mappers.
    - Ensure responses match OpenAPI (status + body) exactly.
 
@@ -78,13 +81,17 @@ Use this flow whenever making backend changes that affect APIs.
    ```bash
    npm run test:contract:local
 
+   ```
+
 6. **Commit All Related Artifacts**
+
    - Backend code changes.
    - OpenAPI spec changes.
    - Updated Postman collections/environments.
    - Any new scripts or doc updates (PLAN/CHECKLIST if needed).
 
 7. **Push & Review**
+
    - Open PR with:
      - Short description of API changes.
      - Mention that contract tests were updated and are green locally.
@@ -103,9 +110,11 @@ Use this flow whenever making backend changes that affect APIs.
 When you introduce a new endpoint:
 
 1. **Add to OpenAPI**
+
    - Define the path, method, parameters, request body, responses, and error schema.
 
 2. **Create Collection Entry**
+
    - Locate appropriate collection (e.g. `lakira-analytics-contract.postman_collection.json`).
    - Add a new folder or reuse an existing folder for that feature.
    - Add one or more requests:
@@ -113,6 +122,7 @@ When you introduce a new endpoint:
      - Error cases (validation, 404, auth, etc.).
 
 3. **Define Tests in Postman**
+
    - In the Postman “Tests” tab, add assertions to:
      - Check expected status code.
      - Validate key fields and types.
@@ -120,6 +130,7 @@ When you introduce a new endpoint:
      - Validate error body structure for negative cases.
 
 4. **Update Environment Variables**
+
    - Add any new variables needed (e.g. `metricId`, `dashboardId`, etc.) to:
      - `lakira-local.postman_environment.json`
      - `lakira-staging.postman_environment.json`
@@ -200,6 +211,7 @@ When making potentially breaking changes:
 Guidelines for using Codex/LLM in this workflow:
 
 - Good tasks for Codex:
+
   - Generating or updating Postman test scripts based on OpenAPI and BE code.
   - Proposing new contract scenarios when new features are added.
   - Translating failing console output from Newman into actionable fixes.

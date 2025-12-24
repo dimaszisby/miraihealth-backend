@@ -14,7 +14,9 @@ const skipDbLifecycle = process.env.SKIP_DB_LIFECYCLE === "true";
 jest.setTimeout(40000);
 
 if (skipDbLifecycle) {
-  console.log("[PROCESS] SKIP_DB_LIFECYCLE enabled — skipping server/DB bootstrap.");
+  console.log(
+    "[PROCESS] SKIP_DB_LIFECYCLE enabled — skipping server/DB bootstrap.",
+  );
 }
 
 // Ensure Jest uses the correct test environment
@@ -42,7 +44,7 @@ if (!skipDbLifecycle) {
     try {
       server = app.listen(TEST_SERVER_PORT, () => {
         console.log(
-          `[PROCESS] Test server running on port ${TEST_SERVER_PORT}`
+          `[PROCESS] Test server running on port ${TEST_SERVER_PORT}`,
         );
       });
 
@@ -69,7 +71,7 @@ if (!skipDbLifecycle) {
 
       const result = (await sequelize.query(
         `SELECT tablename FROM pg_tables WHERE schemaname = 'public';`,
-        { type: QueryTypes.SELECT }
+        { type: QueryTypes.SELECT },
       )) as { tablename: string }[] | unknown;
       const tables = Array.isArray(result)
         ? (result as { tablename: string }[])
@@ -81,7 +83,7 @@ if (!skipDbLifecycle) {
           continue;
         }
         await sequelize.query(
-          `TRUNCATE TABLE "${tableName}" RESTART IDENTITY CASCADE;`
+          `TRUNCATE TABLE "${tableName}" RESTART IDENTITY CASCADE;`,
         );
       }
 

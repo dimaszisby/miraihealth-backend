@@ -1,4 +1,7 @@
-import { loadEnvOrExit, resetEnvCacheForTesting } from "../config/envManager.js";
+import {
+  loadEnvOrExit,
+  resetEnvCacheForTesting,
+} from "../config/envManager.js";
 
 type EnvOverrides = Partial<NodeJS.ProcessEnv>;
 
@@ -9,7 +12,7 @@ type WithTestEnvOptions = {
 
 export async function withTestEnv<T>(
   fn: () => Promise<T> | T,
-  options: WithTestEnvOptions = {}
+  options: WithTestEnvOptions = {},
 ): Promise<T> {
   const previousValues: Record<string, string | undefined> = {};
   const { overrides = {}, skipDbLifecycle = true } = options;

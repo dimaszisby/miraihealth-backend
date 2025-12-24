@@ -39,21 +39,27 @@ Use this checklist when:
 ## 3. Job Structure & Timeouts
 
 - [ ] `checks` job exists and runs:
+
   - [ ] `npm ci`
   - [ ] `npm run lint`
   - [ ] `npm run typecheck`
   - [ ] Job has `timeout-minutes` configured.
 
 - [ ] `tests` job exists and:
+
   - [ ] Declares Postgres and Redis service containers.
   - [ ] Runs `npm ci`.
   - [ ] Runs `npm run db:migrate:test` (or equivalent).
   - [ ] Runs `npm run test:unit`.
   - [ ] Runs `npm run test:integration`.
+  - [ ] Runs `npm run test:unit:coverage` and stores the output (e.g., renames `coverage/jest` to `coverage/jest-unit`).
+  - [ ] Runs `npm run test:integration:coverage` and stores the output (e.g., renames `coverage/jest` to `coverage/jest-integration`).
+  - [ ] Uploads the combined coverage folders as a GitHub Actions artifact.
   - [ ] Depends on `checks` (`needs: checks`).
   - [ ] Has `timeout-minutes` configured.
 
 - [ ] `contract_local` job exists and:
+
   - [ ] Declares Postgres and Redis service containers.
   - [ ] Runs `npm ci`.
   - [ ] Runs DB migrations for contract DB (can reuse `db:migrate:test`).
@@ -65,6 +71,7 @@ Use this checklist when:
   - [ ] Has `timeout-minutes` configured.
 
 - [ ] (Future) `deploy_staging` job:
+
   - [ ] Depends on `contract_local` or `tests`.
   - [ ] Triggers Render staging deploy via deploy hook.
   - [ ] Polls staging health endpoint until healthy or timeout.
@@ -83,6 +90,7 @@ Use this checklist when:
 ## 4. Services & Environment Variables
 
 - [ ] Postgres service configured with:
+
   - [ ] `POSTGRES_USER=postgres`
   - [ ] `POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD_TEST }}`
   - [ ] `POSTGRES_DB=lakira_ci`
@@ -91,12 +99,14 @@ Use this checklist when:
 - [ ] Redis service configured with health checks.
 
 - [ ] Jobs that talk to DB/Redis set:
+
   - [ ] `DATABASE_URL` uses the `postgres` service host and `lakira_ci` DB.
   - [ ] `REDIS_URL` uses the `redis` service host.
   - [ ] `NODE_ENV=test` for tests/contract jobs.
   - [ ] `JWT_SECRET_TEST` from secrets.
 
 - [ ] Staging deploy job reads:
+
   - [ ] `RENDER_STAGING_DEPLOY_HOOK_URL` from secrets.
   - [ ] `STAGING_HEALTH_URL` from secrets.
 
@@ -149,6 +159,7 @@ Backend `package.json` includes:
 - [ ] `test:contract:staging` uses:
   - [ ] `lakira-staging.postman_environment.json`.
 - [ ] Contract runs produce:
+
   - [ ] JUnit XML reports.
   - [ ] HTML reports.
   - [ ] Saved under `documents/tests/4-contract-tests/postman-newman/reports/local/**` and `reports/staging/**`.

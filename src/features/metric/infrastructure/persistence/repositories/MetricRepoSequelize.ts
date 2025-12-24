@@ -1,6 +1,9 @@
 import { models } from "@/infrastructure/db/models.js";
 import { Transaction } from "sequelize";
-import { CreateMetricDTO, MetricRepository } from "../../../domain/repositories/MetricRepository.js";
+import {
+  CreateMetricDTO,
+  MetricRepository,
+} from "../../../domain/repositories/MetricRepository.js";
 import { Metric } from "../../../domain/entities/Metric.js";
 import { PersistenceTransaction } from "../../../application/ports/PersistenceTransaction.js";
 import { MetricRow, toDomain } from "../mappers/MetricMapper.js";
@@ -12,10 +15,7 @@ export class MetricRepoSequelize implements MetricRepository {
     return count > 0;
   }
 
-  async categoryExists(
-    userId: string,
-    categoryId: string
-  ): Promise<boolean> {
+  async categoryExists(userId: string, categoryId: string): Promise<boolean> {
     const count = await models.MetricCategory.count({
       where: { userId, id: categoryId },
     });
@@ -24,7 +24,7 @@ export class MetricRepoSequelize implements MetricRepository {
 
   async create(
     data: CreateMetricDTO,
-    tx: PersistenceTransaction
+    tx: PersistenceTransaction,
   ): Promise<Metric> {
     const transaction = tx as Transaction;
     const created = await models.Metric.create(
@@ -37,7 +37,7 @@ export class MetricRepoSequelize implements MetricRepository {
         defaultUnit: data.defaultUnit,
         isPublic: data.isPublic,
       },
-      { transaction }
+      { transaction },
     );
 
     await created.reload({ transaction });

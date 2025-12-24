@@ -15,7 +15,7 @@ export class CreateMetric {
     private repo: MetricRepository,
     private settings: MetricSettingsPort,
     private cache: CachePort,
-    private tx: TransactionPort
+    private tx: TransactionPort,
   ) {}
 
   async execute(input: Input): Promise<Metric> {
@@ -26,7 +26,7 @@ export class CreateMetric {
     if (input.categoryId) {
       const exists = await this.repo.categoryExists(
         input.userId,
-        input.categoryId
+        input.categoryId,
       );
       if (!exists) throw new AppError("Category not found", 404);
     }

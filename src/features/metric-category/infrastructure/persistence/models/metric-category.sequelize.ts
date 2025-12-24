@@ -88,7 +88,7 @@ export class MetricCategory
         paranoid: true,
         underscored: true,
         schema: "public",
-      }
+      },
     );
 
     return MetricCategory;

@@ -105,16 +105,19 @@ function clampLimit(limit: number) {
 function normalizeSort(sort: SortParam): { field: SortField; dir: Dir } {
   const defaultSort: SortParam = sort ?? "-createdAt";
   const dir: Dir = defaultSort.startsWith("-") ? "DESC" : "ASC";
-  const field = (defaultSort.startsWith("-")
-    ? defaultSort.slice(1)
-    : defaultSort) as SortField;
+  const field = (
+    defaultSort.startsWith("-") ? defaultSort.slice(1) : defaultSort
+  ) as SortField;
 
   return ["createdAt", "updatedAt", "logValue", "loggedAt"].includes(field)
     ? { field, dir }
     : { field: "createdAt", dir: "DESC" };
 }
 
-function buildWhere(filter?: { logValue?: number; metricId?: string }, q?: string) {
+function buildWhere(
+  filter?: { logValue?: number; metricId?: string },
+  q?: string,
+) {
   const and: any[] = [];
   if (filter?.metricId) and.push({ metricId: filter.metricId });
   if (filter?.logValue) and.push({ logValue: filter.logValue });
@@ -128,7 +131,7 @@ function buildWhere(filter?: { logValue?: number; metricId?: string }, q?: strin
 function buildCursorPredicate(
   cursor: CursorPayload,
   field: SortField,
-  dir: Dir
+  dir: Dir,
 ): WhereOptions {
   const ltgt = dir === "DESC" ? Op.lt : Op.gt;
   const eq = Op.eq;
@@ -140,7 +143,10 @@ function buildCursorPredicate(
         [Op.or]: [
           { createdAt: { [ltgt]: c } },
           {
-            [Op.and]: [{ createdAt: { [eq]: c } }, { id: { [ltgt]: cursor.id } }],
+            [Op.and]: [
+              { createdAt: { [eq]: c } },
+              { id: { [ltgt]: cursor.id } },
+            ],
           },
         ],
       };
@@ -151,7 +157,10 @@ function buildCursorPredicate(
         [Op.or]: [
           { updatedAt: { [ltgt]: u } },
           {
-            [Op.and]: [{ updatedAt: { [eq]: u } }, { id: { [ltgt]: cursor.id } }],
+            [Op.and]: [
+              { updatedAt: { [eq]: u } },
+              { id: { [ltgt]: cursor.id } },
+            ],
           },
         ],
       };
@@ -162,7 +171,10 @@ function buildCursorPredicate(
         [Op.or]: [
           { logValue: { [ltgt]: last } },
           {
-            [Op.and]: [{ logValue: { [eq]: last } }, { id: { [ltgt]: cursor.id } }],
+            [Op.and]: [
+              { logValue: { [eq]: last } },
+              { id: { [ltgt]: cursor.id } },
+            ],
           },
         ],
       };
@@ -173,7 +185,10 @@ function buildCursorPredicate(
         [Op.or]: [
           { loggedAt: { [ltgt]: l } },
           {
-            [Op.and]: [{ loggedAt: { [eq]: l } }, { id: { [ltgt]: cursor.id } }],
+            [Op.and]: [
+              { loggedAt: { [eq]: l } },
+              { id: { [ltgt]: cursor.id } },
+            ],
           },
         ],
       };

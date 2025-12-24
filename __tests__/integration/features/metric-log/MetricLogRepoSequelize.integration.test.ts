@@ -28,9 +28,9 @@ describe("MetricLog repositories (integration)", () => {
       loggedAt,
     });
 
-    await expect(
-      repo.existsAtTimestamp(metric.id, loggedAt),
-    ).resolves.toBe(true);
+    await expect(repo.existsAtTimestamp(metric.id, loggedAt)).resolves.toBe(
+      true,
+    );
     await expect(
       repo.existsAtTimestamp(metric.id, loggedAt, log.id),
     ).resolves.toBe(false);

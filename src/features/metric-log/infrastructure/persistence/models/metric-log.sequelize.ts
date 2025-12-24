@@ -79,7 +79,7 @@ export class MetricLog
         tableName: "metric_logs",
         underscored: true,
         schema: "public",
-      }
+      },
     );
 
     return MetricLog;

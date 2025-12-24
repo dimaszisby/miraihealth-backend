@@ -30,4 +30,3 @@ generateOpenApiSpec().catch((error) => {
   console.error("[OpenAPI] Failed to generate specification:", error);
   process.exitCode = 1;
 });
-

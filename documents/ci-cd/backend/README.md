@@ -17,12 +17,14 @@ For high-level project-wide strategy, see `documents/ci-cd/CI_CD_STRATEGY.md`.
 ## 2. Goals
 
 - Ensure every backend change is:
+
   - Linted and type-checked,
   - Covered by unit and integration tests,
   - Validated via API contract tests (Postman/Newman),
-  before being considered stable.
+    before being considered stable.
 
 - Provide a **repeatable pipeline definition** suitable for:
+
   - Recruiters and interviewers reviewing the repository.
   - AI agents (Codex) helping maintain or extend the pipeline.
 
@@ -52,10 +54,11 @@ The main backend workflow is triggered on:
 
 A typical pipeline is composed of these jobs:
 
-1. **checks** – Lint & Typecheck  
-2. **tests** – Unit & Integration tests (with Postgres + Redis services)  
-3. **contract_local** – Contract tests against a locally started backend (optional intermediate step)  
-4. **deploy_staging** (future) – Deploy backend to staging PaaS  
+1. **checks** – Lint & Typecheck
+2. **tests** – Unit & Integration tests (with Postgres + Redis services)
+   - Runs both fast test commands and coverage variants (`test:unit:coverage`, `test:integration:coverage`) and uploads `coverage/jest-unit` + `coverage/jest-integration` as artifacts.
+3. **contract_local** – Contract tests against a locally started backend (optional intermediate step)
+4. **deploy_staging** (future) – Deploy backend to staging PaaS
 5. **contract_staging** (future) – Run contract tests against staging backend
 
 Later, you may add:
@@ -96,15 +99,17 @@ Later, you may add:
 
 The backend pipeline uses three logical environments:
 
-1. **Local (developer)**  
+1. **Local (developer)**
+
    - Runs via `npm run` commands directly.
    - Uses local Docker services for Postgres/Redis.
 
-2. **GitHub Actions (CI)**  
+2. **GitHub Actions (CI)**
+
    - Uses service containers for Postgres/Redis.
    - Uses secrets for DB credentials and JWT keys as needed.
 
-3. **Staging (PaaS)** – planned  
+3. **Staging (PaaS)** – planned
    - Backend deployed on Render (managed platform).
    - Configured via platform environment variables.
    - Contract tests point to this environment using `lakira-staging.postman_environment.json`.
@@ -149,10 +154,12 @@ CI jobs call the same scripts and commands referenced in those documents, ensuri
 Planned/optional enhancements:
 
 - **deploy_staging job**:
+
   - Build Docker image or use platform buildpacks.
   - Deploy to Render staging environment.
 
 - **contract_staging job**:
+
   - Run Newman against staging using `lakira-staging.postman_environment.json`.
   - Archive reports as artifacts.
 

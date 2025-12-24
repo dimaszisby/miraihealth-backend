@@ -34,3 +34,4 @@ Contract Tests (Postman/Newman)  ← THIS DOCUMENT
 End-to-End Tests (optional)
   ↓
 Manual Approval / Automated Deploy to Production
+```

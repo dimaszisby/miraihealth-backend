@@ -82,7 +82,7 @@ const sequelize = new Sequelize(
       underscored: true,
       timestamps: true,
     },
-  }
+  },
 );
 
 export default sequelize;

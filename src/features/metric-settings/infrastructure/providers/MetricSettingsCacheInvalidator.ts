@@ -9,13 +9,11 @@ import {
   logCacheInvalidationError,
 } from "@/shared/cache/logging.js";
 
-export class MetricSettingsCacheInvalidator
-  implements CacheInvalidationPort
-{
+export class MetricSettingsCacheInvalidator implements CacheInvalidationPort {
   async invalidate(
     userId: string,
     metricId?: string,
-    settingsId?: string
+    settingsId?: string,
   ): Promise<void> {
     if (!redisClient.isOpen) return;
     try {

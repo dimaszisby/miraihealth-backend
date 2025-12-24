@@ -11,7 +11,7 @@ import {
 export class ListCategories {
   constructor(
     private repo: MetricCategoryRepository,
-    private cache: CachePort
+    private cache: CachePort,
   ) {}
 
   async execute(q: ListQuery): Promise<ListResult<MetricCategory>> {

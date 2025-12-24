@@ -5,7 +5,7 @@ import { CacheInvalidationPort } from "../ports/CacheInvalidationPort.js";
 export class DeleteMetricSettings {
   constructor(
     private repo: MetricSettingsRepository,
-    private cache: CacheInvalidationPort
+    private cache: CacheInvalidationPort,
   ) {}
 
   async execute(userId: string, settingsId: string): Promise<void> {

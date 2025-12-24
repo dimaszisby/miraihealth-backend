@@ -11,7 +11,7 @@ type Input = {
 export class UpdateMetric {
   constructor(
     private repo: MetricRepository,
-    private cache: CachePort
+    private cache: CachePort,
   ) {}
 
   async execute({ userId, metricId, data }: Input) {

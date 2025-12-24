@@ -79,6 +79,6 @@ export type DashboardVizResponse = {
 export interface VisualizationReadRepository {
   fetchVisualization(params: VisualizationQueryParams): Promise<VizResponse>;
   fetchDashboardVisualization(
-    params: DashboardVisualizationParams
+    params: DashboardVisualizationParams,
   ): Promise<DashboardVizResponse>;
 }

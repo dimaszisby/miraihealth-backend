@@ -37,7 +37,7 @@ const successResponse = <T>(
   statusCode: number,
   data: T | null,
   message = "Success",
-  code?: number | string
+  code?: number | string,
 ): Response<SuccessResponse<T>> => {
   return res.status(statusCode).json({
     status: "success",
@@ -64,7 +64,7 @@ const errorResponse = (
   message: string,
   error: unknown = null,
   code?: number | string,
-  errors?: string[]
+  errors?: string[],
 ): Response<ErrorResponse> => {
   return res.status(statusCode).json({
     status: "error",

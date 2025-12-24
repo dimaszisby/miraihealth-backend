@@ -1,8 +1,5 @@
 import { CachePort } from "../../application/ports/CachePort.js";
-import {
-  redisClient,
-  invalidateCacheByPattern,
-} from "@/utils/redis-client.js";
+import { redisClient, invalidateCacheByPattern } from "@/utils/redis-client.js";
 import {
   logCacheInvalidation,
   logCacheInvalidationError,
@@ -26,7 +23,7 @@ export class MetricCategoryCacheRedis implements CachePort {
     await redisClient.setEx(
       key,
       ttlSec ?? this.defaultTtlSeconds,
-      JSON.stringify(value)
+      JSON.stringify(value),
     );
   }
 

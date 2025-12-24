@@ -4,25 +4,30 @@
 > **Goal:** Bring every feature back to the canonical vertical-slice / DDD pattern defined in `feature-vertical-slice-migration-review-overview.md`.
 
 ## How to Read This Plan
+
 - Each task references one or more review finding IDs (e.g., `AN-01`, `G-02`).
 - Use checkboxes to track completion; keep IDs immutable even across iterations.
 - Include owners/dates as metadata when known (e.g., `Owner: @user`, `Target: 2024-07-15`).
 - Acceptance criteria must be testable and reference files or behaviors.
 
 ### Status Legend
-| Symbol | Meaning |
-| --- | --- |
-| `[ ]` | Not started |
-| `[~]` | In progress |
-| `[x]` | Complete |
+
+| Symbol | Meaning     |
+| ------ | ----------- |
+| `[ ]`  | Not started |
+| `[~]`  | In progress |
+| `[x]`  | Complete    |
 
 ## Global / Cross-Cutting Objectives
+
 - Unify shared abstractions (CachePort, TransactionPort) where duplication exists.
 - Ensure every feature exports a `feature.ts` describing its container wiring.
 - Remove legacy service locators or circular dependencies between features.
 
 ### Tasks
+
 - [x] **G-01 – Standardize read/query port pattern**
+
   - From findings: G-01, AN-01, M-01, M-02, ML-01
   - Description: Introduce feature-local read/query ports so application-layer queries never import `sequelize` or raw SQL directly.
   - Affected Areas: `src/features/analytics/application/queries`, `src/features/metric/application/queries`, `src/features/metric-log/application/queries`, associated `infrastructure/persistence` adapters, `infrastructure/db`.
@@ -55,12 +60,15 @@
 ## Feature: analytics
 
 ### Goals
+
 - Application queries depend only on domain/read ports; no direct Sequelize imports.
 - Dashboard caching flows are abstracted behind a CachePort with DI through `feature.ts`.
 - HTTP presentation layer pulls dependencies from a feature builder and follows canonical `infrastructure/http` naming.
 
 ### Tasks
+
 - [x] **AN-01 – Introduce VisualizationReadRepository** (addresses finding AN-01 & G-01)
+
   - Description: Move dashboard visualization SQL/Sequelize access into a repository adapter while the application query consumes a port.
   - Affected Files: `src/features/analytics/application/queries/getDashboardVisualization.ts`, new `application/ports/VisualizationReadRepository.ts`, `infrastructure/sql/*`, `infrastructure/persistence/*`.
   - Steps:
@@ -74,6 +82,7 @@
     - Tests cover both adapter (integration) and query (unit via stub).
 
 - [x] **AN-02 – Wrap cache access behind CachePort** (addresses finding AN-02)
+
   - Description: Create a feature-specific `CachePort` and Redis adapter so queries never import `vizCache` helpers directly.
   - Affected Files: `src/features/analytics/application/queries/getDashboardVisualization.ts`, new `application/ports/CachePort.ts`, `infrastructure/cache/vizCache.ts`.
   - Steps:
@@ -102,11 +111,14 @@
 ## Feature: auth
 
 ### Goals
+
 - Own all auth-specific DTO/validation logic inside the feature.
 - Keep controllers/mappers fully encapsulated without reaching into shared directories.
 
 ### Tasks
+
 - [x] **AUTH-01 – Move Zod schemas into auth feature** (addresses finding AUTH-01 & G-02)
+
   - Description: Create `schema.zod.ts` (or similar) under `infrastructure/http` containing register/login/update payload validators and replace imports from `@/types/api`.
   - Affected Files: `src/features/auth/infrastructure/http/router.ts`, new schema file, `src/features/auth/infrastructure/http/schema.zod.ts`.
   - Steps:
@@ -133,12 +145,15 @@
 ## Feature: metric
 
 ### Goals
+
 - Application queries and use-cases go through `MetricRepository`/read ports only.
 - Shared helpers (`findOwnedMetric`, `toDomainMetric`) are absorbed into the feature.
 - DTO mapping happens within the feature boundary.
 
 ### Tasks
+
 - [x] **M-01 – Convert ListMetrics to use read port** (addresses finding M-01 & G-01)
+
   - Description: Refactor `ListMetrics` so it depends on a `MetricReadRepository` interface implemented under infrastructure, eliminating direct Sequelize usage.
   - Affected Files: `src/features/metric/application/queries/ListMetrics.ts`, new read port + adapter files, router/services referencing the query.
   - Steps:
@@ -150,6 +165,7 @@
     - Query is unit-testable with a mock port.
 
 - [x] **M-02 – Move GetMetricDetail data access behind repository** (addresses finding M-02 & G-01)
+
   - Description: Extend the domain repository (or add read port) with a `findDetailedById` method implemented in infrastructure.
   - Affected Files: `src/features/metric/application/queries/GetMetricDetail.ts`, `domain/repositories/MetricRepository.ts`, infrastructure adapters.
   - Steps:
@@ -176,11 +192,14 @@
 ## Feature: metric-category
 
 ### Goals
+
 - Application layer hosts all mutations/queries; controllers never touch infrastructure directly.
 - Reads follow CQRS naming conventions (`application/queries`).
 
 ### Tasks
+
 - [x] **MC-01 – Add GenerateDummyCategories use-case** (addresses finding MC-01)
+
   - Description: Create a use-case that wraps factory + repository + cache invalidation so the HTTP layer no longer manipulates models/cache directly.
   - Affected Files: `src/features/metric-category/infrastructure/http/controller.ts`, new `application/use-cases/GenerateDummyCategories.ts`, `feature.ts`.
   - Steps:
@@ -207,11 +226,14 @@
 ## Feature: metric-log
 
 ### Goals
+
 - Cursor queries abstracted via read port adapters; DTO shaping handled in HTTP layer.
 - Feature owns its DTO/schema definitions without relying on shared folders.
 
 ### Tasks
+
 - [x] **ML-01 – Create MetricLogQueryPort** (addresses finding ML-01 & G-01)
+
   - Description: Define a read port for cursor pagination and move Sequelize logic/mappers into an adapter.
   - Affected Files: `src/features/metric-log/application/queries/listMetricLogs.ts`, new `application/ports/MetricLogQueryPort.ts`, infrastructure adapter.
   - Steps:
@@ -238,11 +260,14 @@
 ## Feature: metric-settings
 
 ### Goals
+
 - Feature-scoped DTOs/validators/mappers for all endpoints.
 - Cache invalidation + ownership logic remain encapsulated via ports/use-cases.
 
 ### Tasks
+
 - [x] **MS-01 – Move MetricSettings DTO/mappers into feature** (addresses finding MS-01 & G-02)
+
   - Description: Create local DTO + mapper files and update controllers to consume them instead of shared helpers.
   - Affected Files: `src/features/metric-settings/infrastructure/http/controller.ts`, new `dto.ts`/`mappers.ts`, `src/utils/mappers/metric-settings.mapper.ts`.
   - Steps:
@@ -269,10 +294,12 @@
 ## Feature: shared
 
 ### Goals
+
 - Clarify whether shared helpers remain under `src/features` or move to a dedicated shared module.
 - Ensure any remaining shared slice follows the canonical feature layout.
 
 ### Tasks
+
 - [x] **SH-01 – Re-home shared utilities** (addresses finding SH-01)
   - Description: Decide whether middleware such as `cache`, `rate-limiter`, and `validated` belong inside a proper feature slice or under a global `shared/` folder, then restructure accordingly.
   - Affected Files: `src/shared/middleware/**/*`, possibly new `src/shared` (or multiple small features).
@@ -288,6 +315,7 @@
 ---
 
 ## Delivery Governance
+
 - **Dependency Tracking:** note upstream/downstream relationships (e.g., `AUTH-02` blocked by `G-01`).
 - **Testing Expectations:** list automated tests or manual verification steps when relevant.
 - **Review Notes:** capture any deviations from plan or rationale for deprioritizing findings.

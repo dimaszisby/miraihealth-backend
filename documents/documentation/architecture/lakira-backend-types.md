@@ -134,15 +134,20 @@ export const getMetricLogSchema = z.object({
 });
 
 export const getAllMetricLogsSchema = z.object({
-  query: z.object({
-    metricId: zUUID.optional(),
-    startDate: zDateOptional,
-    endDate: zDateOptional,
-    sortBy: z.string().optional(),
-    order: z.enum(["asc", "desc"]).optional(),
-    page: z.preprocess(Number, z.number().int().min(1)).optional().default(1),
-    limit: z.preprocess(Number, z.number().int().min(1)).optional().default(10),
-  }).optional(),
+  query: z
+    .object({
+      metricId: zUUID.optional(),
+      startDate: zDateOptional,
+      endDate: zDateOptional,
+      sortBy: z.string().optional(),
+      order: z.enum(["asc", "desc"]).optional(),
+      page: z.preprocess(Number, z.number().int().min(1)).optional().default(1),
+      limit: z
+        .preprocess(Number, z.number().int().min(1))
+        .optional()
+        .default(10),
+    })
+    .optional(),
 });
 
 export const deleteMetricLogSchema = z.object({
@@ -252,9 +257,11 @@ export const getMetricSettingsSchema = z.object({
 });
 
 export const getAllMetricSettingsSchema = z.object({
-  query: z.object({
-    metricId: zUUID.optional(),
-  }).optional(),
+  query: z
+    .object({
+      metricId: zUUID.optional(),
+    })
+    .optional(),
 });
 
 export const deleteMetricSettingsSchema = z.object({
@@ -1722,7 +1729,7 @@ export interface MetricPreviewResponseDTO {
    * @property {MetricPreviewCategoryDTO} [category] - Optional summarized information about the metric's category.
    * @readonly
    */
-  readonly category: MetricPreviewCategoryDTO |null;
+  readonly category: MetricPreviewCategoryDTO | null;
 
   /**
    * @property {string} [goalType] - Optional goal type associated with the metric's settings (e.g., 'cumulative', 'incremental').
@@ -1942,7 +1949,7 @@ export const zUUID = z
 export const zDateOptional = z
   .preprocess(
     (val) => (typeof val === "string" && val.trim() === "" ? undefined : val),
-    z.coerce.date().optional()
+    z.coerce.date().optional(),
   )
   .refine((date) => date === undefined || !isNaN(date.getTime()), {
     message: ZodMessages.common.invalidDate,
@@ -2055,3 +2062,4 @@ export const zPositiveFloat = z
 export const zLogType = z.enum(["manual", "automatic"], {
   required_error: ZodMessages.metricLog.logTypeInvalid,
 });
+```

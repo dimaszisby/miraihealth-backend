@@ -21,7 +21,7 @@ export class MetricLog {
   }
 
   static createDraft(
-    props: Omit<MetricLogProps, "id" | "createdAt" | "updatedAt">
+    props: Omit<MetricLogProps, "id" | "createdAt" | "updatedAt">,
   ) {
     const now = new Date();
     return new MetricLog({

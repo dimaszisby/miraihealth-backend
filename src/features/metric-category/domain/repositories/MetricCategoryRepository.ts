@@ -14,14 +14,14 @@ export interface MetricCategoryRepository {
   // CREATE
   create(
     userId: string,
-    data: { name: string; color?: string; icon?: string }
+    data: { name: string; color?: string; icon?: string },
   ): Promise<MetricCategory>;
 
   // UPDATE
   update(
     userId: string,
     id: string,
-    patch: Partial<{ name: string; color: string; icon: string }>
+    patch: Partial<{ name: string; color: string; icon: string }>,
   ): Promise<MetricCategory>;
 
   // DELETE

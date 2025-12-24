@@ -23,103 +23,123 @@ export const overrideMetricCategoryFeatureForTest = (custom: Feature) => {
   feature = custom;
 };
 
-export const createCategory = catchAsync(async (req: AuthRequest, res: Response) => {
-  assertAuthenticated(req);
-  const { body } = pickValidated(createMetricCategorySchema)(req);
-  const payload = body;
-  const category = await feature.createCategory.execute({
-    userId: req.user.id,
-    name: payload.name,
-    color: payload.color,
-    icon: payload.icon,
-  });
+export const createCategory = catchAsync(
+  async (req: AuthRequest, res: Response) => {
+    assertAuthenticated(req);
+    const { body } = pickValidated(createMetricCategorySchema)(req);
+    const payload = body;
+    const category = await feature.createCategory.execute({
+      userId: req.user.id,
+      name: payload.name,
+      color: payload.color,
+      icon: payload.icon,
+    });
 
-  successResponse(
-    res,
-    201,
-    toResponseDTO(category),
-    "Category created successfully"
-  );
-});
+    successResponse(
+      res,
+      201,
+      toResponseDTO(category),
+      "Category created successfully",
+    );
+  },
+);
 
-export const listCategories = catchAsync(async (req: AuthRequest, res: Response) => {
-  assertAuthenticated(req);
-  const { query } = pickValidated(getAllMetricCategoriesSchema)(req);
-  const { limit, sort, q, after, includeTotal } = query;
-  const filter =
-    query["filter[name]"] && query["filter[name]"]!.trim().length > 0
-      ? { name: query["filter[name]"]!.trim() }
-      : undefined;
+export const listCategories = catchAsync(
+  async (req: AuthRequest, res: Response) => {
+    assertAuthenticated(req);
+    const { query } = pickValidated(getAllMetricCategoriesSchema)(req);
+    const { limit, sort, q, after, includeTotal } = query;
+    const filter =
+      query["filter[name]"] && query["filter[name]"]!.trim().length > 0
+        ? { name: query["filter[name]"]!.trim() }
+        : undefined;
 
-  const page = await feature.listCategories.execute({
-    userId: req.user.id,
-    limit,
-    sort,
-    q,
-    filter,
-    after,
-    includeTotal,
-  });
+    const page = await feature.listCategories.execute({
+      userId: req.user.id,
+      limit,
+      sort,
+      q,
+      filter,
+      after,
+      includeTotal,
+    });
 
-  const dto = {
-    items: toListResponseDTO(page.items),
-    nextCursor: page.nextCursor,
-    sort: page.sort,
-    limit: page.limit,
-    ...(page.q ? { q: page.q } : {}),
-    ...(page.filter ? { filter: page.filter } : {}),
-    ...(includeTotal ? { totalCount: page.totalCount ?? 0 } : {}),
-  };
+    const dto = {
+      items: toListResponseDTO(page.items),
+      nextCursor: page.nextCursor,
+      sort: page.sort,
+      limit: page.limit,
+      ...(page.q ? { q: page.q } : {}),
+      ...(page.filter ? { filter: page.filter } : {}),
+      ...(includeTotal ? { totalCount: page.totalCount ?? 0 } : {}),
+    };
 
-  successResponse(res, 200, dto, "Categories list retrieved successfully");
-});
+    successResponse(res, 200, dto, "Categories list retrieved successfully");
+  },
+);
 
-export const getCategory = catchAsync(async (req: AuthRequest, res: Response) => {
-  assertAuthenticated(req);
-  const category = await feature.getCategory.execute(req.user.id, req.params.id);
-  successResponse(res, 200, toResponseDTO(category), "Category retrieved successfully");
-});
+export const getCategory = catchAsync(
+  async (req: AuthRequest, res: Response) => {
+    assertAuthenticated(req);
+    const category = await feature.getCategory.execute(
+      req.user.id,
+      req.params.id,
+    );
+    successResponse(
+      res,
+      200,
+      toResponseDTO(category),
+      "Category retrieved successfully",
+    );
+  },
+);
 
-export const updateCategory = catchAsync(async (req: AuthRequest, res: Response) => {
-  assertAuthenticated(req);
-  const { body, params } = pickValidated(updateMetricCategorySchema)(req);
-  const category = await feature.updateCategory.execute({
-    userId: req.user.id,
-    categoryId: params.id,
-    name: body.name,
-    color: body.color,
-    icon: body.icon,
-  });
+export const updateCategory = catchAsync(
+  async (req: AuthRequest, res: Response) => {
+    assertAuthenticated(req);
+    const { body, params } = pickValidated(updateMetricCategorySchema)(req);
+    const category = await feature.updateCategory.execute({
+      userId: req.user.id,
+      categoryId: params.id,
+      name: body.name,
+      color: body.color,
+      icon: body.icon,
+    });
 
-  successResponse(
-    res,
-    200,
-    toResponseDTO(category),
-    "Category updated successfully"
-  );
-});
+    successResponse(
+      res,
+      200,
+      toResponseDTO(category),
+      "Category updated successfully",
+    );
+  },
+);
 
-export const deleteCategory = catchAsync(async (req: AuthRequest, res: Response) => {
-  assertAuthenticated(req);
-  await feature.deleteCategory.execute(req.user.id, req.params.id);
-  successResponse(res, 200, null, "Category deleted successfully");
-});
+export const deleteCategory = catchAsync(
+  async (req: AuthRequest, res: Response) => {
+    assertAuthenticated(req);
+    await feature.deleteCategory.execute(req.user.id, req.params.id);
+    successResponse(res, 200, null, "Category deleted successfully");
+  },
+);
 
-export const generateDummyCategories = catchAsync(async (req: AuthRequest, res: Response) => {
-  assertAuthenticated(req);
-  const { body } = pickValidated(generateDummyMetricCategoriesSchema)(req);
-  const created = await feature.generateDummyCategories.execute({
-    userId: req.user.id,
-    count: body.count,
-  });
+export const generateDummyCategories = catchAsync(
+  async (req: AuthRequest, res: Response) => {
+    assertAuthenticated(req);
+    const { body } = pickValidated(generateDummyMetricCategoriesSchema)(req);
+    const created = await feature.generateDummyCategories.execute({
+      userId: req.user.id,
+      count: body.count,
+    });
 
-  successResponse(
-    res,
-    201,
-    toListResponseDTO(created),
-    `${body.count} dummy metric categories generated successfully`
-  );
-});
+    successResponse(
+      res,
+      201,
+      toListResponseDTO(created),
+      `${body.count} dummy metric categories generated successfully`,
+    );
+  },
+);
 
 // /**
 //  * * Update Category
@@ -135,7 +155,7 @@ export const generateDummyCategories = catchAsync(async (req: AuthRequest, res: 
 //         req.params.id,
 //         req.body
 //       );
-      
+
 //     successResponse(
 //       res,
 //       200,

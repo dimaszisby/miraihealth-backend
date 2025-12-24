@@ -71,4 +71,3 @@ Use this checklist when creating or modifying `.github/workflows/frontend-ci.yml
 
 - [ ] Latest run of `frontend-ci` on `develop` or `main` is green.
 - [ ] Checklist updated if expectations change.
-

@@ -2,17 +2,14 @@ import logger from "@/utils/logger.js";
 
 type Context = Record<string, unknown> | undefined;
 
-export const logCacheInvalidation = (
-  scope: string,
-  context?: Context
-) => {
+export const logCacheInvalidation = (scope: string, context?: Context) => {
   logger.debug("[CACHE] invalidate", { scope, ...(context ?? {}) });
 };
 
 export const logCacheInvalidationError = (
   scope: string,
   error: unknown,
-  context?: Context
+  context?: Context,
 ) => {
   const payload: Record<string, unknown> = {
     scope,

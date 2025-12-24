@@ -14,7 +14,7 @@ export type UpdateProfileInput = {
 export class UpdateProfile {
   constructor(
     private repo: UserRepository,
-    private hasher: PasswordHasher
+    private hasher: PasswordHasher,
   ) {}
 
   async execute(input: UpdateProfileInput): Promise<AuthUser> {

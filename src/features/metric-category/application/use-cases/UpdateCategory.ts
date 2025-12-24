@@ -14,7 +14,7 @@ type Input = {
 export class UpdateCategory {
   constructor(
     private repo: MetricCategoryRepository,
-    private cache: CachePort
+    private cache: CachePort,
   ) {}
 
   async execute({ userId, categoryId, name, color, icon }: Input) {
@@ -38,7 +38,7 @@ export class UpdateCategory {
 
     if (this.cache.isEnabled()) {
       await this.cache.delByPattern(
-        `${METRIC_CATEGORY_CURSOR_NAMESPACE_ALL}:${userId}:*`
+        `${METRIC_CATEGORY_CURSOR_NAMESPACE_ALL}:${userId}:*`,
       );
       await this.cache.delByPattern(`category:${userId}:${categoryId}`);
     }

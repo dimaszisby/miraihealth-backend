@@ -19,12 +19,12 @@ This matrix documents **all environments** that affect the Lakira Frontend (Next
 
 > Special Note for Codex: When updating pipeline scripts or Vercel settings, copy the URLs and env var names from this table verbatim to avoid drift.
 
-| Env        | Purpose                                      | Frontend Host / Base URL                             | Backend API URL                              |
-|-----------|----------------------------------------------|------------------------------------------------------|----------------------------------------------|
-| `local`   | Developer machine (Next dev server)          | `http://localhost:3000`                              | `http://localhost:4000/api/v1`               |
-| `ci`      | GitHub Actions frontend tests/build          | No public URL (runs in CI job)                       | `https://api-staging.lakira.yourdomain.com/api/v1` (or same as staging backend) |
-| `preview` | Vercel Preview deployments per PR/branch     | `https://lakira-frontend-git-<branch>.vercel.app`    | `https://api-staging.lakira.yourdomain.com/api/v1` |
-| `prod`    | Production (can be same as staging for now)  | `https://lakira.app` (or `https://lakira-frontend.vercel.app`) | `https://api.lakira.yourdomain.com/api/v1` (or staging if shared) |
+| Env       | Purpose                                     | Frontend Host / Base URL                                       | Backend API URL                                                                 |
+| --------- | ------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `local`   | Developer machine (Next dev server)         | `http://localhost:3000`                                        | `http://localhost:4000/api/v1`                                                  |
+| `ci`      | GitHub Actions frontend tests/build         | No public URL (runs in CI job)                                 | `https://api-staging.lakira.yourdomain.com/api/v1` (or same as staging backend) |
+| `preview` | Vercel Preview deployments per PR/branch    | `https://lakira-frontend-git-<branch>.vercel.app`              | `https://api-staging.lakira.yourdomain.com/api/v1`                              |
+| `prod`    | Production (can be same as staging for now) | `https://lakira.app` (or `https://lakira-frontend.vercel.app`) | `https://api.lakira.yourdomain.com/api/v1` (or staging if shared)               |
 
 Replace URLs above with your actual Vercel + backend domains once configured.
 
@@ -119,10 +119,10 @@ Vercel production env vars:
 
 ## 7. Mapping Summary
 
-| Layer          | Local                       | CI / Tests                                      | Preview (Vercel)                                   | Production (Vercel)                                   |
-|----------------|----------------------------|------------------------------------------------|---------------------------------------------------|------------------------------------------------------|
-| Frontend URL   | `http://localhost:3000`    | n/a                                            | `https://lakira-frontend-git-<branch>.vercel.app` | `https://lakira.app` (example)                       |
-| Backend URL    | `http://localhost:4000/api/v1` | `https://api-staging.lakira.yourdomain.com/api/v1` | `https://api-staging.lakira.yourdomain.com/api/v1` | `https://api.lakira.yourdomain.com/api/v1` (or same) |
-| Next env var   | `NEXT_PUBLIC_API_BASE_URL=http://localhost:4000/api/v1` | `NEXT_PUBLIC_API_BASE_URL=${{ secrets.STAGING_API_BASE_URL }}` | `NEXT_PUBLIC_API_BASE_URL=https://api-staging...` | `NEXT_PUBLIC_API_BASE_URL=https://api.lakira...`     |
+| Layer        | Local                                                   | CI / Tests                                                     | Preview (Vercel)                                   | Production (Vercel)                                  |
+| ------------ | ------------------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------- |
+| Frontend URL | `http://localhost:3000`                                 | n/a                                                            | `https://lakira-frontend-git-<branch>.vercel.app`  | `https://lakira.app` (example)                       |
+| Backend URL  | `http://localhost:4000/api/v1`                          | `https://api-staging.lakira.yourdomain.com/api/v1`             | `https://api-staging.lakira.yourdomain.com/api/v1` | `https://api.lakira.yourdomain.com/api/v1` (or same) |
+| Next env var | `NEXT_PUBLIC_API_BASE_URL=http://localhost:4000/api/v1` | `NEXT_PUBLIC_API_BASE_URL=${{ secrets.STAGING_API_BASE_URL }}` | `NEXT_PUBLIC_API_BASE_URL=https://api-staging...`  | `NEXT_PUBLIC_API_BASE_URL=https://api.lakira...`     |
 
 Keep this file updated when you change Vercel project settings or backend URLs.

@@ -16,23 +16,28 @@ These guidelines define **how to design, write, and maintain** GitHub Actions wo
 ## 2. General Principles
 
 1. **Pipelines as Code**
+
    - All CI/CD logic lives in `.github/workflows/*.yml`.
    - Avoid manual, undocumented release steps for anything critical.
 
 2. **Fail Fast, Then Go Deep**
+
    - Run lint and typecheck first.
    - Only run unit/integration/contract tests after basic checks pass.
 
 3. **Deterministic & Idempotent**
+
    - Tests must not depend on wall-clock time or random data unless explicitly controlled.
    - DB migrations and seeds should be safe to re-run without corrupting data.
 
 4. **Security by Default**
+
    - Secrets always come from `secrets.*`.
    - No credentials or tokens may be hard-coded in workflows.
 
 5. **Observability**
    - Upload key reports (Jest, Newman) as artifacts.
+   - When running coverage jobs, rename/persist per-suite folders (e.g., `coverage/jest-unit`, `coverage/jest-integration`) before uploading so they are not overwritten.
    - Configure timeouts and clear failure points.
 
 ---
@@ -51,7 +56,7 @@ on:
     branches:
       - main
       - develop
-      - 'feature/**'
+      - "feature/**"
   pull_request:
     branches:
       - main
@@ -300,7 +305,7 @@ on:
     branches:
       - main
       - develop
-      - 'feature/**'
+      - "feature/**"
   pull_request:
     branches:
       - main

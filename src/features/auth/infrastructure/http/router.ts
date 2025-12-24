@@ -27,7 +27,7 @@ export const createAuthRouter = () => {
     userRateLimiter,
     authMiddleware,
     validate(updateUserSchema),
-    updateProfile
+    updateProfile,
   );
   router.post("/logout", authMiddleware, logout);
 

@@ -20,7 +20,7 @@ const LOG_SNAPSHOT_KEYS = [
 export class EnvValidationError extends Error {
   constructor(
     message: string,
-    readonly options: { issues?: ZodIssue[]; environment?: string } = {}
+    readonly options: { issues?: ZodIssue[]; environment?: string } = {},
   ) {
     super(message);
     this.name = "EnvValidationError";

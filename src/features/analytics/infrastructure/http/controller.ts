@@ -8,7 +8,7 @@ import { buildAnalyticsFeature } from "../../feature.js";
 
 const DASH_CACHE_MAX_AGE = Number(process.env.VIZ_CACHE_MAX_AGE_SEC ?? 60);
 const DASH_CACHE_STALE_WHILE_REVALIDATE = Number(
-  process.env.VIZ_CACHE_STALE_SEC ?? 30
+  process.env.VIZ_CACHE_STALE_SEC ?? 30,
 );
 
 type AnalyticsFeature = ReturnType<typeof buildAnalyticsFeature>;
@@ -26,7 +26,7 @@ function makeEtag(body: unknown) {
 export async function handleGetVisualization(
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     assertAuthenticated(req);
@@ -56,7 +56,7 @@ export async function handleGetVisualization(
 export async function handleGetDashboardVisualization(
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     assertAuthenticated(req);

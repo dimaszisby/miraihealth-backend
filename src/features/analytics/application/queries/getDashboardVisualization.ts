@@ -26,12 +26,15 @@ export class GetDashboardVisualization {
   constructor(private repo: VisualizationReadRepository) {}
 
   async execute(
-    input: GetDashboardVisualizationInput
+    input: GetDashboardVisualizationInput,
   ): Promise<DashboardVizResponse> {
     const spec = resolveBucket(input.bucket);
     assertBounds(input.startISO, input.endISO, spec);
 
-    const limit = Math.min(input.limit ?? 12, Number(process.env.VIZ_DASH_MAX_METRICS ?? 24));
+    const limit = Math.min(
+      input.limit ?? 12,
+      Number(process.env.VIZ_DASH_MAX_METRICS ?? 24),
+    );
 
     return this.repo.fetchDashboardVisualization({
       userId: input.userId,
@@ -58,7 +61,7 @@ function assertBounds(startISO: string, endISO: string, spec: BucketSpec) {
   if (est > DASH_MAX_BUCKETS) {
     throw new AppError(
       `Range too large for ${spec.iso} (~${est} buckets, max=${DASH_MAX_BUCKETS})`,
-      400
+      400,
     );
   }
 }

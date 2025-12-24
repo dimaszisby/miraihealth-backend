@@ -27,7 +27,7 @@ export interface MetricSettingsRepository {
   save(settings: MetricSettings): Promise<MetricSettings>;
   delete(settings: MetricSettings): Promise<void>;
   listByCursor(
-    opts: ListMetricSettingsOptions
+    opts: ListMetricSettingsOptions,
   ): Promise<ListMetricSettingsResult>;
 }
 

@@ -53,7 +53,7 @@ function assertBounds(startISO: string, endISO: string, spec: BucketSpec) {
   if (est > MAX_BUCKETS) {
     throw new AppError(
       `Range too large for ${spec.iso} (~${est} buckets, max=${MAX_BUCKETS})`,
-      400
+      400,
     );
   }
 }

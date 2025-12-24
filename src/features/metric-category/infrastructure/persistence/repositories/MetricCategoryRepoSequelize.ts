@@ -51,7 +51,7 @@ export class MetricCategoryRepoSequelize implements MetricCategoryRepository {
 
   async create(
     userId: string,
-    data: { name: string; color?: string; icon?: string }
+    data: { name: string; color?: string; icon?: string },
   ) {
     const created = await models.MetricCategory.create({
       userId,
@@ -74,7 +74,7 @@ export class MetricCategoryRepoSequelize implements MetricCategoryRepository {
   async update(
     userId: string,
     id: string,
-    patch: Partial<{ name: string; color: string; icon: string }>
+    patch: Partial<{ name: string; color: string; icon: string }>,
   ) {
     const row = await models.MetricCategory.findOne({
       where: { id, userId, deletedAt: null },
@@ -181,7 +181,7 @@ function normalizeSort(sort: SortParam): { field: SortField; dir: Dir } {
 function buildWhere(
   userId: string,
   q?: string,
-  filter?: { name?: string }
+  filter?: { name?: string },
 ): WhereOptions {
   const like = (v: string) => ({ [Op.iLike]: `%${v}%` });
   const and: any[] = [{ userId }, { deletedAt: null }];
@@ -192,7 +192,7 @@ function buildWhere(
 function buildCursorPredicate(
   c: CursorPayload,
   field: SortField,
-  dir: Dir
+  dir: Dir,
 ): WhereOptions {
   const ltgt = dir === "DESC" ? Op.lt : Op.gt,
     eq = Op.eq;

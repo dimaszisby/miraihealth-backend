@@ -39,7 +39,9 @@ const envSchema = z.object({
   PRODUCTION_DATABASE_URL: z.string().optional(),
 
   // IF you rely on a DB_HOST/DB_PORT approach:
-  DB_HOST: z.string().default(process.env.NODE_ENV === "test" ? "db" : "127.0.0.1"),
+  DB_HOST: z
+    .string()
+    .default(process.env.NODE_ENV === "test" ? "db" : "127.0.0.1"),
   DB_PORT: z
     .string()
     .transform((val) => parseInt(val, 10))
@@ -51,7 +53,9 @@ const envSchema = z.object({
     .default("true"),
 
   // Redis
-  REDIS_HOST: z.string().default(process.env.NODE_ENV === "test" ? "redis" : "127.0.0.1"),
+  REDIS_HOST: z
+    .string()
+    .default(process.env.NODE_ENV === "test" ? "redis" : "127.0.0.1"),
   REDIS_PORT: z
     .string()
     .transform((val) => {
@@ -92,15 +96,16 @@ const envSchema = z.object({
   JEST_TIMEOUT: z.string().transform(Number).default("30000"),
 
   // Database
-  DB_USER: z
-    .string()
-    .min(1, { message: "DB_USER is required. Set an explicit value in your .env file." }),
-  DB_PASSWORD: z
-    .string()
-    .min(1, { message: "DB_PASSWORD is required. Set an explicit value in your .env file." }),
-  DB_NAME: z
-    .string()
-    .min(1, { message: "DB_NAME is required. Set an explicit value in your .env file." }),
+  DB_USER: z.string().min(1, {
+    message: "DB_USER is required. Set an explicit value in your .env file.",
+  }),
+  DB_PASSWORD: z.string().min(1, {
+    message:
+      "DB_PASSWORD is required. Set an explicit value in your .env file.",
+  }),
+  DB_NAME: z.string().min(1, {
+    message: "DB_NAME is required. Set an explicit value in your .env file.",
+  }),
 
   ENABLE_DUMMY_ENDPOINTS: z
     .string()

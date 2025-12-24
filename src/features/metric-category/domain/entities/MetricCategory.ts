@@ -22,7 +22,10 @@ export class MetricCategory {
     return new MetricCategory(p);
   }
 
-  static create(userId: string, params: { name: string; color?: string; icon?: string }) {
+  static create(
+    userId: string,
+    params: { name: string; color?: string; icon?: string },
+  ) {
     return new MetricCategory({
       id: crypto.randomUUID(),
       userId,

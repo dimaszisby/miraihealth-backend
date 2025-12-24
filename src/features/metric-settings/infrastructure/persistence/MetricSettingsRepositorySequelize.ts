@@ -63,7 +63,10 @@ export class MetricSettingsRepositorySequelize
         err instanceof UniqueConstraintError &&
         err.errors.some((e) => e.path === "metric_id" || e.path === "metricId")
       ) {
-        throw new AppError("Metric settings already exist for this metric", 409);
+        throw new AppError(
+          "Metric settings already exist for this metric",
+          409,
+        );
       }
       throw err;
     }
@@ -79,7 +82,7 @@ export class MetricSettingsRepositorySequelize
 
   async findById(
     userId: string,
-    settingsId: string
+    settingsId: string,
   ): Promise<MetricSettings | null> {
     const row = await models.MetricSettings.findOne({
       where: { id: settingsId },
@@ -119,7 +122,7 @@ export class MetricSettingsRepositorySequelize
   }
 
   async listByCursor(
-    opts: ListMetricSettingsOptions
+    opts: ListMetricSettingsOptions,
   ): Promise<ListMetricSettingsResult> {
     const { field, dir } = normalizeSort(opts.sort);
     const pageSize = Math.min(Math.max(opts.limit || 20, 1), 100);
@@ -161,8 +164,10 @@ export class MetricSettingsRepositorySequelize
       const last = items[items.length - 1];
       const snap = last.snapshot();
       const payload: CursorPayload = { sort: opts.sort, id: snap.id };
-      if (field === "createdAt") payload.createdAt = snap.createdAt.toISOString();
-      if (field === "updatedAt") payload.updatedAt = snap.updatedAt.toISOString();
+      if (field === "createdAt")
+        payload.createdAt = snap.createdAt.toISOString();
+      if (field === "updatedAt")
+        payload.updatedAt = snap.updatedAt.toISOString();
       if (field === "isActive") payload.isActive = snap.isActive;
       nextCursor = encodeCursor(payload);
     }
@@ -188,7 +193,7 @@ type CursorPayload = {
 };
 
 const normalizeSort = (
-  sort: SortParam
+  sort: SortParam,
 ): { field: SortField; dir: "ASC" | "DESC" } => {
   const dir = sort.startsWith("-") ? "DESC" : "ASC";
   const field = (sort.startsWith("-") ? sort.slice(1) : sort) as SortField;
@@ -199,7 +204,7 @@ const normalizeSort = (
 
 const buildWhere = (
   filter?: { metricId?: string; isActive?: boolean },
-  q?: string
+  q?: string,
 ): WhereOptions => {
   const and: WhereOptions[] = [];
   if (filter?.metricId) and.push({ metricId: filter.metricId });
@@ -213,7 +218,7 @@ const buildWhere = (
 const buildCursorPredicate = (
   cursor: CursorPayload,
   field: SortField,
-  dir: "ASC" | "DESC"
+  dir: "ASC" | "DESC",
 ): WhereOptions => {
   const ltgt = dir === "DESC" ? Op.lt : Op.gt;
   const eq = Op.eq;
@@ -223,7 +228,9 @@ const buildCursorPredicate = (
     return {
       [Op.or]: [
         { createdAt: { [ltgt]: C } },
-        { [Op.and]: [{ createdAt: { [eq]: C } }, { id: { [ltgt]: cursor.id } }] },
+        {
+          [Op.and]: [{ createdAt: { [eq]: C } }, { id: { [ltgt]: cursor.id } }],
+        },
       ],
     };
   }
@@ -232,14 +239,21 @@ const buildCursorPredicate = (
     return {
       [Op.or]: [
         { updatedAt: { [ltgt]: U } },
-        { [Op.and]: [{ updatedAt: { [eq]: U } }, { id: { [ltgt]: cursor.id } }] },
+        {
+          [Op.and]: [{ updatedAt: { [eq]: U } }, { id: { [ltgt]: cursor.id } }],
+        },
       ],
     };
   }
   return {
     [Op.or]: [
       { isActive: { [ltgt]: cursor.isActive! } },
-      { [Op.and]: [{ isActive: { [eq]: cursor.isActive! } }, { id: { [ltgt]: cursor.id } }] },
+      {
+        [Op.and]: [
+          { isActive: { [eq]: cursor.isActive! } },
+          { id: { [ltgt]: cursor.id } },
+        ],
+      },
     ],
   };
 };

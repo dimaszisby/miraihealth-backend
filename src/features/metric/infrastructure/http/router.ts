@@ -116,34 +116,43 @@ export const createMetricRouter = () => {
     "/",
     validate(getAllMetricsViaCursorSchema),
     cacheMiddleware(metricsCursorCacheKey, 60),
-    getUserMetricLibrariesViaCursor
+    getUserMetricLibrariesViaCursor,
   );
 
   router.get(
     "/:id",
     validate(getMetricSchema),
     cacheMiddleware(metricCacheKey, 60),
-    getUserDetailMetricById
+    getUserDetailMetricById,
   );
 
-  router.put("/:id", userRateLimiter, validate(updateMetricSchema), updateMetric);
+  router.put(
+    "/:id",
+    userRateLimiter,
+    validate(updateMetricSchema),
+    updateMetric,
+  );
 
   router.delete(
     "/:id",
     userRateLimiter,
     validate(deleteMetricSchema),
-    deleteMetric
+    deleteMetric,
   );
 
   const trendParams = { params: z.object({ metricId: z.string().uuid() }) };
-  router.get("/:metricId/trends", validate(trendParams as any), handleMetricTrend);
+  router.get(
+    "/:metricId/trends",
+    validate(trendParams as any),
+    handleMetricTrend,
+  );
 
   if (env.ENABLE_DUMMY_ENDPOINTS) {
     router.post(
       "/dummy",
       userRateLimiter,
       validate(generateDummyMetricsSchema),
-      generateDummyMetrics
+      generateDummyMetrics,
     );
   }
 

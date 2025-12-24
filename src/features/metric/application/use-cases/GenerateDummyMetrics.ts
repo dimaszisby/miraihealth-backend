@@ -20,8 +20,7 @@ export class GenerateDummyMetrics {
       const metric = await models.Metric.create({
         userId,
         name: `Dummy Metric ${Date.now()}-${i}`,
-        description:
-          "This is a dummy metric generated for testing pagination.",
+        description: "This is a dummy metric generated for testing pagination.",
         defaultUnit:
           DEFAULT_UNITS[Math.floor(Math.random() * DEFAULT_UNITS.length)],
         isPublic: Math.random() > 0.5,

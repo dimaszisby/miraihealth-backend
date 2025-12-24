@@ -11,7 +11,7 @@ export const cacheMiddleware =
   async (
     req: AuthRequest,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> => {
     if (env.NODE_ENV === "test") {
       return next();
@@ -34,10 +34,13 @@ export const cacheMiddleware =
         redisClient
           .setEx(key, duration, JSON.stringify(data))
           .then(() =>
-            logger.info(`[CACHE] Cached response: ${key} (TTL: ${duration}s)`)
+            logger.info(`[CACHE] Cached response: ${key} (TTL: ${duration}s)`),
           )
           .catch((cacheError) =>
-            logger.error(`[CACHE ERROR] Cache write failed: ${key}`, cacheError)
+            logger.error(
+              `[CACHE ERROR] Cache write failed: ${key}`,
+              cacheError,
+            ),
           );
 
         return originalJson(data);

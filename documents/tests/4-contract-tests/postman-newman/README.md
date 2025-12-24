@@ -69,3 +69,4 @@ To run these tests locally, you need:
 
   ```bash
   npm install --save-dev newman
+  ```

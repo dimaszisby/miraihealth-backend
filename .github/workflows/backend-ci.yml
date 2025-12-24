@@ -7,7 +7,7 @@ on:
     branches:
       - main
       - develop
-      - 'feature/**'
+      - "feature/**"
   pull_request:
     branches:
       - main
@@ -113,6 +113,24 @@ jobs:
 
       - name: Run integration tests
         run: npm run test:integration
+
+      - name: Run unit tests with coverage
+        run: npm run test:unit:coverage
+
+      - name: Archive unit coverage output
+        run: mv coverage/jest coverage/jest-unit
+
+      - name: Run integration tests with coverage
+        run: npm run test:integration:coverage
+
+      - name: Archive integration coverage output
+        run: mv coverage/jest coverage/jest-integration
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: coverage
 
       # Optional: upload Jest JUnit reports if you configure them
       # - name: Upload Jest test reports

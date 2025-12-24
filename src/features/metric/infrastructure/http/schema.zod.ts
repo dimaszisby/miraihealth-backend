@@ -15,17 +15,17 @@ extendZodWithOpenApi(z);
 const FilterSchema = z.object({
   ["filter[name]"]: z.preprocess(
     (v) => (typeof v === "string" ? v.trim() : v),
-    z.string().min(1).optional()
+    z.string().min(1).optional(),
   ),
   ["filter[categoryId]"]: z.preprocess(
     (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-    zUUID.optional()
+    zUUID.optional(),
   ),
   filter: z
     .object({
       name: z.preprocess(
         (v) => (typeof v === "string" ? v.trim() : v),
-        z.string().min(1).optional()
+        z.string().min(1).optional(),
       ),
       categoryId: zUUID.optional(),
     })
@@ -80,7 +80,7 @@ const listMetricQueryRaw = z
       .default("-createdAt"),
     q: z.preprocess(
       (v) => (typeof v === "string" ? v.trim() : v),
-      z.string().min(1).optional()
+      z.string().min(1).optional(),
     ),
     after: z.string().optional(),
     includeTotal: z.coerce.boolean().default(false),
@@ -120,7 +120,7 @@ const csvIncludes = z
     {
       message:
         "include must be 'flat' | 'full' or a CSV of: settings,category,logs",
-    }
+    },
   );
 
 export const metricDetailQuery = z.object({

@@ -11,14 +11,8 @@
       "@utils/*": ["src/utils/*"],
       "@config/*": ["src/config/*"]
     },
-    "typeRoots": [
-      "./node_modules/@types",
-      "./src/types"
-    ],
-    "types": [
-      "node",
-      "jest"
-    ],
+    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "types": ["node", "jest"],
     "resolveJsonModule": true,
     "allowJs": true,
     "checkJs": true,

@@ -24,7 +24,7 @@ export class MetricLogRepoSequelize implements MetricLogRepository {
   async existsAtTimestamp(
     metricId: string,
     loggedAt: Date,
-    excludeLogId?: string
+    excludeLogId?: string,
   ): Promise<boolean> {
     const where: any = { metricId, loggedAt };
     if (excludeLogId) {

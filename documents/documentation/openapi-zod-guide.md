@@ -5,9 +5,11 @@ This guide provides a step-by-step approach to generating a production-grade Ope
 ## 1. Introduction and Project Setup
 
 ### 1.1 What is OpenAPI?
+
 OpenAPI Specification (OAS) defines a standard, language-agnostic interface to RESTful APIs, allowing both humans and computers to discover and understand the capabilities of a service without access to source code, documentation, or network traffic inspection.
 
 ### 1.2 Why `zod-to-openapi`?
+
 `zod-to-openapi` is a library that bridges the gap between Zod schemas (for runtime validation) and OpenAPI schemas (for API documentation). By defining your API's data structures once with Zod, you can automatically generate both runtime validation and OpenAPI documentation, reducing redundancy and ensuring consistency.
 
 ### 1.3 Initial Project Setup
@@ -26,6 +28,7 @@ npm install -D typescript @types/node @types/express @types/swagger-ui-express
 ```
 
 **`tsconfig.json` (example):**
+
 ```json
 {
   "compilerOptions": {
@@ -52,42 +55,63 @@ Organize your Zod schemas in a dedicated directory, e.g., `src/types/api/`. Each
 Use `z.object()` to define schemas for request bodies, query parameters, path parameters, and headers.
 
 **Example: `src/features/auth/infrastructure/http/schema.zod.ts`**
+
 ```typescript
-import { z } from 'zod';
-import { ZOD_MESSAGES } from '../../constants/zod-messages'; // Assuming this file exists
+import { z } from "zod";
+import { ZOD_MESSAGES } from "../../constants/zod-messages"; // Assuming this file exists
 
 // Schema for creating a new user (request body)
 export const CreateUserSchema = z.object({
-  username: z.string().min(3, ZOD_MESSAGES.MIN_LENGTH('Username', 3)).max(50, ZOD_MESSAGES.MAX_LENGTH('Username', 50)),
+  username: z
+    .string()
+    .min(3, ZOD_MESSAGES.MIN_LENGTH("Username", 3))
+    .max(50, ZOD_MESSAGES.MAX_LENGTH("Username", 50)),
   email: z.string().email(ZOD_MESSAGES.INVALID_EMAIL),
-  password: z.string().min(8, ZOD_MESSAGES.MIN_LENGTH('Password', 8)),
+  password: z.string().min(8, ZOD_MESSAGES.MIN_LENGTH("Password", 8)),
 });
 
 // Schema for fetching a user by ID (path parameters)
 export const GetUserByIdParamsSchema = z.object({
-  id: z.string().uuid(ZOD_MESSAGES.INVALID_UUID('User ID')),
+  id: z.string().uuid(ZOD_MESSAGES.INVALID_UUID("User ID")),
 });
 
 // Schema for listing users (query parameters)
 export const ListUsersQuerySchema = z.object({
-  page: z.string().optional().default('1').transform(Number).pipe(z.number().int().positive(ZOD_MESSAGES.POSITIVE_NUMBER('Page'))),
-  limit: z.string().optional().default('10').transform(Number).pipe(z.number().int().positive(ZOD_MESSAGES.POSITIVE_NUMBER('Limit'))),
+  page: z
+    .string()
+    .optional()
+    .default("1")
+    .transform(Number)
+    .pipe(z.number().int().positive(ZOD_MESSAGES.POSITIVE_NUMBER("Page"))),
+  limit: z
+    .string()
+    .optional()
+    .default("10")
+    .transform(Number)
+    .pipe(z.number().int().positive(ZOD_MESSAGES.POSITIVE_NUMBER("Limit"))),
   search: z.string().optional(),
 });
 
 // Schema for common headers (e.g., Authorization)
-export const AuthHeadersSchema = z.object({
-  authorization: z.string().startsWith('Bearer ', ZOD_MESSAGES.INVALID_AUTH_HEADER),
-}).partial(); // Use .partial() if headers are optional for some routes
+export const AuthHeadersSchema = z
+  .object({
+    authorization: z
+      .string()
+      .startsWith("Bearer ", ZOD_MESSAGES.INVALID_AUTH_HEADER),
+  })
+  .partial(); // Use .partial() if headers are optional for some routes
 ```
 
 **`src/constants/zod-messages.ts` (example, based on existing file structure):**
+
 ```typescript
 export const ZOD_MESSAGES = {
   REQUIRED: (field: string) => `${field} is required.`,
-  MIN_LENGTH: (field: string, min: number) => `${field} must be at least ${min} characters long.`,
-  MAX_LENGTH: (field: string, max: number) => `${field} must be at most ${max} characters long.`,
-  INVALID_EMAIL: 'Invalid email address.',
+  MIN_LENGTH: (field: string, min: number) =>
+    `${field} must be at least ${min} characters long.`,
+  MAX_LENGTH: (field: string, max: number) =>
+    `${field} must be at most ${max} characters long.`,
+  INVALID_EMAIL: "Invalid email address.",
   INVALID_UUID: (field: string) => `Invalid ${field} format.`,
   POSITIVE_NUMBER: (field: string) => `${field} must be a positive number.`,
   INVALID_AUTH_HEADER: 'Authorization header must start with "Bearer ".',
@@ -100,6 +124,7 @@ export const ZOD_MESSAGES = {
 Define schemas for the structure of your API responses. These can be used for both documentation and potentially for client-side validation or type generation.
 
 **Example: `src/features/auth/infrastructure/http/schema.zod.ts` (continued)**
+
 ```typescript
 // ... (previous schemas)
 
@@ -133,7 +158,7 @@ export const PaginationSchema = z.object({
 });
 
 // src/types/api/zod-product.schema.ts
-import { PaginationSchema } from './common.schema';
+import { PaginationSchema } from "./common.schema";
 
 export const ProductSchema = z.object({
   id: z.string().uuid(),
@@ -141,9 +166,11 @@ export const ProductSchema = z.object({
   price: z.number().positive(),
 });
 
-export const ListProductsResponseSchema = z.object({
-  data: z.array(ProductSchema),
-}).merge(PaginationSchema); // Merge common pagination fields
+export const ListProductsResponseSchema = z
+  .object({
+    data: z.array(ProductSchema),
+  })
+  .merge(PaginationSchema); // Merge common pagination fields
 ```
 
 ## 3. Integrating `zod-to-openapi` with Express.js
@@ -153,61 +180,69 @@ export const ListProductsResponseSchema = z.object({
 Create a central registry to collect all your API paths and components.
 
 **`src/openapi/registry.ts`**
+
 ```typescript
-import { OpenApiBuilder, ZodOpenApiRegistry } from '@asteasolutions/zod-to-openapi';
+import {
+  OpenApiBuilder,
+  ZodOpenApiRegistry,
+} from "@asteasolutions/zod-to-openapi";
 
 export const registry = new ZodOpenApiRegistry();
 export const openApiBuilder = new OpenApiBuilder(registry.definitions);
 
 openApiBuilder.addInfo({
-  title: 'Lakira Backend API',
-  version: '1.0.0',
-  description: 'API documentation for the Lakira Backend application.',
+  title: "Lakira Backend API",
+  version: "1.0.0",
+  description: "API documentation for the Lakira Backend application.",
 });
 
 openApiBuilder.addExternalDocs({
-  url: 'https://example.com/docs',
-  description: 'Find more info here',
+  url: "https://example.com/docs",
+  description: "Find more info here",
 });
 
 // Define common responses (e.g., 400 Bad Request, 401 Unauthorized, 500 Internal Server Error)
-registry.registerComponent('responses', 'BadRequest', {
-  description: 'Bad Request',
+registry.registerComponent("responses", "BadRequest", {
+  description: "Bad Request",
   content: {
-    'application/json': {
+    "application/json": {
       schema: {
-        type: 'object',
+        type: "object",
         properties: {
-          message: { type: 'string', example: 'Invalid input data.' },
-          errors: { type: 'array', items: { type: 'string' }, example: ['"username" is required'] },
+          message: { type: "string", example: "Invalid input data." },
+          errors: {
+            type: "array",
+            items: { type: "string" },
+            example: ['"username" is required'],
+          },
         },
       },
     },
   },
 });
 
-registry.registerComponent('responses', 'Unauthorized', {
-  description: 'Unauthorized',
+registry.registerComponent("responses", "Unauthorized", {
+  description: "Unauthorized",
   content: {
-    'application/json': {
+    "application/json": {
       schema: {
-        type: 'object',
+        type: "object",
         properties: {
-          message: { type: 'string', example: 'Authentication required.' },
+          message: { type: "string", example: "Authentication required." },
         },
       },
     },
   },
 });
 
-registry.registerComponent('responses', 'InternalServerError', {
-  description: 'Internal Server Error',
+registry.registerComponent("responses", "InternalServerError", {
+  description: "Internal Server Error",
   content: {
-    'application/json': {
+    "application/json": {
       schema: {
-        type: 'object',
+        type: "object",
         properties: {
-          message: { type: 'string', example: 'An unexpected error occurred.' },
+          message: { type: "string", example: "An unexpected error occurred." },
         },
       },
     },
@@ -220,128 +255,129 @@ registry.registerComponent('responses', 'InternalServerError', {
 Extend your Express.js routes to include OpenAPI metadata using `registry.registerPath()`.
 
 **`src/routes/user.routes.ts` (example)**
+
 ```typescript
-import { Router } from 'express';
-import { registry } from '../openapi/registry';
+import { Router } from "express";
+import { registry } from "../openapi/registry";
 import {
   CreateUserSchema,
   GetUserByIdParamsSchema,
   UserResponseSchema,
   ListUsersQuerySchema,
   ListUsersResponseSchema,
-} from '../types/api/auth schema';
-import { validate } from '../middleware/validate'; // Custom validation middleware
-import { AuthHeadersSchema } from '../types/api/auth schema'; // For security
+} from "../types/api/auth schema";
+import { validate } from "../middleware/validate"; // Custom validation middleware
+import { AuthHeadersSchema } from "../types/api/auth schema"; // For security
 
 const router = Router();
 
 // Register path for creating a user
 registry.registerPath({
-  method: 'post',
-  path: '/users',
-  summary: 'Create a new user',
+  method: "post",
+  path: "/users",
+  summary: "Create a new user",
   request: {
     body: {
       content: {
-        'application/json': {
+        "application/json": {
           schema: CreateUserSchema,
         },
       },
-      description: 'User data to create',
+      description: "User data to create",
       required: true,
     },
   },
   responses: {
     201: {
-      description: 'User created successfully',
+      description: "User created successfully",
       content: {
-        'application/json': {
+        "application/json": {
           schema: UserResponseSchema,
         },
       },
     },
-    400: { $ref: '#/components/responses/BadRequest' },
-    500: { $ref: '#/components/responses/InternalServerError' },
+    400: { $ref: "#/components/responses/BadRequest" },
+    500: { $ref: "#/components/responses/InternalServerError" },
   },
-  tags: ['Users'],
+  tags: ["Users"],
 });
 
 router.post(
-  '/',
+  "/",
   validate({ body: CreateUserSchema }), // Validate request body
   (req, res) => {
     // Controller logic to create user
-    res.status(201).json({ message: 'User created', user: req.body });
-  }
+    res.status(201).json({ message: "User created", user: req.body });
+  },
 );
 
 // Register path for getting a user by ID
 registry.registerPath({
-  method: 'get',
-  path: '/users/{id}',
-  summary: 'Get user by ID',
+  method: "get",
+  path: "/users/{id}",
+  summary: "Get user by ID",
   request: {
     params: GetUserByIdParamsSchema,
     headers: AuthHeadersSchema, // Example: requiring auth header
   },
   responses: {
     200: {
-      description: 'User details',
+      description: "User details",
       content: {
-        'application/json': {
+        "application/json": {
           schema: UserResponseSchema,
         },
       },
     },
-    401: { $ref: '#/components/responses/Unauthorized' },
-    404: { description: 'User not found' },
-    500: { $ref: '#/components/responses/InternalServerError' },
+    401: { $ref: "#/components/responses/Unauthorized" },
+    404: { description: "User not found" },
+    500: { $ref: "#/components/responses/InternalServerError" },
   },
   security: [{ bearerAuth: [] }], // Apply security scheme
-  tags: ['Users'],
+  tags: ["Users"],
 });
 
 router.get(
-  '/:id',
+  "/:id",
   validate({ params: GetUserByIdParamsSchema, headers: AuthHeadersSchema }), // Validate params and headers
   (req, res) => {
     // Controller logic to fetch user
     res.status(200).json({ message: `User with ID ${req.params.id}` });
-  }
+  },
 );
 
 // Register path for listing users
 registry.registerPath({
-  method: 'get',
-  path: '/users',
-  summary: 'List all users',
+  method: "get",
+  path: "/users",
+  summary: "List all users",
   request: {
     query: ListUsersQuerySchema,
     headers: AuthHeadersSchema,
   },
   responses: {
     200: {
-      description: 'List of users',
+      description: "List of users",
       content: {
-        'application/json': {
+        "application/json": {
           schema: ListUsersResponseSchema,
         },
       },
     },
-    401: { $ref: '#/components/responses/Unauthorized' },
-    500: { $ref: '#/components/responses/InternalServerError' },
+    401: { $ref: "#/components/responses/Unauthorized" },
+    500: { $ref: "#/components/responses/InternalServerError" },
   },
   security: [{ bearerAuth: [] }],
-  tags: ['Users'],
+  tags: ["Users"],
 });
 
 router.get(
-  '/',
+  "/",
   validate({ query: ListUsersQuerySchema, headers: AuthHeadersSchema }),
   (req, res) => {
     // Controller logic to list users
     res.status(200).json({ data: [], total: 0, page: 1, limit: 10 });
-  }
+  },
 );
 
 export default router;
@@ -352,10 +388,11 @@ export default router;
 Create a generic middleware to validate incoming requests against Zod schemas.
 
 **`src/shared/middleware/validation.ts`**
+
 ```typescript
-import { Request, Response, NextFunction } from 'express';
-import { AnyZodObject, ZodError, z } from 'zod';
-import AppError from '@/utils/AppError'; // Custom error class
+import { Request, Response, NextFunction } from "express";
+import { AnyZodObject, ZodError, z } from "zod";
+import AppError from "@/utils/AppError"; // Custom error class
 
 interface ValidationSchemas {
   body?: AnyZodObject;
@@ -364,7 +401,8 @@ interface ValidationSchemas {
   headers?: AnyZodObject;
 }
 
-export const validate = (schemas: ValidationSchemas) =>
+export const validate =
+  (schemas: ValidationSchemas) =>
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (schemas.body) {
@@ -379,15 +417,20 @@ export const validate = (schemas: ValidationSchemas) =>
       if (schemas.headers) {
         // Headers are typically lowercased by Express, so normalize them
         const normalizedHeaders = Object.fromEntries(
-          Object.entries(req.headers).map(([key, value]) => [key.toLowerCase(), value])
+          Object.entries(req.headers).map(([key, value]) => [
+            key.toLowerCase(),
+            value,
+          ]),
         );
         req.headers = await schemas.headers.parseAsync(normalizedHeaders);
       }
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        const errors = error.errors.map(err => `${err.path.join('.')} - ${err.message}`);
-        return next(new AppError('Validation Error', 400, errors));
+        const errors = error.errors.map(
+          (err) => `${err.path.join(".")} - ${err.message}`,
+        );
+        return next(new AppError("Validation Error", 400, errors));
       }
       next(error); // Pass other errors to the general error handler
     }
@@ -401,6 +444,7 @@ Implement custom error classes and a centralized error handling middleware to pr
 ### 4.1 Custom Error Class
 
 **`src/utils/AppError.ts`**
+
 ```typescript
 export class AppError extends Error {
   public statusCode: number;
@@ -411,7 +455,7 @@ export class AppError extends Error {
   constructor(message: string, statusCode: number = 500, errors?: string[]) {
     super(message);
     this.statusCode = statusCode;
-    this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
+    this.status = `${statusCode}`.startsWith("4") ? "fail" : "error";
     this.isOperational = true; // Operational errors are those we can predict and handle
     this.errors = errors;
 
@@ -423,15 +467,16 @@ export class AppError extends Error {
 ### 4.2 Centralized Error Handling Middleware
 
 **`src/shared/middleware/error.ts`**
+
 ```typescript
-import { Request, Response, NextFunction } from 'express';
-import AppError from '@/utils/AppError';
+import { Request, Response, NextFunction } from "express";
+import AppError from "@/utils/AppError";
 
 export const errorHandler = (
   err: Error,
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
@@ -442,10 +487,10 @@ export const errorHandler = (
   }
 
   // For unexpected errors, log them and send a generic response
-  console.error('UNHANDLED ERROR:', err);
+  console.error("UNHANDLED ERROR:", err);
   res.status(500).json({
-    status: 'error',
-    message: 'Something went wrong!',
+    status: "error",
+    message: "Something went wrong!",
   });
 };
 ```
@@ -453,18 +498,18 @@ export const errorHandler = (
 ### 4.3 Integrating Error Handling in `src/server.ts`
 
 ```typescript
-import express from 'express';
-import userRoutes from './routes/user.routes'; // Import your routes
-import { errorHandler } from './middleware/error-handler'; // Import error handler
+import express from "express";
+import userRoutes from "./routes/user.routes"; // Import your routes
+import { errorHandler } from "./middleware/error-handler"; // Import error handler
 
 const app = express();
 app.use(express.json()); // Body parser
 
 // API Routes
-app.use('/api/v1/users', userRoutes);
+app.use("/api/v1/users", userRoutes);
 
 // Catch-all for undefined routes
-app.all('*', (req, res, next) => {
+app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
@@ -484,18 +529,21 @@ OpenAPI allows you to define various security schemes. `zod-to-openapi` integrat
 ### 5.1 JWT (Bearer Token)
 
 **`src/openapi/registry.ts` (continued)**
+
 ```typescript
 // ... (previous registry setup)
 
-openApiBuilder.addSecurityScheme('bearerAuth', {
-  type: 'http',
-  scheme: 'bearer',
-  bearerFormat: 'JWT',
-  description: 'JWT Authorization header using the Bearer scheme. Example: "Authorization: Bearer {token}"',
+openApiBuilder.addSecurityScheme("bearerAuth", {
+  type: "http",
+  scheme: "bearer",
+  bearerFormat: "JWT",
+  description:
+    'JWT Authorization header using the Bearer scheme. Example: "Authorization: Bearer {token}"',
 });
 ```
 
 Then, apply this security scheme to specific paths as shown in `src/routes/user.routes.ts`:
+
 ```typescript
 // ...
 registry.registerPath({
@@ -510,18 +558,19 @@ registry.registerPath({
 For OAuth2, you would define the flows.
 
 **`src/openapi/registry.ts` (continued)**
+
 ```typescript
 // ... (previous registry setup)
 
-openApiBuilder.addSecurityScheme('OAuth2', {
-  type: 'oauth2',
-  description: 'OAuth2 authentication with implicit flow',
+openApiBuilder.addSecurityScheme("OAuth2", {
+  type: "oauth2",
+  description: "OAuth2 authentication with implicit flow",
   flows: {
     implicit: {
-      authorizationUrl: 'https://example.com/oauth/authorize',
+      authorizationUrl: "https://example.com/oauth/authorize",
       scopes: {
-        'read:users': 'Read user profiles',
-        'write:users': 'Modify user profiles',
+        "read:users": "Read user profiles",
+        "write:users": "Modify user profiles",
       },
     },
   },
@@ -529,11 +578,12 @@ openApiBuilder.addSecurityScheme('OAuth2', {
 ```
 
 And apply it similarly:
+
 ```typescript
 // ...
 registry.registerPath({
   // ...
-  security: [{ OAuth2: ['read:users'] }], // Requesting 'read:users' scope
+  security: [{ OAuth2: ["read:users"] }], // Requesting 'read:users' scope
   // ...
 });
 ```
@@ -547,6 +597,7 @@ registry.registerPath({
 Create a script to generate the OpenAPI JSON from your registry.
 
 **`src/openapi/generate-openapi-spec.ts`**
+
 ```typescript
 import { openApiBuilder, registry } from './registry';
 import * as fs from 'fs';
@@ -569,6 +620,7 @@ console.log(`OpenAPI spec written to ${outputPath}`);
 ```
 
 Add a script to your `package.json` to run this:
+
 ```json
 {
   "scripts": {
@@ -576,30 +628,32 @@ Add a script to your `package.json` to run this:
   }
 }
 ```
+
 Run `npm run generate-openapi` to create `documents/openapi/lakira-backend-openapi.json`.
 
 ### 6.2 Serve with Swagger UI
 
 **`src/server.ts` (continued)**
+
 ```typescript
-import express from 'express';
-import swaggerUi from 'swagger-ui-express';
-import * as swaggerDocument from '../documents/openapi/lakira-backend-openapi.json'; // Import the generated spec
-import userRoutes from './routes/user.routes';
-import { errorHandler } from './middleware/error-handler';
-import { AppError } from './utils/AppError';
+import express from "express";
+import swaggerUi from "swagger-ui-express";
+import * as swaggerDocument from "../documents/openapi/lakira-backend-openapi.json"; // Import the generated spec
+import userRoutes from "./routes/user.routes";
+import { errorHandler } from "./middleware/error-handler";
+import { AppError } from "./utils/AppError";
 
 const app = express();
 app.use(express.json());
 
 // Serve Swagger UI
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // API Routes
-app.use('/api/v1/users', userRoutes);
+app.use("/api/v1/users", userRoutes);
 
 // Catch-all for undefined routes
-app.all('*', (req, res, next) => {
+app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
@@ -617,19 +671,19 @@ app.listen(PORT, () => {
 
 ### 7.1 Maintainability
 
-*   **Modular Schemas**: Keep Zod schemas small and focused, organized by domain or resource.
-*   **Centralized Registry**: All OpenAPI definitions flow through a single registry, making it easy to manage.
-*   **Automated Generation**: Rely on `zod-to-openapi` to generate the spec, reducing manual errors.
-*   **Clear Tagging**: Use OpenAPI `tags` to group related endpoints in the documentation.
-*   **Descriptions and Summaries**: Provide meaningful `summary` and `description` for paths and schemas.
+- **Modular Schemas**: Keep Zod schemas small and focused, organized by domain or resource.
+- **Centralized Registry**: All OpenAPI definitions flow through a single registry, making it easy to manage.
+- **Automated Generation**: Rely on `zod-to-openapi` to generate the spec, reducing manual errors.
+- **Clear Tagging**: Use OpenAPI `tags` to group related endpoints in the documentation.
+- **Descriptions and Summaries**: Provide meaningful `summary` and `description` for paths and schemas.
 
 ### 7.2 Testing
 
-*   **Unit Tests for Schemas**: Test your Zod schemas independently to ensure they validate data as expected.
-*   **Integration Tests for Endpoints**:
-    *   Test API endpoints to ensure they correctly handle valid and invalid inputs based on your Zod schemas.
-    *   Verify that error responses for validation failures conform to your defined error handling structure.
-    *   You can even use the generated OpenAPI spec to dynamically generate test cases or validate API responses against the spec.
+- **Unit Tests for Schemas**: Test your Zod schemas independently to ensure they validate data as expected.
+- **Integration Tests for Endpoints**:
+  - Test API endpoints to ensure they correctly handle valid and invalid inputs based on your Zod schemas.
+  - Verify that error responses for validation failures conform to your defined error handling structure.
+  - You can even use the generated OpenAPI spec to dynamically generate test cases or validate API responses against the spec.
 
 ### 7.3 CI/CD Pipelines
 

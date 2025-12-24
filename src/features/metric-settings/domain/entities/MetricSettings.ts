@@ -71,7 +71,7 @@ export class MetricSettings {
   updateDetails(update: UpdateMetricSettingsProps) {
     if (update.displayOptions) {
       update.displayOptions.showOnDashboard = Boolean(
-        update.displayOptions.showOnDashboard
+        update.displayOptions.showOnDashboard,
       );
     }
 
@@ -82,7 +82,7 @@ export class MetricSettings {
       if (update.goalType == null || update.goalValue == null) {
         throw new AppError(
           "goalType and goalValue are required when goalEnabled is true",
-          400
+          400,
         );
       }
     }
@@ -94,7 +94,7 @@ export class MetricSettings {
       if (!update.startDate || !update.deadlineDate) {
         throw new AppError(
           "Valid startDate and deadlineDate required when timeFrameEnabled is true",
-          400
+          400,
         );
       }
       if (update.deadlineDate <= update.startDate) {
@@ -107,7 +107,7 @@ export class MetricSettings {
     } else if (update.alertEnabled === true && update.alertThresholds == null) {
       throw new AppError(
         "alertThresholds is required when alertEnabled is true",
-        400
+        400,
       );
     }
 

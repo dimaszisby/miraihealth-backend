@@ -1,5 +1,8 @@
 import { models } from "@/infrastructure/db/models.js";
-import { MetricLibraryDomain, MetricDomainExtended } from "@/types/domain/metric.domain.js";
+import {
+  MetricLibraryDomain,
+  MetricDomainExtended,
+} from "@/types/domain/metric.domain.js";
 import {
   MetricReadRepository,
   ListMetricsResult,
@@ -9,7 +12,10 @@ import {
   MetricDetailQuery,
   Dir,
 } from "../../../application/ports/MetricReadRepository.js";
-import { toDomainMetricLibrary, toExtendedMetricDomain } from "@/utils/mappers/metric.mapper.js";
+import {
+  toDomainMetricLibrary,
+  toExtendedMetricDomain,
+} from "@/utils/mappers/metric.mapper.js";
 import {
   FindAttributeOptions,
   ProjectionAlias,
@@ -56,7 +62,7 @@ export class MetricReadRepoSequelize implements MetricReadRepository {
     const slice = hasMore ? rows.slice(0, limit) : rows;
 
     const items: MetricLibraryDomain[] = slice.map((row: any) =>
-      toDomainMetricLibrary(row)
+      toDomainMetricLibrary(row),
     );
 
     let nextCursor: string | undefined;
@@ -211,7 +217,7 @@ function normalizeSort(sort: SortParam): {
 function buildWhere(
   userId: string,
   q?: string,
-  filter?: { name?: string; categoryId?: string }
+  filter?: { name?: string; categoryId?: string },
 ): WhereOptions {
   const like = (v: string) => ({ [Op.iLike]: `%${v}%` });
   const and: any[] = [{ userId }, { deletedAt: null }];
@@ -226,7 +232,7 @@ function buildWhere(
 function buildCursorPredicate(
   cursor: CursorPayload,
   field: SortField,
-  dir: Dir
+  dir: Dir,
 ): WhereOptions {
   const ltgt = dir === "DESC" ? Op.lt : Op.gt;
   const eq = Op.eq;
@@ -264,15 +270,14 @@ function buildCursorPredicate(
       const N = cursor.nameLower ?? "";
       return {
         [Op.or]: [
-          Sequelize.where(
-            Sequelize.fn("lower", Sequelize.col("Metric.name")),
-            { [ltgt]: N }
-          ),
+          Sequelize.where(Sequelize.fn("lower", Sequelize.col("Metric.name")), {
+            [ltgt]: N,
+          }),
           {
             [Op.and]: [
               Sequelize.where(
                 Sequelize.fn("lower", Sequelize.col("Metric.name")),
-                { [eq]: N }
+                { [eq]: N },
               ),
               { id: { [ltgt]: cursor.id } },
             ],

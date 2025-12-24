@@ -17,14 +17,14 @@ router.get(
   "/dashboard",
   analyticsRateLimiter,
   validate(getDashboardVizSchema),
-  catchAsync(handleGetDashboardVisualization)
+  catchAsync(handleGetDashboardVisualization),
 );
 
 router.get(
   "/metrics/:metricId",
   analyticsRateLimiter,
   validate(getVisualizationSchema),
-  catchAsync(handleGetVisualization)
+  catchAsync(handleGetVisualization),
 );
 
 export { router as visualizationRouter };

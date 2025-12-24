@@ -27,7 +27,9 @@ import {
 import { toMetricLogResponseDTO } from "./metric-log.mapper.js";
 import { toDomainMetricLog } from "./metric-log.mapper.js";
 
-const toCategoryRow = (category: Partial<MetricCategoryRow>): MetricCategoryRow => ({
+const toCategoryRow = (
+  category: Partial<MetricCategoryRow>,
+): MetricCategoryRow => ({
   id: category.id ?? "",
   userId: category.userId ?? "",
   name: category.name ?? "",
@@ -37,13 +39,13 @@ const toCategoryRow = (category: Partial<MetricCategoryRow>): MetricCategoryRow 
   updatedAt: category.updatedAt
     ? new Date(category.updatedAt)
     : category.createdAt
-    ? new Date(category.createdAt)
-    : new Date(0),
+      ? new Date(category.createdAt)
+      : new Date(0),
   metricCount: Number(category.metricCount ?? 0),
 });
 
 const toCategoryInfo = (
-  category: ReturnType<typeof toMetricCategoryDomain>
+  category: ReturnType<typeof toMetricCategoryDomain>,
 ): MetricLibraryCategoryInfoDomain => ({
   id: category.id,
   name: category.name,
@@ -56,7 +58,7 @@ const validateUserId = (userId: string | null | undefined) => {
     logger.error("Metric object missing userId");
     throw new AppError(
       "Metric is missing the required userId. This indicates a data integrity issue.",
-      500
+      500,
     );
   }
   return userId;
@@ -84,7 +86,7 @@ export const toDomainMetric = (metric: Metric): MetricDomain => {
 };
 
 export const toDomainMetricLibrary = (
-  metric: Metric & { logCount?: number }
+  metric: Metric & { logCount?: number },
 ): MetricLibraryDomain => {
   validateUserId(metric.userId);
 
@@ -112,7 +114,7 @@ export const toDomainMetricLibrary = (
 };
 
 const toDomainCategoryInfo = (
-  category: MetricCategory
+  category: MetricCategory,
 ): MetricLibraryCategoryInfoDomain => {
   return {
     id: category.id,
@@ -133,7 +135,7 @@ type MetricWithAssociations = Metric & {
  */
 // TODO: Refactor this mapper to use the base mapper first for each association for better readability
 export const toExtendedMetricDomain = (
-  metric: MetricWithAssociations
+  metric: MetricWithAssociations,
 ): MetricDomainExtended => {
   const domain = toDomainMetric(metric);
 
@@ -167,7 +169,7 @@ export const toExtendedMetricDomain = (
  * * Mapper: Domain → DTO (for API Response - Base Metric)
  */
 export const toMetricResponseDTO = (
-  metric: MetricDomain // Takes the base domain object
+  metric: MetricDomain, // Takes the base domain object
 ): MetricResponseDTO => ({
   id: metric.id,
   userId: metric.userId,
@@ -186,7 +188,7 @@ export const toMetricResponseDTO = (
  * * Mapper: Domain (Extended) → DTO (for Detailed Metric API Response)
  */
 export const toUserMetricDetailResponseDTO = (
-  metric: MetricDomainExtended
+  metric: MetricDomainExtended,
 ): UserMetricDetailResponseDTO => ({
   // Map base
   id: metric.id,
@@ -201,11 +203,11 @@ export const toUserMetricDetailResponseDTO = (
   updatedAt: metric.updatedAt.toISOString(),
 
   // Map associated
-    category: metric.category
-      ? toMetricCategoryResponseDTO(
-          toMetricCategoryDomain(toCategoryRow(metric.category as any))
-        )
-      : null,
+  category: metric.category
+    ? toMetricCategoryResponseDTO(
+        toMetricCategoryDomain(toCategoryRow(metric.category as any)),
+      )
+    : null,
   settings: metric.settings
     ? toMetricSettingsResponseDTO(metric.settings)
     : null,
@@ -216,7 +218,7 @@ export const toUserMetricDetailResponseDTO = (
  * * Mapper: Domain → DTO (for Metric Library Response)
  */
 export const toMetricLibraryResponseDTO = (
-  metric: MetricLibraryDomain
+  metric: MetricLibraryDomain,
 ): MetricPreviewResponseDTO => ({
   id: metric.id,
   name: metric.name,

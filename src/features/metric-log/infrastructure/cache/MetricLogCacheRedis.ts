@@ -13,12 +13,12 @@ import {
 
 const METRIC_LOG_CURSOR_NAMESPACE_ALL = cursorCacheNamespace(
   "metric-logs",
-  "*"
+  "*",
 );
 
 export class MetricLogCacheRedis implements CachePort {
   constructor(
-    private visualizationInvalidation: VisualizationInvalidationPort
+    private visualizationInvalidation: VisualizationInvalidationPort,
   ) {}
 
   isEnabled(): boolean {
@@ -28,7 +28,7 @@ export class MetricLogCacheRedis implements CachePort {
   async invalidate(
     userId: string,
     metricId: string,
-    logId?: string
+    logId?: string,
   ): Promise<void> {
     if (!this.isEnabled()) return;
 
@@ -36,19 +36,16 @@ export class MetricLogCacheRedis implements CachePort {
       await invalidateCacheByPattern(`logs:${userId}:${metricId}:*`);
       await invalidateCacheByPattern(`logs:${userId}:all:*`);
       await invalidateCacheByPattern(
-        `${METRIC_LOG_CURSOR_NAMESPACE_ALL}:${userId}:*fm:${metricId}*`
+        `${METRIC_LOG_CURSOR_NAMESPACE_ALL}:${userId}:*fm:${metricId}*`,
       );
       await invalidateCacheByPattern(
-        `${METRIC_LOG_CURSOR_NAMESPACE_ALL}:${userId}:*`
+        `${METRIC_LOG_CURSOR_NAMESPACE_ALL}:${userId}:*`,
       );
 
       await invalidateCache(`logStats:${userId}:${metricId}`);
       await invalidateCache(`logStats:${userId}`);
 
-      await this.visualizationInvalidation.invalidateByMetric(
-        userId,
-        metricId
-      );
+      await this.visualizationInvalidation.invalidateByMetric(userId, metricId);
 
       if (logId) {
         await invalidateCache(`log:${userId}:${logId}`);

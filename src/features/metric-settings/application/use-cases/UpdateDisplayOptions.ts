@@ -7,13 +7,13 @@ import { DisplayOptionsDTO } from "../../infrastructure/http/dto.js";
 export class UpdateDisplayOptions {
   constructor(
     private repo: MetricSettingsRepository,
-    private cache: CacheInvalidationPort
+    private cache: CacheInvalidationPort,
   ) {}
 
   async execute(
     userId: string,
     settingsId: string,
-    displayOptions: DisplayOptionsDTO
+    displayOptions: DisplayOptionsDTO,
   ): Promise<MetricSettings> {
     if (!userId) throw new AppError("User not authenticated", 401);
     const settings = await this.repo.findById(userId, settingsId);

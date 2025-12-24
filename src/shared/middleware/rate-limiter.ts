@@ -11,7 +11,7 @@ const maybeCreateStore = () => {
 
   if (!env.REDIS_REQUIRED && !redisClient.isOpen) {
     logger.warn(
-      "[RATE LIMITER] Redis not connected; falling back to in-memory store."
+      "[RATE LIMITER] Redis not connected; falling back to in-memory store.",
     );
     return undefined;
   }

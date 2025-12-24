@@ -6,7 +6,7 @@ import { PersistenceTransaction } from "../../../application/ports/PersistenceTr
 export class MetricSettingsPortSequelize implements MetricSettingsPort {
   async createDefault(
     metricId: string,
-    tx: PersistenceTransaction
+    tx: PersistenceTransaction,
   ): Promise<void> {
     const transaction = tx as Transaction;
     await models.MetricSettings.create(
@@ -29,7 +29,7 @@ export class MetricSettingsPortSequelize implements MetricSettingsPort {
           color: "#E897A3",
         },
       },
-      { transaction }
+      { transaction },
     );
   }
 }

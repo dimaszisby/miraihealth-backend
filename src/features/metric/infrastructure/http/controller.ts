@@ -33,7 +33,7 @@ type AnalyticsFeature = ReturnType<typeof buildAnalyticsFeature>;
 let analyticsFeature: AnalyticsFeature = buildAnalyticsFeature();
 
 export const overrideMetricTrendFeatureForTest = (
-  feature: AnalyticsFeature
+  feature: AnalyticsFeature,
 ) => {
   analyticsFeature = feature;
 };
@@ -64,7 +64,7 @@ export const createMetric = catchAsync(
 
     const dto = toMetricResponseDTO(metricDomain);
     successResponse(res, 201, dto, "Metric created successfully");
-  }
+  },
 );
 
 export const getUserMetricLibrariesViaCursor = catchAsync(
@@ -95,7 +95,7 @@ export const getUserMetricLibrariesViaCursor = catchAsync(
     };
 
     successResponse(res, 200, dto, "Metrics cursor fetched successfully");
-  }
+  },
 );
 
 export const getUserDetailMetricById = catchAsync(
@@ -140,9 +140,9 @@ export const getUserDetailMetricById = catchAsync(
       res,
       200,
       dto,
-      "Metric extended detail retrieved successfully"
+      "Metric extended detail retrieved successfully",
     );
-  }
+  },
 );
 
 export const updateMetric = catchAsync(
@@ -158,7 +158,7 @@ export const updateMetric = catchAsync(
     const dto = toMetricResponseDTO(updatedMetricDomain);
 
     successResponse(res, 200, dto, "Metric updated successfully");
-  }
+  },
 );
 
 export const deleteMetric = catchAsync(
@@ -173,7 +173,7 @@ export const deleteMetric = catchAsync(
     const dto = toMetricResponseDTO(metricDomain);
 
     successResponse(res, 200, dto, "Metric deleted successfully");
-  }
+  },
 );
 
 export const generateDummyMetrics = catchAsync(
@@ -192,9 +192,9 @@ export const generateDummyMetrics = catchAsync(
       res,
       201,
       dto,
-      `${count} dummy metrics generated successfully`
+      `${count} dummy metrics generated successfully`,
     );
-  }
+  },
 );
 
 export const handleMetricTrend = catchAsync(
@@ -206,5 +206,5 @@ export const handleMetricTrend = catchAsync(
     });
 
     successResponse(res, 200, data);
-  }
+  },
 );

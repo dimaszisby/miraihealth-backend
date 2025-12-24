@@ -5,8 +5,10 @@ export const ZodMessages = {
     positiveNumber: "Must be a positive number",
   },
   api: {
-    minLength: (field: string, min: number) => `${field} must be at least ${min} characters long.`,
-    maxLength: (field: string, max: number) => `${field} must be at most ${max} characters long.`,
+    minLength: (field: string, min: number) =>
+      `${field} must be at least ${min} characters long.`,
+    maxLength: (field: string, max: number) =>
+      `${field} must be at most ${max} characters long.`,
     invalidEmail: "Invalid email address.",
     invalidUUID: (field: string) => `Invalid ${field} format.`,
     positiveNumber: (field: string) => `${field} must be a positive number.`,
@@ -49,4 +51,3 @@ export const ZodMessages = {
     logDateInvalid: "Invalid date format",
   },
 };
-
