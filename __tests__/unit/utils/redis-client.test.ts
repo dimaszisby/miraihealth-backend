@@ -20,6 +20,7 @@ type MockRedisClient = {
   scan: AsyncMock<{ cursor: number; keys: string[] }, [number, unknown]>;
 };
 
+// Swap the real redis client with an in-memory mock so we control connection state + cursor responses.
 jest.mock("redis", () => {
   const mockRedisClient: MockRedisClient = {
     isOpen: false,
@@ -71,6 +72,7 @@ const { env: envMock } = jest.requireMock("@/config/envManager.js") as {
   };
 };
 
+// Silence logger output during tests and let assertions capture the payloads instead.
 jest.mock("@/utils/logger.js", () => ({
   info: jest.fn(),
   warn: jest.fn(),

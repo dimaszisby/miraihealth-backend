@@ -10,6 +10,7 @@ import { z, type ZodTypeAny } from "zod";
 import type { AuthRequest } from "@/types/request.context.js";
 import type { Response, NextFunction } from "express";
 import { validate } from "@/shared/middleware/validation.js";
+import logger from "@/utils/logger.js";
 
 const createResponse = (): Response => {
   const res = {
@@ -19,9 +20,10 @@ const createResponse = (): Response => {
   return res as unknown as Response;
 };
 
-const consoleErrorSpy = jest
-  .spyOn(console, "error")
-  .mockImplementation(() => {});
+// Swap logger.error with a spy so we assert on the same logging surface used in production.
+const loggerErrorSpy = jest
+  .spyOn(logger, "error")
+  .mockImplementation(() => logger);
 
 const makeRequest = (overrides: Partial<AuthRequest>): AuthRequest =>
   ({
@@ -37,7 +39,7 @@ describe("validation middleware", () => {
   });
 
   afterAll(() => {
-    consoleErrorSpy.mockRestore();
+    loggerErrorSpy.mockRestore();
   });
 
   it("passes through when no schema is provided", () => {
@@ -166,7 +168,7 @@ describe("validation middleware", () => {
 
     middleware(req, res, next);
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
+    expect(loggerErrorSpy).toHaveBeenCalledWith(
       "Unexpected Error during Validation:",
       error,
     );

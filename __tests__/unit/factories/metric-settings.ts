@@ -1,6 +1,8 @@
 import { MetricSettings } from "@/features/metric-settings/domain/entities/MetricSettings.js";
 import { MetricSettingsProps } from "@/features/metric-settings/domain/entities/MetricSettings.js";
 
+// Shared factory for specs that need MetricSettings entities without repeating boilerplate props.
+
 type Overrides = Partial<MetricSettingsProps> & {
   displayOptions?: Partial<MetricSettingsProps["displayOptions"]>;
 };

@@ -3,6 +3,7 @@ import type { Response } from "express";
 import { cacheMiddleware } from "@/shared/middleware/cache.js";
 import type { AuthRequest } from "@/types/request.context.js";
 
+// Stub env + redis + logger so cache middleware behavior can be driven entirely by the test.
 jest.mock("@/config/envManager.js", () => ({
   env: { NODE_ENV: "production" },
 }));
@@ -44,6 +45,7 @@ type MockResponse = Response & {
   originalJson: jest.Mock;
 };
 
+// Minimal Express response mock that lets us intercept the patched json() method.
 const createResponse = (): MockResponse => {
   const res = {
     status: jest.fn(),

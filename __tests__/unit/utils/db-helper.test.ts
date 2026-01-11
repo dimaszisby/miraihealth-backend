@@ -8,6 +8,7 @@ import {
   findOwnedMetricLog,
 } from "@/utils/db-helper.js";
 
+// Replace Sequelize models with jest.fn() so we can deterministically drive findOne responses per test.
 jest.mock("@/infrastructure/db/models.js", () => ({
   models: {
     Metric: { findOne: jest.fn() },

@@ -4,6 +4,7 @@ import {
   logCacheInvalidationError,
 } from "@/shared/cache/logging.js";
 
+// Mock the Winston logger so these tests only assert payloads rather than emitting real logs.
 jest.mock("@/utils/logger.js", () => ({
   debug: jest.fn(),
   error: jest.fn(),

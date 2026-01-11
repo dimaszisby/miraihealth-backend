@@ -7,6 +7,7 @@ import {
   createAnalyticsRateLimiter,
 } from "@/shared/middleware/rate-limiter.js";
 
+// Replace the real middleware factories with simple stubs so we can assert on the config that's passed in.
 jest.mock("express-rate-limit", () => {
   const factory = jest.fn((options) => options);
   return {
@@ -51,6 +52,7 @@ const { env: envMock } = jest.requireMock("@/config/envManager.js") as {
   };
 };
 
+// The limiter logs warnings when it downgrades behavior; spy on logger so the tests stay noise-free.
 jest.mock("@/utils/logger.js", () => ({
   warn: jest.fn(),
 }));
@@ -81,6 +83,7 @@ const createResponse = (): Response => {
   return res as unknown as Response;
 };
 
+// Limiter factory returns the options object (per the mock), so unwrap it for convenience.
 const unwrapLimiter = (limiter: unknown) => limiter as any;
 
 describe("rate limiter middleware", () => {

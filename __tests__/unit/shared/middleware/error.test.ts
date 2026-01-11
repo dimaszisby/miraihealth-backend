@@ -4,6 +4,7 @@ import type { Response, NextFunction } from "express";
 import AppError from "@/utils/AppError.js";
 import { createErrorHandler } from "@/shared/middleware/error.js";
 
+// Swap env + logger bindings so the middleware can be tested deterministically without touching real config/logging.
 jest.mock("@/config/envManager.js", () => ({
   env: { NODE_ENV: "development" },
 }));
@@ -28,6 +29,7 @@ const createResponse = () => {
   return res as unknown as Response;
 };
 
+// Instantiate once; per-test NODE_ENV mutations control behavior.
 const handler = createErrorHandler();
 
 describe("error middleware", () => {
