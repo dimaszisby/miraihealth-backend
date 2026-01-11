@@ -18,6 +18,7 @@ describe("MetricReadRepoSequelize", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+    // Use plain objects to mimic the minimal shape returned by Sequelize when attributes are stripped.
     const rows = [
       { ...baseMetric, id: "metric-1", userId: "user-1", name: "Steps" },
       { ...baseMetric, id: "metric-2", userId: "user-1", name: "Sleep" },
