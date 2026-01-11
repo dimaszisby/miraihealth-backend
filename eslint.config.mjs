@@ -40,12 +40,16 @@ export default [
   tsConfig, // TypeScript rules (flat version)
   prettierConfig, // Prettier config without the extends key
   {
+    files: ["**/*.{js,mjs,cjs,ts,tsx,jsx}"],
     languageOptions: {
       parser: tsParser, // Use the correct TypeScript parser
       parserOptions: {
         ecmaVersion: "latest", // Use latest ECMAScript features
         sourceType: "module", // Enforce ES Modules
         project: "./tsconfig.json", // Ensure TS project config is considered
+      },
+      globals: {
+        ...globals.node, // Provide Node globals like process, Buffer, console
       },
     },
     plugins: {
@@ -56,8 +60,8 @@ export default [
       "n/no-missing-import": "off", // Avoid false positives with TS imports
       "no-console": "warn", // Warn about console.log (not an error)
       semi: ["error", "always"], // Enforce semicolons
-      quotes: ["error", "double"], // Enforce double quotes
-      indent: ["error", 2], // Enforce 2-space indentation
+      quotes: ["error", "double", { avoidEscape: true }], // Prefer double quotes but avoid needless escaping
+      indent: "off", // Delegate indentation entirely to Prettier
       "prettier/prettier": "error", // Ensure Prettier formatting
       "no-restricted-imports": [
         "error",
@@ -105,6 +109,40 @@ export default [
           ],
         },
       ],
+    },
+  },
+  // Override for Jest-driven test files living under __tests__
+  {
+    files: ["__tests__/**/*.{js,mjs,cjs,ts,tsx,jsx}"],
+    languageOptions: {
+      globals: {
+        ...globals.jest,
+        ...globals.node,
+      },
+    },
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off", // Tests frequently rely on loose mocks
+      "@typescript-eslint/no-unused-vars": "off", // Allow descriptive helper/mocked signatures
+      "@typescript-eslint/no-require-imports": "off", // Allow jest.mock requires inside tests
+      "no-restricted-properties": [
+        "error",
+        {
+          object: "process",
+          property: "env",
+          message:
+            "Use withTestEnv/getEnv helpers instead of mutating process.env directly in tests.",
+        },
+      ],
+    },
+  },
+  // Jest setup files live at repo root but still need Jest globals
+  {
+    files: ["jest.setup*.ts"],
+    languageOptions: {
+      globals: {
+        ...globals.jest,
+        ...globals.node,
+      },
     },
   },
   // Override for CommonJS files (migrations, config files)

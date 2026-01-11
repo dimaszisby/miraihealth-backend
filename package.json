@@ -44,6 +44,7 @@
     "docs:openapi:check": "npm run docs:openapi:generate && git diff --exit-code documents/openapi/lakira-backend-openapi.json",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "lint:tests": "eslint \"__tests__/**/*.{ts,tsx,js,jsx}\"",
     "lint-staged": "lint-staged",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md,yml,yaml}\"",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,json,md,yml,yaml}\""

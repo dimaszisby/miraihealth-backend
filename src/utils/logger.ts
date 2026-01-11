@@ -1,6 +1,6 @@
 import { createLogger, format, transports, Logger } from "winston";
 const { combine, timestamp, printf, errors, colorize, json, splat } = format;
-import { env } from "../config/envManager.js";
+const nodeEnv = process.env.NODE_ENV || "development";
 
 /**
  * * Winston Logging Utility
@@ -29,8 +29,9 @@ const logger: Logger = createLogger({
   exitOnError: false, // Do not exit on handled exceptions
 });
 
-// 3. Enable console logging in non-production environments
-if (env.NODE_ENV !== "production") {
+// 3. Enable console logging in non-production environments.
+// Use process.env directly to avoid envManager imports here, preventing circular dependencies.
+if (nodeEnv !== "production") {
   logger.add(
     new transports.Console({
       format: combine(colorize(), logFormat),

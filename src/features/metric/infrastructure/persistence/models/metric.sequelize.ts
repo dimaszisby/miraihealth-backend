@@ -14,8 +14,7 @@ export interface MetricAttributes extends MetricAttributesBase {
   updatedAt?: Date;
 }
 
-export interface MetricCreationAttributes
-  extends Optional<MetricAttributes, "id"> {}
+export type MetricCreationAttributes = Optional<MetricAttributes, "id">;
 
 export class Metric
   extends Model<MetricAttributes, MetricCreationAttributes>

@@ -4,8 +4,9 @@ import {
   CreateUserDTO,
   UserRepository,
 } from "../../domain/repositories/UserRepository.js";
+import type { User } from "./models/user.sequelize.js";
 
-const toDomain = (row: any): AuthUser =>
+const toDomain = (row: User): AuthUser =>
   AuthUser.fromPersistence({
     id: row.id,
     email: row.email,
@@ -13,8 +14,8 @@ const toDomain = (row: any): AuthUser =>
     passwordHash: row.password,
     role: row.role ?? "user",
     isPublicProfile: row.isPublicProfile ?? !!row.isPublicProfile,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
+    createdAt: row.createdAt ?? new Date(0),
+    updatedAt: row.updatedAt ?? new Date(0),
     deletedAt: row.deletedAt ?? null,
   });
 

@@ -27,20 +27,27 @@ import {
   METRIC_CATEGORY_CURSOR_VERSION,
 } from "@/features/metric-category/application/cache.constants.js";
 
+const getQueryString = (value: unknown): string | undefined =>
+  typeof value === "string" ? value : undefined;
+
 const categoriesCacheKey = (req: AuthRequest) => {
-  const { limit = 20, sort = "-createdAt", q, after } = req.query as any;
-  const fname = (req.query["filter[name]"] as string) ?? ".js";
-  const includeTotal = String(req.query.includeTotal ?? "false");
+  const limitParam = getQueryString(req.query.limit);
+  const sortParam = getQueryString(req.query.sort);
+  const qParam = getQueryString(req.query.q);
+  const afterParam = getQueryString(req.query.after);
+  const filterName = getQueryString(req.query["filter[name]"]);
+  const includeTotal = getQueryString(req.query.includeTotal) ?? "false";
+
   return buildCursorCacheKey({
     feature: METRIC_CATEGORY_CURSOR_FEATURE,
     version: METRIC_CATEGORY_CURSOR_VERSION,
     userId: req.user?.id,
     segments: [
-      ["l", limit],
-      ["s", sort],
-      ["q", q ?? ""],
-      ["fn", fname],
-      ["after", after ?? ""],
+      ["l", Number(limitParam ?? 20)],
+      ["s", sortParam ?? "-createdAt"],
+      ["q", qParam ?? ""],
+      ["fn", filterName ?? ".js"],
+      ["after", afterParam ?? ""],
       ["it", includeTotal],
     ],
   });

@@ -1,7 +1,6 @@
 import { ZodError, type ZodIssue } from "zod";
 import type { Env } from "./zodEnv.js";
 import { buildEnv } from "./zodEnv.js";
-
 let cachedEnv: Env | null = null;
 
 const SENSITIVE_KEY_PATTERN = /(password|secret|token|key|certificate|url)$/i;
@@ -66,6 +65,8 @@ function maskedEnvSnapshot(): Record<string, unknown> {
   }, {});
 }
 
+// Logging cannot depend on logger.ts because envManager is part of the bootstrap path.
+// Use console.error here to avoid reintroducing the circular dependency that broke tests.
 function logEnvFailure(error: Error): void {
   const payload = {
     event: "env.validation.failed",
@@ -75,6 +76,7 @@ function logEnvFailure(error: Error): void {
     envSample: maskedEnvSnapshot(),
   };
 
+  // eslint-disable-next-line no-console -- envManager boots before logger; keeping console.error avoids circular deps and keeps tests (envManager.test.ts) aligned with actual behavior.
   console.error(`[ENV_ERROR] ${JSON.stringify(payload)}`);
 }
 

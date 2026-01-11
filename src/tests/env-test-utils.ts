@@ -3,7 +3,7 @@ import {
   resetEnvCacheForTesting,
 } from "../config/envManager.js";
 
-type EnvOverrides = Partial<NodeJS.ProcessEnv>;
+type EnvOverrides = Partial<Record<string, string | undefined>>;
 
 type WithTestEnvOptions = {
   overrides?: EnvOverrides;
@@ -22,7 +22,9 @@ export async function withTestEnv<T>(
     process.env.SKIP_DB_LIFECYCLE = "true";
   }
 
-  for (const [key, value] of Object.entries(overrides)) {
+  for (const [key, value] of Object.entries(overrides) as Array<
+    [string, string | undefined]
+  >) {
     previousValues[key] = process.env[key];
     process.env[key] = value;
   }

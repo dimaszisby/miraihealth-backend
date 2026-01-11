@@ -17,8 +17,10 @@ export interface MetricSettingsAttributes extends MetricSettingsAttributesBase {
   updatedAt?: Date;
 }
 
-export interface MetricSettingsCreationAttributes
-  extends Optional<MetricSettingsAttributes, "id"> {}
+export type MetricSettingsCreationAttributes = Optional<
+  MetricSettingsAttributes,
+  "id"
+>;
 
 export class MetricSettings
   extends Model<MetricSettingsAttributes, MetricSettingsCreationAttributes>
@@ -205,7 +207,7 @@ export class MetricSettings
     });
   }
 
-  public toJSON(): Record<string, any> {
+  public toJSON(): Record<string, unknown> {
     const attributes = this.get();
     return {
       ...attributes,

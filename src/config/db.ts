@@ -1,5 +1,10 @@
 import { Sequelize } from "sequelize";
 import { env } from "./envManager.js"; // Use validated env variables
+import logger from "@/utils/logger.js";
+
+const sqlLogger = (message: unknown) => {
+  logger.debug(message);
+};
 
 const dbConfig = {
   development: {
@@ -9,7 +14,7 @@ const dbConfig = {
     username: env.DB_USER,
     password: env.DB_PASSWORD,
     database: env.DB_NAME,
-    logging: env.DB_LOGGING === "true" ? console.log : false,
+    logging: env.DB_LOGGING === "true" ? sqlLogger : false,
     dialectOptions: {
       ssl: false,
     },
@@ -48,7 +53,7 @@ const dbConfig = {
     username: env.DB_USER,
     password: env.DB_PASSWORD,
     database: env.DB_NAME,
-    logging: env.DB_LOGGING === "true" ? console.log : false,
+    logging: env.DB_LOGGING === "true" ? sqlLogger : false,
     dialectOptions: {
       ssl: {
         require: true,

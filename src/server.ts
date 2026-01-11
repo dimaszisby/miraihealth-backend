@@ -7,6 +7,7 @@ import hpp from "hpp";
 import http from "http";
 import swaggerUi from "swagger-ui-express";
 import { getOpenApiDocumentation } from "./lib/openapi/openapi-docs.js";
+import logger from "@/utils/logger.js";
 
 // Routes
 import { authRouter } from "./features/auth/index.js";
@@ -51,14 +52,14 @@ const initialDbBootstrap = async () => {
     loadModels();
     await sequelize.authenticate();
   } else {
-    console.log(
+    logger.info(
       "[SERVER] SKIP_DB_LIFECYCLE enabled — skipping initial DB bootstrap.",
     );
   }
 };
 
 const serverBootstrapPromise = initialDbBootstrap().catch((error) => {
-  console.error("[SERVER] Initial database bootstrap failed.", error);
+  logger.error("[SERVER] Initial database bootstrap failed.", error);
   throw error;
 });
 export const serverReady = serverBootstrapPromise;
@@ -123,27 +124,24 @@ app.use(errorHandler);
 // HTTP Server Reference
 let server: http.Server | null = null;
 
-// Helper function for checking test environment
-const isTestEnv = (env: string): env is "test" => env === "test";
-
 const startServer = async () => {
   try {
     if (env.NODE_ENV === "test") {
-      console.log("[SERVER] Running in test environment. Server not started.");
+      logger.info("[SERVER] Running in test environment. Server not started.");
       return;
     }
 
     // Authenticate database connection
     await sequelize.authenticate();
-    console.log("[SERVER] Database connection established successfully.");
+    logger.info("[SERVER] Database connection established successfully.");
 
     // Start HTTP Server
     const PORT = env.PORT || 5000;
     server = app.listen(PORT, () => {
-      console.log(`[SERVER] Lakira backend running on port ${PORT}`);
+      logger.info(`[SERVER] Lakira backend running on port ${PORT}`);
     });
   } catch (error) {
-    console.error("[SERVER ERROR] Server initialization failed:", error);
+    logger.error("[SERVER ERROR] Server initialization failed:", error);
     process.exit(1);
   }
 };
@@ -156,26 +154,26 @@ const startServer = async () => {
  * - Log shutdown
  */
 const shutdown = async (signal: string) => {
-  console.log(`\n[SERVER] Received ${signal}, initiating shutdown...`);
+  logger.info(`\n[SERVER] Received ${signal}, initiating shutdown...`);
 
   try {
     if (server) {
-      console.log("[SERVER] Closing HTTP server...");
+      logger.info("[SERVER] Closing HTTP server...");
       await new Promise((resolve) => server!.close(resolve));
     }
 
     // Close database connection
-    console.log("[SERVER] Closing database connection...");
+    logger.info("[SERVER] Closing database connection...");
     await sequelize.close();
 
     // Close Redis connection
-    console.log("[SERVER] Closing Redis connection...");
+    logger.info("[SERVER] Closing Redis connection...");
     await disconnectRedis();
 
-    console.log("[SERVER] Cleanup completed. Exiting.");
+    logger.info("[SERVER] Cleanup completed. Exiting.");
     process.exit(0);
   } catch (error) {
-    console.error("[SERVER] during shutdown:", error);
+    logger.error("[SERVER] during shutdown:", error);
     process.exitCode = 1;
   }
 };
@@ -187,12 +185,12 @@ const shutdown = async (signal: string) => {
 
 // Handle uncaught exceptions and promise rejections
 process.on("uncaughtException", (error) => {
-  console.error("[SERVER ERROR] Uncaught Exception:", error);
+  logger.error("[SERVER ERROR] Uncaught Exception:", error);
   shutdown("Uncaught Exception");
 });
 
 process.on("unhandledRejection", (reason, promise) => {
-  console.error(
+  logger.error(
     "[SERVER ERROR] Unhandled Promise Rejection at:",
     promise,
     "reason:",

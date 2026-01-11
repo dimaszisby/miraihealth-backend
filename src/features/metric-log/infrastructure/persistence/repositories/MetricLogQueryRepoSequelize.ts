@@ -118,7 +118,7 @@ function buildWhere(
   filter?: { logValue?: number; metricId?: string },
   q?: string,
 ) {
-  const and: any[] = [];
+  const and: Array<Record<string, unknown>> = [];
   if (filter?.metricId) and.push({ metricId: filter.metricId });
   if (filter?.logValue) and.push({ logValue: filter.logValue });
   if (q && q.trim()) {

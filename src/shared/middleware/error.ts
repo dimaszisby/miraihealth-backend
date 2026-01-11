@@ -7,6 +7,7 @@ import { AuthRequest } from "@/types/request.context.js";
 export const createErrorHandler =
   () =>
   (err: Error, req: AuthRequest, res: Response, next: NextFunction): void => {
+    void next;
     logger.error(`Error Occurred: ${err.message}`, err);
     const appError =
       err instanceof AppError

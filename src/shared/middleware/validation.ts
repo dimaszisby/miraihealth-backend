@@ -1,6 +1,7 @@
 import { AuthRequest } from "@/types/request.context.js";
 import { Response, NextFunction } from "express";
 import { ZodError, ZodTypeAny } from "zod";
+import logger from "@/utils/logger.js";
 
 type SchemaBag = {
   body?: ZodTypeAny;
@@ -14,12 +15,19 @@ const handleError = (res: Response, error: ZodError) => {
     message: err.message,
   }));
 
-  console.error("Validation Errors:", formattedErrors);
+  logger.error("Validation Errors:", formattedErrors);
   res.status(400).json({ status: "fail", errors: formattedErrors });
 };
 
-const isZodSchema = (x: unknown): x is ZodTypeAny =>
-  !!x && typeof (x as any).safeParse === "function";
+type SafeParseHolder = { safeParse: ZodTypeAny["safeParse"] };
+
+const hasSafeParse = (candidate: unknown): candidate is SafeParseHolder =>
+  typeof candidate === "object" &&
+  candidate !== null &&
+  "safeParse" in candidate &&
+  typeof (candidate as { safeParse?: unknown }).safeParse === "function";
+
+const isZodSchema = (x: unknown): x is ZodTypeAny => hasSafeParse(x);
 
 export const validate =
   (arg?: SchemaBag | ZodTypeAny) =>
@@ -57,7 +65,7 @@ export const validate =
       req.validated = out;
       return next();
     } catch (error) {
-      console.error("Unexpected Error during Validation:", error);
+      logger.error("Unexpected Error during Validation:", error);
       next(error);
     }
   };

@@ -8,9 +8,15 @@ import { Request, Response, NextFunction } from "express";
  * @returns A function that handles errors and passes them to `next()`.
  */
 const catchAsync =
-  (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) =>
-  (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    return fn(req, res, next).catch(next);
+  (
+    fn: (
+      req: Request,
+      res: Response,
+      next: NextFunction,
+    ) => Promise<unknown> | unknown,
+  ) =>
+  (req: Request, res: Response, next: NextFunction): void => {
+    void Promise.resolve(fn(req, res, next)).catch(next);
   };
 
 export default catchAsync;

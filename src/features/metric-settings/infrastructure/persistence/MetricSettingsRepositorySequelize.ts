@@ -11,6 +11,7 @@ import {
   SortParam,
 } from "../../domain/repositories/MetricSettingsRepository.js";
 import { Op, OrderItem, UniqueConstraintError, WhereOptions } from "sequelize";
+import type { MetricSettingsAttributes } from "./models/metric-settings.sequelize.js";
 
 const includeMetric = () => [
   {
@@ -20,7 +21,12 @@ const includeMetric = () => [
   },
 ];
 
-const toEntity = (row: any): MetricSettings =>
+type MetricSettingsRow = MetricSettingsAttributes & {
+  metric?: { userId?: string } | null;
+  displayOptions?: MetricSettingsAttributes["displayOptions"] | null;
+};
+
+const toEntity = (row: MetricSettingsRow): MetricSettings =>
   MetricSettings.fromPersistence({
     id: row.id,
     metricId: row.metricId,
@@ -43,8 +49,8 @@ const toEntity = (row: any): MetricSettings =>
       chartType: row.displayOptions?.chartType ?? "line",
       color: row.displayOptions?.color ?? "#E897A3",
     },
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
+    createdAt: row.createdAt ?? new Date(0),
+    updatedAt: row.updatedAt ?? new Date(0),
   });
 
 export class MetricSettingsRepositorySequelize

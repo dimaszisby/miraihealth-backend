@@ -23,7 +23,10 @@ import {
   WhereOptions,
   Op,
   OrderItem,
+  Includeable,
+  FindOptions,
 } from "sequelize";
+import type { Metric as MetricModel } from "../models/metric.sequelize.js";
 
 export class MetricReadRepoSequelize implements MetricReadRepository {
   async listMetrics(opts: ListOpts): Promise<ListMetricsResult> {
@@ -34,12 +37,13 @@ export class MetricReadRepoSequelize implements MetricReadRepository {
 
     const attributes = baseAttributesWithLogCount() as FindAttributeOptions;
     const order = buildOrder(field, dir);
+    const pageSize = Math.min(Math.max(limit || 20, 1), 100);
 
-    const scope: any = {
+    const scope: FindOptions = {
       attributes,
       where,
       order,
-      limit: Math.min(Math.max(limit || 20, 1), 100) + 1,
+      limit: pageSize + 1,
       paranoid: false,
       include: [
         {
@@ -58,23 +62,30 @@ export class MetricReadRepoSequelize implements MetricReadRepository {
     }
 
     const rows = await models.Metric.findAll(scope);
-    const hasMore = rows.length > limit;
-    const slice = hasMore ? rows.slice(0, limit) : rows;
+    const hasMore = rows.length > pageSize;
+    const slice = hasMore ? rows.slice(0, pageSize) : rows;
 
-    const items: MetricLibraryDomain[] = slice.map((row: any) =>
+    const items: MetricLibraryDomain[] = slice.map((row: MetricModel) =>
       toDomainMetricLibrary(row),
     );
 
     let nextCursor: string | undefined;
     if (hasMore && slice.length) {
       const last = slice[slice.length - 1];
+      const logCountValue =
+        typeof (last as { get?: unknown }).get === "function"
+          ? (last as MetricModel & { get: (k: string) => unknown }).get(
+              "logCount",
+            )
+          : (last as MetricModel & { logCount?: unknown }).logCount;
       const payload: CursorPayload = {
         sort,
         id: last.id,
         createdAt: last.createdAt?.toISOString(),
         updatedAt: last.updatedAt?.toISOString(),
         nameLower: last.name?.toLowerCase(),
-        logCount: Number((last as any).logCount ?? 0),
+        // Access literal value when rows are plain objects (unit tests) or Sequelize instances.
+        logCount: Number((logCountValue as number | string | undefined) ?? 0),
       };
       nextCursor = encodeCursor(payload);
     }
@@ -104,7 +115,7 @@ export class MetricReadRepoSequelize implements MetricReadRepository {
     includes = [],
     logsLimit = 20,
   }: MetricDetailQuery): Promise<MetricDomainExtended | null> {
-    const includeArr: any[] = [];
+    const includeArr: Includeable[] = [];
 
     if (includes.includes("category")) {
       includeArr.push({
@@ -178,8 +189,8 @@ type CursorPayload = {
 };
 
 const LOG_COUNT_SQL =
-  `(SELECT COUNT(*) FROM "public"."metric_logs" ml ` +
-  `WHERE ml."metric_id" = "Metric"."id")`;
+  '(SELECT COUNT(*) FROM "public"."metric_logs" ml ' +
+  'WHERE ml."metric_id" = "Metric"."id")';
 
 function baseAttributesWithLogCount(): (string | ProjectionAlias)[] {
   const logCount: ProjectionAlias = [
@@ -220,7 +231,7 @@ function buildWhere(
   filter?: { name?: string; categoryId?: string },
 ): WhereOptions {
   const like = (v: string) => ({ [Op.iLike]: `%${v}%` });
-  const and: any[] = [{ userId }, { deletedAt: null }];
+  const and: Array<Record<string, unknown>> = [{ userId }, { deletedAt: null }];
 
   if (q) and.push({ name: like(q) });
   if (filter?.name) and.push({ name: like(filter.name) });
@@ -268,22 +279,20 @@ function buildCursorPredicate(
     }
     case "name": {
       const N = cursor.nameLower ?? "";
+      const lowerColumn = Sequelize.fn("LOWER", Sequelize.col("Metric.name"));
       return {
         [Op.or]: [
-          Sequelize.where(Sequelize.fn("lower", Sequelize.col("Metric.name")), {
+          Sequelize.where(lowerColumn, {
             [ltgt]: N,
           }),
           {
             [Op.and]: [
-              Sequelize.where(
-                Sequelize.fn("lower", Sequelize.col("Metric.name")),
-                { [eq]: N },
-              ),
+              Sequelize.where(lowerColumn, { [eq]: N }),
               { id: { [ltgt]: cursor.id } },
             ],
           },
         ],
-      } as any;
+      };
     }
     case "logCount": {
       const L = cursor.logCount ?? 0;
@@ -298,7 +307,7 @@ function buildCursorPredicate(
             ],
           },
         ],
-      } as any;
+      };
     }
   }
 }

@@ -86,18 +86,17 @@ export const toDomainMetric = (metric: Metric): MetricDomain => {
 };
 
 export const toDomainMetricLibrary = (
-  metric: Metric & { logCount?: number },
+  metric: MetricWithAssociations & { logCount?: number | string },
 ): MetricLibraryDomain => {
   validateUserId(metric.userId);
 
   // Accept both shapes: instance include (MetricCategory) and raw+alias include (category)
-  const rawCategory =
-    (metric as any).MetricCategory ?? (metric as any).category ?? null;
+  const rawCategory = metric.MetricCategory ?? metric.category ?? null;
 
   const categoryDomain = rawCategory ? toDomainCategoryInfo(rawCategory) : null;
 
   // Guard against NaN if the subquery isn't present for any reason
-  const logCount = Number((metric as any).logCount ?? 0);
+  const logCount = Number(metric.logCount ?? 0);
 
   return {
     id: metric.id,
@@ -114,7 +113,7 @@ export const toDomainMetricLibrary = (
 };
 
 const toDomainCategoryInfo = (
-  category: MetricCategory,
+  category: MetricCategory | MetricCategoryRow,
 ): MetricLibraryCategoryInfoDomain => {
   return {
     id: category.id,
@@ -125,9 +124,13 @@ const toDomainCategoryInfo = (
 };
 
 type MetricWithAssociations = Metric & {
-  MetricCategory?: MetricCategory | null;
+  MetricCategory?: MetricCategory | MetricCategoryRow | null;
+  category?: MetricCategory | MetricCategoryRow | null;
   MetricSettings?: MetricSettings | null;
+  settings?: MetricSettings | null;
   MetricLogs?: MetricLog[] | null;
+  logs?: MetricLog[] | null;
+  logCount?: number | string;
 };
 
 /**
@@ -139,8 +142,7 @@ export const toExtendedMetricDomain = (
 ): MetricDomainExtended => {
   const domain = toDomainMetric(metric);
 
-  const rawCategory =
-    (metric as any).MetricCategory ?? (metric as any).category ?? null;
+  const rawCategory = metric.MetricCategory ?? metric.category ?? null;
   const categoryDomain = rawCategory
     ? toMetricCategoryDomain(toCategoryRow(rawCategory))
     : null;
@@ -148,13 +150,12 @@ export const toExtendedMetricDomain = (
     ? toCategoryInfo(categoryDomain)
     : null;
 
-  const rawSettings =
-    (metric as any).MetricSettings ?? (metric as any).settings ?? null;
+  const rawSettings = metric.MetricSettings ?? metric.settings ?? null;
   const settingsDomain = rawSettings
     ? toDomainMetricSettings(rawSettings)
     : null;
 
-  const rawLogs = (metric as any).MetricLogs ?? (metric as any).logs ?? null;
+  const rawLogs = metric.MetricLogs ?? metric.logs ?? null;
   const logsDomain = rawLogs ? rawLogs.map(toDomainMetricLog) : null;
 
   return {
@@ -205,7 +206,14 @@ export const toUserMetricDetailResponseDTO = (
   // Map associated
   category: metric.category
     ? toMetricCategoryResponseDTO(
-        toMetricCategoryDomain(toCategoryRow(metric.category as any)),
+        toMetricCategoryDomain(
+          toCategoryRow({
+            id: metric.category.id,
+            name: metric.category.name,
+            icon: metric.category.icon,
+            color: metric.category.color,
+          }),
+        ),
       )
     : null,
   settings: metric.settings

@@ -1,4 +1,4 @@
-import { NextFunction, Response } from "express";
+import { Response } from "express";
 import {
   createMetricSchema,
   deleteMetricSchema,
@@ -39,7 +39,7 @@ export const overrideMetricTrendFeatureForTest = (
 };
 
 export const createMetric = catchAsync(
-  async (req: AuthRequest, res: Response, _next: NextFunction) => {
+  async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
 
     const { body } = pickValidated(createMetricSchema)(req);
@@ -68,7 +68,7 @@ export const createMetric = catchAsync(
 );
 
 export const getUserMetricLibrariesViaCursor = catchAsync(
-  async (req: AuthRequest, res: Response, _next: NextFunction) => {
+  async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
 
     const { query } = pickValidated(getAllMetricsViaCursorSchema)(req);
@@ -99,7 +99,7 @@ export const getUserMetricLibrariesViaCursor = catchAsync(
 );
 
 export const getUserDetailMetricById = catchAsync(
-  async (req: AuthRequest, res: Response, _next: NextFunction) => {
+  async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
 
     const { params, query } = pickValidated(getMetricSchema)(req);
@@ -146,7 +146,7 @@ export const getUserDetailMetricById = catchAsync(
 );
 
 export const updateMetric = catchAsync(
-  async (req: AuthRequest, res: Response, _next: NextFunction) => {
+  async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
 
     const { body, params } = pickValidated(updateMetricSchema)(req);
@@ -162,7 +162,7 @@ export const updateMetric = catchAsync(
 );
 
 export const deleteMetric = catchAsync(
-  async (req: AuthRequest, res: Response, _next: NextFunction) => {
+  async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
 
     const { params } = pickValidated(deleteMetricSchema)(req);
@@ -177,7 +177,7 @@ export const deleteMetric = catchAsync(
 );
 
 export const generateDummyMetrics = catchAsync(
-  async (req: AuthRequest, res: Response, _next: NextFunction) => {
+  async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
     const { body } = pickValidated(generateDummyMetricsSchema)(req);
     const { count } = body;

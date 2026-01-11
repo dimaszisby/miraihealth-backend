@@ -61,11 +61,16 @@ export const toDomainDisplayOptions = (
 ): MetricSettingsDomain["displayOptions"] =>
   normalizeDisplayOptions(settings.displayOptions);
 
+type DisplayOptionsRow =
+  | Partial<MetricSettingsDomain["displayOptions"]>
+  | null
+  | undefined;
+
 const normalizeDisplayOptions = (
-  opts: any = {},
+  opts: DisplayOptionsRow = {},
 ): MetricSettingsDomain["displayOptions"] => ({
-  showOnDashboard: opts.showOnDashboard ?? false,
-  priority: opts.priority ?? 1,
-  chartType: opts.chartType ?? "line",
-  color: opts.color ?? "#E897A3",
+  showOnDashboard: opts?.showOnDashboard ?? false,
+  priority: opts?.priority ?? 1,
+  chartType: opts?.chartType ?? "line",
+  color: opts?.color ?? "#E897A3",
 });

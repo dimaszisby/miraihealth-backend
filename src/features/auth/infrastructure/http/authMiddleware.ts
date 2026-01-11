@@ -50,7 +50,7 @@ export const createAuthMiddleware = (
 
       req.user = toUserDomain(authUser);
       next();
-    } catch (error) {
+    } catch {
       return next(new AppError("Unauthorized: Invalid token", 401));
     }
   };

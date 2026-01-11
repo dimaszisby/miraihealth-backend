@@ -1,4 +1,4 @@
-import { Response, NextFunction } from "express";
+import { Response } from "express";
 import AppError from "@/utils/AppError.js";
 import { successResponse } from "@/utils/response-formatter.js";
 import catchAsync from "@/utils/catch-async.js";
@@ -29,7 +29,7 @@ export const overrideMetricLogFeatureForTest = (feature: MetricLogFeature) => {
 };
 
 export const createMetricLog = catchAsync(
-  async (req: AuthRequest, res: Response, _next: NextFunction) => {
+  async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
 
     const { body } = pickValidated(createMetricLogSchema)(req);

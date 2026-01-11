@@ -13,8 +13,7 @@ export interface UserAttributes extends UserAttributesBase {
   deletedAt?: Date | null;
 }
 
-export interface UserCreationAttributes
-  extends Optional<UserAttributes, "id"> {}
+export type UserCreationAttributes = Optional<UserAttributes, "id">;
 
 export interface UserInstance extends Model<UserAttributes>, UserAttributes {
   validPassword(password: string): Promise<boolean>;

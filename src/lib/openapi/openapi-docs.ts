@@ -1,4 +1,5 @@
 import { OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi";
+import type { ComponentsObject } from "openapi3-ts/oas30";
 import { openApiDocument, registry } from "./openapi-config.js";
 import {
   LoginRequestSchema,
@@ -9,13 +10,11 @@ import {
   MetricCategorySchema,
   CreateMetricCategoryRequestSchema,
   UpdateMetricCategoryRequestSchema,
-  MetricCategoryListResponseSchema,
   MetricCategoryCursorResponseSchema,
   MetricCategoryCursorQueryParamsSchema,
   MetricSchema,
   CreateMetricRequestSchema,
   UpdateMetricRequestSchema,
-  MetricListResponseSchema,
   MetricCursorResponseSchema,
   MetricCursorQueryParamsSchema,
   MetricDetailResponseSchema,
@@ -23,7 +22,6 @@ import {
   MetricLogSchema,
   CreateMetricLogRequestSchema,
   UpdateMetricLogRequestSchema,
-  MetricLogListResponseSchema,
   MetricLogStatsResponseSchema,
   MetricLogCursorResponseSchema,
   MetricLogCursorQueryParamsSchema,
@@ -31,21 +29,15 @@ import {
   CreateMetricSettingsRequestSchema,
   UpdateMetricSettingsRequestSchema,
   UpdateDisplayOptionsRequestSchema,
-  MetricSettingsListResponseSchema,
   MetricSettingsCursorResponseSchema,
   MetricSettingsCursorQueryParamsSchema,
-  TrendDataPointSchema,
   TrendResponseSchema,
-  GetTrendRequestSchema,
   MetricIdQuerySchema,
   MetricIdRequiredQuerySchema,
   VisualizationResponseSchema,
   DashboardVisualizationResponseSchema,
   VisualizationQueryParamsSchema,
   DashboardVisualizationQueryParamsSchema,
-  UuidSchema,
-  ErrorSchema,
-  ValidationErrorSchema,
   SuccessResponseSchema,
 } from "./openapi-schemas.js";
 import {
@@ -1083,29 +1075,29 @@ export const getOpenApiDocumentation = () => {
 
   // Ensure we preserve and merge base components (securitySchemes, responses, etc.)
   // with any components generated from Zod schemas (schemas, parameters, ...).
-  const baseComponents = openApiDocument.components ?? {};
-  const generatedComponents = document.components ?? {};
+  const baseComponents = (openApiDocument.components ?? {}) as ComponentsObject;
+  const generatedComponents = (document.components ?? {}) as ComponentsObject;
 
   document.components = {
     ...baseComponents,
     ...generatedComponents,
     schemas: {
-      ...(baseComponents as any).schemas,
-      ...(generatedComponents as any).schemas,
+      ...(baseComponents.schemas ?? {}),
+      ...(generatedComponents.schemas ?? {}),
     },
     responses: {
-      ...(baseComponents as any).responses,
-      ...(generatedComponents as any).responses,
+      ...(baseComponents.responses ?? {}),
+      ...(generatedComponents.responses ?? {}),
     },
     securitySchemes: {
-      ...(baseComponents as any).securitySchemes,
-      ...(generatedComponents as any).securitySchemes,
+      ...(baseComponents.securitySchemes ?? {}),
+      ...(generatedComponents.securitySchemes ?? {}),
     },
     parameters: {
-      ...(baseComponents as any).parameters,
-      ...(generatedComponents as any).parameters,
+      ...(baseComponents.parameters ?? {}),
+      ...(generatedComponents.parameters ?? {}),
     },
-  };
+  } as ComponentsObject;
 
   return document;
 };

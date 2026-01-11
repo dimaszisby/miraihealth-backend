@@ -2,6 +2,7 @@ import { models } from "@/infrastructure/db/models.js";
 import { validateMetricAccess } from "@/utils/db-helper.js";
 import AppError from "@/utils/AppError.js";
 import { Op } from "sequelize";
+import type { MetricLog } from "@/features/metric-log/infrastructure/persistence/models/metric-log.sequelize.js";
 
 type GetMetricTrendInput = {
   userId: string;
@@ -36,8 +37,10 @@ export async function getMetricTrend({
     attributes: ["createdAt", "logValue"],
   });
 
-  return logs.map((log: any) => ({
-    date: log.createdAt,
-    value: log.logValue,
-  }));
+  return logs.map(
+    (log: MetricLog): MetricTrendPoint => ({
+      date: log.createdAt!,
+      value: log.logValue,
+    }),
+  );
 }

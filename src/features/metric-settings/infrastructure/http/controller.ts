@@ -1,7 +1,6 @@
-import { Request, Response, NextFunction } from "express";
+import { Response } from "express";
 import { buildMetricSettingsFeature } from "../../feature.js";
 import catchAsync from "@/utils/catch-async.js";
-import AppError from "@/utils/AppError.js";
 import { successResponse } from "@/utils/response-formatter.js";
 import { AuthRequest } from "@/types/request.context.js";
 import { assertAuthenticated } from "@/utils/auth-guards.js";
@@ -9,7 +8,6 @@ import {
   toDisplayOptionsResponseDTO,
   toMetricSettingsResponseDTO,
 } from "../mappers/MetricSettingsMapper.js";
-import { DisplayOptionsDTO } from "./dto.js";
 import {
   createMetricSettingsSchema,
   deleteMetricSettingsSchema,

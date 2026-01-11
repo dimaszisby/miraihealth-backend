@@ -6,14 +6,24 @@ import { AuthRequest } from "@/types/request.context.js";
 
 export type KeyGenerator = (req: AuthRequest) => string;
 
+export type CacheMiddlewareOptions = {
+  /** Skip cache middleware in test environments (default: true) */
+  disableInTest?: boolean;
+};
+
 export const cacheMiddleware =
-  (keyGenerator: KeyGenerator, duration: number) =>
+  (
+    keyGenerator: KeyGenerator,
+    duration: number,
+    options: CacheMiddlewareOptions = {},
+  ) =>
   async (
     req: AuthRequest,
     res: Response,
     next: NextFunction,
   ): Promise<void> => {
-    if (env.NODE_ENV === "test") {
+    const disableInTest = options.disableInTest ?? true;
+    if (disableInTest && env.NODE_ENV === "test") {
       return next();
     }
 
@@ -30,7 +40,7 @@ export const cacheMiddleware =
       logger.info(`[CACHE PROCESS] Cache miss for key: ${key}`);
 
       const originalJson = res.json.bind(res);
-      res.json = (data: any) => {
+      res.json = ((data: unknown) => {
         redisClient
           .setEx(key, duration, JSON.stringify(data))
           .then(() =>
@@ -44,7 +54,7 @@ export const cacheMiddleware =
           );
 
         return originalJson(data);
-      };
+      }) as typeof res.json;
 
       next();
     } catch (error) {

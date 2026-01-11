@@ -31,7 +31,16 @@ const firstNonEmpty = (...vals: unknown[]) =>
     | string
     | undefined;
 
-const bool01 = (v: any) => (v === true || v === "true" ? "1" : "0");
+const bool01 = (v: unknown) => (v === true || v === "true" ? "1" : "0");
+
+const asString = (value: unknown): string | undefined =>
+  typeof value === "string" ? value : undefined;
+
+const asStringOrNumber = (value: unknown): string | undefined => {
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return value.toString();
+  return undefined;
+};
 
 const logCacheKey = (req: AuthRequest) =>
   `log:${req.user?.id}:${req.params.id}`;
@@ -40,27 +49,30 @@ const METRIC_LOG_CURSOR_FEATURE = "metric-logs.js";
 const METRIC_LOG_CURSOR_VERSION = 2;
 
 const logsCursorCacheKey = (req: AuthRequest) => {
-  const q = req.query as any;
-  const filter = (q && typeof q.filter === "object" && q.filter) || {};
+  const q = req.query;
+  const filter =
+    (typeof q.filter === "object" && q.filter !== null
+      ? (q.filter as Record<string, unknown>)
+      : undefined) ?? {};
 
   const metricId =
     firstNonEmpty(
-      filter.metricId,
-      q["filter[metricId]"],
-      q.metricId,
+      asString(filter.metricId),
+      asString(q["filter[metricId]"]),
+      asString(q.metricId),
       req.params?.metricId,
     ) ?? "_.js";
 
   const logValueStr =
     firstNonEmpty(
-      String(filter.logValue ?? ""),
-      String(q["filter[logValue]"] ?? ""),
+      asStringOrNumber(filter.logValue),
+      asString(q["filter[logValue]"]),
     ) ?? "_.js";
 
-  const limit = Number(q.limit ?? 20);
-  const sort = String(q.sort ?? "-createdAt");
-  const search = typeof q.q === "string" ? q.q.trim() : ".js";
-  const after = typeof q.after === "string" ? q.after : ".js";
+  const limit = Number(asString(q.limit) ?? 20);
+  const sort = asString(q.sort) ?? "-createdAt";
+  const search = asString(q.q)?.trim() ?? ".js";
+  const after = asString(q.after) ?? ".js";
   const it = bool01(q.includeTotal);
 
   const key = buildCursorCacheKey({

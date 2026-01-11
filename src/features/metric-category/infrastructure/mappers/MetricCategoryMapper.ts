@@ -1,4 +1,3 @@
-import { MetricCategory as MetricCategorySequelize } from "@/features/metric-category/infrastructure/persistence/models/metric-category.sequelize.js";
 import { MetricCategory as MetricCategoryDomain } from "@/features/metric-category/domain/entities/MetricCategory.js";
 import { MetricCategoryResponseDTO } from "@/features/metric-category/infrastructure/http/dto.js";
 

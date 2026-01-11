@@ -25,49 +25,20 @@ import { AuthRequest } from "@/types/request.context.js";
 import { env } from "@/config/envManager.js";
 import { buildCursorCacheKey } from "@/shared/cache/keys.js";
 
-const metricsCacheKey = (req: AuthRequest) => {
-  const q = req.query as Record<string, unknown>;
-  const allow = [
-    "page",
-    "limit",
-    "sortBy",
-    "sortOrder",
-    "q",
-    "name",
-    "categoryId",
-    "isPublic",
-  ] as const;
-
-  const picked: Record<string, unknown> = {};
-  for (const k of allow) {
-    if (q[k] !== undefined && q[k] !== null && q[k] !== "") picked[k] = q[k];
-  }
-
-  if (picked.page === undefined) picked.page = 1;
-  if (picked.limit === undefined) picked.limit = 20;
-  if (picked.sortBy === undefined) picked.sortBy = "createdAt";
-  if (picked.sortOrder === undefined) picked.sortOrder = "DESC";
-
-  const stable = Object.keys(picked)
-    .sort()
-    .map((k) => `${k}:${String(picked[k])}`)
-    .join("|");
-
-  return `metrics:${req.user?.id}:${stable}`;
-};
+const asString = (value: unknown): string | undefined =>
+  typeof value === "string" ? value : undefined;
 
 const METRIC_CURSOR_FEATURE = "metrics";
 const METRIC_CURSOR_VERSION = 1;
 
 const metricsCursorCacheKey = (req: AuthRequest) => {
-  const query = req.query as any;
-  const limit = Number(query.limit ?? 20);
-  const sort = String(query.sort ?? "-createdAt");
-  const search = typeof query.q === "string" ? query.q : "";
-  const fname = (query["filter[name]"] as string) ?? "";
-  const fcat = (query["filter[categoryId]"] as string) ?? "";
-  const after = typeof query.after === "string" ? query.after : "";
-  const includeTotal = String(query.includeTotal ?? "false");
+  const limit = Number(asString(req.query.limit) ?? 20);
+  const sort = asString(req.query.sort) ?? "-createdAt";
+  const search = asString(req.query.q) ?? "";
+  const fname = asString(req.query["filter[name]"]) ?? "";
+  const fcat = asString(req.query["filter[categoryId]"]) ?? "";
+  const after = asString(req.query.after) ?? "";
+  const includeTotal = asString(req.query.includeTotal) ?? "false";
 
   return buildCursorCacheKey({
     feature: METRIC_CURSOR_FEATURE,
@@ -86,9 +57,12 @@ const metricsCursorCacheKey = (req: AuthRequest) => {
 };
 
 const metricCacheKey = (req: AuthRequest) => {
-  const includeRaw = String((req.query as any)?.include ?? "flat");
-  const logsLimit = Number((req.query as any)?.logsLimit ?? 20);
+  const includeRaw = asString(req.query.include) ?? "flat";
+  const logsLimit = Number(asString(req.query.logsLimit) ?? 20);
   const allowed = ["settings", "category", "logs"] as const;
+
+  const isAllowedInclude = (value: string): value is (typeof allowed)[number] =>
+    allowed.includes(value as (typeof allowed)[number]);
 
   let includeNormalized = "flat";
   if (includeRaw === "full") {
@@ -97,7 +71,7 @@ const metricCacheKey = (req: AuthRequest) => {
     includeNormalized = includeRaw
       .split(",")
       .map((s) => s.trim())
-      .filter((s): s is (typeof allowed)[number] => allowed.includes(s as any))
+      .filter((s): s is (typeof allowed)[number] => isAllowedInclude(s))
       .sort()
       .join(",");
     if (!includeNormalized) includeNormalized = "flat";
@@ -141,11 +115,7 @@ export const createMetricRouter = () => {
   );
 
   const trendParams = { params: z.object({ metricId: z.string().uuid() }) };
-  router.get(
-    "/:metricId/trends",
-    validate(trendParams as any),
-    handleMetricTrend,
-  );
+  router.get("/:metricId/trends", validate(trendParams), handleMetricTrend);
 
   if (env.ENABLE_DUMMY_ENDPOINTS) {
     router.post(

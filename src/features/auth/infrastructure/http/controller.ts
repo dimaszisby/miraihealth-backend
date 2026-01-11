@@ -1,8 +1,7 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import { successResponse } from "@/utils/response-formatter.js";
 import catchAsync from "@/utils/catch-async.js";
 import { toUserResponseDTO } from "../../infrastructure/mappers/UserMapper.js";
-import AppError from "@/utils/AppError.js";
 import { buildAuthFeature } from "../../feature.js";
 import { AuthRequest } from "@/types/request.context.js";
 import { assertAuthenticated } from "@/utils/auth-guards.js";

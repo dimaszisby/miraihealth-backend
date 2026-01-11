@@ -1,4 +1,3 @@
-// src/types/request.context.ts
 import { Request } from "express";
 import { UserDomain } from "@/types/domain/user.domain.js";
 

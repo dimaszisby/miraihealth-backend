@@ -20,7 +20,8 @@ import {
   toDomain,
 } from "../../mappers/MetricCategoryMapper.js";
 
-const METRIC_COUNT_SQL = `(SELECT COUNT(*) FROM "metrics" m WHERE m."category_id" = "MetricCategory"."id" AND m."deleted_at" IS NULL)`;
+const METRIC_COUNT_SQL =
+  '(SELECT COUNT(*) FROM "metrics" m WHERE m."category_id" = "MetricCategory"."id" AND m."deleted_at" IS NULL)';
 
 const baseAttrs = (): FindAttributeOptions => {
   const metricCount: ProjectionAlias = [
@@ -184,7 +185,7 @@ function buildWhere(
   filter?: { name?: string },
 ): WhereOptions {
   const like = (v: string) => ({ [Op.iLike]: `%${v}%` });
-  const and: any[] = [{ userId }, { deletedAt: null }];
+  const and: Array<Record<string, unknown>> = [{ userId }, { deletedAt: null }];
   if (q) and.push({ name: like(q) });
   if (filter?.name) and.push({ name: like(filter.name) });
   return { [Op.and]: and };

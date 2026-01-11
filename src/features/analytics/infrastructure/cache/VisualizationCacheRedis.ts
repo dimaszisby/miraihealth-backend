@@ -5,34 +5,43 @@ import {
   SingleVizCacheKey,
   DashboardVizCacheKey,
 } from "../../application/ports/VisualizationCachePort.js";
+import type { VizResponse } from "../../domain/types.js";
+import type { DashboardVizResponse } from "../../application/ports/VisualizationReadRepository.js";
 
 const TTL = Number(process.env.VIZ_DEFAULT_TTL_SEC ?? 120);
 
 export class VisualizationCacheRedis implements VisualizationCachePort {
-  async getSingleVisualization(params: SingleVizCacheKey) {
+  async getSingleVisualization(
+    params: SingleVizCacheKey,
+  ): Promise<VizResponse | null> {
     if (!redisClient.isOpen) return null;
     const key = vizKey(params);
     const json = await redisClient.get(key);
-    return json ? (JSON.parse(json) as any) : null;
+    return json ? (JSON.parse(json) as VizResponse) : null;
   }
 
-  async setSingleVisualization(params: SingleVizCacheKey, value: unknown) {
+  async setSingleVisualization(
+    params: SingleVizCacheKey,
+    value: VizResponse,
+  ): Promise<void> {
     if (!redisClient.isOpen) return;
     const key = vizKey(params);
     await redisClient.set(key, JSON.stringify(value), { EX: TTL });
   }
 
-  async getDashboardVisualization(params: DashboardVizCacheKey) {
+  async getDashboardVisualization(
+    params: DashboardVizCacheKey,
+  ): Promise<DashboardVizResponse | null> {
     if (!redisClient.isOpen) return null;
     const key = vizDashKey(params);
     const json = await redisClient.get(key);
-    return json ? (JSON.parse(json) as any) : null;
+    return json ? (JSON.parse(json) as DashboardVizResponse) : null;
   }
 
   async setDashboardVisualization(
     params: DashboardVizCacheKey,
-    value: unknown,
-  ) {
+    value: DashboardVizResponse,
+  ): Promise<void> {
     if (!redisClient.isOpen) return;
     const key = vizDashKey(params);
     await redisClient.set(key, JSON.stringify(value), { EX: TTL });

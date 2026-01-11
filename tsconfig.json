@@ -37,7 +37,8 @@
     "jest.setup.ts",
     "jest.setup.unit.ts",
     "jest.config.mjs",
-    "scripts/**/*.cjs"
+    "scripts/**/*.cjs",
+    "scripts/**/*.ts"
   ],
   "exclude": ["node_modules", "dist"]
 }
