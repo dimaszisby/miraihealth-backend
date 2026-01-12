@@ -11,10 +11,9 @@ import type {
   DashboardVizItem,
 } from "@/features/analytics/domain/types.js";
 import {
-  createMetricLogRow,
-  createMetricRow,
-  createMetricSettingsRow,
   createUserRow,
+  seedDashboardMetric,
+  seedMetricWithLogs,
   truncateAllTables,
 } from "../../helpers/db-fixtures.js";
 
@@ -76,26 +75,24 @@ describe("VisualizationReadRepoSequelize (integration)", () => {
 
   // Developer note: happy-path single-metric visualization fetch covering SQL + cache hydration.
   it("fetches single metric visualization with averages and caches subsequent calls", async () => {
-    const user = await createUserRow();
-    const metric = await createMetricRow({
-      userId: user.id,
-      defaultUnit: "km",
-    });
-
-    await createMetricLogRow({
-      metricId: metric.id,
-      logValue: 5,
-      loggedAt: new Date("2025-03-01T00:00:00Z"),
-    });
-    await createMetricLogRow({
-      metricId: metric.id,
-      logValue: 10,
-      loggedAt: new Date("2025-03-02T00:00:00Z"),
-    });
-    await createMetricLogRow({
-      metricId: metric.id,
-      logValue: 15,
-      loggedAt: new Date("2025-03-03T00:00:00Z"),
+    const { user, metric } = await seedMetricWithLogs({
+      metricOverrides: {
+        defaultUnit: "km",
+      },
+      logs: [
+        {
+          logValue: 5,
+          loggedAt: new Date("2025-03-01T00:00:00Z"),
+        },
+        {
+          logValue: 10,
+          loggedAt: new Date("2025-03-02T00:00:00Z"),
+        },
+        {
+          logValue: 15,
+          loggedAt: new Date("2025-03-03T00:00:00Z"),
+        },
+      ],
     });
 
     const startISO = "2025-03-01T00:00:00Z";
@@ -135,36 +132,41 @@ describe("VisualizationReadRepoSequelize (integration)", () => {
 
   it("builds dashboard visualization lists for display-ready metrics and caches them", async () => {
     const user = await createUserRow();
-    const metricA = await createMetricRow({ userId: user.id, name: "Run" });
-    const metricB = await createMetricRow({ userId: user.id, name: "Lift" });
-    await createMetricSettingsRow({
-      metricId: metricA.id,
-      displayOptions: {
-        showOnDashboard: true,
-        priority: 1,
-        chartType: "line",
-        color: "#111111",
+    const metricASeed = await seedDashboardMetric({
+      user,
+      metricOverrides: { name: "Run" },
+      settingsOverrides: {
+        displayOptions: {
+          showOnDashboard: true,
+          priority: 1,
+          chartType: "line",
+          color: "#111111",
+        },
       },
+      logs: [
+        {
+          logValue: 30,
+          loggedAt: new Date("2025-04-10T00:00:00Z"),
+        },
+      ],
     });
-    await createMetricSettingsRow({
-      metricId: metricB.id,
-      displayOptions: {
-        showOnDashboard: true,
-        priority: 2,
-        chartType: "bar",
-        color: "#222222",
+    const metricBSeed = await seedDashboardMetric({
+      user,
+      metricOverrides: { name: "Lift" },
+      settingsOverrides: {
+        displayOptions: {
+          showOnDashboard: true,
+          priority: 2,
+          chartType: "bar",
+          color: "#222222",
+        },
       },
-    });
-
-    await createMetricLogRow({
-      metricId: metricA.id,
-      logValue: 30,
-      loggedAt: new Date("2025-04-10T00:00:00Z"),
-    });
-    await createMetricLogRow({
-      metricId: metricB.id,
-      logValue: 60,
-      loggedAt: new Date("2025-04-11T00:00:00Z"),
+      logs: [
+        {
+          logValue: 60,
+          loggedAt: new Date("2025-04-11T00:00:00Z"),
+        },
+      ],
     });
 
     const params = {
@@ -182,7 +184,9 @@ describe("VisualizationReadRepoSequelize (integration)", () => {
     const metricIds = first.items
       .map((item: DashboardVizItem) => item.metricId)
       .sort();
-    expect(metricIds).toEqual([metricA.id, metricB.id].sort());
+    expect(metricIds).toEqual(
+      [metricASeed.metric.id, metricBSeed.metric.id].sort(),
+    );
     expect(first.meta.count).toBe(2);
     expect(first.sync.etagSeed).toBeDefined();
     expect(

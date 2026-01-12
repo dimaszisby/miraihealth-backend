@@ -71,6 +71,10 @@ const envSchema = z.object({
     .string()
     .transform((val) => val === "true") // Convert string to boolean
     .default(process.env.NODE_ENV === "test" ? "false" : "true"),
+  ENABLE_REDIS_INTEGRATION: z
+    .string()
+    .transform((val) => val === "true")
+    .default("false"),
   RATE_LIMIT_GLOBAL_MAX: z
     .string()
     .transform((val) => {

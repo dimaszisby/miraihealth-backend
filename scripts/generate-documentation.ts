@@ -1,14 +1,13 @@
-// scripts/generate-documentation.ts
-
 import * as fs from "fs";
 import * as path from "path";
 
 import { fileURLToPath } from "url";
+import logger from "../src/utils/logger.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const srcDir = path.join(__dirname, "../src");
+// const srcDir = path.join(__dirname, "../src");
 const typesDir = path.join(__dirname, "../src/types");
 const outputDir = path.join(__dirname, "../documents");
 const outputFile = path.join(outputDir, "backend-documentation.md");
@@ -39,9 +38,9 @@ async function generateDocumentation() {
       /\*\n \* @property {(.*)} (.*) - (.*)\n \*/g,
     );
     if (fieldsMatch) {
-      documentation += `### Fields\n\n`;
-      documentation += `| Name | Type | Description |\n`;
-      documentation += `|---|---|---|\n`;
+      documentation += "### Fields\n\n";
+      documentation += "| Name | Type | Description |\n";
+      documentation += "|---|---|---|\n";
       fieldsMatch.forEach((field) => {
         const parts = field.match(/\*\n \* @property {(.*)} (.*) - (.*)\n \*/);
         if (parts && parts.length === 4) {
@@ -53,15 +52,15 @@ async function generateDocumentation() {
       });
     }
 
-    documentation += `### Example\n\n`;
-    documentation += `\`\`\`json\n`;
-    documentation += `{\n  // Example JSON for this data type\n}\n`;
-    documentation += `\`\`\`\n\n`;
+    documentation += "### Example\n\n";
+    documentation += "```json\n";
+    documentation += "{\n  // Example JSON for this data type\n}\n";
+    documentation += "```\n\n";
 
-    documentation += `### Data Mapping\n\n`;
-    documentation += `- **Input Data Type:**  \n`;
-    documentation += `- **Output Data Type:**  \n`;
-    documentation += `- **Mapping Description:**  \n\n`;
+    documentation += "### Data Mapping\n\n";
+    documentation += "- **Input Data Type:**  \n";
+    documentation += "- **Output Data Type:**  \n";
+    documentation += "- **Mapping Description:**  \n\n";
 
     documentation += "```typescript\n";
     documentation += fileContent;
@@ -86,7 +85,9 @@ async function generateDocumentation() {
   await readDirectory(typesDir);
 
   fs.writeFileSync(outputFile, documentation);
-  console.log(`Documentation generated at ${outputFile}`);
+  logger.info(`Documentation generated at ${outputFile}`);
 }
 
-generateDocumentation().catch(console.error);
+generateDocumentation().catch((error) =>
+  logger.error("[DOCS] Documentation generation failed", error),
+);

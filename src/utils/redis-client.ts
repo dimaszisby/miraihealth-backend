@@ -17,6 +17,7 @@ const redisConfig = {
 const redisClient: RedisClientType = createClient(redisConfig);
 
 const isTestEnv = env.NODE_ENV === "test";
+const redisIntegrationEnabled = env.ENABLE_REDIS_INTEGRATION;
 
 // Gracefully handle Redis errors
 redisClient.on("error", (err: Error) => {
@@ -35,11 +36,15 @@ redisClient.on("end", () => logger.warn("[REDIS] Redis connection closed."));
 // Ensure connection before exporting
 const connectRedis = async () => {
   try {
-    const shouldConnect = !isTestEnv;
+    const shouldConnect = !isTestEnv || redisIntegrationEnabled;
 
     if (shouldConnect) {
       await redisClient.connect();
-      logger.info("[REDIS] Redis connection established.");
+      logger.info(
+        `[REDIS] Redis connection established${
+          redisIntegrationEnabled && isTestEnv ? " (tests opted in)" : ""
+        }.`,
+      );
     } else {
       logger.info("[REDIS] Skipping Redis connection in test environment.");
     }

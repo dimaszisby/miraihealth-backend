@@ -32,10 +32,10 @@ export default {
   coverageDirectory: "<rootDir>/coverage/jest",
   coverageThreshold: {
     global: {
-      statements: 0,
-      branches: 0,
-      functions: 0,
-      lines: 0,
+      statements: 60,
+      branches: 40,
+      functions: 55,
+      lines: 60,
     },
   },
   reporters: [
@@ -45,6 +45,16 @@ export default {
       {
         failuresOnly: false,
         showPassed: false,
+      },
+    ],
+    [
+      "jest-junit",
+      {
+        outputDirectory: "<rootDir>/coverage/junit",
+        outputName: "unit.xml",
+        ancestorSeparator: " > ",
+        classNameTemplate: "{filepath}",
+        titleTemplate: "{classname} {title}",
       },
     ],
   ],

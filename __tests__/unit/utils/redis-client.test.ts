@@ -59,6 +59,7 @@ jest.mock("@/config/envManager.js", () => ({
     REDIS_PORT: "6379",
     REDIS_PASSWORD: undefined,
     REDIS_REQUIRED: false,
+    ENABLE_REDIS_INTEGRATION: false,
   },
 }));
 
@@ -69,6 +70,7 @@ const { env: envMock } = jest.requireMock("@/config/envManager.js") as {
     REDIS_PORT: string;
     REDIS_PASSWORD?: string;
     REDIS_REQUIRED: boolean;
+    ENABLE_REDIS_INTEGRATION: boolean;
   };
 };
 

@@ -8,7 +8,7 @@ import { Metric } from "@/features/metric/domain/entities/Metric.js";
 const uniqueSuffix = () =>
   `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-type UserOverrides = Partial<{
+export type UserOverrides = Partial<{
   id: string;
   email: string;
   username: string;
@@ -28,14 +28,16 @@ export async function createUserRow(overrides: UserOverrides = {}) {
   });
 }
 
+export type MetricCategoryOverrides = Partial<{
+  id: string;
+  name: string;
+  color: string;
+  icon: string;
+}>;
+
 export async function createMetricCategoryRow(
   userId: string,
-  overrides: Partial<{
-    id: string;
-    name: string;
-    color: string;
-    icon: string;
-  }> = {},
+  overrides: MetricCategoryOverrides = {},
 ) {
   return models.MetricCategory.create({
     id: overrides.id ?? randomUUID(),
@@ -103,7 +105,7 @@ export async function truncateAllTables() {
   }
 }
 
-type MetricRowOverrides = Partial<{
+export type MetricRowOverrides = Partial<{
   id: string;
   userId: string;
   categoryId: string | null;
@@ -132,21 +134,23 @@ export async function createMetricRow(data: MetricRowOverrides = {}) {
   });
 }
 
+export type MetricSettingsRowOverrides = Partial<{
+  id: string;
+  metricId: string;
+  goalEnabled: boolean;
+  goalType: "cumulative" | "incremental" | null;
+  goalValue: number | null;
+  timeFrameEnabled: boolean;
+  startDate: Date | null;
+  deadlineDate: Date | null;
+  alertEnabled: boolean;
+  alertThresholds: number | null;
+  isActive: boolean;
+  displayOptions: MetricDisplayOptions;
+}>;
+
 export async function createMetricSettingsRow(
-  overrides: Partial<{
-    id: string;
-    metricId: string;
-    goalEnabled: boolean;
-    goalType: "cumulative" | "incremental" | null;
-    goalValue: number | null;
-    timeFrameEnabled: boolean;
-    startDate: Date | null;
-    deadlineDate: Date | null;
-    alertEnabled: boolean;
-    alertThresholds: number | null;
-    isActive: boolean;
-    displayOptions: MetricDisplayOptions;
-  }> = {},
+  overrides: MetricSettingsRowOverrides = {},
 ) {
   return models.MetricSettings.create({
     id: overrides.id ?? randomUUID(),
@@ -170,14 +174,16 @@ export async function createMetricSettingsRow(
   });
 }
 
+export type MetricLogRowOverrides = Partial<{
+  id: string;
+  metricId: string;
+  logValue: number;
+  type: "manual" | "automatic";
+  loggedAt: Date;
+}>;
+
 export async function createMetricLogRow(
-  overrides: Partial<{
-    id: string;
-    metricId: string;
-    logValue: number;
-    type: "manual" | "automatic";
-    loggedAt: Date;
-  }> = {},
+  overrides: MetricLogRowOverrides = {},
 ) {
   return models.MetricLog.create({
     id: overrides.id ?? randomUUID(),
@@ -186,4 +192,76 @@ export async function createMetricLogRow(
     type: overrides.type ?? "manual",
     loggedAt: overrides.loggedAt ?? new Date(),
   });
+}
+
+type CreatedUser = Awaited<ReturnType<typeof createUserRow>>;
+type CreatedCategory = Awaited<ReturnType<typeof createMetricCategoryRow>>;
+
+export async function createUserWithCategory(
+  userOverrides: UserOverrides = {},
+  categoryOverrides: MetricCategoryOverrides = {},
+) {
+  const user = await createUserRow(userOverrides);
+  const category = await createMetricCategoryRow(user.id, categoryOverrides);
+  return { user, category };
+}
+
+type SeedMetricWithLogsOptions = {
+  user?: CreatedUser;
+  userOverrides?: UserOverrides;
+  categoryOverrides?: MetricCategoryOverrides;
+  metricOverrides?: MetricRowOverrides;
+  logs?: MetricLogRowOverrides[];
+};
+
+export async function seedMetricWithLogs(
+  options: SeedMetricWithLogsOptions = {},
+) {
+  const user = options.user ?? (await createUserRow(options.userOverrides));
+  const category = options.categoryOverrides
+    ? await createMetricCategoryRow(user.id, options.categoryOverrides)
+    : null;
+
+  const metricOverrides = options.metricOverrides ?? {};
+  const metricPayload: MetricRowOverrides = {
+    ...metricOverrides,
+    userId: user.id,
+  };
+
+  const hasCategoryOverride =
+    metricOverrides &&
+    Object.prototype.hasOwnProperty.call(metricOverrides, "categoryId");
+
+  if (!hasCategoryOverride && category) {
+    metricPayload.categoryId = category.id;
+  }
+
+  const metric = await createMetricRow(metricPayload);
+
+  const logs = [];
+  for (const logOverrides of options.logs ?? []) {
+    logs.push(
+      await createMetricLogRow({
+        metricId: metric.id,
+        ...logOverrides,
+      }),
+    );
+  }
+
+  return { user, metric, logs, category };
+}
+
+type SeedDashboardMetricOptions = SeedMetricWithLogsOptions & {
+  settingsOverrides?: MetricSettingsRowOverrides;
+};
+
+export async function seedDashboardMetric(
+  options: SeedDashboardMetricOptions = {},
+) {
+  const seed = await seedMetricWithLogs(options);
+  await createMetricSettingsRow({
+    metricId: seed.metric.id,
+    ...options.settingsOverrides,
+  });
+  return seed;
 }
