@@ -259,9 +259,74 @@ export async function seedDashboardMetric(
   options: SeedDashboardMetricOptions = {},
 ) {
   const seed = await seedMetricWithLogs(options);
-  await createMetricSettingsRow({
+  const settings = await createMetricSettingsRow({
     metricId: seed.metric.id,
     ...options.settingsOverrides,
   });
-  return seed;
+  return { ...seed, settings };
+}
+
+type DashboardMetricSeed = {
+  metricOverrides?: MetricRowOverrides;
+  settingsOverrides?: MetricSettingsRowOverrides;
+  logs?: MetricLogRowOverrides[];
+  categoryOverrides?: MetricCategoryOverrides;
+};
+
+type SeedDashboardWithMetricsOptions = {
+  userOverrides?: UserOverrides;
+  metrics?: DashboardMetricSeed[];
+};
+
+export async function seedDashboardWithMetrics(
+  options: SeedDashboardWithMetricsOptions = {},
+) {
+  const user = await createUserRow(options.userOverrides);
+  const metricsToSeed = options.metrics ?? [
+    {
+      metricOverrides: { name: "DashboardMetricA" },
+      logs: [
+        {
+          logValue: 10,
+          loggedAt: new Date("2025-05-01T00:00:00Z"),
+        },
+        {
+          logValue: 15,
+          loggedAt: new Date("2025-05-02T00:00:00Z"),
+        },
+      ],
+    },
+    {
+      metricOverrides: { name: "DashboardMetricB" },
+      logs: [
+        {
+          logValue: 20,
+          loggedAt: new Date("2025-05-03T00:00:00Z"),
+        },
+      ],
+      settingsOverrides: {
+        displayOptions: {
+          showOnDashboard: true,
+          priority: 2,
+          chartType: "bar",
+          color: "#333333",
+        },
+      },
+    },
+  ];
+
+  const metrics = [];
+  for (const spec of metricsToSeed) {
+    metrics.push(
+      await seedDashboardMetric({
+        user,
+        metricOverrides: spec.metricOverrides,
+        settingsOverrides: spec.settingsOverrides,
+        logs: spec.logs,
+        categoryOverrides: spec.categoryOverrides,
+      }),
+    );
+  }
+
+  return { user, metrics };
 }

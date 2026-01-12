@@ -40,7 +40,7 @@ export class CreateMetricLog {
     if (await this.repo.existsAtTimestamp(metricId, timestamp)) {
       throw new AppError(
         "A log entry already exists for this timestamp for this metric",
-        400,
+        409,
       );
     }
 

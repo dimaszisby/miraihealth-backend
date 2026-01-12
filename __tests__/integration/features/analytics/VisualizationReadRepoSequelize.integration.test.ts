@@ -13,6 +13,7 @@ import type {
 import {
   createUserRow,
   seedDashboardMetric,
+  seedDashboardWithMetrics,
   seedMetricWithLogs,
   truncateAllTables,
 } from "../../helpers/db-fixtures.js";
@@ -131,40 +132,44 @@ describe("VisualizationReadRepoSequelize (integration)", () => {
   });
 
   it("builds dashboard visualization lists for display-ready metrics and caches them", async () => {
-    const user = await createUserRow();
-    const metricASeed = await seedDashboardMetric({
+    const {
       user,
-      metricOverrides: { name: "Run" },
-      settingsOverrides: {
-        displayOptions: {
-          showOnDashboard: true,
-          priority: 1,
-          chartType: "line",
-          color: "#111111",
-        },
-      },
-      logs: [
+      metrics: [metricASeed, metricBSeed],
+    } = await seedDashboardWithMetrics({
+      metrics: [
         {
-          logValue: 30,
-          loggedAt: new Date("2025-04-10T00:00:00Z"),
+          metricOverrides: { name: "Run" },
+          settingsOverrides: {
+            displayOptions: {
+              showOnDashboard: true,
+              priority: 1,
+              chartType: "line",
+              color: "#111111",
+            },
+          },
+          logs: [
+            {
+              logValue: 30,
+              loggedAt: new Date("2025-04-10T00:00:00Z"),
+            },
+          ],
         },
-      ],
-    });
-    const metricBSeed = await seedDashboardMetric({
-      user,
-      metricOverrides: { name: "Lift" },
-      settingsOverrides: {
-        displayOptions: {
-          showOnDashboard: true,
-          priority: 2,
-          chartType: "bar",
-          color: "#222222",
-        },
-      },
-      logs: [
         {
-          logValue: 60,
-          loggedAt: new Date("2025-04-11T00:00:00Z"),
+          metricOverrides: { name: "Lift" },
+          settingsOverrides: {
+            displayOptions: {
+              showOnDashboard: true,
+              priority: 2,
+              chartType: "bar",
+              color: "#222222",
+            },
+          },
+          logs: [
+            {
+              logValue: 60,
+              loggedAt: new Date("2025-04-11T00:00:00Z"),
+            },
+          ],
         },
       ],
     });

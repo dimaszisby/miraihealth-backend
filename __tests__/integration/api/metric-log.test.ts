@@ -112,8 +112,32 @@ describe("Metric Log API", () => {
       .set("Authorization", authHeader(token))
       .send({ metricId, logValue: 12, loggedAt, type: "manual" });
 
-    expect(res.status).toBe(400);
-    expect(res.body.status).toBe("fail");
+    expect(res.status).toBe(409);
+    expect(res.body.message).toMatch(/already exists/i);
+  });
+
+  it("blocks log updates that collide on timestamps", async () => {
+    const loggedAt = "2025-03-01T00:00:00.000Z";
+    const { log: existing } = await createMetricLog(token, metricId, {
+      loggedAt,
+      logValue: 33,
+    });
+    const { log: toUpdate } = await createMetricLog(token, metricId, {
+      logValue: 99,
+    });
+
+    const res = await api
+      .put(`/api/v1/metric-logs/${toUpdate.id}`)
+      .set("Authorization", authHeader(token))
+      .send({ loggedAt });
+
+    expect(res.status).toBe(409);
+    expect(res.body.message).toMatch(/already exists/i);
+    const followUp = await api
+      .get(`/api/v1/metric-logs/${existing.id}`)
+      .set("Authorization", authHeader(token))
+      .query({ metricId });
+    expect(followUp.status).toBe(200);
   });
 
   it("blocks unauthorized creation", async () => {

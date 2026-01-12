@@ -41,7 +41,7 @@ export class UpdateMetricLog {
       if (await this.repo.existsAtTimestamp(log.metricId, timestamp, log.id)) {
         throw new AppError(
           "A log entry already exists for this timestamp for this metric",
-          400,
+          409,
         );
       }
       log.setLoggedAt(timestamp);
