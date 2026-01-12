@@ -100,8 +100,8 @@ Success is measured by:
 - **Cache-Control policy:** `handleGetDashboardVisualization` emits `Cache-Control: private, max-age=<VIZ_CACHE_MAX_AGE_SEC>, stale-while-revalidate=<VIZ_CACHE_STALE_SEC>` to align with the five-minute React Query caching strategy.
 - **Validation doc:** `documents/features/analytics/dashboard-etag-validation.md` outlines curl-based steps QA can execute to confirm 200→304 flows and metadata invalidation.
 
-- **Unit coverage:** `__tests__/analytics/fallback-range.test.ts` locks expected behavior for `computeFallbackRange` (null guard, bucket coarsening, guard clamping).
-- **Service integration tests:** `__tests__/analytics/dashboard-visualization.service.test.ts` stubs Sequelize + cache layers to validate lifecycle metadata, fallback orchestration, and `sync.etagSeed` changes when metadata timestamps update.
+- **Unit coverage:** `__tests__/unit/features/analytics/domain/fallback-range.test.ts` locks expected behavior for `computeFallbackRange` (null guard, bucket coarsening, guard clamping).
+- **Service integration tests:** `__tests__/unit/features/analytics/application/GetDashboardVisualization.service.test.ts` stubs Sequelize + cache layers to validate lifecycle metadata, fallback orchestration, and `sync.etagSeed` changes when metadata timestamps update.
 - **Manual validation:** `documents/features/analytics/dashboard-etag-validation.md` captures curl-based steps for QA to exercise 200→304 flows and fallback logging until automated HTTP tests are added.
 - **OpenAPI refresh:** `documents/openapi/lakira-backend-openapi.json` regenerated via `npm run docs:openapi:generate`, ensuring the published spec reflects the v2 dashboard contract.
 - **Remaining work:** extend suite with OpenAPI regression tests (Schemathesis) once backend endpoint is deployed to a test DB.

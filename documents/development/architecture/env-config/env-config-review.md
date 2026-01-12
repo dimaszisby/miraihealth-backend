@@ -11,8 +11,8 @@
 2. `src/config/zodEnv.ts` imports `loadEnv`, builds a comprehensive `z.object` schema, and parses `process.env` into a typed `env` export.
 3. `src/config/config.cjs` (Sequelize CLI format) imports the compiled `dist/config/envManager.js`, ensuring the CLI path shares the same validated env object as runtime consumers.
 4. Runtime modules import the generated configuration or reuse the `env` export for feature toggles, rate limits, Redis, etc.
-5. Test suites can wrap overrides with `withTestEnv` (`src/tests/env-test-utils.ts`), which snapshots `process.env`, resets the cache, and restores values; lints enforce using this helper instead of mutating `process.env` directly.
-6. Legacy suites still need migration to the helper; a follow-up ticket (TKT-005A) tracks cleaning up those tests (see `legacy-test-cleanup.md`) so the lint guardrail can run cleanly in CI now that Jest globals are registered in ESLint overrides.
+5. Test suites can wrap overrides with `withTestEnv` (`src/tests/env-test-utils.ts`), which snapshots `process.env`, resets the cache, and restores values; as of 2026-01-05 the ESLint override (`no-restricted-properties`) enforces using this helper instead of mutating `process.env` directly.
+6. Legacy suites still need documentation/formatting polish while adopting the helper; a follow-up ticket (TKT-005A) tracks ongoing cleanup (see `legacy-test-cleanup.md`), but CI now fails fast if any test attempts to touch `process.env`.
 
 ## Strengths
 

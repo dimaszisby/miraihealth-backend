@@ -37,8 +37,8 @@ Use this checklist to drive the backend implementation of the dashboard overhaul
 
 ## 6. Testing & Validation
 
-- [x] Add unit tests for fallback bucket/range selection utilities (`__tests__/analytics/fallback-range.test.ts`).
-- [x] Add integration tests covering: lifecycle metadata presence, fallback path, pagination metadata, ETag change on metadata update (`__tests__/analytics/dashboard-visualization.service.test.ts`).
+- [x] Add unit tests for fallback bucket/range selection utilities (`__tests__/unit/features/analytics/domain/fallback-range.test.ts`).
+- [x] Add integration tests covering: lifecycle metadata presence, fallback path, pagination metadata, ETag change on metadata update (`__tests__/unit/features/analytics/application/GetDashboardVisualization.service.test.ts`).
 - [ ] Regenerate OpenAPI docs and run contract tests (Schemathesis/Postman) against the updated schema.
 
 ### Testing Commands Reference

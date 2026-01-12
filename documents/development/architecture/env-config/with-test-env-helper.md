@@ -30,7 +30,7 @@ The helper snapshots existing values, applies overrides, clears the cached env (
 
 ## Lint Enforcement
 
-All files under `__tests__/` are prevented from touching `process.env` directly via `no-restricted-properties`. Use `withTestEnv` (or application-level getters such as `getEnv`) to interact with configuration in tests.
+All files under `__tests__/` are prevented from touching `process.env` directly via the ESLint `no-restricted-properties` override (enforced January 5 2026). Use `withTestEnv` (or application-level getters such as `getEnv`) to interact with configuration in tests, and run `npm run lint:tests` (or `npx eslint "__tests__/**/*.{ts,js}"`) to verify the guardrail stays green.
 
 ## Best Practices
 

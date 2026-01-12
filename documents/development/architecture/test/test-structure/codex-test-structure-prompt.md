@@ -22,7 +22,7 @@ You can paste the text below directly into Codex.
 > - Any Jest/Vitest config and `package.json` scripts for testing
 > - The current test tree under `__tests__/` and relevant `src/features/**` code
 >
-> **High-level goal**
+> _Update (2026-01-09): The legacy `__tests__/analytics/**` folder referenced in older docs has now been merged into `__tests__/unit/features/analytics/**`. Treat any remaining mentions as historical context._ > **High-level goal**
 >
 > - Validate and refine the plan in `test-structure-concern.md` using real repo context.
 > - Classify every existing test file by type (unit vs integration).
@@ -38,7 +38,7 @@ You can paste the text below directly into Codex.
 > 1. Read `documents/tests/test-structure-concern.md` carefully.
 > 2. Compare the **test type definitions** in Section 3 (static, unit, integration, contract) with how tests are actually written in the repo:
 >    - Look at `__tests__/` tree and representative test files in:
->      - `__tests__/analytics/**`
+>      - `__tests__/unit/features/analytics/**` (legacy references may still mention `__tests__/analytics/**`)
 >      - `__tests__/docs/swagger.test.ts`
 >      - `__tests__/features/**`
 >      - Root `__tests__/*.test.ts`
@@ -92,11 +92,11 @@ You can paste the text below directly into Codex.
 >    - List all files that should end up under `__tests__/unit/**`, in a table:
 >
 >      ```markdown
->      | From Path                                       | To Path                                              |
->      | ----------------------------------------------- | ---------------------------------------------------- |
->      | **tests**/features/auth/domain/AuthUser.test.ts | **tests**/unit/features/auth/domain/AuthUser.test.ts |
->      | **tests**/analytics/fallback-range.test.ts      | **tests**/unit/analytics/fallback-range.test.ts      |
->      | ...                                             | ...                                                  |
+>      | From Path                                       | To Path                                                         |
+>      | ----------------------------------------------- | --------------------------------------------------------------- |
+>      | **tests**/features/auth/domain/AuthUser.test.ts | **tests**/unit/features/auth/domain/AuthUser.test.ts            |
+>      | **tests**/analytics/fallback-range.test.ts      | **tests**/unit/features/analytics/domain/fallback-range.test.ts |
+>      | ...                                             | ...                                                             |
 >      ```
 >
 >    **3.2 Integration tests – moves**

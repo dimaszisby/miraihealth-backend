@@ -10,6 +10,8 @@ This review lives under `documents/development/architecture/feature-vertical-sli
 - Capture coupling between tests, infrastructure, and CI (`package.json` test scripts, env overrides, helper APIs).
 - Identify blockers that prevent consolidating every suite under the feature directories today.
 
+> **Update (2026-01-09):** The analytics suites referenced below have now been relocated under `__tests__/unit/features/analytics/**` (application + domain folders). The remainder of this review is preserved for historical context on why the move required extra coordination.
+
 ## Current Architecture Snapshot
 
 - **Dual hierarchies**: Regression/API suites remain directly under `__tests__/` (e.g., `__tests__/analytics.test.ts` seeds users/metrics/logs through `helpers/test-utils`) while the slice-aligned suites live under `__tests__/features/<feature>/**` for unit and adapter coverage (`__tests__/features/analytics/application/GetDashboardVisualization.test.ts`, `__tests__/features/analytics/infrastructure/persistence/VisualizationReadRepoSequelize.test.ts`). The split is intentional but undocumented outside the migration notes.

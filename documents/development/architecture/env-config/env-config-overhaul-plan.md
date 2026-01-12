@@ -63,8 +63,8 @@ Transform the current environment configuration pipeline into an industry-standa
   - Jest utility in `__tests__/utils/env.ts` (or similar) + documentation snippet.
   - Example tests migrated to the helper.
 - **Success Metrics**: New helper adopted in at least one integration test; lint rules prevent direct mutation of `process.env` in tests.
-- **Status**: ✅ Helper published (`src/tests/env-test-utils.ts`), analytics tests migrated, new lint rule enforces usage, documentation added.
-- **Follow-up**: 🚧 Added Jest-globals ESLint override so existing suites stop flagging `describe`/`it`, but global lint still fails until legacy tests migrate off `process.env` (tracked in TKT-005A; see `documents/development/architecture/env-config/legacy-test-cleanup.md`).
+- **Status**: ✅ Helper published (`src/tests/env-test-utils.ts`), analytics tests migrated, and as of 2026-01-05 the ESLint override blocks direct `process.env` usage in `__tests__/**`.
+- **Follow-up**: 🚧 Continue migrating legacy suites to `withTestEnv` patterns per TKT-005A (formatting/fixture cleanup) even though the guardrail now prevents regressions.
 
 ### Phase 4 — Documentation & Runbooks
 

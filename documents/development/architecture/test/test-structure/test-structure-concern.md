@@ -10,7 +10,8 @@ This document captures my current concerns about Lakira Backend test structure, 
 - Fill gaps where my current context is incomplete.
 - Propose concrete file-level changes aligned with the repo as it actually exists.
 
-> **Update — 2025-12-22:** The initial restructuring is underway: `__tests__/unit/**` now contains all in-memory suites and `__tests__/integration/**` hosts the HTTP/API suites plus helpers. This document still describes the original pain points so we can track any regressions, but refer to `documents/tests/test-classification-2025-12-22.md` and `documents/tests/test-structure-move-plan-2025-12-22.md` for the current tree.
+> **Update — 2025-12-22:** The initial restructuring is underway: `__tests__/unit/**` now contains all in-memory suites and `__tests__/integration/**` hosts the HTTP/API suites plus helpers. This document still describes the original pain points so we can track any regressions, but refer to `documents/tests/test-classification-2025-12-22.md` and `documents/tests/test-structure-move-plan-2025-12-22.md` for the current tree.  
+> **Update — 2026-01-09:** The remaining analytics suites have been merged into `__tests__/unit/features/analytics/**`; references to the legacy `__tests__/analytics` folder remain here for historical context.
 
 ---
 
@@ -148,8 +149,8 @@ These are the working definitions I intend to use for Lakira BE.
   - `__tests__/features/metric/domain/Metric.test.ts`
   - `__tests__/features/metric-log/domain/MetricLog.test.ts`
   - `__tests__/features/metric-settings/domain/MetricSettings.test.ts`
-  - `__tests__/analytics/fallback-range.test.ts` (if pure)
-  - `__tests__/analytics/dashboard-visualization.service.test.ts` (if pure)
+  - `__tests__/unit/features/analytics/domain/fallback-range.test.ts` (if pure; formerly `__tests__/analytics/fallback-range.test.ts`)
+  - `__tests__/unit/features/analytics/application/GetDashboardVisualization.service.test.ts` (if pure; formerly `__tests__/analytics/dashboard-visualization.service.test.ts`)
 
 ### 3.3 Integration tests
 

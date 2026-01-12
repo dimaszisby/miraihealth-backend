@@ -33,16 +33,17 @@
 - Deliver `withTestEnv` / `mockEnv` helper with documentation and examples.
 - Update representative integration test to adopt the helper.
 - Add lint/test rule that flags direct `process.env` mutation in tests.
-- Status: ✅ Helper added, analytics tests migrated, ESLint rule prevents direct `process.env` usage, and documentation lives in `documents/development/architecture/env-config/with-test-env-helper.md`. Follow-up ticket: TKT-005A to clean up legacy suites that still trip the lint rule.
+- Status: ✅ Helper added, analytics tests migrated, and as of 2026-01-05 the ESLint override blocks direct `process.env` usage. Documentation lives in `documents/development/architecture/env-config/with-test-env-helper.md`. Follow-up ticket: TKT-005A to clean up legacy suites (formatting + helper adoption evidence).
 
 ## TKT-005A — Legacy Test Cleanup
 
 - Scope: Update legacy `__tests__/**` suites to import Jest globals, use `withTestEnv` (or `getEnv`) instead of mutating `process.env`, and clear lingering lint errors. Details captured in `documents/development/architecture/env-config/legacy-test-cleanup.md`.
 - Deliverables:
   - ESLint override providing Jest globals so rules don’t flag `describe`/`it`. ✅
+  - Guardrail enforcing `no-restricted-properties` for `process.env` within tests. ✅ (2026-01-05)
   - Incremental refactors (or TODO markers) for suites that still rely on manual env mutation / formatting drift.
-- Success Metrics: `npm run lint __tests__` passes without disabling the guardrail.
-- Status: 🔄 Override committed; outstanding work: apply Prettier and env helper migration per cleanup doc.
+- Success Metrics: `npm run lint:tests` passes without disabling the guardrail (achieved 2026-01-05); remaining work focuses on documentation and formatting cleanup.
+- Status: 🔄 Guardrail enforced; continue applying Prettier/refactors and tracking TODOs per the cleanup doc.
 
 ## TKT-006 — Documentation & Runbooks
 
