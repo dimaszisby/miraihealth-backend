@@ -13,8 +13,9 @@
 
 ## Commands & Tooling
 
-- `npm run lint` — runs ESLint across the repo using `eslint.config.mjs`. _Current status:_ passes in ~7.5 s after removing a stray compiled JS test file.
+- `npm run lint` — runs ESLint across the repo using `eslint.config.mjs`. _Current status:_ passes in ~7.5 s after removing a stray compiled JS test file, now covering `__tests__/**` (Jest-aware override plus the 2026-01-05 `no-restricted-properties` guardrail that blocks direct `process.env` access).
 - `npm run lint:fix` — auto-fixes supported rules; still fails on remaining errors.
+- `npm run lint:tests` — scoped ESLint run for `__tests__/**` to validate the guardrail quickly during development.
 - `npm run typecheck` — invokes `tsc --noEmit` with `tsconfig.json`.
 - _Current status:_ `npm run typecheck` now passes (~9.1 s) after the `.js` specifier rollout.
 - `npm run format:check` — runs Prettier in check mode across `ts|tsx|js|json|md|yml|yaml`, honoring `.prettierignore`. _Current status:_ passes after `npm run format:write` cleaned up pending files.
