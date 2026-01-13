@@ -11,7 +11,7 @@ Use this log to capture flaky or failing integration-test behavior that escapes 
 
 ## Template
 
-````md
+```md
 ## YYYY-MM-DD – <short summary>
 
 - **Detected by:** (CI job / developer / contract suite)
@@ -20,7 +20,7 @@ Use this log to capture flaky or failing integration-test behavior that escapes 
 - **Root cause:** <explain>
 - **Remediation:** <code/docs/tests>
 - **Follow-up:** <link to PR, checklist, ADR, TODO>
-````
+```
 
 _No incidents logged yet._
 

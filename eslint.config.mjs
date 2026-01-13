@@ -46,7 +46,7 @@ export default [
       parserOptions: {
         ecmaVersion: "latest", // Use latest ECMAScript features
         sourceType: "module", // Enforce ES Modules
-        project: "./tsconfig.json", // Ensure TS project config is considered
+        project: "./tsconfig.eslint.json", // Use expanded TS project for linting
       },
       globals: {
         ...globals.node, // Provide Node globals like process, Buffer, console

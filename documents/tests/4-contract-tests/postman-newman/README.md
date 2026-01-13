@@ -70,3 +70,101 @@ To run these tests locally, you need:
   ```bash
   npm install --save-dev newman
   ```
+
+## 5. Folder Layout
+
+```
+documents/tests/4-contract-tests/postman-newman/
+├── collections/      # Postman collections (one per feature domain)
+├── environments/     # Local & staging env files (non-secret placeholders)
+├── scripts/          # Node helpers invoked by npm scripts (local/staging)
+├── reports/          # Newman CLI, HTML, and JUnit outputs per env
+├── README.md         # This file
+├── PLAN.md           # Coverage + scenario blueprint
+├── CHECKLIST.md      # Execution tracker
+├── WORKFLOW_GUIDELINES.md
+└── PIPELINE_OVERVIEW.md
+```
+
+Collections + environment files are version-controlled; secrets (tokens, passwords) must be provided via CI secrets or local `.env` values at runtime.
+
+## 6. Local Execution Workflow
+
+1. **Start backend + dependencies**
+   - Use Docker Compose or `npm run start:test`.
+   - Keep Postgres/Redis aligned with `.env.test`.
+2. **Run the automated script**
+   ```bash
+   npm run test:contract:local
+   # internally calls node documents/tests/4-contract-tests/postman-newman/scripts/run-contract-local.js
+   ```
+   - The script runs `npm run seed:contract-tests` (unless `SKIP_CONTRACT_SEED=true`), then executes every collection with the local environment file.
+3. **Inspect reports**
+   - CLI output appears in the terminal.
+   - HTML + JUnit saved to `documents/tests/4-contract-tests/postman-newman/reports/local/<timestamp>/`.
+4. **Update documentation**
+   - Log runtime + coverage deltas in `metrics-tracker.md`.
+   - Update checklist items when new scenarios are added.
+5. **Refresh tokens when necessary**
+   - Copy the latest `primaryUser.token` from `tmp/contract-seed.json` into the local environment file whenever the JWT expires (7-day TTL).
+
+## 7. Staging / CI Execution
+
+- `npm run test:contract:staging` runs the same collections against the staging base URL.
+- `scripts/run-contract-staging.js` reads GitHub Actions secrets and overrides `lakira-staging.postman_environment.json` at runtime. Required env vars:
+  - `STAGING_BASE_URL`
+  - `STAGING_CONTRACT_TOKEN`
+  - `STAGING_CONTRACT_USER_ID`
+  - `STAGING_CONTRACT_SECONDARY_USER_ID`
+  - `STAGING_CATEGORY_REVENUE_ID`
+  - `STAGING_CATEGORY_PRODUCTIVITY_ID`
+  - `STAGING_METRIC_REVENUE_ID`
+  - `STAGING_METRIC_PRODUCTIVITY_ID`
+  - `STAGING_METRIC_SETTINGS_REVENUE_ID`
+  - `STAGING_METRIC_SETTINGS_PRODUCTIVITY_ID`
+  - `STAGING_METRIC_LOG_REVENUE_LATEST_ID`
+  - `STAGING_METRIC_LOG_PRODUCTIVITY_LATEST_ID`
+- Reports land under `documents/tests/4-contract-tests/postman-newman/reports/staging/<timestamp>/` and should be uploaded as CI artifacts (see pipeline plan).
+- The CI `contract_staging` job (Phase 3) must depend on the staging deploy job to ensure the latest code is under test.
+
+## 8. Assertions & Reporting
+
+- Follow `PLAN.md` + `CHECKLIST.md` for endpoint coverage and scenario expectations.
+- Minimum assertions per request:
+  - Status code.
+  - `Content-Type`.
+  - Headers specific to analytics caching (ETag, Cache-Control).
+  - Body fields and types (consider using JSON schema snippets stored under `collections/schemas/` if needed).
+- Enable Newman reporters: `cli`, `html`, `junit`.
+- The runner scripts already configure the reporters and export paths:
+  ```bash
+  newman run <collection> \
+    -e <environment> \
+    --reporters cli,html,junit \
+    --reporter-html-export reports/<env>/<timestamp>/<collection>.html \
+    --reporter-junit-export reports/<env>/<timestamp>/<collection>.xml
+  ```
+
+## 9. Troubleshooting & Tips
+
+- **Auth failures:** Re-run the contract seed script to regenerate tokens or update environment variables.
+- **Flaky analytics ETag tests:** Ensure Redis/cache is enabled and seeds include historical logs; use `ENABLE_REDIS_INTEGRATION=true` when running backend locally.
+- **Schema mismatches:** Regenerate OpenAPI spec and verify backend DTOs; update Postman assertions + Schemathesis plan accordingly.
+- **Performance issues:** Split collections across multiple Newman runs or leverage `--delay-request` sparingly; document changes in PLAN and CI docs.
+
+## 10. References
+
+- [Contract Tests Plan](../contract-tests-plan.md)
+- [Postman Plan](./PLAN.md)
+- [Postman Checklist](./CHECKLIST.md)
+- [Workflow Guidelines](./WORKFLOW_GUIDELINES.md)
+- [Pipeline Overview](./PIPELINE_OVERVIEW.md)
+- [Schemathesis Plan](../schemathesis/PLAN.md) — for complementary fuzzing strategy
+
+## 11. Runtime Variables
+
+- The collections set transient environment variables so follow-up requests can reference created records:
+  - `contractCreatedMetricId` / `contractCreatedMetricName`
+  - `contractCreatedMetricLogId`
+  - `contractLoggedInUserId`
+- These are cleared at the end of their respective flows, but rerun `npm run seed:contract-tests` whenever you want to reset the backing data (JWTs expire every 7 days).

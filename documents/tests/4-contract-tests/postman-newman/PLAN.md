@@ -32,7 +32,7 @@ This plan initially focuses on the analytics and metrics domain, but the structu
 - `collections/lakira-metrics-contract.postman_collection.json`
 - `collections/lakira-metric-logs-contract.postman_collection.json`
 - `collections/lakira-metric-settings-contract.postman_collection.json`
-- `collections/lakira-auth-contract.postman_collection.json` :contentReference[oaicite:0]{index=0}
+- `collections/lakira-auth-contract.postman_collection.json`
 
 **Endpoints covered (from `lakira-backend-openapi.json`):**
 
@@ -102,7 +102,7 @@ This plan initially focuses on the analytics and metrics domain, but the structu
 
 - **Backend Architecture Docs**
 
-  - `documents/documentation/architecture/lakira-backend-db-schema.md` – tables and relationships. :contentReference[oaicite:1]{index=1}
+  - `documents/documentation/architecture/lakira-backend-db-schema.md` – tables and relationships.
   - `documents/documentation/architecture/lakira-backend-routes.md` – route overview.
   - `documents/documentation/architecture/lakira-backend-types.md` – DTOs and shared types.
 
@@ -586,3 +586,9 @@ Each Postman request should assert:
    ```bash
    npm run test:contract:local
    ```
+
+   This script will:
+
+   - Run database migrations + `npm run seed:contract-tests` if needed.
+   - Execute `run-contract-local.js` to run every collection (auth, analytics, metrics, metric logs, metric settings) with the local environment file.
+   - Store HTML/JUnit reports under `documents/tests/4-contract-tests/postman-newman/reports/local/<timestamp>/`.

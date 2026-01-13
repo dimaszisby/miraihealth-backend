@@ -3,23 +3,23 @@
 > Generated: 2025-12-02 07:31:50 UTC  
 > Context: `npm run test:dev` against Docker-backed Postgres/Redis (host-overrides for DB/Redis)
 
-## 1. `__tests__/analytics/dashboard-visualization.service.test.ts`
+## 1. `__tests__/unit/features/analytics/application/GetDashboardVisualization.service.test.ts`
 
 - **Failure mode:** TypeScript compilation halts because mocked `.query` calls return plain arrays whose shape (`{ metric_id: ... }`) does not match the inferred `[unknown[], unknown]` tuple signature.
 - **Impact:** Entire suite never executes; other suites depending on `ts-jest` stop at compile error.
 - **Log snapshot (07:30 UTC):**
   ```text
-  __tests__/analytics/dashboard-visualization.service.test.ts:41:11 - error TS2353: Object literal may only specify known properties, and 'metric_id' does not exist in type 'unknown[]'.
+  __tests__/unit/features/analytics/application/GetDashboardVisualization.service.test.ts:41:11 - error TS2353: Object literal may only specify known properties, and 'metric_id' does not exist in type 'unknown[]'.
   ...
   55       .mockResolvedValueOnce([])
                                    ~~
-  __tests__/analytics/dashboard-visualization.service.test.ts:55:30 - error TS2345: Argument of type '[]' is not assignable to parameter of type '[unknown[], unknown]'
+  __tests__/unit/features/analytics/application/GetDashboardVisualization.service.test.ts:55:30 - error TS2345: Argument of type '[]' is not assignable to parameter of type '[unknown[], unknown]'
   ```
 - **Plan**
   - [x] 2025-12-02 09:25 UTC – Relaxed the spy typing to `jest.MockedFunction<(...args) => Promise<any>>` and reverted mocks to return the same row arrays the SELECT query produces (no tuple juggling required).
-  - [x] 2025-12-02 09:25 UTC – Re-ran `DB_HOST=127.0.0.1 REDIS_REQUIRED=false NODE_ENV=test npm run jest -- __tests__/analytics/dashboard-visualization.service.test.ts --runInBand`; suite now passes (see PASS log in terminal snippet above).
+  - [x] 2025-12-02 09:25 UTC – Re-ran `DB_HOST=127.0.0.1 REDIS_REQUIRED=false NODE_ENV=test npm run jest -- __tests__/unit/features/analytics/application/GetDashboardVisualization.service.test.ts --runInBand`; suite now passes (see PASS log in terminal snippet above).
 
-## 2. `__tests__/analytics/fallback-range.test.ts`
+## 2. `__tests__/unit/features/analytics/domain/fallback-range.test.ts`
 
 - **Failure mode:** `computeFallbackRange` returns a ~30-day interval (`2592000000ms`) while the spec expects ≤5 days (`432001000ms`) when clamping after bucket coarsening.
 - **Impact:** Regression coverage for fallback guard is broken; actual API may now exceed FE constraints.
@@ -38,7 +38,7 @@
 
 - **Plan**
   - [x] 2025-12-02 09:18 UTC – Added a guard-span clamp (`guardBuckets * requestedBucket.approxMs`) after bucket coarsening so the actual window never exceeds the guard, then recalculated `estimatedBuckets`.
-  - [x] 2025-12-02 09:18 UTC – Re-ran `npm run jest -- __tests__/analytics/fallback-range.test.ts --runInBand`; all three unit cases now pass.
+  - [x] 2025-12-02 09:18 UTC – Re-ran `npm run jest -- __tests__/unit/features/analytics/domain/fallback-range.test.ts --runInBand`; all three unit cases now pass.
 
 ## 3. API Integration Suites (`auth`, `metric*`, `analytics`)
 

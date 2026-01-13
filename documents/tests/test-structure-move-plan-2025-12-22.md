@@ -2,14 +2,15 @@
 
 Grounded in `test-classification-2025-12-22.md` and the desired layout from `documents/development/architecture/test/test-structure/test-structure-concern.md`.
 
-> **Status (2025-12-22):** Completed. All suites now live under `__tests__/unit/**` or `__tests__/integration/**` per the tables below. Keep this document for traceability when syncing docs/CI.
+> **Status (2025-12-22):** Completed. All suites now live under `__tests__/unit/**` or `__tests__/integration/**` per the tables below. Keep this document for traceability when syncing docs/CI.  
+> **Update (2026-01-09):** The lingering analytics suites have now been folded into `__tests__/unit/features/analytics/**`; the table below reflects the final destinations + rename.
 
 ## 3.1 Unit Tests – Moves
 
 | From Path                                                                                        | To Path                                                                                               | Notes / Required Changes                                                      |
 | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `__tests__/analytics/dashboard-visualization.service.test.ts`                                    | `__tests__/unit/analytics/dashboard-visualization.service.test.ts`                                    | Update relative imports if any `../` references exist (currently none).       |
-| `__tests__/analytics/fallback-range.test.ts`                                                     | `__tests__/unit/analytics/fallback-range.test.ts`                                                     | Pure domain; no extra work.                                                   |
+| `__tests__/analytics/dashboard-visualization.service.test.ts`                                    | `__tests__/unit/features/analytics/application/GetDashboardVisualization.service.test.ts`             | Renamed during the move to match the query naming + layered folder.           |
+| `__tests__/analytics/fallback-range.test.ts`                                                     | `__tests__/unit/features/analytics/domain/fallback-range.test.ts`                                     | Pure domain; only folder change required.                                     |
 | `__tests__/config/envManager.test.ts`                                                            | `__tests__/unit/config/envManager.test.ts`                                                            | Keep `withTestEnv` import absolute (`@/tests/...`), so no code change needed. |
 | `__tests__/features/analytics/application/GetDashboardVisualization.test.ts`                     | `__tests__/unit/features/analytics/application/GetDashboardVisualization.test.ts`                     | Absolute imports keep working.                                                |
 | `__tests__/features/analytics/infrastructure/persistence/VisualizationReadRepoSequelize.test.ts` | `__tests__/unit/features/analytics/infrastructure/persistence/VisualizationReadRepoSequelize.test.ts` | Spy on Sequelize via absolute paths; unaffected.                              |

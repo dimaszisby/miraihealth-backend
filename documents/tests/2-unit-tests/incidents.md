@@ -11,7 +11,7 @@ Use this log to capture any flaky or failing unit-test behavior that escapes loc
 
 ## Template
 
-````md
+```md
 ## YYYY-MM-DD – <short summary>
 
 - **Detected by:** (CI job / developer)
@@ -20,6 +20,6 @@ Use this log to capture any flaky or failing unit-test behavior that escapes loc
 - **Root cause:** <explain>
 - **Remediation:** <code/docs/tests>
 - **Follow-up:** <link to PR, checklist, TODO>
-````
+```
 
 _No incidents logged yet._

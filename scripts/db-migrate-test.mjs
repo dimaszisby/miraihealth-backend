@@ -5,8 +5,8 @@
  */
 import { spawn } from "child_process";
 import path from "path";
-import { fileURLToPath } from "url";
 import dotenv from "dotenv";
+import logger from "./logger.js";
 
 const cwd = process.cwd();
 const envPath = path.resolve(cwd, ".env.test");
@@ -35,6 +35,6 @@ const run = () =>
   });
 
 run().catch((error) => {
-  console.error("[db-migrate-test] Migration failed:", error);
+  logger.error("[db-migrate-test] Migration failed", error);
   process.exitCode = 1;
 });
