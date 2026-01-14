@@ -127,6 +127,11 @@ const envSchema = z.object({
     })
     .default("30"),
 
+  DISABLE_RATE_LIMITING: z
+    .string()
+    .transform((val) => val === "true")
+    .default("false"),
+
   // HTTP
   REQUEST_BODY_LIMIT: z.string().default("1mb"),
   SWAGGER_REQUIRE_AUTH: z

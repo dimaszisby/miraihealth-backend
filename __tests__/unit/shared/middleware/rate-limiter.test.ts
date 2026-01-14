@@ -39,6 +39,7 @@ jest.mock("@/config/envManager.js", () => ({
     RATE_LIMIT_GLOBAL_MAX: 100,
     RATE_LIMIT_USER_MAX: 50,
     RATE_LIMIT_ANALYTICS_MAX: 25,
+    DISABLE_RATE_LIMITING: false,
   },
 }));
 
@@ -49,16 +50,19 @@ const { env: envMock } = jest.requireMock("@/config/envManager.js") as {
     RATE_LIMIT_GLOBAL_MAX: number;
     RATE_LIMIT_USER_MAX: number;
     RATE_LIMIT_ANALYTICS_MAX: number;
+    DISABLE_RATE_LIMITING: boolean;
   };
 };
 
 // The limiter logs warnings when it downgrades behavior; spy on logger so the tests stay noise-free.
 jest.mock("@/utils/logger.js", () => ({
   warn: jest.fn(),
+  info: jest.fn(),
 }));
 
 const loggerMock = jest.requireMock("@/utils/logger.js") as {
   warn: jest.Mock;
+  info: jest.Mock;
 };
 
 jest.mock("@/utils/redis-client.js", () => ({
@@ -91,6 +95,7 @@ describe("rate limiter middleware", () => {
     jest.clearAllMocks();
     envMock.NODE_ENV = "development";
     envMock.REDIS_REQUIRED = false;
+    envMock.DISABLE_RATE_LIMITING = false;
     redisClient.isOpen = false;
   });
 
@@ -179,5 +184,25 @@ describe("rate limiter middleware", () => {
     const req = { ip: "9.9.9.9" } as AuthRequest;
 
     expect(limiter.keyGenerator(req)).toBe("9.9.9.9");
+  });
+
+  it("returns a no-op middleware when DISABLE_RATE_LIMITING is true", () => {
+    envMock.DISABLE_RATE_LIMITING = true;
+
+    const globalLimiter = createGlobalRateLimiter();
+    const userLimiter = createUserRateLimiter();
+    const analyticsLimiter = createAnalyticsRateLimiter();
+    const next = jest.fn();
+    const res = createResponse();
+
+    globalLimiter({} as AuthRequest, res, next);
+    userLimiter({} as AuthRequest, res, next);
+    analyticsLimiter({} as AuthRequest, res, next);
+
+    expect(next).toHaveBeenCalledTimes(3);
+    expect(rateLimitFactory).not.toHaveBeenCalled();
+    expect(loggerMock.info).toHaveBeenCalledWith(
+      "[RATE LIMITER] DISABLE_RATE_LIMITING=true — skipping throttling (contract tests / fuzzing runs).",
+    );
   });
 });

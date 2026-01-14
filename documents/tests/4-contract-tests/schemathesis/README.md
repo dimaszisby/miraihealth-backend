@@ -27,7 +27,8 @@ pip install -r documents/tests/4-contract-tests/schemathesis/requirements.txt
 
    Wait for `[SERVER] Lakira backend running on port 8002` (default test port) before executing Schemathesis, then stop the process via `Ctrl+C` afterward.
 
-4. **Python virtualenv active** – ensures the Schemathesis binary referenced by the runner scripts is discoverable.
+4. **Rate limiter toggle** – `.env.test` sets `DISABLE_RATE_LIMITING=true` so Schemathesis/Newman can exercise endpoints without tripping the global/user/analytics throttles. Keep this `false` in other environments.
+5. **Python virtualenv active** – ensures the Schemathesis binary referenced by the runner scripts is discoverable.
 
 ## 3. Commands
 
@@ -73,7 +74,7 @@ Both scripts validate the OpenAPI file exists before invoking Schemathesis and p
 - **`schemathesis: command not found`** – ensure your Python virtualenv is activated or set `SCHEMATHESIS_CLI` to the binary path.
 - **`OpenAPI spec not found`** – run `npm run docs:openapi:generate`; runners bail out early if the JSON is missing to avoid stale results.
 - **401 responses** – regenerate the seed (`npm run seed:contract-tests`) and export the new `SCHEMATHESIS_LOCAL_TOKEN`. For staging, rotate the service account JWT and update GitHub secrets.
-- **Burst of 429 failures** – the global rate limiter applies even to contract runs. Temporarily disable it via env vars or whitelist the Schemathesis service account before rerunning.
+- **Burst of 429 failures** – the global rate limiter applies even to contract runs. Set `DISABLE_RATE_LIMITING=true` (as in `.env.test`) or whitelist the Schemathesis service account before rerunning.
 - **Random 404s / invalid IDs** – confirm `--stateful=links` is enabled (default) and that the OpenAPI spec includes the correct `operationId` relationships. If any endpoints require manual setup, document them in the plan + checklist.
 - **Slow runs** – tune `SCHEMATHESIS_*_MAX_EXAMPLES` or split the tag list (e.g., analytics vs metrics) while keeping the ≥90% coverage target outlined in the metrics tracker.
 

@@ -35,6 +35,7 @@
 - Local + CI rely on `.env.test` plus dedicated contract-test seeds to provision:
   - Auth tokens (`CONTRACT_TEST_USER_TOKEN`, etc.).
   - Stable IDs for metrics/settings/logs (document in env JSON files).
+- Set `DISABLE_RATE_LIMITING=true` when running Schemathesis/Newman locally so the global limiter does not emit 429s during contract fuzzing (see `.env.test`); keep it `false` elsewhere.
 - After running `npm run seed:contract-tests`, copy the latest `primaryUser.token` value from `tmp/contract-seed.json` into `documents/tests/4-contract-tests/postman-newman/environments/lakira-local.postman_environment.json`.
 - Generated JWTs expire every 7 days; rerun the seed command before local Newman runs to refresh `contractAuthToken`.
 - Staging credentials must be injected via GitHub secrets and _not_ stored in JSON. Use Newman `--env-var` overrides and set `SCHEMATHESIS_STAGING_*` variables at runtime.
@@ -46,7 +47,7 @@
 2. Start backend locally (`npm run start:test` or Docker Compose).
 3. Execute `npm run test:contract:local`. Confirm reports generated and no assertions failed.
 4. (After staging deploy) export the `STAGING_*` secrets listed in `postman-newman/README.md` (base URL, tokens, seeded IDs), then run `npm run test:contract:staging`.
-5. For Schemathesis, ensure OpenAPI spec is regenerated (`npm run docs:openapi:generate`) before executing fuzzing commands, then start the API via `NODE_ENV=development npx dotenv -e .env.test -- tsx ./src/server.ts` so the test database + port 8002 are live during fuzzing.
+5. For Schemathesis, ensure OpenAPI spec is regenerated (`npm run docs:openapi:generate`) before executing fuzzing commands, start the API via `NODE_ENV=development npx dotenv -e .env.test -- tsx ./src/server.ts`, and confirm `DISABLE_RATE_LIMITING=true` so the test database listens on port 8002 without throttling.
 
 CI/CD expectations:
 

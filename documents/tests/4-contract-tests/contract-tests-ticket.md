@@ -42,3 +42,4 @@ Blocking dependencies:
 ## Recent Progress
 
 - 2026-01-14 — Schemathesis CLI + runner scripts landed and the first local fuzzing run executed against `http://localhost:8002/api/v1`. Results: 31/31 operations exercised, 112 failures (schema drift vs. OpenAPI envelopes, lack of 405 handlers for TRACE, and global rate limiting returning 429). Artifacts live under `documents/tests/4-contract-tests/schemathesis/reports/local/2026-01-14T08-19-10-426Z/`; follow-ups captured in `metrics-tracker.md` and `incidents.md`.
+- 2026-01-14 — Introduced `DISABLE_RATE_LIMITING=true` env toggle (documented in README + Schemathesis guide) so contract tests can bypass throttling noise without affecting other environments.

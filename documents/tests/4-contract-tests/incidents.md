@@ -9,7 +9,7 @@
   - TRACE requests returning 404 instead of the documented 405 for unsupported methods.
   - Several endpoints returning 500 when receiving intentionally malformed payloads instead of defensive 4xx errors.
 - **Next Actions:**
-  1. Add a contract-test toggle to disable or raise the rate limiter thresholds so Schemathesis can exercise endpoints without tripping 429s.
+  1. ✅ (2026-01-14) Added `DISABLE_RATE_LIMITING` env toggle + docs so contract/Schemathesis runs bypass throttling noise.
   2. Align OpenAPI schemas with the actual success envelopes (or update the implementation to match the documented response shape).
   3. Implement blanket 405 handling (or update the spec) for unsupported HTTP verbs so TRACE/OPTIONS behaviour is deterministic.
   4. Harden analytics + metric controllers to return validation errors rather than unhandled 500s when fuzzed payloads are invalid.

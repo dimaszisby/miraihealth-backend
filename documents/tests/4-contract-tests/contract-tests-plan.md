@@ -43,6 +43,7 @@
    - ✅ (2026-01-14) Stand up Schemathesis CLI scripts: `npm run test:contract:schemathesis:local|staging` now call Node wrappers that enforce OpenAPI freshness, seeded tokens, and timestamped report folders under `schemathesis/reports/<env>/`.
    - ✅ (2026-01-14) Schemathesis plan/checklist refreshed and backed by a dedicated README + `requirements.txt` so contributors can install the CLI, understand env vars, and log coverage/triage steps before nightly adoption.
    - ✅ (2026-01-14) Captured the first local Schemathesis run (112 failures across schema drift, missing 405 responses, and aggressive rate limiting). Reports: `schemathesis/reports/local/2026-01-14T08-19-10-426Z/` with HAR + JUnit artifacts; incidents + tracker updated with follow-ups (disable rate limiter for fuzzing, align response envelopes with OpenAPI).
+   - ✅ (2026-01-14) Added `DISABLE_RATE_LIMITING` env flag + documentation so contract/Schemathesis runs can bypass throttling without impacting other environments.
    - Deliverable: nightly (manual) local fuzzing run documented with sample report + metrics entry.
 
 4. **Phase 3 – CI/CD Integration & Enforcement**
