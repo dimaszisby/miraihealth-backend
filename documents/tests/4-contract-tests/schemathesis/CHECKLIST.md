@@ -4,12 +4,12 @@ Use this checklist alongside the main contract-test checklist when building and 
 
 ## Phase A – Bootstrap
 
-- [ ] Install Schemathesis as a devDependency (`npm install --save-dev schemathesis`).
-- [ ] Ensure `npm run docs:openapi:generate` produces the latest OpenAPI JSON.
-- [ ] Implement local runner script (`documents/tests/4-contract-tests/schemathesis/scripts/run-local.js`) invoked by `npm run test:contract:schemathesis:local`.
-- [ ] Implement staging runner script (`schemathesis/scripts/run-staging.js`) invoked by `npm run test:contract:schemathesis:staging`.
-- [ ] Create `reports/local` and `reports/staging` folders with `.gitkeep` or first run artifacts.
-- [ ] Document CLI flags + environment requirements in this folder’s README (link from top-level README).
+- [x] Install Schemathesis dependency and capture install instructions — owner: Codex assist (2026-01-14) (`schemathesis/requirements.txt` + README `#1 Installation` steps, use venv + `pip install -r ...`).
+- [x] Ensure `npm run docs:openapi:generate` produces the latest OpenAPI JSON — owner: Codex assist (2026-01-14) (runner scripts check for the file and block execution with guidance if stale/missing; README section 2 reinforces the prerequisite).
+- [x] Implement local runner script (`documents/tests/4-contract-tests/schemathesis/scripts/run-local.js`) invoked by `npm run test:contract:schemathesis:local` — owner: Codex assist (2026-01-14) (enforces env vars, tags, OpenAPI freshness, and writes timestamped reports).
+- [x] Implement staging runner script (`schemathesis/scripts/run-staging.js`) invoked by `npm run test:contract:schemathesis:staging` — owner: Codex assist (2026-01-14) (supports token/base URL overrides + targeted endpoints).
+- [x] Create `reports/local` and `reports/staging` folders with `.gitkeep` or first run artifacts — owner: Codex assist (2026-01-14) (see `schemathesis/reports/<env>/.gitkeep`).
+- [x] Document CLI flags + environment requirements in this folder’s README (link from top-level README) — owner: Codex assist (2026-01-14) (`schemathesis/README.md` covers install, env vars, troubleshooting, and next steps; linked from main contract-test README).
 
 ## Phase B – Full Path Coverage
 

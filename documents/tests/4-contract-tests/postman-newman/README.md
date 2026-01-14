@@ -29,6 +29,7 @@ and is especially important for **analytics/dashboard** where small schema or ca
 - Provide a **reproducible test harness** FE can trust as a baseline before implementing or refactoring features.
 - Integrate into **CI/CD** so contract regressions block merges to protected branches.
 - Serve as a **living reference** of how the backend is expected to behave at the HTTP boundary.
+- Cover both happy-path and guardrail scenarios (validation/auth/not-found) using deterministic seed data so failures are reproducible.
 
 > Special Note for Codex: When asked to “validate API contract” or “check analytics/metrics endpoints,” treat this folder (and its collections) as the primary reference for Postman/Newman-based contract testing.
 
@@ -151,6 +152,7 @@ Collections + environment files are version-controlled; secrets (tokens, passwor
 - **Flaky analytics ETag tests:** Ensure Redis/cache is enabled and seeds include historical logs; use `ENABLE_REDIS_INTEGRATION=true` when running backend locally.
 - **Schema mismatches:** Regenerate OpenAPI spec and verify backend DTOs; update Postman assertions + Schemathesis plan accordingly.
 - **Performance issues:** Split collections across multiple Newman runs or leverage `--delay-request` sparingly; document changes in PLAN and CI docs.
+- **Conditional requests skipped:** Run the primary analytics dashboard + visualization happy-path requests first so the `analyticsDashboardEtag` / `analyticsMetricEtag` variables are populated before the 304 scenarios.
 
 ## 10. References
 
@@ -167,4 +169,7 @@ Collections + environment files are version-controlled; secrets (tokens, passwor
   - `contractCreatedMetricId` / `contractCreatedMetricName`
   - `contractCreatedMetricLogId`
   - `contractLoggedInUserId`
+- Analytics tests also use:
+  - `analyticsDashboardEtag`
+  - `analyticsMetricEtag`
 - These are cleared at the end of their respective flows, but rerun `npm run seed:contract-tests` whenever you want to reset the backing data (JWTs expire every 7 days).

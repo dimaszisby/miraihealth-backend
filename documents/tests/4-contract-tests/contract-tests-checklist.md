@@ -27,11 +27,11 @@ Use this checklist to track the contract-test program end-to-end (Postman/Newman
 
 ## Phase 2 – Negative Coverage & Schemathesis Kickoff
 
-- [ ] Extend collections with validation/auth/not-found scenarios per endpoint checklist.
-- [ ] Add ETag + Cache-Control assertions for analytics dashboard + visualization requests.
-- [ ] Introduce JSON Schema snippets or scripted validators for dashboard payloads.
-- [ ] Finalize Schemathesis CLI scripts for local + staging (commands + npm scripts).
-- [ ] Create Schemathesis run plan/checklist with failure triage workflow.
+- [x] Extend collections with validation/auth/not-found scenarios per endpoint checklist — owner: Codex assist (2026-01-14) (see `postman-newman/collections/*` added 401/400/404 flows).
+- [x] Add ETag + Cache-Control assertions for analytics dashboard + visualization requests — owner: Codex assist (2026-01-14) (dashboard + metric viz tests store and reuse `ETag` for 304 coverage).
+- [x] Introduce JSON Schema snippets or scripted validators for dashboard payloads — owner: Codex assist (2026-01-14) (analytics dashboard test validates core fields/arrays).
+- [x] Finalize Schemathesis CLI scripts for local + staging — owner: Codex assist (2026-01-14) (`npm run test:contract:schemathesis:<env>` invokes `schemathesis/scripts/run-*.js`, enforces OpenAPI freshness, and drops JSON/JUnit artifacts under `schemathesis/reports/<env>/`).
+- [x] Create Schemathesis run plan/checklist with failure triage workflow — owner: Codex assist (2026-01-14) (`schemathesis/PLAN.md`, `CHECKLIST.md`, and new README/requirements describe install, env vars, hooks, and metrics expectations).
 - [ ] Capture first Schemathesis report and log runtime + findings in metrics tracker.
 
 ---

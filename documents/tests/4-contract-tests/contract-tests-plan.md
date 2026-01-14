@@ -36,12 +36,12 @@
 
 3. **Phase 2 – Negative Coverage, Headers, & Schemathesis Kickoff**
 
-   - Expand Postman suites with validation errors, auth failures, cache/ETag checks, and not-found scenarios per checklist.
-   - Implement JSON Schema snippets or Postman test scripts mirroring OpenAPI definitions for analytics dashboard payloads.
-   - Stand up Schemathesis CLI scripts:
-     - `npm run test:contract:schemathesis:local`
-     - `npm run test:contract:schemathesis:staging`
-   - Schemathesis plan/checklist finalized with target path coverage (≥90% of documented endpoints) and runbook for triaging findings.
+   - Expand Postman suites with validation errors, auth failures, cache/ETag checks, and not-found scenarios per checklist.  
+     ✅ (2026-01-14) Collections now include 400/401/404 flows plus conditional requests for analytics dashboard/visualizations.
+   - Implement JSON Schema snippets or Postman test scripts mirroring OpenAPI definitions for analytics dashboard payloads.  
+     ✅ (2026-01-14) Dashboard happy-path request validates key fields/arrays before persisting the response `ETag`.
+   - ✅ (2026-01-14) Stand up Schemathesis CLI scripts: `npm run test:contract:schemathesis:local|staging` now call Node wrappers that enforce OpenAPI freshness, seeded tokens, and timestamped report folders under `schemathesis/reports/<env>/`.
+   - ✅ (2026-01-14) Schemathesis plan/checklist refreshed and backed by a dedicated README + `requirements.txt` so contributors can install the CLI, understand env vars, and log coverage/triage steps before nightly adoption.
    - Deliverable: nightly (manual) local fuzzing run documented with sample report + metrics entry.
 
 4. **Phase 3 – CI/CD Integration & Enforcement**

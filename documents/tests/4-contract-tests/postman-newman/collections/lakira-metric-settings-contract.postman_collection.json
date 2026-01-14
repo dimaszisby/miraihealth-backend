@@ -46,6 +46,30 @@
       ]
     },
     {
+      "name": "GET /metric-settings – unauthorized",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/metric-settings",
+          "host": ["{{baseUrl}}"],
+          "path": ["metric-settings"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 401\", function () {",
+              "  pm.response.to.have.status(401);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "GET /metric-settings/:id – seeded settings",
       "request": {
         "method": "GET",
@@ -74,6 +98,73 @@
               "const json = pm.response.json();",
               "pm.test(\"settings id matches\", function () {",
               "  pm.expect(json.data.id).to.eql(pm.environment.get('metricSettingsRevenueId'));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /metric-settings/:id – not found",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{contractAuthToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/metric-settings/00000000-0000-4000-8000-000000000066",
+          "host": ["{{baseUrl}}"],
+          "path": ["metric-settings", "00000000-0000-4000-8000-000000000066"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 404\", function () {",
+              "  pm.response.to.have.status(404);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST /metric-settings – validation error",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{contractAuthToken}}",
+            "type": "text"
+          },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"metricId\": \"{{metricRevenueId}}\",\n  \"goalEnabled\": true\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/metric-settings",
+          "host": ["{{baseUrl}}"],
+          "path": ["metric-settings"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 400\", function () {",
+              "  pm.response.to.have.status(400);",
               "});"
             ]
           }

@@ -22,9 +22,10 @@
 
 - `npm run test:contract:local` – seeds deterministic data (unless `SKIP_CONTRACT_SEED=true`) and runs all Newman collections against the locally running backend using `documents/tests/4-contract-tests/postman-newman/environments/lakira-local.postman_environment.json`.
 - `npm run test:contract:staging` – runs the same collections against staging using secrets injected via `STAGING_*` environment variables.
-- `npm run test:contract:schemathesis:local` _(planned)_ – invokes Schemathesis with the local OpenAPI file and base URL.
-- `npm run test:contract:schemathesis:staging` _(planned)_ – Schemathesis against staging.
+- `npm run test:contract:schemathesis:local` – runs Schemathesis against the generated OpenAPI file using `SCHEMATHESIS_LOCAL_TOKEN` from `tmp/contract-seed.json`.
+- `npm run test:contract:schemathesis:staging` – Schemathesis fuzzing pointed at staging; requires `SCHEMATHESIS_STAGING_BASE_URL` + `SCHEMATHESIS_STAGING_TOKEN`.
 - Scripts will live under `documents/tests/4-contract-tests/postman-newman/scripts/` and `documents/tests/4-contract-tests/schemathesis/scripts/`.
+- Install Schemathesis via `python -m venv .venv && source .venv/bin/activate && pip install -r documents/tests/4-contract-tests/schemathesis/requirements.txt` (see the Schemathesis README for Windows commands).
 - Reports:
   - `documents/tests/4-contract-tests/postman-newman/reports/local|staging`.
   - `documents/tests/4-contract-tests/schemathesis/reports/local|staging`.
@@ -36,7 +37,7 @@
   - Stable IDs for metrics/settings/logs (document in env JSON files).
 - After running `npm run seed:contract-tests`, copy the latest `primaryUser.token` value from `tmp/contract-seed.json` into `documents/tests/4-contract-tests/postman-newman/environments/lakira-local.postman_environment.json`.
 - Generated JWTs expire every 7 days; rerun the seed command before local Newman runs to refresh `contractAuthToken`.
-- Staging credentials must be injected via GitHub secrets and _not_ stored in JSON. Use Newman/Schemathesis `--env-var` overrides to pass tokens at runtime.
+- Staging credentials must be injected via GitHub secrets and _not_ stored in JSON. Use Newman `--env-var` overrides and set `SCHEMATHESIS_STAGING_*` variables at runtime.
 - Seeding scripts are owned by the backend repo (see `scripts/seed-contract-tests.ts` invoked via `npm run seed:contract-tests`).
 
 ## Verification Workflow
@@ -69,7 +70,8 @@ CI/CD expectations:
   - [Workflow Guidelines](./postman-newman/WORKFLOW_GUIDELINES.md)
   - [Pipeline Overview](./postman-newman/PIPELINE_OVERVIEW.md)
 - [Seed Strategy](./seed-strategy.md)
-- Schemathesis docs (to be populated in this milestone):
+- Schemathesis docs:
+  - [README](./schemathesis/README.md)
   - [Plan](./schemathesis/PLAN.md)
   - [Checklist](./schemathesis/CHECKLIST.md)
 - CI/CD alignment: `documents/ci-cd/backend/GITHUB_ACTIONS_PIPELINE_PLAN.md`

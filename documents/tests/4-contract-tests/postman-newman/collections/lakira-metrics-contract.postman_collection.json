@@ -47,6 +47,31 @@
       ]
     },
     {
+      "name": "GET /metrics – unauthorized",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/metrics?limit=5",
+          "host": ["{{baseUrl}}"],
+          "path": ["metrics"],
+          "query": [{ "key": "limit", "value": "5" }]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 401\", function () {",
+              "  pm.response.to.have.status(401);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "POST /metrics – create metric",
       "request": {
         "method": "POST",
@@ -90,6 +115,42 @@
       ]
     },
     {
+      "name": "POST /metrics – validation error (missing name)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{contractAuthToken}}",
+            "type": "text"
+          },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"description\": \"invalid payload\",\n  \"defaultUnit\": \"count\",\n  \"categoryId\": \"{{categoryRevenueId}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/metrics",
+          "host": ["{{baseUrl}}"],
+          "path": ["metrics"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 400\", function () {",
+              "  pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "GET /metrics/:id – seeded metric detail",
       "request": {
         "method": "GET",
@@ -118,6 +179,37 @@
               "const json = pm.response.json();",
               "pm.test(\"Metric id matches\", function () {",
               "  pm.expect(json.data.id).to.eql(pm.environment.get(\"metricRevenueId\"));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /metrics/:id – not found",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{contractAuthToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/metrics/00000000-0000-4000-8000-000000000088",
+          "host": ["{{baseUrl}}"],
+          "path": ["metrics", "00000000-0000-4000-8000-000000000088"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 404\", function () {",
+              "  pm.response.to.have.status(404);",
               "});"
             ]
           }
