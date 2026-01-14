@@ -1,2 +1,2 @@
 # Python dependencies for Schemathesis-based contract tests.
-schemathesis==3.26.6
+schemathesis==4.4.4

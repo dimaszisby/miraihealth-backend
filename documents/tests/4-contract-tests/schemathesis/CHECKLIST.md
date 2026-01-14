@@ -13,17 +13,17 @@ Use this checklist alongside the main contract-test checklist when building and 
 
 ## Phase B – Full Path Coverage
 
-- [ ] Configure `--target-endpoint-tag` (or operationId filters) to ensure analytics, metrics, metric-logs, metric-settings, and auth paths are included.
-- [ ] Enable `--stateful=links` and custom hooks to fetch IDs for nested endpoints.
+- [ ] Keep `SCHEMATHESIS_*_ENDPOINT_TAGS` aligned with OpenAPI tags (`Auth`, `Analytics`, `Metric Logs`, etc.) or add operationId filters so every contract scope path is fuzzed.
+- [ ] Ensure the `stateful` phase stays enabled and layer hooks/helpers to fetch seeded IDs for nested endpoints (e.g., metrics → logs).
 - [ ] Add custom checks/assertions for analytics caching headers (ETag, Cache-Control) in Schemathesis hooks.
-- [ ] Limit examples per endpoint (e.g., `--hypothesis-max-examples 50`) to keep runtime predictable; document chosen values.
+- [ ] Limit examples per endpoint (e.g., `--max-examples 50`) to keep runtime predictable; document chosen values.
 - [ ] Capture baseline runtime + coverage stats in metrics tracker.
 
 ## Phase C – CI/Nightly Integration
 
 - [ ] Add Schemathesis dev dependency + CLI invocation to GitHub Actions nightly workflow (cron).
 - [ ] Inject staging base URL + auth token via Actions secrets; avoid committing credentials.
-- [ ] Upload Schemathesis JSON + junit reports as artifacts.
+- [ ] Upload Schemathesis HAR (JSON) + JUnit reports as artifacts.
 - [ ] Add alerting (e.g., Slack webhook) for nightly job failures.
 - [ ] Log failures + follow-up actions in `incidents.md`.
 

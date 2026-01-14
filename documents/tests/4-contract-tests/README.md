@@ -22,13 +22,13 @@
 
 - `npm run test:contract:local` – seeds deterministic data (unless `SKIP_CONTRACT_SEED=true`) and runs all Newman collections against the locally running backend using `documents/tests/4-contract-tests/postman-newman/environments/lakira-local.postman_environment.json`.
 - `npm run test:contract:staging` – runs the same collections against staging using secrets injected via `STAGING_*` environment variables.
-- `npm run test:contract:schemathesis:local` – runs Schemathesis against the generated OpenAPI file using `SCHEMATHESIS_LOCAL_TOKEN` from `tmp/contract-seed.json`.
+- `npm run test:contract:schemathesis:local` – runs Schemathesis against the generated OpenAPI file using `SCHEMATHESIS_LOCAL_TOKEN` from `tmp/contract-seed.json` (override `SCHEMATHESIS_LOCAL_BASE_URL=http://localhost:8002/api/v1` when booting via `.env.test`).
 - `npm run test:contract:schemathesis:staging` – Schemathesis fuzzing pointed at staging; requires `SCHEMATHESIS_STAGING_BASE_URL` + `SCHEMATHESIS_STAGING_TOKEN`.
 - Scripts will live under `documents/tests/4-contract-tests/postman-newman/scripts/` and `documents/tests/4-contract-tests/schemathesis/scripts/`.
 - Install Schemathesis via `python -m venv .venv && source .venv/bin/activate && pip install -r documents/tests/4-contract-tests/schemathesis/requirements.txt` (see the Schemathesis README for Windows commands).
 - Reports:
   - `documents/tests/4-contract-tests/postman-newman/reports/local|staging`.
-  - `documents/tests/4-contract-tests/schemathesis/reports/local|staging`.
+  - `documents/tests/4-contract-tests/schemathesis/reports/local|staging` (per-run folders with `.xml` + `.har` reports).
 
 ## Environment & Data
 
@@ -46,7 +46,7 @@
 2. Start backend locally (`npm run start:test` or Docker Compose).
 3. Execute `npm run test:contract:local`. Confirm reports generated and no assertions failed.
 4. (After staging deploy) export the `STAGING_*` secrets listed in `postman-newman/README.md` (base URL, tokens, seeded IDs), then run `npm run test:contract:staging`.
-5. For Schemathesis, ensure OpenAPI spec is regenerated (`npm run docs:openapi:generate`) before executing fuzzing commands.
+5. For Schemathesis, ensure OpenAPI spec is regenerated (`npm run docs:openapi:generate`) before executing fuzzing commands, then start the API via `NODE_ENV=development npx dotenv -e .env.test -- tsx ./src/server.ts` so the test database + port 8002 are live during fuzzing.
 
 CI/CD expectations:
 

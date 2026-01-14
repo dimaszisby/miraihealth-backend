@@ -38,3 +38,7 @@ Blocking dependencies:
 
 - Regenerated OpenAPI spec via `npm run docs:openapi:generate`.
 - Stable seed data for analytics/metrics/logs to avoid flaky IDs.
+
+## Recent Progress
+
+- 2026-01-14 — Schemathesis CLI + runner scripts landed and the first local fuzzing run executed against `http://localhost:8002/api/v1`. Results: 31/31 operations exercised, 112 failures (schema drift vs. OpenAPI envelopes, lack of 405 handlers for TRACE, and global rate limiting returning 429). Artifacts live under `documents/tests/4-contract-tests/schemathesis/reports/local/2026-01-14T08-19-10-426Z/`; follow-ups captured in `metrics-tracker.md` and `incidents.md`.

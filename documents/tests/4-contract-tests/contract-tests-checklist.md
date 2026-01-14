@@ -32,7 +32,7 @@ Use this checklist to track the contract-test program end-to-end (Postman/Newman
 - [x] Introduce JSON Schema snippets or scripted validators for dashboard payloads — owner: Codex assist (2026-01-14) (analytics dashboard test validates core fields/arrays).
 - [x] Finalize Schemathesis CLI scripts for local + staging — owner: Codex assist (2026-01-14) (`npm run test:contract:schemathesis:<env>` invokes `schemathesis/scripts/run-*.js`, enforces OpenAPI freshness, and drops JSON/JUnit artifacts under `schemathesis/reports/<env>/`).
 - [x] Create Schemathesis run plan/checklist with failure triage workflow — owner: Codex assist (2026-01-14) (`schemathesis/PLAN.md`, `CHECKLIST.md`, and new README/requirements describe install, env vars, hooks, and metrics expectations).
-- [ ] Capture first Schemathesis report and log runtime + findings in metrics tracker.
+- [x] Capture first Schemathesis report and log runtime + findings in metrics tracker — owner: Codex assist (2026-01-14) (local run via `npm run test:contract:schemathesis:local` against `http://localhost:8002/api/v1` surfaced 112 failures: schema drift, missing 405 handling, & 429 throttles; artifacts stored under `schemathesis/reports/local/2026-01-14T08-19-10-426Z/`, tracker + incidents updated with follow-up actions).
 
 ---
 

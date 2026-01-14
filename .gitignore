@@ -72,3 +72,6 @@ Thumbs.db
 
 # Ignore coverage reports
 coverage/
+
+# Schemathesis / Hypothesis artifacts
+.hypothesis/

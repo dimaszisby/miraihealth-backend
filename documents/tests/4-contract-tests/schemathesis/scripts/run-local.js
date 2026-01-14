@@ -6,7 +6,7 @@ import { spawn } from "node:child_process";
 import logger from "../../../../../scripts/logger.js";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(scriptDir, "../../../..");
+const repoRoot = path.resolve(scriptDir, "../../../../..");
 const schemathesisDir = path.join(
   repoRoot,
   "documents",
@@ -24,7 +24,7 @@ const specPath = path.join(
 const CLI = process.env.SCHEMATHESIS_CLI ?? "schemathesis";
 const DEFAULT_TAGS =
   process.env.SCHEMATHESIS_LOCAL_ENDPOINT_TAGS ??
-  "analytics,metrics,metric-logs,metric-settings,auth";
+  "Auth,Analytics,Metrics,Metric Logs,Metric Settings,Metric Categories,Trends";
 
 function buildTags(tagString) {
   return tagString
@@ -79,31 +79,35 @@ async function main() {
   await fs.mkdir(reportDir, { recursive: true });
 
   const junitPath = path.join(reportDir, "schemathesis-local.xml");
-  const jsonPath = path.join(reportDir, "schemathesis-local.json");
+  const harPath = path.join(reportDir, "schemathesis-local.har");
 
   const args = [
     "run",
     specPath,
-    "--base-url",
+    "--url",
     baseUrl,
     "--checks",
     "all",
-    "--stateful=links",
+    "--phases",
+    process.env.SCHEMATHESIS_LOCAL_PHASES ??
+      "examples,coverage,fuzzing,stateful",
     "--workers",
     process.env.SCHEMATHESIS_LOCAL_WORKERS ?? "auto",
-    "--hypothesis-max-examples",
+    "--max-examples",
     process.env.SCHEMATHESIS_LOCAL_MAX_EXAMPLES ?? "50",
-    "--junit-xml",
+    "--report",
+    "junit,har",
+    "--report-junit-path",
     junitPath,
-    "--report-file",
-    jsonPath,
-    "--headers",
+    "--report-har-path",
+    harPath,
+    "--header",
     `Authorization: Bearer ${token}`,
   ];
 
   const tags = buildTags(DEFAULT_TAGS);
   tags.forEach((tag) => {
-    args.push("--endpoint-tag", tag);
+    args.push("--include-tag", tag);
   });
 
   if (process.env.SCHEMATHESIS_LOCAL_ENDPOINTS) {
@@ -111,7 +115,7 @@ async function main() {
       .map((value) => value.trim())
       .filter(Boolean)
       .forEach((endpoint) => {
-        args.push("--endpoint", endpoint);
+        args.push("--include-operation-id", endpoint);
       });
   }
 

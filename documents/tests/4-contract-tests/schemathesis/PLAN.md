@@ -29,23 +29,35 @@ Out of scope:
 2. **Command Templates**
 
    ```bash
-   # Local
+   # Local (port 8002 when booting against `.env.test`)
    schemathesis run documents/openapi/lakira-backend-openapi.json \
-     --base-url http://localhost:4000/api/v1 \
+     --url http://localhost:8002/api/v1 \
      --checks all \
-     --hypothesis-phases explicit \
-     --target-endpoint-tag analytics \
-     --stateful=links \
+     --phases examples,coverage,fuzzing,stateful \
      --workers auto \
-     --report-file documents/tests/4-contract-tests/schemathesis/reports/local/latest.json
+     --max-examples 50 \
+     --report junit,har \
+     --report-junit-path documents/tests/4-contract-tests/schemathesis/reports/local/latest.xml \
+     --report-har-path documents/tests/4-contract-tests/schemathesis/reports/local/latest.har \
+     --include-tag Auth \
+     --include-tag Analytics \
+     --include-tag Metrics \
+     --include-tag "Metric Logs" \
+     --include-tag "Metric Settings" \
+     --include-tag "Metric Categories" \
+     --include-tag Trends \
+     -H "Authorization: Bearer $SCHEMATHESIS_LOCAL_TOKEN"
 
    # Staging
-   STAGING_BASE_URL=https://lakira-backend-staging.onrender.com/api/v1
    schemathesis run documents/openapi/lakira-backend-openapi.json \
-     --base-url "$STAGING_BASE_URL" \
+     --url "$SCHEMATHESIS_STAGING_BASE_URL" \
      --checks all \
-     --headers "Authorization: Bearer $STAGING_CONTRACT_TOKEN" \
-     --report-file documents/tests/4-contract-tests/schemathesis/reports/staging/$(date +%Y%m%d-%H%M)-summary.json
+     --phases examples,coverage,fuzzing,stateful \
+     --workers auto \
+     --max-examples 50 \
+     --report junit,har \
+     --report-dir documents/tests/4-contract-tests/schemathesis/reports/staging/$(date +%Y%m%d-%H%M) \
+     -H "Authorization: Bearer $SCHEMATHESIS_STAGING_TOKEN"
    ```
 
    - Wrap these commands in npm scripts (`test:contract:schemathesis:local|staging`) and Node helpers under `schemathesis/scripts/`.
@@ -53,11 +65,11 @@ Out of scope:
 3. **State & Auth**
 
    - Use seeded users + tokens documented in Postman env files.
-   - For endpoints requiring path IDs, configure Schemathesis `--stateful=links` and custom hooks to fetch IDs via setup calls (e.g., `GET /metrics` before fuzzing `GET /metrics/{id}`).
+   - For endpoints requiring path IDs, rely on stateful phase runs and add custom hooks to pull IDs via setup calls (e.g., `GET /metrics` before fuzzing `GET /metrics/{id}`).
 
 4. **Reporting**
 
-   - Store JSON report + junit XML (via `--junit-xml`) under `schemathesis/reports/<env>/`.
+   - Store JUnit XML + HAR JSON files under `schemathesis/reports/<env>/`.
    - Link report paths from README + metrics tracker.
 
 5. **Failure Handling**
@@ -103,6 +115,7 @@ Out of scope:
 - **Auth & State Complexity:** Some endpoints require valid IDs; fuzzing may generate invalid combos. Mitigate using fixtures + `--stateful=links`.
 - **Runtime Explosion:** Large search space may slow runs. Mitigate by limiting examples per endpoint (`--hypothesis-max-examples`) and splitting tags into batches if needed.
 - **Environment Sensitivity:** Staging data differences may cause reproducibility issues. Mitigate by seeding staging with known fixtures before nightly run.
+- **Rate Limiting Noise:** Global throttles currently trip at ~20 requests/second, yielding cascades of 429 responses. Mitigate by disabling or relaxing the limiter for the Schemathesis service account (local + staging) during contract runs.
 
 ## 7. References
 
