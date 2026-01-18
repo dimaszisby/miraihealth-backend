@@ -78,3 +78,6 @@ coverage/
 
 # generated test reports
 documents/tests/4-contract-tests/schemathesis/reports/
+
+# local/export reference (untracked)
+documents/documentation/code-for-export-reference/
