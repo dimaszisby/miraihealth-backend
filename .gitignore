@@ -75,3 +75,6 @@ coverage/
 
 # Schemathesis / Hypothesis artifacts
 .hypothesis/
+
+# generated test reports
+documents/tests/4-contract-tests/schemathesis/reports/
