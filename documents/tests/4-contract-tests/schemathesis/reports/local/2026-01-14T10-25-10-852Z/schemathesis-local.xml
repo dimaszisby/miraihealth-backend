@@ -1,0 +1,1348 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites disabled="0" errors="0" failures="31" tests="31" time="21.57919551599998">
+	<testsuite disabled="0" errors="0" failures="31" name="schemathesis" skipped="6" tests="31" time="21.57919551599998" hostname="Dimass-MacBook-Pro.local">
+		<testcase name="POST /auth/logout" time="0.555979">
+			<failure type="failure" message="1. Test Case ID: xDoQ7u
+
+- Unsupported methods
+
+    Unsupported method TRACE returned 404, expected 405 Method Not Allowed
+
+    Return 405 for methods not listed in the OpenAPI spec
+
+[404] Not Found:
+
+    `&lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;Error&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;pre&gt;Cannot TRACE /api/v1/auth/logout&lt;/pre&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;`
+
+Reproduce with: 
+
+    curl -X TRACE -H 'Authorization: [Filtered]' http://localhost:8002/api/v1/auth/logout"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="GET /auth/profile" time="0.738328">
+			<failure type="failure" message="1. Test Case ID: cDyBaM
+
+- Unsupported methods
+
+    Unsupported method TRACE returned 404, expected 405 Method Not Allowed
+
+    Return 405 for methods not listed in the OpenAPI spec
+
+[404] Not Found:
+
+    `&lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;Error&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;pre&gt;Cannot TRACE /api/v1/auth/profile&lt;/pre&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;`
+
+Reproduce with: 
+
+    curl -X TRACE -H 'Authorization: [Filtered]' http://localhost:8002/api/v1/auth/profile"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="GET /metric-categories" time="0.144465">
+			<failure type="failure" message="1. Test Case ID: yH8KRR
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 5xx
+
+- Undocumented HTTP status code
+
+    Received: 400
+    Documented: 200, 401, 500
+
+[400] Bad Request:
+
+    `{&quot;status&quot;:&quot;fail&quot;,&quot;errors&quot;:[{&quot;field&quot;:&quot;query.q&quot;,&quot;message&quot;:&quot;String must contain at least 1 character(s)&quot;}]}`
+
+Reproduce with: 
+
+    curl -X GET -H 'Authorization: [Filtered]' 'http://localhost:8002/api/v1/metric-categories?limit=1&amp;sort=createdAt&amp;q=&amp;includeTotal=true&amp;filter%5Bname%5D='"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="POST /metrics" time="0.222135">
+			<failure type="failure" message="1. Test Case ID: rszeQQ
+
+- Unsupported methods
+
+    Unsupported method TRACE returned 404, expected 405 Method Not Allowed
+
+    Return 405 for methods not listed in the OpenAPI spec
+
+[404] Not Found:
+
+    `&lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;Error&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;pre&gt;Cannot TRACE /api/v1/metrics&lt;/pre&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;`
+
+Reproduce with: 
+
+    curl -X TRACE -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;categoryId&quot;: null, &quot;originalMetricId&quot;: null, &quot;name&quot;: &quot;0&quot;, &quot;description&quot;: &quot;&quot;, &quot;defaultUnit&quot;: &quot;0&quot;, &quot;isPublic&quot;: false}' http://localhost:8002/api/v1/metrics"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="GET /metrics" time="0.041373">
+			<failure type="failure" message="1. Test Case ID: 5tXxyw
+
+- Response violates schema
+
+    'items' is a required property
+
+    Schema:
+
+        {
+            &quot;required&quot;: [
+                &quot;items&quot;,
+                &quot;nextCursor&quot;,
+                &quot;sort&quot;,
+                &quot;limit&quot;
+            ],
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;properties&quot;: {
+                &quot;items&quot;: {
+                    &quot;type&quot;: &quot;array&quot;,
+                    &quot;items&quot;: {
+                        &quot;$ref&quot;: &quot;#/x-bundled/schema2&quot;
+                    }
+                },
+                &quot;nextCursor&quot;: {
+                    &quot;anyOf&quot;: [
+                        {
+                            &quot;type&quot;: &quot;string&quot;,
+            // Output truncated...
+        }
+
+    Value:
+
+        {
+            &quot;status&quot;: &quot;success&quot;,
+            &quot;message&quot;: &quot;Metrics cursor fetched successfully&quot;,
+            &quot;data&quot;: {
+                &quot;items&quot;: [],
+                &quot;sort&quot;: &quot;createdAt&quot;,
+                &quot;limit&quot;: 20,
+                &quot;q&quot;: &quot;0&quot;,
+                &quot;filter&quot;: {
+                    &quot;name&quot;: &quot;0&quot;,
+                    &quot;categoryId&quot;: &quot;e3e70682-c209-4cac-629f-6fbed82c07cd&quot;
+                },
+                &quot;totalCount&quot;: 0
+            },
+            &quot;success&quot;: true
+        }
+
+[200] OK:
+
+    `{&quot;status&quot;:&quot;success&quot;,&quot;message&quot;:&quot;Metrics cursor fetched successfully&quot;,&quot;data&quot;:{&quot;items&quot;:[],&quot;sort&quot;:&quot;createdAt&quot;,&quot;limit&quot;:20,&quot;q&quot;:&quot;0&quot;,&quot;filter&quot;:{&quot;name&quot;:&quot;0&quot;,&quot;categoryId&quot;:&quot;e3e70682-c209-4cac-629f-6fbed82c07cd&quot;},&quot;totalCount&quot;:0},&quot;success&quot;:true}`
+
+Reproduce with: 
+
+    curl -X GET -H 'Authorization: [Filtered]' 'http://localhost:8002/api/v1/metrics?limit=20&amp;sort=createdAt&amp;q=0&amp;includeTotal=true&amp;filter%5Bname%5D=0&amp;filter%5BcategoryId%5D=e3e70682-c209-4cac-629f-6fbed82c07cd&amp;filter=name&amp;filter=categoryId'"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="PUT /metrics/{id}" time="0.639945">
+			<failure type="failure" message="1. Test Case ID: IWpwpA
+
+- Unsupported methods
+
+    Unsupported method TRACE returned 404, expected 405 Method Not Allowed
+
+    Return 405 for methods not listed in the OpenAPI spec
+
+[404] Not Found:
+
+    `&lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;Error&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;pre&gt;Cannot TRACE /api/v1/metrics/a1b2c3d4-e5f6-7890-1234-567890abcdef&lt;/pre&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;`
+
+Reproduce with: 
+
+    curl -X TRACE -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;categoryId&quot;: null, &quot;originalMetricId&quot;: null, &quot;name&quot;: &quot;0&quot;, &quot;description&quot;: &quot;&quot;, &quot;defaultUnit&quot;: &quot;0&quot;, &quot;isPublic&quot;: false}' http://localhost:8002/api/v1/metrics/a1b2c3d4-e5f6-7890-1234-567890abcdef"/>
+		</testcase>
+		<testcase name="DELETE /metric-categories/{id}" time="0.427885">
+			<failure type="failure" message="1. Test Case ID: jAhdbB
+
+- Unsupported methods
+
+    Unsupported method TRACE returned 404, expected 405 Method Not Allowed
+
+    Return 405 for methods not listed in the OpenAPI spec
+
+[404] Not Found:
+
+    `&lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;Error&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;pre&gt;Cannot TRACE /api/v1/metric-categories/a1b2c3d4-e5f6-7890-1234-567890abcdef&lt;/pre&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;`
+
+Reproduce with: 
+
+    curl -X TRACE -H 'Authorization: [Filtered]' http://localhost:8002/api/v1/metric-categories/a1b2c3d4-e5f6-7890-1234-567890abcdef"/>
+		</testcase>
+		<testcase name="GET /metrics/{id}" time="0.324572">
+			<failure type="failure" message="1. Test Case ID: oQhHHs
+
+- Response violates schema
+
+    'id' is a required property
+
+    Schema at /allOf/0:
+
+        {
+            &quot;required&quot;: [
+                &quot;id&quot;,
+                &quot;userId&quot;,
+                &quot;name&quot;,
+                &quot;defaultUnit&quot;,
+                &quot;isPublic&quot;,
+                &quot;createdAt&quot;,
+                &quot;updatedAt&quot;
+            ],
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;properties&quot;: {
+                &quot;id&quot;: {
+                    &quot;$ref&quot;: &quot;#/x-bundled/schema3&quot;
+                },
+                &quot;userId&quot;: {
+                    &quot;$ref&quot;: &quot;#/x-bundled/schema3&quot;
+                },
+                &quot;originalMetricId&quot;: {
+            // Output truncated...
+        }
+
+    Value:
+
+        {
+            &quot;status&quot;: &quot;fail&quot;,
+            &quot;message&quot;: &quot;Metric not found&quot;,
+            &quot;stack&quot;: &quot;Error: Metric not found\n    at new AppError (/Users/dimaspramu...
+        }
+
+[200] OK:
+
+    `{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Metric not found&quot;,&quot;stack&quot;:&quot;Error: Metric not found\n    at new AppError (/Users/dimaspramudya/development/workspace/js/lakira-backend/src/utils/AppError.ts:19:11)\n    at &lt;anonymous&gt; (/Users/dimaspramudya/development/workspace/js/lakira-backend/src/features/metric/infrastructure/http/controller.ts:128:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)&quot;}`
+
+Reproduce with: 
+
+    curl -X GET -H 'Authorization: [Filtered]' 'http://localhost:8002/api/v1/metrics/a1b2c3d4-e5f6-7890-1234-567890abcdef?logsLimit=20&amp;x-schemathesis-unknown-property=42'"/>
+		</testcase>
+		<testcase name="POST /auth/login" time="0.495617">
+			<failure type="failure" message="1. Test Case ID: pEmJXg
+
+- Unsupported methods
+
+    Unsupported method TRACE returned 404, expected 405 Method Not Allowed
+
+    Return 405 for methods not listed in the OpenAPI spec
+
+[404] Not Found:
+
+    `&lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;Error&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;pre&gt;Cannot TRACE /api/v1/auth/login&lt;/pre&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;`
+
+Reproduce with: 
+
+    curl -X TRACE -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;email&quot;: &quot;user@example.com&quot;, &quot;password&quot;: &quot;password123&quot;}' http://localhost:8002/api/v1/auth/login"/>
+		</testcase>
+		<testcase name="DELETE /metrics/{id}" time="0.862402">
+			<failure type="failure" message="1. Test Case ID: nf7Zlc
+
+- Unsupported methods
+
+    Unsupported method TRACE returned 404, expected 405 Method Not Allowed
+
+    Return 405 for methods not listed in the OpenAPI spec
+
+[404] Not Found:
+
+    `&lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;Error&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;pre&gt;Cannot TRACE /api/v1/metrics/a1b2c3d4-e5f6-7890-1234-567890abcdef&lt;/pre&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;`
+
+Reproduce with: 
+
+    curl -X TRACE -H 'Authorization: [Filtered]' http://localhost:8002/api/v1/metrics/a1b2c3d4-e5f6-7890-1234-567890abcdef"/>
+		</testcase>
+		<testcase name="GET /metric-categories/{id}" time="0.495736">
+			<failure type="failure" message="1. Test Case ID: QQnEDl
+
+- Unsupported methods
+
+    Unsupported method TRACE returned 404, expected 405 Method Not Allowed
+
+    Return 405 for methods not listed in the OpenAPI spec
+
+[404] Not Found:
+
+    `&lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;Error&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;pre&gt;Cannot TRACE /api/v1/metric-categories/a1b2c3d4-e5f6-7890-1234-567890abcdef&lt;/pre&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;`
+
+Reproduce with: 
+
+    curl -X TRACE -H 'Authorization: [Filtered]' http://localhost:8002/api/v1/metric-categories/a1b2c3d4-e5f6-7890-1234-567890abcdef"/>
+		</testcase>
+		<testcase name="PUT /metric-categories/{id}" time="0.511545">
+			<failure type="failure" message="1. Test Case ID: WOJenp
+
+- Unsupported methods
+
+    Unsupported method TRACE returned 404, expected 405 Method Not Allowed
+
+    Return 405 for methods not listed in the OpenAPI spec
+
+[404] Not Found:
+
+    `&lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;Error&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;pre&gt;Cannot TRACE /api/v1/metric-categories/a1b2c3d4-e5f6-7890-1234-567890abcdef&lt;/pre&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;`
+
+Reproduce with: 
+
+    curl -X TRACE -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;name&quot;: &quot;Updated Category Name&quot;, &quot;color&quot;: &quot;#654321&quot;, &quot;icon&quot;: &quot;\ud83c\udf1f&quot;}' http://localhost:8002/api/v1/metric-categories/a1b2c3d4-e5f6-7890-1234-567890abcdef"/>
+		</testcase>
+		<testcase name="DELETE /metric-logs/{id}" time="0.378898">
+			<failure type="failure" message="1. Test Case ID: NBrkCB
+
+- Unsupported methods
+
+    Unsupported method TRACE returned 404, expected 405 Method Not Allowed
+
+    Return 405 for methods not listed in the OpenAPI spec
+
+[404] Not Found:
+
+    `&lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;Error&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;pre&gt;Cannot TRACE /api/v1/metric-logs/a1b2c3d4-e5f6-7890-1234-567890abcdef&lt;/pre&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;`
+
+Reproduce with: 
+
+    curl -X TRACE -H 'Authorization: [Filtered]' http://localhost:8002/api/v1/metric-logs/a1b2c3d4-e5f6-7890-1234-567890abcdef"/>
+		</testcase>
+		<testcase name="GET /metric-logs/{id}" time="0.590654">
+			<failure type="failure" message="1. Test Case ID: bEQVr6
+
+- Unsupported methods
+
+    Unsupported method TRACE returned 404, expected 405 Method Not Allowed
+
+    Return 405 for methods not listed in the OpenAPI spec
+
+[404] Not Found:
+
+    `&lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;Error&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;pre&gt;Cannot TRACE /api/v1/metric-logs/a1b2c3d4-e5f6-7890-1234-567890abcdef&lt;/pre&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;`
+
+Reproduce with: 
+
+    curl -X TRACE -H 'Authorization: [Filtered]' 'http://localhost:8002/api/v1/metric-logs/a1b2c3d4-e5f6-7890-1234-567890abcdef?metricId=a1b2c3d4-e5f6-7890-1234-567890abcdef'"/>
+		</testcase>
+		<testcase name="PUT /metric-logs/{id}" time="0.565524">
+			<failure type="failure" message="1. Test Case ID: MpIpyC
+
+- Unsupported methods
+
+    Unsupported method TRACE returned 404, expected 405 Method Not Allowed
+
+    Return 405 for methods not listed in the OpenAPI spec
+
+[404] Not Found:
+
+    `&lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;Error&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;pre&gt;Cannot TRACE /api/v1/metric-logs/a1b2c3d4-e5f6-7890-1234-567890abcdef&lt;/pre&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;`
+
+Reproduce with: 
+
+    curl -X TRACE -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;logValue&quot;: 12000, &quot;type&quot;: &quot;manual&quot;, &quot;loggedAt&quot;: &quot;2023-01-01T13:00:00Z&quot;}' http://localhost:8002/api/v1/metric-logs/a1b2c3d4-e5f6-7890-1234-567890abcdef"/>
+		</testcase>
+		<testcase name="GET /metric-settings/{id}" time="0.584709">
+			<failure type="failure" message="1. Test Case ID: iqwtDv
+
+- Response violates schema
+
+    'id' is a required property
+
+    Schema:
+
+        {
+            &quot;required&quot;: [
+                &quot;id&quot;,
+                &quot;metricId&quot;,
+                &quot;isActive&quot;,
+                &quot;goalEnabled&quot;,
+                &quot;goalType&quot;,
+                &quot;goalValue&quot;,
+                &quot;timeFrameEnabled&quot;,
+                &quot;startDate&quot;,
+                &quot;deadlineDate&quot;,
+                &quot;alertEnabled&quot;,
+                &quot;alertThresholds&quot;,
+                &quot;isAchieved&quot;,
+                &quot;displayOptions&quot;,
+                &quot;createdAt&quot;,
+                &quot;updatedAt&quot;
+            ],
+            &quot;type&quot;: &quot;object&quot;,
+            // Output truncated...
+        }
+
+    Value:
+
+        {
+            &quot;status&quot;: &quot;fail&quot;,
+            &quot;message&quot;: &quot;Metric Settings not found&quot;,
+            &quot;stack&quot;: &quot;Error: Metric Settings not found\n    at new AppError (/Users/d...
+        }
+
+- API accepted schema-violating request
+
+    Invalid data should have been rejected
+    Expected: 400, 401, 403, 404, 406, 422, 428, 5xx
+    Invalid component: Missing `metricId` at query
+
+[200] OK:
+
+    `{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Metric Settings not found&quot;,&quot;stack&quot;:&quot;Error: Metric Settings not found\n    at new AppError (/Users/dimaspramudya/development/workspace/js/lakira-backend/src/utils/AppError.ts:19:11)\n    at GetMetricSettings.execute (/Users/dimaspramudya/development/workspace/js/lakira-backend/src/features/metric-settings/application/queries/GetMetricSettings.ts:12:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async &lt;anonymous&gt; (/Users/dimaspramudy // Output truncated...`
+
+Reproduce with: 
+
+    curl -X GET -H 'Authorization: [Filtered]' http://localhost:8002/api/v1/metric-settings/a1b2c3d4-e5f6-7890-1234-567890abcdef"/>
+		</testcase>
+		<testcase name="GET /analytics/dashboard" time="0.135459">
+			<failure type="failure" message="1. Test Case ID: xbFyx4
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 5xx
+
+[400] Bad Request:
+
+    `{&quot;status&quot;:&quot;fail&quot;,&quot;errors&quot;:[{&quot;field&quot;:&quot;query.tz&quot;,&quot;message&quot;:&quot;Invalid IANA time zone&quot;},{&quot;field&quot;:&quot;query.end&quot;,&quot;message&quot;:&quot;end must be after start&quot;}]}`
+
+Reproduce with: 
+
+    curl -X GET -H 'Authorization: [Filtered]' 'http://localhost:8002/api/v1/analytics/dashboard?tz=&amp;fill=none&amp;start=2000-01-01T00%3A00%3A00Z&amp;end=2000-01-01T00%3A00%3A00Z&amp;last=&amp;limit=1'"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="DELETE /metric-settings/{id}" time="0.582416">
+			<failure type="failure" message="1. Test Case ID: b03BEZ
+
+- Unsupported methods
+
+    Unsupported method TRACE returned 404, expected 405 Method Not Allowed
+
+    Return 405 for methods not listed in the OpenAPI spec
+
+[404] Not Found:
+
+    `&lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;Error&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;pre&gt;Cannot TRACE /api/v1/metric-settings/a1b2c3d4-e5f6-7890-1234-567890abcdef&lt;/pre&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;`
+
+Reproduce with: 
+
+    curl -X TRACE -H 'Authorization: [Filtered]' 'http://localhost:8002/api/v1/metric-settings/a1b2c3d4-e5f6-7890-1234-567890abcdef?metricId=a1b2c3d4-e5f6-7890-1234-567890abcdef'"/>
+		</testcase>
+		<testcase name="GET /metrics/{metricId}/trends" time="2.100076">
+			<failure type="failure" message="1. Test Case ID: CEmuUB
+
+- Unsupported methods
+
+    Unsupported method TRACE returned 404, expected 405 Method Not Allowed
+
+    Return 405 for methods not listed in the OpenAPI spec
+
+[404] Not Found:
+
+    `&lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;Error&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;pre&gt;Cannot TRACE /api/v1/metrics/a1b2c3d4-e5f6-7890-1234-567890abcdef/trends&lt;/pre&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;`
+
+Reproduce with: 
+
+    curl -X TRACE -H 'Authorization: [Filtered]' 'http://localhost:8002/api/v1/metrics/a1b2c3d4-e5f6-7890-1234-567890abcdef/trends?startDate=2023-01-01T00%3A00%3A00Z&amp;endDate=2023-01-31T23%3A59%3A59Z&amp;interval=daily'"/>
+		</testcase>
+		<testcase name="PUT /metric-settings/{id}" time="0.650307">
+			<failure type="failure" message="1. Test Case ID: tojEzZ
+
+- Unsupported methods
+
+    Unsupported method TRACE returned 404, expected 405 Method Not Allowed
+
+    Return 405 for methods not listed in the OpenAPI spec
+
+[404] Not Found:
+
+    `&lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;Error&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;pre&gt;Cannot TRACE /api/v1/metric-settings/a1b2c3d4-e5f6-7890-1234-567890abcdef&lt;/pre&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;`
+
+Reproduce with: 
+
+    curl -X TRACE -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;goalEnabled&quot;: false, &quot;goalType&quot;: null, &quot;goalValue&quot;: null, &quot;timeFrameEnabled&quot;: false, &quot;startDate&quot;: null, &quot;deadlineDate&quot;: null, &quot;alertEnabled&quot;: false, &quot;alertThresholds&quot;: null, &quot;displayOptions&quot;: {&quot;showOnDashboard&quot;: true, &quot;priority&quot;: null, &quot;chartType&quot;: null, &quot;color&quot;: null}}' 'http://localhost:8002/api/v1/metric-settings/a1b2c3d4-e5f6-7890-1234-567890abcdef?metricId=a1b2c3d4-e5f6-7890-1234-567890abcdef'"/>
+		</testcase>
+		<testcase name="PATCH /metric-settings/{id}/achieve" time="0.492354">
+			<failure type="failure" message="1. Test Case ID: Bdcs1y
+
+- Unsupported methods
+
+    Unsupported method TRACE returned 404, expected 405 Method Not Allowed
+
+    Return 405 for methods not listed in the OpenAPI spec
+
+[404] Not Found:
+
+    `&lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;Error&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;pre&gt;Cannot TRACE /api/v1/metric-settings/a1b2c3d4-e5f6-7890-1234-567890abcdef/achieve&lt;/pre&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;`
+
+Reproduce with: 
+
+    curl -X TRACE -H 'Authorization: [Filtered]' 'http://localhost:8002/api/v1/metric-settings/a1b2c3d4-e5f6-7890-1234-567890abcdef/achieve?metricId=a1b2c3d4-e5f6-7890-1234-567890abcdef'"/>
+		</testcase>
+		<testcase name="PATCH /metric-settings/{id}/display" time="0.697439">
+			<failure type="failure" message="1. Test Case ID: G9rgNe
+
+- Unsupported methods
+
+    Unsupported method TRACE returned 404, expected 405 Method Not Allowed
+
+    Return 405 for methods not listed in the OpenAPI spec
+
+[404] Not Found:
+
+    `&lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;Error&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;pre&gt;Cannot TRACE /api/v1/metric-settings/a1b2c3d4-e5f6-7890-1234-567890abcdef/display&lt;/pre&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;`
+
+Reproduce with: 
+
+    curl -X TRACE -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;displayOptions&quot;: {&quot;showOnDashboard&quot;: true, &quot;priority&quot;: 2, &quot;chartType&quot;: &quot;bar&quot;, &quot;color&quot;: &quot;#00FFAA&quot;}}' 'http://localhost:8002/api/v1/metric-settings/a1b2c3d4-e5f6-7890-1234-567890abcdef/display?metricId=a1b2c3d4-e5f6-7890-1234-567890abcdef'"/>
+		</testcase>
+		<testcase name="POST /metric-settings" time="0.864238">
+			<failure type="failure" message="1. Test Case ID: D9fqcd
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 5xx
+
+[400] Bad Request:
+
+    `{&quot;status&quot;:&quot;fail&quot;,&quot;errors&quot;:[{&quot;field&quot;:&quot;body.goalType&quot;,&quot;message&quot;:&quot;goalType is required when goalEnabled is true.&quot;},{&quot;field&quot;:&quot;body.goalValue&quot;,&quot;message&quot;:&quot;goalValue is required when goalEnabled is true.&quot;}]}`
+
+Reproduce with: 
+
+    curl -X POST -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;metricId&quot;: &quot;a1b2c3d4-e5f6-7890-1234-567890abcdef&quot;, &quot;goalEnabled&quot;: true, &quot;displayOptions&quot;: {&quot;showOnDashboard&quot;: true, &quot;priority&quot;: 1, &quot;chartType&quot;: &quot;line&quot;, &quot;color&quot;: &quot;#E897A3&quot;}}' http://localhost:8002/api/v1/metric-settings"/>
+			<failure type="failure" message="1. Test Case ID: D9fqcd
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 5xx
+
+[400] Bad Request:
+
+    `{&quot;status&quot;:&quot;fail&quot;,&quot;errors&quot;:[{&quot;field&quot;:&quot;body.goalType&quot;,&quot;message&quot;:&quot;goalType is required when goalEnabled is true.&quot;},{&quot;field&quot;:&quot;body.goalValue&quot;,&quot;message&quot;:&quot;goalValue is required when goalEnabled is true.&quot;}]}`
+
+Reproduce with: 
+
+    curl -X POST -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;metricId&quot;: &quot;a1b2c3d4-e5f6-7890-1234-567890abcdef&quot;, &quot;goalEnabled&quot;: true, &quot;displayOptions&quot;: {&quot;showOnDashboard&quot;: true, &quot;priority&quot;: 1, &quot;chartType&quot;: &quot;line&quot;, &quot;color&quot;: &quot;#E897A3&quot;}}' http://localhost:8002/api/v1/metric-settings
+
+2. Test Case ID: g8O4sj
+
+- Unsupported methods
+
+    Unsupported method TRACE returned 404, expected 405 Method Not Allowed
+
+    Return 405 for methods not listed in the OpenAPI spec
+
+[404] Not Found:
+
+    `&lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;Error&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;pre&gt;Cannot TRACE /api/v1/metric-settings&lt;/pre&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;`
+
+Reproduce with: 
+
+    curl -X TRACE -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;metricId&quot;: &quot;e3e70682-c209-4cac-629f-6fbed82c07cd&quot;, &quot;goalEnabled&quot;: true, &quot;goalType&quot;: null, &quot;goalValue&quot;: null, &quot;timeFrameEnabled&quot;: false, &quot;startDate&quot;: null, &quot;deadlineDate&quot;: null, &quot;alertEnabled&quot;: false, &quot;alertThresholds&quot;: null, &quot;displayOptions&quot;: {&quot;showOnDashboard&quot;: true, &quot;priority&quot;: null, &quot;chartType&quot;: null, &quot;color&quot;: null}}' http://localhost:8002/api/v1/metric-settings"/>
+		</testcase>
+		<testcase name="GET /metric-settings" time="0.741901">
+			<failure type="failure" message="1. Test Case ID: rdEdaL
+
+- Response violates schema
+
+    'items' is a required property
+
+    Schema:
+
+        {
+            &quot;required&quot;: [
+                &quot;items&quot;,
+                &quot;nextCursor&quot;,
+                &quot;sort&quot;,
+                &quot;limit&quot;
+            ],
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;properties&quot;: {
+                &quot;items&quot;: {
+                    &quot;type&quot;: &quot;array&quot;,
+                    &quot;items&quot;: {
+                        &quot;$ref&quot;: &quot;#/x-bundled/schema2&quot;
+                    }
+                },
+                &quot;nextCursor&quot;: {
+                    &quot;anyOf&quot;: [
+                        {
+                            &quot;type&quot;: &quot;string&quot;,
+            // Output truncated...
+        }
+
+    Value:
+
+        {
+            &quot;status&quot;: &quot;success&quot;,
+            &quot;message&quot;: &quot;Success&quot;,
+            &quot;data&quot;: {
+                &quot;items&quot;: [],
+                &quot;sort&quot;: &quot;-createdAt&quot;,
+                &quot;limit&quot;: 20,
+                &quot;filter&quot;: {
+                    &quot;metricId&quot;: &quot;a1b2c3d4-e5f6-7890-1234-567890abcdef&quot;
+                }
+            },
+            &quot;success&quot;: true
+        }
+
+[200] OK:
+
+    `{&quot;status&quot;:&quot;success&quot;,&quot;message&quot;:&quot;Success&quot;,&quot;data&quot;:{&quot;items&quot;:[],&quot;sort&quot;:&quot;-createdAt&quot;,&quot;limit&quot;:20,&quot;filter&quot;:{&quot;metricId&quot;:&quot;a1b2c3d4-e5f6-7890-1234-567890abcdef&quot;}},&quot;success&quot;:true}`
+
+Reproduce with: 
+
+    curl -X GET -H 'Authorization: [Filtered]' 'http://localhost:8002/api/v1/metric-settings?filter%5BmetricId%5D=a1b2c3d4-e5f6-7890-1234-567890abcdef'"/>
+			<failure type="failure" message="1. Test Case ID: rdEdaL
+
+- Response violates schema
+
+    'items' is a required property
+
+    Schema:
+
+        {
+            &quot;required&quot;: [
+                &quot;items&quot;,
+                &quot;nextCursor&quot;,
+                &quot;sort&quot;,
+                &quot;limit&quot;
+            ],
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;properties&quot;: {
+                &quot;items&quot;: {
+                    &quot;type&quot;: &quot;array&quot;,
+                    &quot;items&quot;: {
+                        &quot;$ref&quot;: &quot;#/x-bundled/schema2&quot;
+                    }
+                },
+                &quot;nextCursor&quot;: {
+                    &quot;anyOf&quot;: [
+                        {
+                            &quot;type&quot;: &quot;string&quot;,
+            // Output truncated...
+        }
+
+    Value:
+
+        {
+            &quot;status&quot;: &quot;success&quot;,
+            &quot;message&quot;: &quot;Success&quot;,
+            &quot;data&quot;: {
+                &quot;items&quot;: [],
+                &quot;sort&quot;: &quot;-createdAt&quot;,
+                &quot;limit&quot;: 20,
+                &quot;filter&quot;: {
+                    &quot;metricId&quot;: &quot;a1b2c3d4-e5f6-7890-1234-567890abcdef&quot;
+                }
+            },
+            &quot;success&quot;: true
+        }
+
+[200] OK:
+
+    `{&quot;status&quot;:&quot;success&quot;,&quot;message&quot;:&quot;Success&quot;,&quot;data&quot;:{&quot;items&quot;:[],&quot;sort&quot;:&quot;-createdAt&quot;,&quot;limit&quot;:20,&quot;filter&quot;:{&quot;metricId&quot;:&quot;a1b2c3d4-e5f6-7890-1234-567890abcdef&quot;}},&quot;success&quot;:true}`
+
+Reproduce with: 
+
+    curl -X GET -H 'Authorization: [Filtered]' 'http://localhost:8002/api/v1/metric-settings?filter%5BmetricId%5D=a1b2c3d4-e5f6-7890-1234-567890abcdef'
+
+2. Test Case ID: HR5xZi
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 5xx
+
+- Undocumented HTTP status code
+
+    Received: 400
+    Documented: 200, 401, 500
+
+[400] Bad Request:
+
+    `{&quot;status&quot;:&quot;fail&quot;,&quot;errors&quot;:[{&quot;field&quot;:&quot;query.q&quot;,&quot;message&quot;:&quot;String must contain at least 1 character(s)&quot;}]}`
+
+Reproduce with: 
+
+    curl -X GET -H 'Authorization: [Filtered]' 'http://localhost:8002/api/v1/metric-settings?limit=1&amp;sort=createdAt&amp;q=&amp;includeTotal=true&amp;filter%5BmetricId%5D=a1b2c3d4-e5f6-7890-1234-567890abcdef&amp;filter%5BisActive%5D=true'"/>
+		</testcase>
+		<testcase name="GET /analytics/metrics/{metricId}" time="0.665888">
+			<failure type="failure" message="1. Test Case ID: jKw2o3
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 5xx
+
+[400] Bad Request:
+
+    `{&quot;status&quot;:&quot;fail&quot;,&quot;errors&quot;:[{&quot;field&quot;:&quot;query&quot;,&quot;message&quot;:&quot;Invalid input&quot;}]}`
+
+Reproduce with: 
+
+    curl -X GET -H 'Authorization: [Filtered]' http://localhost:8002/api/v1/analytics/metrics/a1b2c3d4-e5f6-7890-1234-567890abcdef"/>
+			<failure type="failure" message="1. Test Case ID: jKw2o3
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 5xx
+
+[400] Bad Request:
+
+    `{&quot;status&quot;:&quot;fail&quot;,&quot;errors&quot;:[{&quot;field&quot;:&quot;query&quot;,&quot;message&quot;:&quot;Invalid input&quot;}]}`
+
+Reproduce with: 
+
+    curl -X GET -H 'Authorization: [Filtered]' http://localhost:8002/api/v1/analytics/metrics/a1b2c3d4-e5f6-7890-1234-567890abcdef"/>
+		</testcase>
+		<testcase name="GET /metric-logs/stats" time="1.260556">
+			<failure type="failure" message="1. Test Case ID: 8HIWUP
+
+- Undocumented HTTP status code
+
+    Received: 404
+    Documented: 200, 401, 500
+
+[404] Not Found:
+
+    `{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Metric not found&quot;,&quot;stack&quot;:&quot;Error: Metric not found\n    at new AppError (/Users/dimaspramudya/development/workspace/js/lakira-backend/src/utils/AppError.ts:19:11)\n    at validateMetricAccess (/Users/dimaspramudya/development/workspace/js/lakira-backend/src/utils/db-helper.ts:29:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async MetricAccessSequelize.ensureMetricOwnership (/Users/dimaspramudya/development/workspace/js/lakira-back // Output truncated...`
+
+Reproduce with: 
+
+    curl -X GET -H 'Authorization: [Filtered]' 'http://localhost:8002/api/v1/metric-logs/stats?metricId=a1b2c3d4-e5f6-7890-1234-567890abcdef'"/>
+			<failure type="failure" message="1. Test Case ID: 8HIWUP
+
+- Undocumented HTTP status code
+
+    Received: 404
+    Documented: 200, 401, 500
+
+[404] Not Found:
+
+    `{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Metric not found&quot;,&quot;stack&quot;:&quot;Error: Metric not found\n    at new AppError (/Users/dimaspramudya/development/workspace/js/lakira-backend/src/utils/AppError.ts:19:11)\n    at validateMetricAccess (/Users/dimaspramudya/development/workspace/js/lakira-backend/src/utils/db-helper.ts:29:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async MetricAccessSequelize.ensureMetricOwnership (/Users/dimaspramudya/development/workspace/js/lakira-back // Output truncated...`
+
+Reproduce with: 
+
+    curl -X GET -H 'Authorization: [Filtered]' 'http://localhost:8002/api/v1/metric-logs/stats?metricId=a1b2c3d4-e5f6-7890-1234-567890abcdef'
+
+2. Test Case ID: Tlws5E
+
+- Unsupported methods
+
+    Unsupported method TRACE returned 404, expected 405 Method Not Allowed
+
+    Return 405 for methods not listed in the OpenAPI spec
+
+[404] Not Found:
+
+    `&lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;Error&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;pre&gt;Cannot TRACE /api/v1/metric-logs/stats&lt;/pre&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;`
+
+Reproduce with: 
+
+    curl -X TRACE -H 'Authorization: [Filtered]' 'http://localhost:8002/api/v1/metric-logs/stats?metricId=a1b2c3d4-e5f6-7890-1234-567890abcdef'"/>
+		</testcase>
+		<testcase name="POST /metric-logs" time="0.999514">
+			<failure type="failure" message="1. Test Case ID: 5P8Qh8
+
+- Undocumented HTTP status code
+
+    Received: 404
+    Documented: 201, 400, 401, 500
+
+[404] Not Found:
+
+    `{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Metric not found&quot;,&quot;stack&quot;:&quot;Error: Metric not found\n    at new AppError (/Users/dimaspramudya/development/workspace/js/lakira-backend/src/utils/AppError.ts:19:11)\n    at validateMetricAccess (/Users/dimaspramudya/development/workspace/js/lakira-backend/src/utils/db-helper.ts:29:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async MetricAccessSequelize.ensureMetricOwnership (/Users/dimaspramudya/development/workspace/js/lakira-back // Output truncated...`
+
+Reproduce with: 
+
+    curl -X POST -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;metricId&quot;: &quot;a1b2c3d4-e5f6-7890-1234-567890abcdef&quot;, &quot;logValue&quot;: 5000, &quot;type&quot;: &quot;manual&quot;, &quot;loggedAt&quot;: &quot;2023-01-01T10:00:00Z&quot;}' http://localhost:8002/api/v1/metric-logs"/>
+			<failure type="failure" message="1. Test Case ID: 5P8Qh8
+
+- Undocumented HTTP status code
+
+    Received: 404
+    Documented: 201, 400, 401, 500
+
+[404] Not Found:
+
+    `{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Metric not found&quot;,&quot;stack&quot;:&quot;Error: Metric not found\n    at new AppError (/Users/dimaspramudya/development/workspace/js/lakira-backend/src/utils/AppError.ts:19:11)\n    at validateMetricAccess (/Users/dimaspramudya/development/workspace/js/lakira-backend/src/utils/db-helper.ts:29:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async MetricAccessSequelize.ensureMetricOwnership (/Users/dimaspramudya/development/workspace/js/lakira-back // Output truncated...`
+
+Reproduce with: 
+
+    curl -X POST -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;metricId&quot;: &quot;a1b2c3d4-e5f6-7890-1234-567890abcdef&quot;, &quot;logValue&quot;: 5000, &quot;type&quot;: &quot;manual&quot;, &quot;loggedAt&quot;: &quot;2023-01-01T10:00:00Z&quot;}' http://localhost:8002/api/v1/metric-logs
+
+2. Test Case ID: JA7UKE
+
+- Unsupported methods
+
+    Unsupported method TRACE returned 404, expected 405 Method Not Allowed
+
+    Return 405 for methods not listed in the OpenAPI spec
+
+[404] Not Found:
+
+    `&lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;Error&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;pre&gt;Cannot TRACE /api/v1/metric-logs&lt;/pre&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;`
+
+Reproduce with: 
+
+    curl -X TRACE -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;metricId&quot;: &quot;e3e70682-c209-4cac-629f-6fbed82c07cd&quot;, &quot;logValue&quot;: 5000, &quot;type&quot;: &quot;manual&quot;, &quot;loggedAt&quot;: &quot;2023-01-01T10:00:00Z&quot;}' http://localhost:8002/api/v1/metric-logs"/>
+		</testcase>
+		<testcase name="GET /metric-logs" time="0.982579">
+			<failure type="failure" message="1. Test Case ID: PZumA4
+
+- Response violates schema
+
+    'items' is a required property
+
+    Schema:
+
+        {
+            &quot;required&quot;: [
+                &quot;items&quot;,
+                &quot;nextCursor&quot;,
+                &quot;sort&quot;,
+                &quot;limit&quot;
+            ],
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;properties&quot;: {
+                &quot;items&quot;: {
+                    &quot;type&quot;: &quot;array&quot;,
+                    &quot;items&quot;: {
+                        &quot;$ref&quot;: &quot;#/x-bundled/schema2&quot;
+                    }
+                },
+                &quot;nextCursor&quot;: {
+                    &quot;anyOf&quot;: [
+                        {
+                            &quot;type&quot;: &quot;string&quot;,
+            // Output truncated...
+        }
+
+    Value:
+
+        {
+            &quot;status&quot;: &quot;success&quot;,
+            &quot;message&quot;: &quot;Metric Logs cursor fetched successfully&quot;,
+            &quot;data&quot;: {
+                &quot;items&quot;: [],
+                &quot;sort&quot;: &quot;-createdAt&quot;,
+                &quot;limit&quot;: 20,
+                &quot;filter&quot;: {
+                    &quot;metricId&quot;: &quot;a1b2c3d4-e5f6-7890-1234-567890abcdef&quot;
+                }
+            },
+            &quot;success&quot;: true
+        }
+
+[200] OK:
+
+    `{&quot;status&quot;:&quot;success&quot;,&quot;message&quot;:&quot;Metric Logs cursor fetched successfully&quot;,&quot;data&quot;:{&quot;items&quot;:[],&quot;sort&quot;:&quot;-createdAt&quot;,&quot;limit&quot;:20,&quot;filter&quot;:{&quot;metricId&quot;:&quot;a1b2c3d4-e5f6-7890-1234-567890abcdef&quot;}},&quot;success&quot;:true}`
+
+Reproduce with: 
+
+    curl -X GET -H 'Authorization: [Filtered]' 'http://localhost:8002/api/v1/metric-logs?filter%5BmetricId%5D=a1b2c3d4-e5f6-7890-1234-567890abcdef'"/>
+			<failure type="failure" message="1. Test Case ID: PZumA4
+
+- Response violates schema
+
+    'items' is a required property
+
+    Schema:
+
+        {
+            &quot;required&quot;: [
+                &quot;items&quot;,
+                &quot;nextCursor&quot;,
+                &quot;sort&quot;,
+                &quot;limit&quot;
+            ],
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;properties&quot;: {
+                &quot;items&quot;: {
+                    &quot;type&quot;: &quot;array&quot;,
+                    &quot;items&quot;: {
+                        &quot;$ref&quot;: &quot;#/x-bundled/schema2&quot;
+                    }
+                },
+                &quot;nextCursor&quot;: {
+                    &quot;anyOf&quot;: [
+                        {
+                            &quot;type&quot;: &quot;string&quot;,
+            // Output truncated...
+        }
+
+    Value:
+
+        {
+            &quot;status&quot;: &quot;success&quot;,
+            &quot;message&quot;: &quot;Metric Logs cursor fetched successfully&quot;,
+            &quot;data&quot;: {
+                &quot;items&quot;: [],
+                &quot;sort&quot;: &quot;-createdAt&quot;,
+                &quot;limit&quot;: 20,
+                &quot;filter&quot;: {
+                    &quot;metricId&quot;: &quot;a1b2c3d4-e5f6-7890-1234-567890abcdef&quot;
+                }
+            },
+            &quot;success&quot;: true
+        }
+
+[200] OK:
+
+    `{&quot;status&quot;:&quot;success&quot;,&quot;message&quot;:&quot;Metric Logs cursor fetched successfully&quot;,&quot;data&quot;:{&quot;items&quot;:[],&quot;sort&quot;:&quot;-createdAt&quot;,&quot;limit&quot;:20,&quot;filter&quot;:{&quot;metricId&quot;:&quot;a1b2c3d4-e5f6-7890-1234-567890abcdef&quot;}},&quot;success&quot;:true}`
+
+Reproduce with: 
+
+    curl -X GET -H 'Authorization: [Filtered]' 'http://localhost:8002/api/v1/metric-logs?filter%5BmetricId%5D=a1b2c3d4-e5f6-7890-1234-567890abcdef'
+
+2. Test Case ID: piiRp4
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 5xx
+
+- Undocumented HTTP status code
+
+    Received: 400
+    Documented: 200, 401, 500
+
+[400] Bad Request:
+
+    `{&quot;status&quot;:&quot;fail&quot;,&quot;errors&quot;:[{&quot;field&quot;:&quot;query.q&quot;,&quot;message&quot;:&quot;String must contain at least 1 character(s)&quot;},{&quot;field&quot;:&quot;query.filter.logValue&quot;,&quot;message&quot;:&quot;Expected number, received string&quot;}]}`
+
+Reproduce with: 
+
+    curl -X GET -H 'Authorization: [Filtered]' 'http://localhost:8002/api/v1/metric-logs?limit=1&amp;sort=createdAt&amp;q=&amp;includeTotal=true&amp;filter%5BmetricId%5D=a1b2c3d4-e5f6-7890-1234-567890abcdef&amp;filter%5BlogValue%5D=0'"/>
+		</testcase>
+		<testcase name="POST /metric-categories" time="1.072399">
+			<failure type="failure" message="1. Test Case ID: W16Mdq
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 5xx
+
+[400] Bad Request:
+
+    `{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Category already exists&quot;,&quot;stack&quot;:&quot;Error: Category already exists\n    at new AppError (/Users/dimaspramudya/development/workspace/js/lakira-backend/src/utils/AppError.ts:19:11)\n    at CreateCategory.execute (/Users/dimaspramudya/development/workspace/js/lakira-backend/src/features/metric-category/application/use-cases/CreateCategory.ts:16:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async &lt;anonymous&gt; (/Users/dimaspramudya/develo // Output truncated...`
+
+Reproduce with: 
+
+    curl -X POST -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;name&quot;: &quot;New Category&quot;, &quot;color&quot;: &quot;#123456&quot;, &quot;icon&quot;: &quot;\u2728&quot;}' http://localhost:8002/api/v1/metric-categories"/>
+			<failure type="failure" message="1. Test Case ID: W16Mdq
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 5xx
+
+[400] Bad Request:
+
+    `{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Category already exists&quot;,&quot;stack&quot;:&quot;Error: Category already exists\n    at new AppError (/Users/dimaspramudya/development/workspace/js/lakira-backend/src/utils/AppError.ts:19:11)\n    at CreateCategory.execute (/Users/dimaspramudya/development/workspace/js/lakira-backend/src/features/metric-category/application/use-cases/CreateCategory.ts:16:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async &lt;anonymous&gt; (/Users/dimaspramudya/develo // Output truncated...`
+
+Reproduce with: 
+
+    curl -X POST -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;name&quot;: &quot;New Category&quot;, &quot;color&quot;: &quot;#123456&quot;, &quot;icon&quot;: &quot;\u2728&quot;}' http://localhost:8002/api/v1/metric-categories
+
+2. Test Case ID: xqUz7X
+
+- Unsupported methods
+
+    Unsupported method TRACE returned 404, expected 405 Method Not Allowed
+
+    Return 405 for methods not listed in the OpenAPI spec
+
+[404] Not Found:
+
+    `&lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;Error&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;pre&gt;Cannot TRACE /api/v1/metric-categories&lt;/pre&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;`
+
+Reproduce with: 
+
+    curl -X TRACE -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;name&quot;: &quot;New Category&quot;, &quot;color&quot;: &quot;#123456&quot;, &quot;icon&quot;: &quot;\u2728&quot;}' http://localhost:8002/api/v1/metric-categories"/>
+		</testcase>
+		<testcase name="POST /auth/register" time="1.124295">
+			<failure type="failure" message="1. Test Case ID: B47M2H
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 5xx
+
+[400] Bad Request:
+
+    `{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Email already in use&quot;,&quot;stack&quot;:&quot;Error: Email already in use\n    at new AppError (/Users/dimaspramudya/development/workspace/js/lakira-backend/src/utils/AppError.ts:19:11)\n    at RegisterUser.execute (/Users/dimaspramudya/development/workspace/js/lakira-backend/src/features/auth/application/use-cases/RegisterUser.ts:35:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async &lt;anonymous&gt; (/Users/dimaspramudya/development/workspace/js/la // Output truncated...`
+
+Reproduce with: 
+
+    curl -X POST -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;username&quot;: &quot;newuser&quot;, &quot;email&quot;: &quot;newuser@example.com&quot;, &quot;password&quot;: &quot;newpassword123&quot;, &quot;passwordConfirmation&quot;: &quot;newpassword123&quot;, &quot;isPublicProfile&quot;: true, &quot;role&quot;: &quot;user&quot;}' http://localhost:8002/api/v1/auth/register"/>
+			<failure type="failure" message="1. Test Case ID: B47M2H
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 5xx
+
+[400] Bad Request:
+
+    `{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Email already in use&quot;,&quot;stack&quot;:&quot;Error: Email already in use\n    at new AppError (/Users/dimaspramudya/development/workspace/js/lakira-backend/src/utils/AppError.ts:19:11)\n    at RegisterUser.execute (/Users/dimaspramudya/development/workspace/js/lakira-backend/src/features/auth/application/use-cases/RegisterUser.ts:35:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async &lt;anonymous&gt; (/Users/dimaspramudya/development/workspace/js/la // Output truncated...`
+
+Reproduce with: 
+
+    curl -X POST -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;username&quot;: &quot;newuser&quot;, &quot;email&quot;: &quot;newuser@example.com&quot;, &quot;password&quot;: &quot;newpassword123&quot;, &quot;passwordConfirmation&quot;: &quot;newpassword123&quot;, &quot;isPublicProfile&quot;: true, &quot;role&quot;: &quot;user&quot;}' http://localhost:8002/api/v1/auth/register
+
+2. Test Case ID: wxQZXZ
+
+- Unsupported methods
+
+    Unsupported method TRACE returned 404, expected 405 Method Not Allowed
+
+    Return 405 for methods not listed in the OpenAPI spec
+
+[404] Not Found:
+
+    `&lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;Error&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;pre&gt;Cannot TRACE /api/v1/auth/register&lt;/pre&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;`
+
+Reproduce with: 
+
+    curl -X TRACE -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;username&quot;: &quot;newuser&quot;, &quot;email&quot;: &quot;newuser@example.com&quot;, &quot;password&quot;: &quot;newpassword123&quot;, &quot;passwordConfirmation&quot;: &quot;newpassword123&quot;, &quot;isPublicProfile&quot;: true, &quot;role&quot;: &quot;user&quot;}' http://localhost:8002/api/v1/auth/register"/>
+		</testcase>
+		<testcase name="PUT /auth/profile" time="1.630007">
+			<failure type="failure" message="1. Test Case ID: EVQyVc
+
+- Response violates schema
+
+    'id' is a required property
+
+    Schema:
+
+        {
+            &quot;required&quot;: [
+                &quot;id&quot;,
+                &quot;username&quot;,
+                &quot;email&quot;,
+                &quot;isPublicProfile&quot;,
+                &quot;role&quot;,
+                &quot;createdAt&quot;,
+                &quot;updatedAt&quot;
+            ],
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;properties&quot;: {
+                &quot;id&quot;: {
+                    &quot;$ref&quot;: &quot;#/x-bundled/schema2&quot;
+                },
+                &quot;username&quot;: {
+                    &quot;type&quot;: &quot;string&quot;,
+                    &quot;example&quot;: &quot;testuser&quot;
+                },
+            // Output truncated...
+        }
+
+    Value:
+
+        {
+            &quot;status&quot;: &quot;success&quot;,
+            &quot;message&quot;: &quot;Profile updated successfully&quot;,
+            &quot;data&quot;: {
+                &quot;user&quot;: {
+                    &quot;id&quot;: &quot;11111111-aaaa-4aaa-8aaa-000000000001&quot;,
+                    &quot;username&quot;: &quot;updateduser&quot;,
+                    &quot;email&quot;: &quot;updated@example.com&quot;,
+                    &quot;role&quot;: &quot;user&quot;,
+                    &quot;isPublicProfile&quot;: false,
+                    &quot;createdAt&quot;: &quot;2026-01-14T10:12:09.887Z&quot;,
+                    &quot;updatedAt&quot;: &quot;2026-01-14T10:25:12.425Z&quot;
+                }
+            },
+            &quot;success&quot;: true
+        }
+
+[200] OK:
+
+    `{&quot;status&quot;:&quot;success&quot;,&quot;message&quot;:&quot;Profile updated successfully&quot;,&quot;data&quot;:{&quot;user&quot;:{&quot;id&quot;:&quot;11111111-aaaa-4aaa-8aaa-000000000001&quot;,&quot;username&quot;:&quot;updateduser&quot;,&quot;email&quot;:&quot;updated@example.com&quot;,&quot;role&quot;:&quot;user&quot;,&quot;isPublicProfile&quot;:false,&quot;createdAt&quot;:&quot;2026-01-14T10:12:09.887Z&quot;,&quot;updatedAt&quot;:&quot;2026-01-14T10:25:12.425Z&quot;}},&quot;success&quot;:true}`
+
+Reproduce with: 
+
+    curl -X PUT -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;username&quot;: &quot;updateduser&quot;, &quot;email&quot;: &quot;updated@example.com&quot;, &quot;password&quot;: &quot;updatedpassword&quot;, &quot;isPublicProfile&quot;: false, &quot;role&quot;: &quot;admin&quot;}' http://localhost:8002/api/v1/auth/profile"/>
+			<failure type="failure" message="1. Test Case ID: EVQyVc
+
+- Response violates schema
+
+    'id' is a required property
+
+    Schema:
+
+        {
+            &quot;required&quot;: [
+                &quot;id&quot;,
+                &quot;username&quot;,
+                &quot;email&quot;,
+                &quot;isPublicProfile&quot;,
+                &quot;role&quot;,
+                &quot;createdAt&quot;,
+                &quot;updatedAt&quot;
+            ],
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;properties&quot;: {
+                &quot;id&quot;: {
+                    &quot;$ref&quot;: &quot;#/x-bundled/schema2&quot;
+                },
+                &quot;username&quot;: {
+                    &quot;type&quot;: &quot;string&quot;,
+                    &quot;example&quot;: &quot;testuser&quot;
+                },
+            // Output truncated...
+        }
+
+    Value:
+
+        {
+            &quot;status&quot;: &quot;success&quot;,
+            &quot;message&quot;: &quot;Profile updated successfully&quot;,
+            &quot;data&quot;: {
+                &quot;user&quot;: {
+                    &quot;id&quot;: &quot;11111111-aaaa-4aaa-8aaa-000000000001&quot;,
+                    &quot;username&quot;: &quot;updateduser&quot;,
+                    &quot;email&quot;: &quot;updated@example.com&quot;,
+                    &quot;role&quot;: &quot;user&quot;,
+                    &quot;isPublicProfile&quot;: false,
+                    &quot;createdAt&quot;: &quot;2026-01-14T10:12:09.887Z&quot;,
+                    &quot;updatedAt&quot;: &quot;2026-01-14T10:25:12.425Z&quot;
+                }
+            },
+            &quot;success&quot;: true
+        }
+
+[200] OK:
+
+    `{&quot;status&quot;:&quot;success&quot;,&quot;message&quot;:&quot;Profile updated successfully&quot;,&quot;data&quot;:{&quot;user&quot;:{&quot;id&quot;:&quot;11111111-aaaa-4aaa-8aaa-000000000001&quot;,&quot;username&quot;:&quot;updateduser&quot;,&quot;email&quot;:&quot;updated@example.com&quot;,&quot;role&quot;:&quot;user&quot;,&quot;isPublicProfile&quot;:false,&quot;createdAt&quot;:&quot;2026-01-14T10:12:09.887Z&quot;,&quot;updatedAt&quot;:&quot;2026-01-14T10:25:12.425Z&quot;}},&quot;success&quot;:true}`
+
+Reproduce with: 
+
+    curl -X PUT -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;username&quot;: &quot;updateduser&quot;, &quot;email&quot;: &quot;updated@example.com&quot;, &quot;password&quot;: &quot;updatedpassword&quot;, &quot;isPublicProfile&quot;: false, &quot;role&quot;: &quot;admin&quot;}' http://localhost:8002/api/v1/auth/profile
+
+2. Test Case ID: RlCWK2
+
+- Unsupported methods
+
+    Unsupported method TRACE returned 404, expected 405 Method Not Allowed
+
+    Return 405 for methods not listed in the OpenAPI spec
+
+[404] Not Found:
+
+    `&lt;!DOCTYPE html&gt;
+    &lt;html lang=&quot;en&quot;&gt;
+    &lt;head&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;title&gt;Error&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;pre&gt;Cannot TRACE /api/v1/auth/profile&lt;/pre&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;`
+
+Reproduce with: 
+
+    curl -X TRACE -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;username&quot;: &quot;updateduser&quot;, &quot;email&quot;: &quot;updated@example.com&quot;, &quot;password&quot;: &quot;updatedpassword&quot;, &quot;isPublicProfile&quot;: false, &quot;role&quot;: &quot;admin&quot;}' http://localhost:8002/api/v1/auth/profile"/>
+		</testcase>
+	</testsuite>
+</testsuites>

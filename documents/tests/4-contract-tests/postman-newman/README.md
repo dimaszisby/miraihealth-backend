@@ -127,6 +127,7 @@ Collections + environment files are version-controlled; secrets (tokens, passwor
   - `STAGING_METRIC_LOG_PRODUCTIVITY_LATEST_ID`
 - Reports land under `documents/tests/4-contract-tests/postman-newman/reports/staging/<timestamp>/` and should be uploaded as CI artifacts (see pipeline plan).
 - The CI `contract_staging` job (Phase 3) must depend on the staging deploy job to ensure the latest code is under test.
+- Refer to [`STAGING_RUNBOOK.md`](./STAGING_RUNBOOK.md) for deploy-hook prerequisites, secret rotation guidance, and manual reproduction steps when staging runs fail.
 
 ## 8. Assertions & Reporting
 
@@ -162,6 +163,7 @@ Collections + environment files are version-controlled; secrets (tokens, passwor
 - [Workflow Guidelines](./WORKFLOW_GUIDELINES.md)
 - [Pipeline Overview](./PIPELINE_OVERVIEW.md)
 - [Schemathesis Plan](../schemathesis/PLAN.md) — for complementary fuzzing strategy
+- [Staging Contract Runbook](./STAGING_RUNBOOK.md)
 
 ## 11. Runtime Variables
 

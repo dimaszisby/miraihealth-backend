@@ -38,11 +38,11 @@ Use this checklist to track the contract-test program end-to-end (Postman/Newman
 
 ## Phase 3 – CI/CD Integration & Enforcement
 
-- [ ] Implement `contract_local`, `deploy_staging`, `contract_staging` jobs in `.github/workflows/backend-ci.yml` per CI plan.
-- [ ] Inject staging secrets via GitHub Actions + document rotation steps.
-- [ ] Upload Newman (and later Schemathesis) artifacts from CI to `newman-*/` artifact names.
-- [ ] Require `contract_local` job for PR merges; document gating in README + CI plan.
-- [ ] Run staging contract tests end-to-end (deploy → test) at least once and document results in metrics tracker.
+- [x] Implement `contract_local`, `deploy_staging`, `contract_staging` jobs in `.github/workflows/backend-ci.yml` per CI plan — owner: Codex assist (2026-01-14) (`contract_local` now regenerates OpenAPI, seeds fixtures, runs Newman + Schemathesis, and uploads artifacts; staging jobs remain pending secrets before first run).
+- [ ] Inject staging secrets via GitHub Actions + document rotation steps (README + CI plan now document the required `STAGING_*` / Schemathesis secrets; awaiting secret creation + rotation cadence sign-off).
+- [x] Upload Newman (and later Schemathesis) artifacts from CI to `newman-*/` artifact names — owner: Codex assist (2026-01-14) (`contract_local` uploads `newman-contract-local` + `schemathesis-contract-local`; add staging upload once those runs are wired).
+- [x] Require `contract_local` job for PR merges; document gating in README + CI plan — owner: @dimaspramudya (2026-01-15) (ruleset “Protect main & develop (contract gate)” now enforces `contract_local`; docs updated with enforcement steps).
+- [ ] Run staging contract tests end-to-end (deploy → test) at least once and document results in metrics tracker (blocked until Render deploy hook + `STAGING_*` / `SCHEMATHESIS_STAGING_*` secrets are provisioned and recorded in `metrics-tracker.md`; follow `postman-newman/STAGING_RUNBOOK.md` when executing).
 
 ---
 

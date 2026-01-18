@@ -44,15 +44,23 @@
    - ✅ (2026-01-14) Schemathesis plan/checklist refreshed and backed by a dedicated README + `requirements.txt` so contributors can install the CLI, understand env vars, and log coverage/triage steps before nightly adoption.
    - ✅ (2026-01-14) Captured the first local Schemathesis run (112 failures across schema drift, missing 405 responses, and aggressive rate limiting). Reports: `schemathesis/reports/local/2026-01-14T08-19-10-426Z/` with HAR + JUnit artifacts; incidents + tracker updated with follow-ups (disable rate limiter for fuzzing, align response envelopes with OpenAPI).
    - ✅ (2026-01-14) Added `DISABLE_RATE_LIMITING` env flag + documentation so contract/Schemathesis runs can bypass throttling without impacting other environments.
+   - ✅ (2026-01-14) Added a global TRACE guard (`disallowTraceMethod` middleware) so unsupported verbs consistently return 405 instead of 404, reducing Schemathesis noise.
    - Deliverable: nightly (manual) local fuzzing run documented with sample report + metrics entry.
 
 4. **Phase 3 – CI/CD Integration & Enforcement**
 
-   - Implement GitHub Actions jobs `contract_local`, `deploy_staging`, and `contract_staging` exactly as described in `documents/ci-cd/backend/GITHUB_ACTIONS_PIPELINE_PLAN.md`.
-   - Add caching + artifact upload logic for both Newman and Schemathesis runs.
+   - Implement GitHub Actions jobs `contract_local`, `deploy_staging`, and `contract_staging` exactly as described in `documents/ci-cd/backend/GITHUB_ACTIONS_PIPELINE_PLAN.md`.  
+     ✅ (2026-01-14) `contract_local` now regenerates the OpenAPI spec, reuses the deterministic seed output, runs Newman + Schemathesis sequentially, and uploads artifacts, giving PRs an automated contract gate while staging jobs await secrets.
+   - Add caching + artifact upload logic for both Newman and Schemathesis runs.  
+     ✅ (2026-01-14) Local job publishes `newman-contract-local` + `schemathesis-contract-local` artifacts every run so reviewers always have CLI + HTML/JUnit outputs.
    - Wire secrets (`STAGING_BASE_URL`, `STAGING_AUTH_TOKEN`, etc.) and document in CI README.
-   - Configure branch protections so PRs require `contract_local` success; optionally gate `main` merges on `contract_staging`.
-   - Update pipeline overview + README to reflect actual commands + report locations; drop screenshots/artifacts in repo for reference.
+   - Configure branch protections so PRs require `contract_local` success; optionally gate `main` merges on `contract_staging`.  
+     ✅ (2026-01-15) CI README + contract README explain how to enforce the `contract_local` job as a required check; ✅ (2026-01-15) branch ruleset “Protect main & develop (contract gate)” enabled with `contract_local` required.
+   - Update pipeline overview + README to reflect actual commands + report locations; drop screenshots/artifacts in repo for reference.  
+     ✅ (2026-01-15) Postman README references the new `STAGING_RUNBOOK.md`, and CI plan/overview describe artifact uploads + deploy-hook prerequisites.
+   - Prepare a staging runbook covering deploy hooks, secret injection, and metrics updates before the first staging execution.  
+     ✅ (2026-01-15) `postman-newman/STAGING_RUNBOOK.md` added with prerequisites, CI flow, manual reproduction steps, and rotation checklist.
+   - **Pending:** enable branch protection for `contract_local` and provision `STAGING_*` / `SCHEMATHESIS_STAGING_*` secrets so `deploy_staging` → `contract_staging` can run end-to-end; log the first staging runtime + artifacts in `metrics-tracker.md`.
 
 5. **Phase 4 – Nightly Schemathesis & Portfolio Hardening**
    - Schedule nightly Schemathesis job (cron) for staging environment; capture failures in incidents log + metrics tracker.
@@ -88,6 +96,9 @@ See `metrics-tracker.md` for quantitative targets and owners.
 
 3. **Do we gate production deploys on staging contract tests?**  
    To be decided with DevOps once staging reliability is proven; update CI doc + ADR when finalized.
+
+4. **When do we enable `contract_local` as a required check and run staging contracts automatically?**  
+   Documentation + runbooks are in place (CI README §7, `postman-newman/STAGING_RUNBOOK.md`). Pending work: update GitHub branch protection to require `contract_local` and provision the `STAGING_*` / `SCHEMATHESIS_STAGING_*` secrets so `deploy_staging` → `contract_staging` can run end-to-end. Track the enforcement date + first staging run in `metrics-tracker.md`.
 
 ## Phase 1 Kickoff Notes (2026-01-14)
 

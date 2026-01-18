@@ -47,6 +47,11 @@ export const SuccessResponseSchema = registerSchema(
   }),
 );
 
+export const successEnvelope = <T extends z.ZodTypeAny>(schema: T) =>
+  SuccessResponseSchema.extend({
+    data: schema.optional(),
+  });
+
 const queryParamMetadata = (
   name: string,
   description: string,

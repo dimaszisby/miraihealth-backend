@@ -39,6 +39,7 @@ import {
   VisualizationQueryParamsSchema,
   DashboardVisualizationQueryParamsSchema,
   SuccessResponseSchema,
+  successEnvelope,
 } from "./openapi-schemas.js";
 import {
   GetByIdParamSchema,
@@ -417,9 +418,12 @@ registry.registerPath({
       description: "Cursor-based list of metrics",
       content: {
         "application/json": {
-          schema: MetricCursorResponseSchema,
+          schema: successEnvelope(MetricCursorResponseSchema),
         },
       },
+    },
+    400: {
+      $ref: "#/components/responses/BadRequestError",
     },
     401: {
       $ref: "#/components/responses/UnauthorizedError",
@@ -553,7 +557,7 @@ registry.registerPath({
       description: "Metric log created successfully",
       content: {
         "application/json": {
-          schema: MetricLogSchema,
+          schema: successEnvelope(MetricLogSchema),
         },
       },
     },
@@ -562,6 +566,9 @@ registry.registerPath({
     },
     401: {
       $ref: "#/components/responses/UnauthorizedError",
+    },
+    404: {
+      $ref: "#/components/responses/NotFoundError",
     },
     500: {
       $ref: "#/components/responses/InternalServerError",
@@ -583,9 +590,12 @@ registry.registerPath({
       description: "Cursor-based list of metric logs",
       content: {
         "application/json": {
-          schema: MetricLogCursorResponseSchema,
+          schema: successEnvelope(MetricLogCursorResponseSchema),
         },
       },
+    },
+    400: {
+      $ref: "#/components/responses/BadRequestError",
     },
     401: {
       $ref: "#/components/responses/UnauthorizedError",
@@ -614,8 +624,14 @@ registry.registerPath({
         },
       },
     },
+    400: {
+      $ref: "#/components/responses/BadRequestError",
+    },
     401: {
       $ref: "#/components/responses/UnauthorizedError",
+    },
+    404: {
+      $ref: "#/components/responses/NotFoundError",
     },
     500: {
       $ref: "#/components/responses/InternalServerError",
@@ -779,6 +795,9 @@ registry.registerPath({
           schema: MetricSettingsCursorResponseSchema,
         },
       },
+    },
+    400: {
+      $ref: "#/components/responses/BadRequestError",
     },
     401: {
       $ref: "#/components/responses/UnauthorizedError",

@@ -81,5 +81,6 @@ Both scripts validate the OpenAPI file exists before invoking Schemathesis and p
 ## 6. Next Steps
 
 - Triage the first local fuzzing run (2026-01-14) — 112 failures logged under `schemathesis/reports/local/2026-01-14T08-19-10-426Z/` and summarized in `metrics-tracker.md` / `incidents.md` (rate limiter + schema drift + missing 405 handlers).
+- Review ongoing findings in [`schemathesis/findings.md`](./findings.md) — latest rerun (examples+coverage, limiter disabled) highlights remaining schema/405/test-data gaps.
 - Wire the staging command into GitHub Actions (`contract_staging` / nightly job) per the CI/CD plan.
 - Extend hooks with caching-header validations once telemetry endpoints settle.

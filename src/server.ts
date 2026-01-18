@@ -27,6 +27,7 @@ import { disconnectRedis } from "./utils/redis-client.js";
 import sequelize from "./config/db.js";
 import { loadModels } from "./infrastructure/db/models.js";
 import { authMiddleware } from "./features/auth/infrastructure/http/authMiddleware.js";
+import { disallowTraceMethod } from "@/shared/middleware/method-guard.js";
 
 const visualizationInvalidationAdapter =
   new AnalyticsVisualizationInvalidationAdapter();
@@ -79,6 +80,9 @@ app.use(
 app.use(helmet()); // Secure HTTP headers
 app.use(xssClean()); // Prevent XSS attacks
 app.use(hpp()); // Prevent HTTP Parameter Pollution
+
+// Disallow TRACE (and similar unsupported verbs) globally so contracts receive 405 responses.
+app.use(disallowTraceMethod);
 
 // Configure CORS
 app.use(

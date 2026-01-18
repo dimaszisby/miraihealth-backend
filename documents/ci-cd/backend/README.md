@@ -149,7 +149,21 @@ CI jobs call the same scripts and commands referenced in those documents, ensuri
 
 ---
 
-## 7. Future Extensions
+## 7. Merge Requirements & Branch Protection
+
+- The `contract_local` job is part of the default pipeline and must stay **green** before any PR merges to `main`/`develop`.
+- Enforce this via GitHub branch protection rules:
+  1. Open **Repository Settings → Branches → Branch protection rules**.
+  2. Require status checks to pass before merging and add `contract_local` (job name) to the required checks list.
+  3. Optionally add `checks` + `tests` so lint/unit/integration suites stay enforced.
+- Document exceptions in PR descriptions and re-run the workflow rather than bypassing checks, since contract seeds + Schemathesis rely on deterministic fixtures to catch regressions early.
+- When new jobs are added (e.g., `contract_staging`, nightly Schemathesis), update this section and the branch protection configuration accordingly.
+
+> Special Note for Codex: If you modify job names or add/remove required checks, update this section plus `GITHUB_ACTIONS_PIPELINE_PLAN.md` so future contributors know which jobs gate merges.
+
+---
+
+## 8. Future Extensions
 
 Planned/optional enhancements:
 
@@ -169,7 +183,7 @@ Planned/optional enhancements:
 
 ---
 
-## 8. Summary
+## 9. Summary
 
 - The Lakira Backend CI/CD is implemented primarily with **GitHub Actions**, following the strategy in `CI_CD_STRATEGY.md`.
 - Pipelines are designed to:

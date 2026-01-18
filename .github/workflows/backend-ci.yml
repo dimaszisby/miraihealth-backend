@@ -196,6 +196,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate OpenAPI spec
+        run: npm run docs:openapi:generate
+
       - name: Run DB migrations (contract)
         run: npm run db:migrate:test
         # Or a dedicated contract DB migration script if you add one
@@ -212,6 +215,27 @@ jobs:
       - name: Run contract tests (local)
         run: npm run test:contract:local
 
+      - name: Setup Python for Schemathesis
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Schemathesis CLI
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r documents/tests/4-contract-tests/schemathesis/requirements.txt
+
+      - name: Extract Schemathesis token
+        id: schemathesis-token
+        run: |
+          echo "value=$(node -e \"const fs=require('fs'); const seed=JSON.parse(fs.readFileSync('tmp/contract-seed.json','utf8')); if(!seed?.primaryUser?.token){process.exit(1);} process.stdout.write(seed.primaryUser.token);\")" >> "$GITHUB_OUTPUT"
+
+      - name: Run Schemathesis contract tests (local)
+        env:
+          SCHEMATHESIS_LOCAL_TOKEN: ${{ steps.schemathesis-token.outputs.value }}
+          SCHEMATHESIS_LOCAL_BASE_URL: http://localhost:4000/api/v1
+        run: npm run test:contract:schemathesis:local
+
       - name: Stop backend server
         if: always()
         run: |
@@ -224,6 +248,12 @@ jobs:
         with:
           name: newman-contract-local
           path: documents/tests/4-contract-tests/postman-newman/reports/local
+
+      - name: Upload Schemathesis contract reports (local)
+        uses: actions/upload-artifact@v4
+        with:
+          name: schemathesis-contract-local
+          path: documents/tests/4-contract-tests/schemathesis/reports/local
 
   deploy_staging:
     name: Deploy Backend to Staging

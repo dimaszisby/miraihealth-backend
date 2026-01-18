@@ -69,7 +69,7 @@ Out of scope:
 
 4. **Reporting**
 
-   - Store JUnit XML + HAR JSON files under `schemathesis/reports/<env>/`.
+   - Store JUnit XML + HAR JSON files under `schemathesis/reports/<env>/` and summarize notable runs in `schemathesis/findings.md`.
    - Link report paths from README + metrics tracker.
 
 5. **Failure Handling**

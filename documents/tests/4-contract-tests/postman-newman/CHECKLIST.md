@@ -14,6 +14,10 @@ Use this checklist whenever you implement or execute the Postman/Newman contract
 - [ ] **Backend feature changes** for the current work (analytics / metrics / logs / settings / auth) are merged into the working branch.
 
 - [ ] **Database migrations** applied and **test data seeds** run for the target environment (local or staging).
+- [ ] **Staging readiness** confirmed when targeting Render:
+  - [ ] Secrets listed in `postman-newman/STAGING_RUNBOOK.md` exist in GitHub Actions and match the latest seeded IDs/tokens.
+  - [ ] `documents/tests/4-contract-tests/postman-newman/STAGING_RUNBOOK.md` reviewed so deploy-hook + rotation steps are clear.
+  - [ ] `documents/ci-cd/backend/README.md` §7 followed to ensure `contract_local` is a required status check before kicking off staging runs.
 
 ---
 
@@ -292,3 +296,21 @@ For each request in each collection:
   ```bash
   npm run test:contract:local
   ```
+
+---
+
+## 6. Staging / CI Execution Checklist
+
+- [ ] `deploy_staging` job succeeds (Render deploy hook + `STAGING_HEALTH_URL` confirmed healthy).
+- [ ] Secrets listed in `postman-newman/STAGING_RUNBOOK.md` populated in GitHub Actions and match the latest deterministic seed output (IDs + tokens).
+- [ ] `contract_staging` job runs `npm run test:contract:staging` and uploads reports to `documents/tests/4-contract-tests/postman-newman/reports/staging/<timestamp>/`.
+- [ ] CI artifacts uploaded (`newman-contract-staging`, and `schemathesis-contract-staging` once enabled).
+- [ ] Runbook followed for manual reproduction / triage when failures occur; rotation dates logged in `metrics-tracker.md`.
+
+---
+
+## 7. Documentation & Metrics
+
+- [ ] Update `postman-newman/PLAN.md`, `CHECKLIST.md`, or `README.md` if new endpoints/scenarios/processes were added.
+- [ ] Add metrics (runtime, pass/fail counts, artifact links) to `documents/tests/4-contract-tests/metrics-tracker.md`.
+- [ ] Log incidents in `documents/tests/4-contract-tests/incidents.md` when staging/local runs uncover regressions or infrastructure gaps.

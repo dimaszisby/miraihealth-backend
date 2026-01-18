@@ -33,3 +33,4 @@ Use this checklist alongside the main contract-test checklist when building and 
 - [ ] Update scripts/checks when new endpoint tags or headers are introduced.
 - [ ] Clean up stale failure reproductions; keep latest known issues for onboarding.
 - [ ] Review runtime + failure rate monthly and update `metrics-tracker.md`.
+- [ ] Log meaningful Schemathesis runs (command, artifacts, findings) in `schemathesis/findings.md`.

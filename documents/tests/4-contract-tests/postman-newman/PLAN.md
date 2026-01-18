@@ -130,6 +130,8 @@ This plan initially focuses on the analytics and metrics domain, but the structu
 - **Testing Docs**
   - `documents/tests/TESTING_STRATEGY.md`
   - `documents/tests/README.md`
+- **Staging Runbook**
+  - `documents/tests/4-contract-tests/postman-newman/STAGING_RUNBOOK.md`
 
 ---
 
@@ -152,6 +154,7 @@ This plan initially focuses on the analytics and metrics domain, but the structu
   - All collections must be runnable via Newman:
     - Locally via npm scripts (e.g. `npm run test:contract:local`).
     - In CI (e.g. `npm run test:contract:staging` during pipeline).
+  - `contract_local` job is required on PR branches (branch protection enforced per `documents/ci-cd/backend/README.md` §7). Staging runs follow the checklist in `postman-newman/STAGING_RUNBOOK.md`.
 
 ### 4.2 Contract Assertions
 
@@ -327,10 +330,11 @@ Each Postman request should assert:
      - `204 No Content`
      - Subsequent `GET /metrics/{id}` returns `404`.
 
-6. **Trends**
+6. **Trends + caching**
 
    - `GET /metrics/{metricId}/trends` with valid params.
    - Validates trending payload structure for charting (buckets, values, meta).
+   - If the endpoint supports conditional requests, repeat the analytics flow (capture `ETag`, assert `304` on `If-None-Match`).
 
 7. **Validation & auth errors**
    - Missing required fields on create/update → `400`.
@@ -390,6 +394,7 @@ Each Postman request should assert:
    - Invalid payload → `400`.
    - Missing/invalid token → `401`.
    - Non-existent ID → `404`.
+   - Rate limit handling: ensure `.env.test` sets `DISABLE_RATE_LIMITING=true` so tests do not fail with `429` during bulk log scenarios (documented in README + checklist).
 
 ---
 
@@ -592,3 +597,16 @@ Each Postman request should assert:
    - Run database migrations + `npm run seed:contract-tests` if needed.
    - Execute `run-contract-local.js` to run every collection (auth, analytics, metrics, metric logs, metric settings) with the local environment file.
    - Store HTML/JUnit reports under `documents/tests/4-contract-tests/postman-newman/reports/local/<timestamp>/`.
+
+### 8.2 CI / Staging
+
+1. Ensure branch protection requires the `contract_local` job on `main`/`develop` (see `documents/ci-cd/backend/README.md` §7) so PRs cannot merge without a green contract gate.
+2. Confirm staging secrets + Render deploy hook listed in `STAGING_RUNBOOK.md` are populated in GitHub Actions and match the deterministic seed output (`tmp/contract-seed.json`).
+3. Workflow sequence:
+   - `deploy_staging` triggers the Render deploy hook and polls `STAGING_HEALTH_URL` until HTTP 200 (5-minute timeout). Investigate Render logs immediately if health fails.
+   - `contract_staging` runs `npm run test:contract:staging`, overriding the Postman environment with seeded IDs/tokens from secrets. Reports land under `postman-newman/reports/staging/<timestamp>/` and must be uploaded as the `newman-contract-staging` artifact.
+   - (Upcoming) Schemathesis-on-staging will run after Newman once runtime budgets and tokens are available; artifacts will be uploaded as `schemathesis-contract-staging`.
+4. After each staging run:
+   - Record runtime + artifact links in `documents/tests/4-contract-tests/metrics-tracker.md`.
+   - Log any regressions or infra gaps in `documents/tests/4-contract-tests/incidents.md` (reference the runbook and CI job URL).
+   - Rotate secrets as needed and capture the rotation date per the runbook’s checklist.

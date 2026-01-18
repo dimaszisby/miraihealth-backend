@@ -100,15 +100,19 @@ The `backend-ci` workflow should be triggered on:
   1. Checkout code.
   2. Setup Node (v20) with npm cache.
   3. `npm ci`.
-  4. Run DB migrations for contract DB (can reuse `db:migrate:test`).
-  5. Start backend in background (e.g. `npm run start:test`).
-  6. Wait for server to boot (e.g. `npx wait-on http://localhost:4000/api/v1/health`).
-  7. `npm run test:contract:local`
+  4. Regenerate the OpenAPI spec (`npm run docs:openapi:generate`) so Schemathesis uses the latest controllers.
+  5. Run DB migrations for contract DB (can reuse `db:migrate:test`).
+  6. Start backend in background (e.g. `npm run start:test`).
+  7. Wait for server to boot (e.g. `npx wait-on http://localhost:4000/api/v1/health`).
+  8. `npm run test:contract:local`
      - This script should:
        - Run Newman with `lakira-local.postman_environment.json`.
        - Execute all relevant contract collections.
        - Produce JUnit + HTML reports under `documents/tests/4-contract-tests/postman-newman/reports/local/**`.
-  8. Upload `reports/local/**` as artifacts.
+  9. Install Schemathesis (`pip install -r documents/tests/4-contract-tests/schemathesis/requirements.txt`), export the deterministic JWT from `tmp/contract-seed.json`, and run `npm run test:contract:schemathesis:local` against the same backend instance.
+  10. Upload artifacts from both suites:
+      - `newman-contract-local` → `documents/tests/4-contract-tests/postman-newman/reports/local/**`
+      - `schemathesis-contract-local` → `documents/tests/4-contract-tests/schemathesis/reports/local/**`
 
 ---
 
@@ -198,12 +202,14 @@ The `backend-ci` workflow should be triggered on:
 - **Needs:** `deploy_staging`
 - **Secrets required:**
   - `STAGING_BASE_URL` – base URL for the staging API, e.g. `https://lakira-backend-staging.onrender.com/api/v1`.
-  - (Optional) `STAGING_AUTH_TOKEN` or similar, if staging contract tests require an injected auth token.
+  - Contract-test fixture secrets consumed by Newman: `STAGING_CONTRACT_TOKEN`, `STAGING_CONTRACT_USER_ID`, `STAGING_CONTRACT_SECONDARY_USER_ID`, `STAGING_CATEGORY_REVENUE_ID`, `STAGING_CATEGORY_PRODUCTIVITY_ID`, `STAGING_METRIC_REVENUE_ID`, `STAGING_METRIC_PRODUCTIVITY_ID`, `STAGING_METRIC_SETTINGS_REVENUE_ID`, `STAGING_METRIC_SETTINGS_PRODUCTIVITY_ID`, `STAGING_METRIC_LOG_REVENUE_LATEST_ID`, `STAGING_METRIC_LOG_PRODUCTIVITY_LATEST_ID`.
+  - Schemathesis staging run variables: `SCHEMATHESIS_STAGING_BASE_URL` (usually the same as `STAGING_BASE_URL`) and `SCHEMATHESIS_STAGING_TOKEN`.
 
 **Environment:**
 
 - `STAGING_BASE_URL` is used as the `baseUrl` in the staging Postman environment.
 - Any sensitive auth tokens should be injected via GitHub secrets, not committed JSON.
+- Fixture secrets map 1:1 with the deterministic IDs defined in `documents/tests/4-contract-tests/seed-strategy.md`. When staging is reseeded, refresh each secret so Newman and Schemathesis continue to hit the correct records.
 
 **Steps:**
 
@@ -254,6 +260,7 @@ The `backend-ci` workflow should be triggered on:
 - For a portfolio project, you may choose to run `contract_staging` only on:
   - `main` branch, and/or
   - Tagged releases (e.g. `v*.*.*`) to control cost.
+- Rotate staging secrets whenever IDs/tokens change (log the rotation date in `metrics-tracker.md`). Prefer regenerating data via the deterministic seed routine so the Postman/Schemathesis collections stay in sync with both staging and local fixtures.
 
 > Special Note for Codex: Never remove the artifact upload or Newman reporting steps when editing this job—recruiters rely on those outputs.
 

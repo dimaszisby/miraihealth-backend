@@ -48,6 +48,7 @@
 3. Execute `npm run test:contract:local`. Confirm reports generated and no assertions failed.
 4. (After staging deploy) export the `STAGING_*` secrets listed in `postman-newman/README.md` (base URL, tokens, seeded IDs), then run `npm run test:contract:staging`.
 5. For Schemathesis, ensure OpenAPI spec is regenerated (`npm run docs:openapi:generate`) before executing fuzzing commands, start the API via `NODE_ENV=development npx dotenv -e .env.test -- tsx ./src/server.ts`, and confirm `DISABLE_RATE_LIMITING=true` so the test database listens on port 8002 without throttling.
+6. In GitHub Actions, configure branch protection for `main`/`develop` so the `contract_local` job is a required status check (see `documents/ci-cd/backend/README.md` §7). This prevents merges when contract tests or Schemathesis finds regressions.
 
 CI/CD expectations:
 
@@ -55,6 +56,23 @@ CI/CD expectations:
 - `deploy_staging` triggers Render deploy + waits for health.
 - `contract_staging` consumes staging URL + Newman env, storing artifacts for reviewers.
 - Schemathesis jobs can run nightly or on `main` once Phase 2 completes (see plan).
+
+### Staging secrets & rotation (CI)
+
+| Secret name                                                                          | Used by                           | Purpose                                                                                                    | Rotation guidance                                                                                                             |
+| ------------------------------------------------------------------------------------ | --------------------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `STAGING_BASE_URL`                                                                   | `contract_staging` + Schemathesis | HTTPS base URL for the Render staging API (`https://…/api/v1`).                                            | Update whenever the Render service URL changes.                                                                               |
+| `STAGING_CONTRACT_TOKEN`                                                             | `contract_staging`                | JWT for the seeded staging primary user.                                                                   | Regenerate via the service-account flow or `seed-contract-tests` equivalent against staging data; tokens expire every 7 days. |
+| `STAGING_CONTRACT_USER_ID`                                                           | `contract_staging`                | Primary seeded user ID.                                                                                    | Keep deterministic (see `seed-strategy.md`). Update secret only if staging data is recreated.                                 |
+| `STAGING_CONTRACT_SECONDARY_USER_ID`                                                 | `contract_staging`                | Secondary seeded user ID for cross-user tests.                                                             | Same as above.                                                                                                                |
+| `STAGING_CATEGORY_REVENUE_ID` / `STAGING_CATEGORY_PRODUCTIVITY_ID`                   | `contract_staging`                | Category IDs referenced by analytics + metrics suites.                                                     | Re-seed staging with the deterministic IDs; rotate secret if IDs change.                                                      |
+| `STAGING_METRIC_REVENUE_ID` / `STAGING_METRIC_PRODUCTIVITY_ID`                       | `contract_staging`                | Metric IDs for happy-path + conditional requests.                                                          | Keep aligned with staging dataset.                                                                                            |
+| `STAGING_METRIC_SETTINGS_REVENUE_ID` / `STAGING_METRIC_SETTINGS_PRODUCTIVITY_ID`     | `contract_staging`                | Metric settings IDs for configuration assertions.                                                          | Update only when staging fixtures change.                                                                                     |
+| `STAGING_METRIC_LOG_REVENUE_LATEST_ID` / `STAGING_METRIC_LOG_PRODUCTIVITY_LATEST_ID` | `contract_staging`                | Latest log IDs seeded for analytics cache/ETag flows.                                                      | Refresh via staging seed routine.                                                                                             |
+| `SCHEMATHESIS_STAGING_BASE_URL`                                                      | Schemathesis staging run          | Same as `STAGING_BASE_URL` but consumed by Schemathesis wrappers.                                          | Keep in sync with Render URL.                                                                                                 |
+| `SCHEMATHESIS_STAGING_TOKEN`                                                         | Schemathesis staging run          | JWT for fuzzing requests (separate from Newman token if using a service account with relaxed rate limits). | Rotate alongside `STAGING_CONTRACT_TOKEN`; store a token that bypasses rate limiting when possible.                           |
+
+> Rotation runbook: whenever staging data drifts or tokens expire, re-run the deterministic seed routine against the staging database (see `seed-strategy.md` for ID mapping), capture the resulting IDs/tokens, and update the secrets above in GitHub Actions. Record the rotation date + owner in `incidents.md` or `metrics-tracker.md` if it impacts test reliability.
 
 ## References
 
@@ -75,5 +93,6 @@ CI/CD expectations:
   - [README](./schemathesis/README.md)
   - [Plan](./schemathesis/PLAN.md)
   - [Checklist](./schemathesis/CHECKLIST.md)
+  - [Findings Log](./schemathesis/findings.md)
 - CI/CD alignment: `documents/ci-cd/backend/GITHUB_ACTIONS_PIPELINE_PLAN.md`
 - `npm run seed:contract-tests` – resets deterministic contract data (users/categories/metrics/logs) and writes outputs to `tmp/contract-seed.json` for Postman environment variables.
