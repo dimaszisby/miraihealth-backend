@@ -33,4 +33,4 @@
 ## Risks / Notes
 
 - Cross-feature dependency (metrics) requires a clean port to avoid circular imports.
-- Cursor query currently resides in `src/features/metric-log/application/queries/listMetricLogs.ts` as the `ListMetricLogs` use case backed by a read port; ensure new implementation stays consistent with audit requirements.
+- Cursor query currently resides in `src/features/metric-log/application/queries/ListMetricLogs.ts` as the `ListMetricLogs` use case backed by a read port; ensure new implementation stays consistent with audit requirements.

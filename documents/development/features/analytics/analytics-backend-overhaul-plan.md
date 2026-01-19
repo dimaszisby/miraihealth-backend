@@ -74,7 +74,7 @@ Success is measured by:
 | -------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------ |
 | Phase 0 – Alignment              | Week 0    | Confirm FE payload contract, update OpenAPI schema draft, document copy needs                                                                                      | Backend + Frontend leads |
 | Phase 1 – Schema & SQL prep      | Week 1    | Extend `visualization.dashboard.sql.ts` to produce lifecycle metadata CTEs; write migrations if new indices needed (e.g., on `metric_logs(metric_id, created_at)`) | Data Platform            |
-| Phase 2 – Service updates        | Week 2    | Update `getDashboardVisualization.ts` to join lifecycle CTE, build fallback range logic, assemble new DTO                                                          | Analytics Services       |
+| Phase 2 – Service updates        | Week 2    | Update `GetDashboardVisualization.ts` to join lifecycle CTE, build fallback range logic, assemble new DTO                                                          | Analytics Services       |
 | Phase 3 – API contract & caching | Week 3    | Update OpenAPI spec, adjust ETag generator (likely metric feature HTTP middleware under `src/features/metric/infrastructure/http`), add pagination metadata        | Platform Infra           |
 | Phase 4 – Testing & rollout      | Weeks 4-5 | Add integration tests covering empty metrics, fallback, ETag invalidation; release behind toggled version (`?v=2`) for FE to consume                               | QA + Release             |
 
@@ -90,7 +90,7 @@ Success is measured by:
 - **Fallback helper utilities:** Added `src/features/analytics/domain/fallback-range.ts` with guard-aware range computation + bucket coarsening logic to reuse during service implementation.
 - **Performance snapshot:** `documents/features/analytics/dashboard-lifecycle-performance.md` captures `EXPLAIN ANALYZE` results (≈6 ms on 2k-row sample) for the lifecycle CTE to benchmark future regressions.
 
-- **Service response enrichment:** `getDashboardVisualization.ts` now hydrates `lastLogAt`, `firstLogAt`, `totalLogs`, `latestValue`, `latestBucketStart`, per-metric `requestedRange`, and `actualRange` using the lifecycle CTE output.
+- **Service response enrichment:** `GetDashboardVisualization.ts` now hydrates `lastLogAt`, `firstLogAt`, `totalLogs`, `latestValue`, `latestBucketStart`, per-metric `requestedRange`, and `actualRange` using the lifecycle CTE output.
 - **Fallback orchestration:** Integrated `computeFallbackRange` to auto-expand empty metrics using guard-aware buckets; fallback series fetched on-demand and surfaced via `fallbackRangeUsed` + `fallbackStrategy`.
 - **DTO metadata:** Dashboard payload now includes `meta.totalMetrics`, `meta.fallbackMetrics`, and `sync.etagSeed` alongside updated `items` schema, aligning with the OpenAPI v2 contract.
 - **Observability hooks:** Structured log `analytics.dashboard.fallback_range_used` fires whenever backend auto-expands a metric, providing traceability for UX tuning. Details recorded in `documents/features/analytics/dashboard-service-layer-notes.md`.

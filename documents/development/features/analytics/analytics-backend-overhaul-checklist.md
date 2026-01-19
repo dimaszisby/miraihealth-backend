@@ -24,7 +24,7 @@ Use this checklist to drive the backend implementation of the dashboard overhaul
 
 ## 4. Service & Application Layer
 
-- [x] Update `getDashboardVisualization.ts` to hydrate new metadata fields and fallback logic.
+- [x] Update `GetDashboardVisualization.ts` to hydrate new metadata fields and fallback logic.
 - [x] Ensure DTO serialization includes `requestedRange` and `actualRange` objects per metric.
 - [x] Implement pagination metadata (`meta.totalMetrics`, `meta.fallbackMetrics`).
 - [x] Wire observability hooks (structured logs for fallback events via `analytics.dashboard.fallback_range_used`).

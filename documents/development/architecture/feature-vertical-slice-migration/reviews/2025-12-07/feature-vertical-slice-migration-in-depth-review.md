@@ -46,7 +46,7 @@ Capture issues that span multiple features here.
   - Description: Multiple features route read models directly through `sequelize` or `models` inside the application layer instead of ports/adapters, so the “use case/query” code is tightly coupled to a specific ORM and raw SQL.
   - Impact: Makes CQRS boundaries leaky, blocks swapping persistence engines, and forces tests to boot Sequelize rather than stub repositories.
   - Suggested Direction: Introduce query/read repositories per feature (or slice-specific ports) and have the application layer depend only on those interfaces; hide raw SQL in infrastructure.
-  - Evidence: `src/features/analytics/application/queries/getDashboardVisualization.ts:1-21`, `src/features/metric/application/queries/ListMetrics.ts:1-20`, `src/features/metric-log/application/queries/listMetricLogs.ts:1-6`
+  - Evidence: `src/features/analytics/application/queries/GetDashboardVisualization.ts:1-21`, `src/features/metric/application/queries/ListMetrics.ts:1-20`, `src/features/metric-log/application/queries/ListMetricLogs.ts:1-6`
 ```
 
 ---
@@ -70,7 +70,7 @@ Analytics still mixes legacy service patterns (raw SQL + Redis cache helpers) wi
   - Description: `getDashboardVisualization` imports `sequelize`, `QueryTypes`, and SQL builders from `infrastructure/sql` inside the application layer.
   - Impact: The query cannot be tested or reused without booting the DB layer, and it violates the “application depends on ports only” rule from the standard.
   - Suggested Direction: Define a query/read port (e.g., `VisualizationReadRepository`) and move the SQL + Sequelize dependency into an adapter under `infrastructure`.
-  - Evidence: `src/features/analytics/application/queries/getDashboardVisualization.ts:1-21`
+  - Evidence: `src/features/analytics/application/queries/GetDashboardVisualization.ts:1-21`
 
 - **AN-02 – Cache access bypasses a CachePort**
 
@@ -78,7 +78,7 @@ Analytics still mixes legacy service patterns (raw SQL + Redis cache helpers) wi
   - Description: The same query calls `vizDashKey`, `getCachedViz`, and `setCachedViz` from `infrastructure/cache/vizCache` directly instead of going through a cache port.
   - Impact: Couples the application layer to Redis-specific semantics (key formats, TTL) and prevents swapping cache providers or faking cache access in tests.
   - Suggested Direction: Introduce a feature-specific `CachePort` (similar to metric/metric-log) and inject it into queries so infrastructure owns key generation and invalidation.
-  - Evidence: `src/features/analytics/application/queries/getDashboardVisualization.ts:10-14`
+  - Evidence: `src/features/analytics/application/queries/GetDashboardVisualization.ts:10-14`
 
 - **AN-03 – No feature builder or canonical HTTP layer**
   - Severity: Medium
@@ -203,10 +203,10 @@ Metric-log owns its mutation flows (create/update/delete/stats) but cursor listi
 - **ML-01 – Cursor query ties directly to shared DTOs and ORM models**
 
   - Severity: High
-  - Description: `listMetricLogs.ts` imports `models`, DTOs, mappers, and Sequelize operators inside the application folder instead of delegating to an adapter.
+  - Description: `ListMetricLogs.ts` imports `models`, DTOs, mappers, and Sequelize operators inside the application folder instead of delegating to an adapter.
   - Impact: Forces consumers to pull in Sequelize + global DTOs for any read, and makes pagination logic impossible to reuse across persistence strategies.
   - Suggested Direction: Define a `MetricLogQueryPort` that returns domain objects, implement it in `infrastructure/persistence`, and move DTO conversion to the HTTP layer.
-  - Evidence: `src/features/metric-log/application/queries/listMetricLogs.ts:1-6`
+  - Evidence: `src/features/metric-log/application/queries/ListMetricLogs.ts:1-6`
 
 - **ML-02 – HTTP layer depends on global DTO/schema modules**
   - Severity: Medium

@@ -70,7 +70,7 @@
 - [x] **AN-01 – Introduce VisualizationReadRepository** (addresses finding AN-01 & G-01)
 
   - Description: Move dashboard visualization SQL/Sequelize access into a repository adapter while the application query consumes a port.
-  - Affected Files: `src/features/analytics/application/queries/getDashboardVisualization.ts`, new `application/ports/VisualizationReadRepository.ts`, `infrastructure/sql/*`, `infrastructure/persistence/*`.
+  - Affected Files: `src/features/analytics/application/queries/GetDashboardVisualization.ts`, new `application/ports/VisualizationReadRepository.ts`, `infrastructure/sql/*`, `infrastructure/persistence/*`.
   - Steps:
     1. Define a read port that exposes the data needed for dashboard visualizations.
     2. Implement the port using current SQL/Sequelize logic under `infrastructure`.
@@ -84,7 +84,7 @@
 - [x] **AN-02 – Wrap cache access behind CachePort** (addresses finding AN-02)
 
   - Description: Create a feature-specific `CachePort` and Redis adapter so queries never import `vizCache` helpers directly.
-  - Affected Files: `src/features/analytics/application/queries/getDashboardVisualization.ts`, new `application/ports/CachePort.ts`, `infrastructure/cache/vizCache.ts`.
+  - Affected Files: `src/features/analytics/application/queries/GetDashboardVisualization.ts`, new `application/ports/CachePort.ts`, `infrastructure/cache/vizCache.ts`.
   - Steps:
     1. Define the CachePort interface covering get/set/invalidate needs.
     2. Implement the port by adapting existing `vizCache` logic.
@@ -235,7 +235,7 @@
 - [x] **ML-01 – Create MetricLogQueryPort** (addresses finding ML-01 & G-01)
 
   - Description: Define a read port for cursor pagination and move Sequelize logic/mappers into an adapter.
-  - Affected Files: `src/features/metric-log/application/queries/listMetricLogs.ts`, new `application/ports/MetricLogQueryPort.ts`, infrastructure adapter.
+  - Affected Files: `src/features/metric-log/application/queries/ListMetricLogs.ts`, new `application/ports/MetricLogQueryPort.ts`, infrastructure adapter.
   - Steps:
     1. Specify the port interface returning domain objects or DTOs expected by the controller.
     2. Implement the adapter using existing logic and keep DTO transformation out of the application layer.

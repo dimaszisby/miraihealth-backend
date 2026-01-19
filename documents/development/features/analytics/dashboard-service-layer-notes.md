@@ -6,7 +6,7 @@ This note captures the backend behaviors added during the Service & Application 
 
 ## Lifecycle Metadata Hydration
 
-- `getDashboardVisualization.ts` now joins the lifecycle CTE (via `buildDashboardLifecycleSQL`) to populate `firstLogAt`, `lastLogAt`, `totalLogs`, `latestValue`, and `latestBucketStart` for every metric returned.
+- `GetDashboardVisualization.ts` now joins the lifecycle CTE (via `buildDashboardLifecycleSQL`) to populate `firstLogAt`, `lastLogAt`, `totalLogs`, `latestValue`, and `latestBucketStart` for every metric returned.
 - Each dashboard item also echoes `requestedRange` and a potentially different `actualRange`, enabling the UI to message whether the data matches the user-selected filters.
 
 ## Fallback Range Resolution

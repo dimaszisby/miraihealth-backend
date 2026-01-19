@@ -38,7 +38,7 @@ Read/query flows now live behind `VisualizationReadRepository`, caching is abstr
 - **AN-01 – Queries import Sequelize and raw SQL directly**
 
   - Status: **Resolved**
-  - Evidence: `src/features/analytics/application/queries/getDashboardVisualization.ts:8-46` depends only on `VisualizationReadRepository`; all SQL remains inside `src/features/analytics/infrastructure/persistence/VisualizationReadRepoSequelize.ts:60-220`.
+  - Evidence: `src/features/analytics/application/queries/GetDashboardVisualization.ts:8-46` depends only on `VisualizationReadRepository`; all SQL remains inside `src/features/analytics/infrastructure/persistence/VisualizationReadRepoSequelize.ts:60-220`.
   - Notes: Unit coverage via `__tests__/features/analytics/application/GetDashboardVisualization.test.ts:1` stubs the port, confirming DI works.
 
 - **AN-02 – Cache access bypasses a CachePort**
@@ -134,7 +134,7 @@ Metric-log’s cursor listing depends on the `MetricLogQueryPort`, with the Sequ
 - **ML-01 – Cursor query ties directly to shared DTOs and ORM models**
 
   - Status: **Resolved**
-  - Evidence: `src/features/metric-log/application/queries/listMetricLogs.ts:1-23` only interacts with `MetricLogQueryPort`; the adapter `src/features/metric-log/infrastructure/persistence/repositories/MetricLogQueryRepoSequelize.ts:1-169` encapsulates Sequelize logic.
+  - Evidence: `src/features/metric-log/application/queries/ListMetricLogs.ts:1-23` only interacts with `MetricLogQueryPort`; the adapter `src/features/metric-log/infrastructure/persistence/repositories/MetricLogQueryRepoSequelize.ts:1-169` encapsulates Sequelize logic.
   - Notes: Unit tests in `__tests__/features/metric-log/application/ListMetricLogs.test.ts:1-38` stub the port to verify CQRS boundaries.
 
 - **ML-02 – HTTP layer depends on global DTO/schema modules**
