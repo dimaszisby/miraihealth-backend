@@ -57,6 +57,9 @@
   "author": "",
   "license": "ISC",
   "type": "module",
+  "engines": {
+    "node": "20.x"
+  },
   "description": "",
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.3.4",

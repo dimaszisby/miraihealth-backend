@@ -103,6 +103,7 @@ The backend pipeline uses three logical environments:
 
    - Runs via `npm run` commands directly.
    - Uses local Docker services for Postgres/Redis.
+   - Runtime version: **Node.js 20.x (LTS)** — use `.nvmrc`/`.node-version` to stay aligned with CI.
 
 2. **GitHub Actions (CI)**
 

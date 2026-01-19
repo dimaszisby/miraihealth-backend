@@ -20,7 +20,9 @@ async function generateOpenApiSpec() {
 
   const document = getOpenApiDocumentation();
 
-  fs.writeFileSync(outputFile, JSON.stringify(document, null, 2), {
+  const payload = `${JSON.stringify(document, null, 2)}\n`;
+
+  fs.writeFileSync(outputFile, payload, {
     encoding: "utf-8",
   });
 
