@@ -38,10 +38,11 @@ Document command outputs or screenshots in the PR description for easier reviewe
 
 ## 3. Developer Environment Expectations
 
-- **Node/npm**: Node 18 LTS, npm 11.x (matches `.nvmrc` + `@tsconfig/node18`).
+- **Node/npm**: Node 20.x LTS (matches `.nvmrc`, `.node-version`, `package.json "engines"`); use `nvm use` or `asdf` to stay aligned with CI.
 - **Env files**: `.env.test` for local tests; other environments handled via `dotenv` scripts.
 - **Databases**: Unit/static checks do not require DB access; integration tests expect Postgres/Redis reachable using the values in `.env.test`.
 - **Tooling**: Husky is installed via `npm install` (`prepare` script). Disable only with team approval (CI is the source of truth).
+- **Dependencies**: Follow the [dependency policy](../security/DEPENDENCY_POLICY.md) — never run `npm audit fix --force`; upgrade runtime libs via PR + full CI evidence; run `npm audit --production` before releasing.
 
 ## 4. CI Failure Playbook
 
