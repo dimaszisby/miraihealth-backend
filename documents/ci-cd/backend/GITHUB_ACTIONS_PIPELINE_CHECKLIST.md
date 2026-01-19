@@ -24,8 +24,8 @@ Use this checklist when:
 ## 2. Triggers, Branches & Concurrency
 
 - [ ] Workflow triggers on:
-  - [ ] `push` to `main`, `develop`, and `feature/**`.
-  - [ ] `pull_request` targeting `main` and `develop`.
+  - [ ] `push` to `main`, `dev`, and `feature/**`.
+  - [ ] `pull_request` targeting `main` and `dev`.
 - [ ] Branch protections require `backend-ci` to pass before merging into `main`.
 - [ ] Workflow uses `concurrency` to cancel in-progress runs on the same branch:
 
@@ -189,7 +189,7 @@ Backend `package.json` includes:
 
 - [ ] Unit/integration tests generate coverage reports.
 - [ ] Coverage thresholds are defined (e.g. `--coverageThreshold` in Jest) and enforced in CI, **or** documented as a future improvement.
-- [ ] A known green run on `develop` or `main` is referenced in:
+- [ ] A known green run on `dev` or `main` is referenced in:
   - [ ] `documents/tests/4-contract-tests/postman-newman/CHECKLIST.md` (as a baseline).
 
 > Special Note for Codex: When referencing coverage or green runs in PRs, link back to this checklist to keep the narrative consistent.
@@ -200,7 +200,7 @@ Backend `package.json` includes:
 
 Before calling the backend pipeline “stable” and “portfolio-ready”:
 
-- [ ] A full run of `backend-ci` on `develop` or `main` is green:
+- [ ] A full run of `backend-ci` on `dev` or `main` is green:
   - [ ] `checks` passes.
   - [ ] `tests` passes.
   - [ ] `contract_local` passes.

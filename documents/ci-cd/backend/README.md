@@ -44,11 +44,11 @@ The main backend workflow is triggered on:
 
 - `push` to:
   - `main`
-  - `develop`
+  - `dev`
   - `feature/**`
 - `pull_request` targeting:
   - `main`
-  - `develop`
+  - `dev`
 
 ### 3.2 Stages (Jobs)
 
@@ -151,7 +151,7 @@ CI jobs call the same scripts and commands referenced in those documents, ensuri
 
 ## 7. Merge Requirements & Branch Protection
 
-- The `contract_local` job is part of the default pipeline and must stay **green** before any PR merges to `main`/`develop`.
+- The `contract_local` job is part of the default pipeline and must stay **green** before any PR merges to `main`/`dev`.
 - Enforce this via GitHub branch protection rules:
   1. Open **Repository Settings → Branches → Branch protection rules**.
   2. Require status checks to pass before merging and add `contract_local` (job name) to the required checks list.

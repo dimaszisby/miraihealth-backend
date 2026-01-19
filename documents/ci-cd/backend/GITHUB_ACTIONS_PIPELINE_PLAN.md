@@ -25,11 +25,11 @@ The `backend-ci` workflow should be triggered on:
 
 - `push` to:
   - `main`
-  - `develop`
+  - `dev`
   - `feature/**`
 - `pull_request` targeting:
   - `main`
-  - `develop`
+  - `dev`
 
 ---
 

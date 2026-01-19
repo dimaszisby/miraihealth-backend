@@ -55,12 +55,12 @@ on:
   push:
     branches:
       - main
-      - develop
+      - dev
       - "feature/**"
   pull_request:
     branches:
       - main
-      - develop
+      - dev
 ```
 
 ### 3.2 Jobs & Dependencies
@@ -304,12 +304,12 @@ on:
   push:
     branches:
       - main
-      - develop
+      - dev
       - "feature/**"
   pull_request:
     branches:
       - main
-      - develop
+      - dev
 
 concurrency:
   group: backend-ci-${{ github.ref }}
