@@ -63,6 +63,8 @@ on:
       - dev
 ```
 
+> Working directory tip: set `defaults.run.working-directory` to the literal backend path (e.g., `.` or `./apps/backend`). GitHub Actions forbids `${{ env.* }}` expressions in this field, so edit the string directly when relocating the backend code.
+
 ### 3.2 Jobs & Dependencies
 
 Standard jobs:

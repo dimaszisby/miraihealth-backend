@@ -21,13 +21,10 @@ concurrency:
 env:
   NODE_VERSION: 20
 
-  # If backend is in a subfolder (e.g. ./apps/backend), set this accordingly
-  # and uncomment the defaults.run section below.
-  BACKEND_WORKDIR: .
-
 defaults:
   run:
-    working-directory: ${{ env.BACKEND_WORKDIR }}
+    # Update this path directly if backend code moves into a subfolder.
+    working-directory: .
 
 jobs:
   checks:
