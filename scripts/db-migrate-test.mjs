@@ -11,12 +11,7 @@ import logger from "./logger.js";
 
 const cwd = process.cwd();
 const envPath = path.resolve(cwd, ".env.test");
-const envManagerPath = path.resolve(
-  cwd,
-  "dist",
-  "config",
-  "envManager.js",
-);
+const envManagerPath = path.resolve(cwd, "dist", "config", "envManager.js");
 
 dotenv.config({ path: envPath, override: false });
 
@@ -36,7 +31,9 @@ const runCommand = (command, args, envOverrides = {}) =>
       if (code === 0) {
         resolve(undefined);
       } else {
-        reject(new Error(`${command} ${args.join(" ")} exited with code ${code}`));
+        reject(
+          new Error(`${command} ${args.join(" ")} exited with code ${code}`),
+        );
       }
     });
   });
@@ -53,7 +50,7 @@ const ensureBuildArtifacts = async () => {
 
   if (!fs.existsSync(envManagerPath)) {
     throw new Error(
-      `dist/config/envManager.js still missing after build. Check tsconfig.build.json include paths.`,
+      "dist/config/envManager.js still missing after build. Check tsconfig.build.json include paths.",
     );
   }
 };
