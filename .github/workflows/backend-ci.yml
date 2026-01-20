@@ -107,6 +107,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build
+        run: npm run build
+
       - name: Run DB migrations (test)
         run: npm run db:migrate:test
         # If you only have `db:migrate`, use that instead:
