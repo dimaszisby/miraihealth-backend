@@ -8,7 +8,7 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "NODE_ENV=production node dist/server.js",
     "start:staging": "NODE_ENV=staging node dist/server.js",
-    "start:test": "NODE_ENV=test node dist/server.js",
+    "start:test": "ALLOW_TEST_HTTP_SERVER=true NODE_ENV=test node dist/server.js",
     "dev": "NODE_ENV=development nodemon --exec tsx watch ./src/server.ts",
     "staging": "NODE_ENV=staging dotenv -e .env.staging -- node --loader ts-node/esm ./src/server.ts",
     "prod": "NODE_ENV=production dotenv -e .env.production -- node --loader ts-node/esm ./src/server.ts",
@@ -116,8 +116,8 @@
     "jest": "^29.7.0",
     "jest-junit": "^16.0.0",
     "jest-summary-reporter": "^0.0.2",
-    "newman": "^6.2.2",
     "lint-staged": "^16.2.7",
+    "newman": "^6.2.2",
     "nodemon": "^3.1.9",
     "prettier": "^3.5.3",
     "sequelize-cli": "^6.6.2",
@@ -125,6 +125,7 @@
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "wait-on": "^9.0.3"
   }
 }

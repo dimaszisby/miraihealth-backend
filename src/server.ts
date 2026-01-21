@@ -105,6 +105,14 @@ app.use("/api/v1/metric-logs", metricLogRouter);
 // DDD based routes
 app.use("/api/v1/analytics", visualizationRouter);
 
+app.get("/api/v1/health", (_req, res) => {
+  res.json({
+    status: "ok",
+    environment: env.NODE_ENV,
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Serve OpenAPI documentation
 // TODO: Developer Note -> Learn more about OpenAPI and Swagger integration
 const openApiDocument = getOpenApiDocumentation();
@@ -130,8 +138,11 @@ let server: http.Server | null = null;
 
 const startServer = async () => {
   try {
-    if (env.NODE_ENV === "test") {
-      logger.info("[SERVER] Running in test environment. Server not started.");
+    const isTestEnv = env.NODE_ENV === "test";
+    if (isTestEnv && !env.ALLOW_TEST_HTTP_SERVER) {
+      logger.info(
+        "[SERVER] Running in test environment with ALLOW_TEST_HTTP_SERVER=false. Server bootstrap skipped.",
+      );
       return;
     }
 

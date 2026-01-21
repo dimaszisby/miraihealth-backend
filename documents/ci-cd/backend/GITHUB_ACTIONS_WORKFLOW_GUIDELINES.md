@@ -212,6 +212,8 @@ env:
 
 > Special Note for Codex: Jobs that run on GitHub’s hosted Ubuntu runner must talk to services via `localhost:<port>` because Actions forwards service ports to the host network. Only use service hostnames (`postgres`, `redis`) if the job itself runs inside a container. Keep `DATABASE_URL` as the canonical variable and surface `DB_*` envs only when scripts require username/password/database fields explicitly.
 
+> Keep `wait-on` pinned as a dev dependency so the workflow never wastes time pulling it on-demand via `npx`.
+
 ---
 
 ## 6. Secrets & Security
@@ -428,13 +430,41 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - run: npm run build
       - run: npm run db:migrate:test
       - name: Start backend
-        run: npm run start:test &
+        run: |
+          nohup npm run start:test > /tmp/backend.log 2>&1 &
+          echo $! > /tmp/backend.pid
       - name: Wait for backend
-        run: npx wait-on http://localhost:4000/api/v1/health
+        run: |
+          wait_with_logs() {
+            "$@" || {
+              echo "---- backend.log (tail) ----"
+              tail -n 200 /tmp/backend.log || true
+              echo "--------------------------------"
+              exit 1
+            }
+          }
+          wait_with_logs npx wait-on tcp:4000 --timeout 180000
+          wait_with_logs npx wait-on http://localhost:4000/api/v1/health --timeout 180000
       - name: Run contract tests (local)
         run: npm run test:contract:local
+      - name: Dump backend logs on failure
+        if: always()
+        run: |
+          if [ "${{ job.status }}" != "success" ]; then
+            echo "---- backend.log (tail) ----"
+            tail -n 200 /tmp/backend.log || true
+            echo "--------------------------------"
+          fi
+      - name: Stop backend
+        if: always()
+        run: |
+          if [ -f /tmp/backend.pid ]; then
+            kill "$(cat /tmp/backend.pid)" || true
+            rm -f /tmp/backend.pid
+          fi
       - name: Upload Newman reports (local)
         uses: actions/upload-artifact@v4
         with:

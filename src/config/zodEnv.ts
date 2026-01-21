@@ -142,6 +142,11 @@ const envSchema = z.object({
     .transform((val) => val === "true")
     .default("false"),
 
+  ALLOW_TEST_HTTP_SERVER: z
+    .string()
+    .transform((val) => val === "true")
+    .default("false"),
+
   // HTTP
   REQUEST_BODY_LIMIT: z.string().default("1mb"),
   SWAGGER_REQUIRE_AUTH: z

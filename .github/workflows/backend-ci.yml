@@ -207,6 +207,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build
+        run: npm run build
+
       - name: Generate OpenAPI spec
         run: npm run docs:openapi:generate
 
@@ -217,11 +220,24 @@ jobs:
 
       - name: Start backend (test server)
         run: |
-          npm run start:test &
-          echo $! > backend_pid
+          nohup npm run start:test > /tmp/backend.log 2>&1 &
+          echo $! > /tmp/backend.pid
+          sleep 1
+          ps -p "$(cat /tmp/backend.pid)" || true
+          lsof -i :4000 || true
 
       - name: Wait for backend health
-        run: npx wait-on http://localhost:4000/api/v1/health --timeout 120000
+        run: |
+          wait_with_logs() {
+            "$@" || {
+              echo "---- backend.log (tail) ----"
+              tail -n 200 /tmp/backend.log || true
+              echo "--------------------------------"
+              exit 1
+            }
+          }
+          wait_with_logs npx wait-on tcp:4000 --timeout 180000
+          wait_with_logs npx wait-on http://localhost:4000/api/v1/health --timeout 180000
 
       - name: Run contract tests (local)
         run: npm run test:contract:local
@@ -247,11 +263,21 @@ jobs:
           SCHEMATHESIS_LOCAL_BASE_URL: http://localhost:4000/api/v1
         run: npm run test:contract:schemathesis:local
 
+      - name: Dump backend logs on failure
+        if: always()
+        run: |
+          if [ "${{ job.status }}" != "success" ]; then
+            echo "---- backend.log (tail) ----"
+            tail -n 200 /tmp/backend.log || true
+            echo "--------------------------------"
+          fi
+
       - name: Stop backend server
         if: always()
         run: |
-          if [ -f backend_pid ]; then
-            kill "$(cat backend_pid)" || true
+          if [ -f /tmp/backend.pid ]; then
+            kill "$(cat /tmp/backend.pid)" || true
+            rm -f /tmp/backend.pid
           fi
 
       - name: Upload Newman contract reports (local)

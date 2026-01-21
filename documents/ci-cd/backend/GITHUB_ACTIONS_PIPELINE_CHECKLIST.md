@@ -62,10 +62,12 @@ Use this checklist when:
 
   - [ ] Declares Postgres and Redis service containers.
   - [ ] Runs `npm ci`.
+  - [ ] Runs `npm run build` before starting the backend so `dist/server.js` exists.
   - [ ] Runs DB migrations for contract DB (can reuse `db:migrate:test`).
-  - [ ] Starts backend with `npm run start:test` in background.
-  - [ ] Waits for health endpoint (e.g. via `wait-on`).
+  - [ ] Starts backend with `npm run start:test` in background via `nohup`, writes the PID to `/tmp/backend.pid`, and captures logs at `/tmp/backend.log`.
+  - [ ] Waits for the TCP port (`tcp:4000`) and the HTTP health endpoint (`/api/v1/health`) using the pinned `wait-on` devDependency, dumping the log tail whenever either probe fails.
   - [ ] Runs `npm run test:contract:local`.
+  - [ ] Tails `/tmp/backend.log` automatically when the job fails (helpful for debugging).
   - [ ] Uploads Newman local reports as artifacts.
   - [ ] Depends on `tests` (`needs: tests`).
   - [ ] Has `timeout-minutes` configured.
