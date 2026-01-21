@@ -100,8 +100,9 @@ Use this checklist when:
 
 - [ ] Jobs that talk to DB/Redis set:
 
-  - [ ] `DATABASE_URL` uses the `postgres` service host and `lakira_ci` DB.
-  - [ ] `REDIS_URL` uses the `redis` service host.
+  - [ ] `DATABASE_URL` points to the Postgres service exposed on `localhost:5432` (GitHub Actions forwards service ports to the runner host).
+  - [ ] `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` are exported when tools (e.g., `sequelize-cli`) require discrete values. When `DATABASE_URL` is present, the env manager will derive these automatically at runtime.
+  - [ ] `REDIS_URL` uses the Redis service exposed on `localhost:6379`.
   - [ ] `NODE_ENV=test` for tests/contract jobs.
   - [ ] `JWT_SECRET_TEST` from secrets.
 

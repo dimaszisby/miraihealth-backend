@@ -199,13 +199,18 @@ Typical environment variables for these jobs:
 
 ```yaml
 env:
-  DATABASE_URL: postgres://postgres:${{ secrets.POSTGRES_PASSWORD_TEST }}@postgres:5432/lakira_ci
-  REDIS_URL: redis://redis:6379
+  DATABASE_URL: postgres://postgres:${{ secrets.POSTGRES_PASSWORD_TEST }}@localhost:5432/lakira_ci
+  DB_HOST: localhost
+  DB_PORT: 5432
+  DB_USER: postgres
+  DB_PASSWORD: ${{ secrets.POSTGRES_PASSWORD_TEST }}
+  DB_NAME: lakira_ci
+  REDIS_URL: redis://localhost:6379
   NODE_ENV: test
   JWT_SECRET: ${{ secrets.JWT_SECRET_TEST }}
 ```
 
-> Special Note for Codex: Treat `postgres` and `redis` as canonical service hostnames when generating DB/Redis configuration for CI—do not introduce alternative env var names without updating this guideline first.
+> Special Note for Codex: Jobs that run on GitHub’s hosted Ubuntu runner must talk to services via `localhost:<port>` because Actions forwards service ports to the host network. Only use service hostnames (`postgres`, `redis`) if the job itself runs inside a container. Keep `DATABASE_URL` as the canonical variable and surface `DB_*` envs only when scripts require username/password/database fields explicitly.
 
 ---
 
@@ -359,8 +364,13 @@ jobs:
           --health-timeout=5s
           --health-retries=5
     env:
-      DATABASE_URL: postgres://postgres:${{ secrets.POSTGRES_PASSWORD_TEST }}@postgres:5432/lakira_ci
-      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgres://postgres:${{ secrets.POSTGRES_PASSWORD_TEST }}@localhost:5432/lakira_ci
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: ${{ secrets.POSTGRES_PASSWORD_TEST }}
+      DB_NAME: lakira_ci
+      REDIS_URL: redis://localhost:6379
       NODE_ENV: test
       JWT_SECRET: ${{ secrets.JWT_SECRET_TEST }}
     steps:
@@ -402,8 +412,13 @@ jobs:
           --health-timeout=5s
           --health-retries=5
     env:
-      DATABASE_URL: postgres://postgres:${{ secrets.POSTGRES_PASSWORD_TEST }}@postgres:5432/lakira_ci
-      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgres://postgres:${{ secrets.POSTGRES_PASSWORD_TEST }}@localhost:5432/lakira_ci
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: ${{ secrets.POSTGRES_PASSWORD_TEST }}
+      DB_NAME: lakira_ci
+      REDIS_URL: redis://localhost:6379
       NODE_ENV: test
       JWT_SECRET: ${{ secrets.JWT_SECRET_TEST }}
     steps:

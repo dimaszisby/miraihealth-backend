@@ -91,6 +91,11 @@ jobs:
     env:
       NODE_ENV: test
       DATABASE_URL: postgres://postgres:${{ secrets.POSTGRES_PASSWORD_TEST }}@localhost:5432/lakira_ci
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: ${{ secrets.POSTGRES_PASSWORD_TEST }}
+      DB_NAME: lakira_ci
       REDIS_URL: redis://localhost:6379
       JWT_SECRET: ${{ secrets.JWT_SECRET_TEST }}
 
@@ -180,6 +185,11 @@ jobs:
     env:
       NODE_ENV: test
       DATABASE_URL: postgres://postgres:${{ secrets.POSTGRES_PASSWORD_TEST }}@localhost:5432/lakira_ci
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: ${{ secrets.POSTGRES_PASSWORD_TEST }}
+      DB_NAME: lakira_ci
       REDIS_URL: redis://localhost:6379
       JWT_SECRET: ${{ secrets.JWT_SECRET_TEST }}
       PORT: 4000

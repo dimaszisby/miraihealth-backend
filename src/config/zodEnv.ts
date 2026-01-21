@@ -33,6 +33,7 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().optional(),
 
   // Database URLs (separate environment variables for dev/test/prod)
+  DATABASE_URL: z.string().optional(),
   DEVELOPMENT_DATABASE_URL: z.string().optional(),
   TEST_DATABASE_URL: z.string().optional(),
   STAGING_DATABASE_URL: z.string().optional(),
@@ -100,16 +101,25 @@ const envSchema = z.object({
   JEST_TIMEOUT: z.string().transform(Number).default("30000"),
 
   // Database
-  DB_USER: z.string().min(1, {
-    message: "DB_USER is required. Set an explicit value in your .env file.",
-  }),
-  DB_PASSWORD: z.string().min(1, {
-    message:
-      "DB_PASSWORD is required. Set an explicit value in your .env file.",
-  }),
-  DB_NAME: z.string().min(1, {
-    message: "DB_NAME is required. Set an explicit value in your .env file.",
-  }),
+  DB_USER: z
+    .string()
+    .min(1, {
+      message: "DB_USER is required. Set an explicit value in your .env file.",
+    })
+    .optional(),
+  DB_PASSWORD: z
+    .string()
+    .min(1, {
+      message:
+        "DB_PASSWORD is required. Set an explicit value in your .env file.",
+    })
+    .optional(),
+  DB_NAME: z
+    .string()
+    .min(1, {
+      message: "DB_NAME is required. Set an explicit value in your .env file.",
+    })
+    .optional(),
 
   ENABLE_DUMMY_ENDPOINTS: z
     .string()
@@ -143,16 +153,70 @@ const envSchema = z.object({
 /**
  * Infer the TypeScript type from the validated schema
  */
-type Env = z.infer<typeof envSchema>;
+type RawEnv = z.infer<typeof envSchema>;
+type Env = RawEnv &
+  Required<Pick<RawEnv, "DB_USER" | "DB_PASSWORD" | "DB_NAME">>;
 
-const buildEnv = (): Env => {
-  const parsedEnv: Env = envSchema.parse(process.env);
+const DATABASE_URL_KEYS = {
+  development: "DEVELOPMENT_DATABASE_URL",
+  test: "TEST_DATABASE_URL",
+  staging: "STAGING_DATABASE_URL",
+  production: "PRODUCTION_DATABASE_URL",
+} as const satisfies Record<RawEnv["NODE_ENV"], keyof RawEnv>;
 
-  if (!parsedEnv.TEST_DATABASE_URL && parsedEnv.NODE_ENV === "test") {
-    throw new Error("[ERROR] TEST_DATABASE_URL is missing in .env.test!");
+const normalizeDatabaseConfig = (parsedEnv: RawEnv): Env => {
+  const envName = parsedEnv.NODE_ENV;
+  const envSpecificKey = DATABASE_URL_KEYS[envName];
+
+  const connectionUrl =
+    parsedEnv[envSpecificKey] ?? parsedEnv.DATABASE_URL ?? null;
+
+  if (connectionUrl) {
+    try {
+      const url = new URL(connectionUrl);
+      if (url.username) {
+        parsedEnv.DB_USER =
+          parsedEnv.DB_USER ?? decodeURIComponent(url.username);
+      }
+      if (url.password) {
+        parsedEnv.DB_PASSWORD =
+          parsedEnv.DB_PASSWORD ?? decodeURIComponent(url.password);
+      }
+      if (url.hostname) {
+        parsedEnv.DB_HOST = url.hostname;
+      }
+      if (url.port) {
+        const parsedPort = Number(url.port);
+        if (!Number.isNaN(parsedPort)) {
+          parsedEnv.DB_PORT = parsedPort;
+        }
+      }
+      const dbName = url.pathname.replace(/^\//, "");
+      if (dbName) {
+        parsedEnv.DB_NAME = parsedEnv.DB_NAME ?? decodeURIComponent(dbName);
+      }
+      parsedEnv[envSpecificKey] = parsedEnv[envSpecificKey] ?? connectionUrl;
+    } catch (error) {
+      throw new Error(
+        `[ERROR] DATABASE_URL (${connectionUrl}) is invalid: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
   }
 
-  return parsedEnv;
+  if (!parsedEnv.DB_USER || !parsedEnv.DB_PASSWORD || !parsedEnv.DB_NAME) {
+    throw new Error(
+      "[ERROR] Database configuration is incomplete. Provide DATABASE_URL or DB_USER/DB_PASSWORD/DB_NAME.",
+    );
+  }
+
+  return parsedEnv as Env;
+};
+
+const buildEnv = (): Env => {
+  const parsedEnv = envSchema.parse(process.env);
+  return normalizeDatabaseConfig(parsedEnv);
 };
 
 /**
