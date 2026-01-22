@@ -255,7 +255,16 @@ jobs:
       - name: Extract Schemathesis token
         id: schemathesis-token
         run: |
-          echo "value=$(node -e \"const fs=require('fs'); const seed=JSON.parse(fs.readFileSync('tmp/contract-seed.json','utf8')); if(!seed?.primaryUser?.token){process.exit(1);} process.stdout.write(seed.primaryUser.token);\")" >> "$GITHUB_OUTPUT"
+          TOKEN=$(node <<'NODE'
+          const fs = require('fs');
+          const seed = JSON.parse(fs.readFileSync('tmp/contract-seed.json','utf8'));
+          if (!seed?.primaryUser?.token) {
+            process.exit(1);
+          }
+          process.stdout.write(seed.primaryUser.token);
+          NODE
+          )
+          echo "value=${TOKEN}" >> "$GITHUB_OUTPUT"
 
       - name: Run Schemathesis contract tests (local)
         env:
