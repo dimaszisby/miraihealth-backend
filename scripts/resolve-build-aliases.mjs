@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+/* eslint-disable no-console -- CLI helper intentionally logs to stdout/stderr */
+
 /**
  * Rewrite compiled imports in `dist/**` so bare "@/foo/bar" aliases become
  * relative paths that Node can resolve at runtime.
@@ -8,8 +10,6 @@
 import path from "path";
 import { promises as fs } from "fs";
 import { existsSync } from "fs";
-import logger from "./logger";
-
 const DIST_ROOT = path.resolve(process.cwd(), "dist");
 const JS_EXTENSIONS = new Set([".js", ".mjs", ".cjs"]);
 const ALIAS_PREFIX = "@/";
@@ -100,6 +100,6 @@ function resolveAlias(specifier, fromFile) {
 }
 
 main().catch((error) => {
-  logger.error("[alias-resolver] Failed to rewrite build aliases:", error);
+  console.error("[alias-resolver] Failed to rewrite build aliases:", error);
   process.exitCode = 1;
 });
