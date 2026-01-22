@@ -16,6 +16,14 @@ const tzSchema = z
     }
   }, "Invalid IANA time zone");
 
+const BUCKET_ANCHOR_MS: Record<string, number> = {
+  "1h": 60 * 60 * 1000,
+  "1d": 24 * 60 * 60 * 1000,
+  "1w": 7 * 24 * 60 * 60 * 1000,
+  "1m": 30 * 24 * 60 * 60 * 1000,
+  "1y": 365 * 24 * 60 * 60 * 1000,
+};
+
 const AbsoluteRange = z
   .object({
     start: z.string().datetime("Invalid start date format"),
@@ -39,27 +47,32 @@ const RelativeRange = z.object({
     .regex(/^\d+(h|d|w|m|y)$/, "Use format like 7d, 30d, 12m, 1y"),
 });
 
-function computeStartEndFromLast(last: string) {
-  const now = new Date();
-  const end = now;
+function anchorNow(bucket?: string) {
+  const unitMs = BUCKET_ANCHOR_MS[bucket ?? ""] ?? 60 * 1000; // default minute
+  const anchored = Math.floor(Date.now() / unitMs) * unitMs;
+  return new Date(anchored);
+}
+
+function computeStartEndFromLast(last: string, bucket?: string) {
+  const end = anchorNow(bucket);
   const n = parseInt(last.slice(0, -1), 10);
   const u = last.slice(-1);
-  const start = new Date(now);
+  const start = new Date(end);
   switch (u) {
     case "h":
-      start.setHours(now.getHours() - n);
+      start.setHours(end.getHours() - n);
       break;
     case "d":
-      start.setDate(now.getDate() - n);
+      start.setDate(end.getDate() - n);
       break;
     case "w":
-      start.setDate(now.getDate() - 7 * n);
+      start.setDate(end.getDate() - 7 * n);
       break;
     case "m":
-      start.setMonth(now.getMonth() - n);
+      start.setMonth(end.getMonth() - n);
       break;
     case "y":
-      start.setFullYear(now.getFullYear() - n);
+      start.setFullYear(end.getFullYear() - n);
       break;
   }
   return { startISO: start.toISOString(), endISO: end.toISOString() };
@@ -78,7 +91,10 @@ export const getVisualizationSchema = z
   })
   .transform(({ params, query }) => {
     if ("last" in query) {
-      const { startISO, endISO } = computeStartEndFromLast(query.last);
+      const { startISO, endISO } = computeStartEndFromLast(
+        query.last,
+        query.bucket,
+      );
       return { params, query: { ...query, start: startISO, end: endISO } };
     }
 
@@ -98,7 +114,10 @@ export const getDashboardVizSchema = z
   })
   .transform(({ query }) => {
     if ("last" in query) {
-      const { startISO, endISO } = computeStartEndFromLast(query.last);
+      const { startISO, endISO } = computeStartEndFromLast(
+        query.last,
+        query.bucket,
+      );
       return { query: { ...query, start: startISO, end: endISO } };
     }
     return { query };
