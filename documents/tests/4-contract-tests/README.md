@@ -36,8 +36,8 @@
   - Auth tokens (`CONTRACT_TEST_USER_TOKEN`, etc.).
   - Stable IDs for metrics/settings/logs (document in env JSON files).
 - Set `DISABLE_RATE_LIMITING=true` when running Schemathesis/Newman locally so the global limiter does not emit 429s during contract fuzzing (see `.env.test`); keep it `false` elsewhere.
-- After running `npm run seed:contract-tests`, copy the latest `primaryUser.token` value from `tmp/contract-seed.json` into `documents/tests/4-contract-tests/postman-newman/environments/lakira-local.postman_environment.json`.
-- Generated JWTs expire every 7 days; rerun the seed command before local Newman runs to refresh `contractAuthToken`.
+- After running `npm run seed:contract-tests`, the Newman runner automatically loads the latest `primaryUser.token` from `tmp/contract-seed.json` and injects it into the runtime environment (you only need to copy it manually if you’re running collections from the Postman UI).
+- Generated JWTs expire every 7 days; rerun the seed command to refresh `tmp/contract-seed.json` before contract tests so a fresh token is available for the automation layer.
 - Staging credentials must be injected via GitHub secrets and _not_ stored in JSON. Use Newman `--env-var` overrides and set `SCHEMATHESIS_STAGING_*` variables at runtime.
 - Seeding scripts are owned by the backend repo (see `scripts/seed-contract-tests.ts` invoked via `npm run seed:contract-tests`).
 

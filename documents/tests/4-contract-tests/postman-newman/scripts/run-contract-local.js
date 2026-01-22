@@ -44,6 +44,7 @@ const envPath = path.join(
   "lakira-local.postman_environment.json",
 );
 const reportsRoot = path.join(postmanDir, "reports", "local");
+const seedOutputPath = path.join(repoRoot, "tmp", "contract-seed.json");
 
 const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
 
@@ -74,6 +75,41 @@ async function ensureSeeds() {
   await runCommand(npmCmd, ["run", "seed:contract-tests"], { cwd: repoRoot });
 }
 
+async function loadEnvironmentTemplate() {
+  const raw = await fs.readFile(envPath, "utf8");
+  return JSON.parse(raw);
+}
+
+async function resolveContractToken() {
+  if (process.env.CONTRACT_AUTH_TOKEN) {
+    return process.env.CONTRACT_AUTH_TOKEN;
+  }
+  try {
+    const seedRaw = await fs.readFile(seedOutputPath, "utf8");
+    const parsed = JSON.parse(seedRaw);
+    return parsed?.primaryUser?.token;
+  } catch (error) {
+    logger.warn(
+      `[contract-local] Unable to read seed file at ${seedOutputPath}: ${error.message}`,
+    );
+    return null;
+  }
+}
+
+async function buildEnvironment() {
+  const environment = await loadEnvironmentTemplate();
+  const token = await resolveContractToken();
+  if (!token) {
+    throw new Error(
+      "[contract-local] contractAuthToken missing. Ensure tmp/contract-seed.json exists or set CONTRACT_AUTH_TOKEN env.",
+    );
+  }
+  environment.values = environment.values.map((entry) =>
+    entry.key === "contractAuthToken" ? { ...entry, value: token } : entry,
+  );
+  return environment;
+}
+
 function runNewman(options) {
   return new Promise((resolve, reject) => {
     newman.run(options, (err, summary) => {
@@ -94,6 +130,7 @@ function runNewman(options) {
 async function main() {
   logger.info("[contract-local] Starting Postman/Newman contract suite…");
   await ensureSeeds();
+  const baseEnvironment = await buildEnvironment();
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   const reportDir = path.join(reportsRoot, timestamp);
@@ -108,11 +145,11 @@ async function main() {
     logger.info(`[contract-local] Running ${collection.name} collection…`);
     await runNewman({
       collection: collectionPath,
-      environment: envPath,
-      reporters: ["cli", "junit", "html"],
+      environment: JSON.parse(JSON.stringify(baseEnvironment)),
+      reporters: ["cli", "junit", "htmlextra"],
       reporter: {
         junit: { export: path.join(reportDir, `${collection.id}.xml`) },
-        html: { export: path.join(reportDir, `${collection.id}.html`) },
+        htmlextra: { export: path.join(reportDir, `${collection.id}.html`) },
       },
     });
   }

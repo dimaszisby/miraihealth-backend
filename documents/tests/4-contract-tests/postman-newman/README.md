@@ -107,7 +107,7 @@ Collections + environment files are version-controlled; secrets (tokens, passwor
    - Log runtime + coverage deltas in `metrics-tracker.md`.
    - Update checklist items when new scenarios are added.
 5. **Refresh tokens when necessary**
-   - Copy the latest `primaryUser.token` from `tmp/contract-seed.json` into the local environment file whenever the JWT expires (7-day TTL).
+   - Rerun `npm run seed:contract-tests` whenever the JWT expires (7-day TTL). The runner automatically reads `tmp/contract-seed.json` and injects `contractAuthToken` at runtime (override via `CONTRACT_AUTH_TOKEN` if you need a custom token).
 
 ## 7. Staging / CI Execution
 

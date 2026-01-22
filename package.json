@@ -118,6 +118,7 @@
     "jest-summary-reporter": "^0.0.2",
     "lint-staged": "^16.2.7",
     "newman": "^6.2.2",
+    "newman-reporter-htmlextra": "^1.23.1",
     "nodemon": "^3.1.9",
     "prettier": "^3.5.3",
     "sequelize-cli": "^6.6.2",
