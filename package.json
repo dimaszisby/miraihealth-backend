@@ -5,7 +5,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "prepare": "husky install",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node ./scripts/resolve-build-aliases.mjs",
     "start": "NODE_ENV=production node dist/server.js",
     "start:staging": "NODE_ENV=staging node dist/server.js",
     "start:test": "ALLOW_TEST_HTTP_SERVER=true NODE_ENV=test node dist/server.js",
