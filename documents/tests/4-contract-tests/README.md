@@ -24,11 +24,40 @@
 - `npm run test:contract:staging` – runs the same collections against staging using secrets injected via `STAGING_*` environment variables.
 - `npm run test:contract:schemathesis:local` – runs Schemathesis against the generated OpenAPI file using `SCHEMATHESIS_LOCAL_TOKEN` from `tmp/contract-seed.json` (override `SCHEMATHESIS_LOCAL_BASE_URL=http://localhost:8002/api/v1` when booting via `.env.test`).
 - `npm run test:contract:schemathesis:staging` – Schemathesis fuzzing pointed at staging; requires `SCHEMATHESIS_STAGING_BASE_URL` + `SCHEMATHESIS_STAGING_TOKEN`.
+- `npm run contract:local:full` – one-stop helper that builds the backend, runs migrations + seeds, boots `npm run start:test` with `DISABLE_RATE_LIMITING=true`, waits for `/api/v1/health`, then executes both Newman and Schemathesis before tearing the server down. Preferred way to reproduce the CI `contract_local` job locally. Defaults to `PORT=4000` for parity with GitHub Actions; override via `CONTRACT_LOCAL_PORT=8002 npm run contract:local:full` if you need a different port (the helper will propagate the same port to the wait-on probes and Schemathesis base URL). The helper auto-detects `.venv-schemathesis/bin/schemathesis` (or uses `SCHEMATHESIS_CLI` if you set one), so run the Python virtualenv installation once before invoking it.
 - Scripts will live under `documents/tests/4-contract-tests/postman-newman/scripts/` and `documents/tests/4-contract-tests/schemathesis/scripts/`.
 - Install Schemathesis via `python -m venv .venv && source .venv/bin/activate && pip install -r documents/tests/4-contract-tests/schemathesis/requirements.txt` (see the Schemathesis README for Windows commands).
 - Reports:
   - `documents/tests/4-contract-tests/postman-newman/reports/local|staging`.
   - `documents/tests/4-contract-tests/schemathesis/reports/local|staging` (per-run folders with `.xml` + `.har` reports).
+
+### Schemathesis local quickstart
+
+1. **Install / activate the CLI once**
+   ```bash
+   python3 -m venv .venv-schemathesis
+   source .venv-schemathesis/bin/activate    # Windows: .venv-schemathesis\Scripts\activate
+   pip install -r documents/tests/4-contract-tests/schemathesis/requirements.txt
+   ```
+2. **Regenerate the OpenAPI spec + seed deterministic data**
+   ```bash
+   npm run docs:openapi:generate
+   npm run seed:contract-tests
+   ```
+3. **Export the Schemathesis JWT + base URL (re-run this after every seed)**
+   ```bash
+   export SCHEMATHESIS_LOCAL_TOKEN=$(node -e 'const seed=require("./tmp/contract-seed.json"); if(!seed?.primaryUser?.token) process.exit(1); process.stdout.write(seed.primaryUser.token);')
+   export SCHEMATHESIS_LOCAL_BASE_URL=${SCHEMATHESIS_LOCAL_BASE_URL:-http://localhost:4000/api/v1}
+   ```
+4. **Start the API with throttling disabled (if not using `npm run contract:local:full`)**
+   ```bash
+   DISABLE_RATE_LIMITING=true ALLOW_TEST_HTTP_SERVER=true npm run start:test
+   ```
+5. **Run Schemathesis locally**
+   ```bash
+   npm run test:contract:schemathesis:local
+   ```
+   Reports land under `documents/tests/4-contract-tests/schemathesis/reports/local/<timestamp>/`.
 
 ## Environment & Data
 
@@ -37,6 +66,14 @@
   - Stable IDs for metrics/settings/logs (document in env JSON files).
 - Set `DISABLE_RATE_LIMITING=true` when running Schemathesis/Newman locally so the global limiter does not emit 429s during contract fuzzing (see `.env.test`); keep it `false` elsewhere.
 - After running `npm run seed:contract-tests`, the Newman runner automatically loads the latest `primaryUser.token` from `tmp/contract-seed.json` and injects it into the runtime environment (you only need to copy it manually if you’re running collections from the Postman UI).
+- All `POST /metric-logs` requests must include an explicit `type` (`"manual"` or `"automatic"`). The backend no longer defaults this value during validation so that contract tests can assert correct error handling for malformed payloads.
+- POST/PUT/PATCH endpoints that accept request bodies expect JSON objects — sending a bare string/number/`null` now returns a `400` via the shared guard middleware. When fuzzing with Schemathesis, prefer `{}` as a starting point if you want to probe “empty object” behaviour. (`PATCH /metric-settings/{id}/achieve` does **not** take a body.)
+- `PUT /metrics/{id}` requires at least one **recognized** update field; empty or unknown-only payloads return `400` (unknown keys are rejected to avoid no-op updates).
+- Metric settings creation/update enforces the domain invariant: when `goalEnabled=true`, both `goalType` and `goalValue` must be provided (and the OpenAPI schema documents this via `oneOf`). The same applies to `timeFrameEnabled`; include `startDate` + `deadlineDate` when enabling the time frame, and updates that provide dates without `timeFrameEnabled` will treat the time frame as enabled for that request.
+- `PUT /metric-settings/{id}` also requires at least one **recognized** update field; defaults are not injected on partial updates to avoid unintended changes (unknown keys are rejected).
+- Cursor-style queries (`/metrics`, `/metric-logs`, `/metric-settings`, `/metric-categories`) strip/trim `q`, reject empty search strings, and disallow unexpected `filter[...]` keys. Schemathesis will see deterministic `400`s for malformed params; treat those as expected rather than bugs.
+- When Schemathesis needs existing IDs (e.g., to avoid 404s), prefer pulling them from `tmp/contract-seed.json` after `npm run seed:contract-tests` and pass them via environment variables or `--header "x-contract-metric-id: …"` helpers. This keeps fuzzing reproducible.
+- The Schemathesis hook in `documents/tests/contract_hooks/seeded_ids.py` normalizes analytics ranges, clamps `last` windows to safe bucket sizes, forces valid IANA `tz` values (falls back to `UTC` when invalid), and skips negative `/auth/register` cases to avoid generator false positives. Analytics normalization applies to **positive** cases only so schema-violating inputs still exercise rejection paths; keep these overrides aligned with API validation rules.
 - Generated JWTs expire every 7 days; rerun the seed command to refresh `tmp/contract-seed.json` before contract tests so a fresh token is available for the automation layer.
 - Staging credentials must be injected via GitHub secrets and _not_ stored in JSON. Use Newman `--env-var` overrides and set `SCHEMATHESIS_STAGING_*` variables at runtime.
 - Seeding scripts are owned by the backend repo (see `scripts/seed-contract-tests.ts` invoked via `npm run seed:contract-tests`).
@@ -96,3 +133,12 @@ CI/CD expectations:
   - [Findings Log](./schemathesis/findings.md)
 - CI/CD alignment: `documents/ci-cd/backend/GITHUB_ACTIONS_PIPELINE_PLAN.md`
 - `npm run seed:contract-tests` – resets deterministic contract data (users/categories/metrics/logs) and writes outputs to `tmp/contract-seed.json` for Postman environment variables.
+
+## Troubleshooting
+
+- **Schemathesis immediately reports “Connection refused”** – the backend isn’t running or is bound to a different port. Use `npm run contract:local:full` (which starts the API on `PORT=4000` by default and waits for `/api/v1/health`) or manually run `PORT=4000 DISABLE_RATE_LIMITING=true npm run start:test` in another terminal before invoking the suites.
+- **Helper says "Schemathesis CLI not found"** – install the CLI once via `python3 -m venv .venv-schemathesis && source .venv-schemathesis/bin/activate && pip install -r documents/tests/4-contract-tests/schemathesis/requirements.txt`, or set `SCHEMATHESIS_CLI` to point at an existing Schemathesis binary before running the helper.
+- **Need to inspect backend output** – the orchestration script writes server logs to `tmp/backend-contract.log`. Tail this file after a failure to see stack traces.
+- **Token missing** – rerun `npm run seed:contract-tests`; the helper automatically injects the token into Newman/Schemathesis, but manual runs still require exporting `SCHEMATHESIS_LOCAL_TOKEN` from `tmp/contract-seed.json`.
+- **“Internal Server Error” when sending raw strings/numbers** – Express now accepts primitive JSON (to let Schemathesis fuzzers through) but every write endpoint enforces `requireJsonObjectBody`. If the payload isn’t an object, you’ll receive a deterministic `400` with `field: "body"` rather than a 500. Fix the client payload instead of retrying.
+- **Analytics fuzzing keeps failing with “tz must be a valid IANA zone / end must be after start”** – every visualization request must carry a valid time window. Supply either both `start` + `end` ISO timestamps **or** rely on the `last` parameter (defaults to `30d`, minimum `1`); do not send `last` alongside `start/end`. Large ranges can be rejected based on bucket size. Do not send blank `tz`; omit it to use the default (Asia/Jakarta).
