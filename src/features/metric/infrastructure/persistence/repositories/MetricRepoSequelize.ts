@@ -1,5 +1,5 @@
 import { models } from "@/infrastructure/db/models.js";
-import { Transaction } from "sequelize";
+import { InstanceError, Op, Sequelize, Transaction } from "sequelize";
 import {
   CreateMetricDTO,
   MetricRepository,
@@ -11,13 +11,35 @@ import AppError from "@/utils/AppError.js";
 
 export class MetricRepoSequelize implements MetricRepository {
   async existsByName(userId: string, name: string): Promise<boolean> {
-    const count = await models.Metric.count({ where: { userId, name } });
+    const normalized = name.trim().toLowerCase();
+    const count = await models.Metric.count({
+      where: {
+        userId,
+        [Op.and]: Sequelize.where(
+          Sequelize.fn("lower", Sequelize.col("name")),
+          normalized,
+        ),
+      },
+    });
     return count > 0;
   }
 
   async categoryExists(userId: string, categoryId: string): Promise<boolean> {
     const count = await models.MetricCategory.count({
       where: { userId, id: categoryId },
+    });
+    return count > 0;
+  }
+
+  async originalMetricExists(
+    userId: string,
+    metricId: string,
+  ): Promise<boolean> {
+    const count = await models.Metric.count({
+      where: {
+        id: metricId,
+        [Op.or]: [{ isPublic: true }, { userId }],
+      },
     });
     return count > 0;
   }
@@ -99,7 +121,14 @@ export class MetricRepoSequelize implements MetricRepository {
       originalMetricId: snapshot.originalMetricId ?? null,
       isPublic: snapshot.isPublic,
     });
-    await instance.reload();
+    try {
+      await instance.reload();
+    } catch (error) {
+      if (error instanceof InstanceError) {
+        throw new AppError("Metric not found", 404);
+      }
+      throw error;
+    }
 
     return toDomain({
       id: instance.id,

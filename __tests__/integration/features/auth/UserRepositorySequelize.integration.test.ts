@@ -15,6 +15,7 @@ describe("UserRepositorySequelize (integration)", () => {
       email: "author@example.com",
       username: "author",
       passwordHash: "bcrypt-hash",
+      isPublicProfile: true,
     });
 
     expect(user.email).toBe("author@example.com");
@@ -56,6 +57,7 @@ describe("UserRepositorySequelize (integration)", () => {
       email: "edit@example.com",
       username: "edit",
       passwordHash: "hash",
+      isPublicProfile: true,
     });
 
     created.changeEmail("edited@example.com");

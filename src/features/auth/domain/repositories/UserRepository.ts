@@ -4,6 +4,7 @@ export type CreateUserDTO = {
   email: string;
   username: string;
   passwordHash: string;
+  isPublicProfile: boolean;
 };
 
 export interface UserRepository {

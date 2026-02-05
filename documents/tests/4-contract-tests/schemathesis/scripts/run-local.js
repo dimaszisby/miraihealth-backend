@@ -20,11 +20,24 @@ const specPath = path.join(
   "openapi",
   "lakira-backend-openapi.json",
 );
+const seedPath = path.join(repoRoot, "tmp", "contract-seed.json");
+const DEFAULT_HOOK_MODULE =
+  process.env.SCHEMATHESIS_HOOKS ?? "documents.tests.contract_hooks.seeded_ids";
+const hookFilePath = path.join(
+  repoRoot,
+  "documents",
+  "tests",
+  "contract_hooks",
+  "seeded_ids.py",
+);
 
 const CLI = process.env.SCHEMATHESIS_CLI ?? "schemathesis";
 const DEFAULT_TAGS =
   process.env.SCHEMATHESIS_LOCAL_ENDPOINT_TAGS ??
   "Auth,Analytics,Metrics,Metric Logs,Metric Settings,Metric Categories,Trends";
+const HEALTH_TIMEOUT_MS = Number(
+  process.env.SCHEMATHESIS_HEALTH_TIMEOUT_MS ?? 10000,
+);
 
 function buildTags(tagString) {
   return tagString
@@ -55,7 +68,16 @@ function runCommand(command, args, options = {}) {
 async function main() {
   const baseUrl =
     process.env.SCHEMATHESIS_LOCAL_BASE_URL ?? "http://localhost:4000/api/v1";
-  const token = process.env.SCHEMATHESIS_LOCAL_TOKEN;
+  let seedData = null;
+  try {
+    const raw = await fs.readFile(seedPath, "utf8");
+    seedData = JSON.parse(raw);
+  } catch {
+    // Seed file is optional; hooks will no-op if absent.
+  }
+
+  const token =
+    process.env.SCHEMATHESIS_LOCAL_TOKEN ?? seedData?.primaryUser?.token;
   if (!token) {
     logger.error(
       "[schemathesis:local] Missing SCHEMATHESIS_LOCAL_TOKEN. Export a contract-test JWT (see tmp/contract-seed.json).",
@@ -74,8 +96,31 @@ async function main() {
     return;
   }
 
+  const healthUrl = `${baseUrl.replace(/\/$/, "")}/health`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), HEALTH_TIMEOUT_MS);
+  try {
+    const response = await fetch(healthUrl, { signal: controller.signal });
+    if (!response.ok) {
+      throw new Error(
+        `[schemathesis:local] Healthcheck at ${healthUrl} returned ${response.status}.`,
+      );
+    }
+  } catch (error) {
+    logger.error(
+      `[schemathesis:local] Backend not reachable at ${healthUrl}. Start the server via "npm run contract:local:full" or ensure "npm run start:test" is running with DISABLE_RATE_LIMITING=true.`,
+    );
+    logger.error(error.message);
+    process.exitCode = 1;
+    return;
+  } finally {
+    clearTimeout(timer);
+  }
+
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const reportDir = path.join(schemathesisDir, "reports", "local", timestamp);
+  const reportBaseDir = path.join(schemathesisDir, "reports", "local");
+  await fs.mkdir(reportBaseDir, { recursive: true });
+  const reportDir = path.join(reportBaseDir, timestamp);
   await fs.mkdir(reportDir, { recursive: true });
 
   const junitPath = path.join(reportDir, "schemathesis-local.xml");
@@ -104,6 +149,13 @@ async function main() {
     "--header",
     `Authorization: Bearer ${token}`,
   ];
+  try {
+    await fs.access(hookFilePath);
+  } catch {
+    logger.warn(
+      `[schemathesis:local] Hooks file missing at ${hookFilePath}. Seeded ID overrides will be skipped.`,
+    );
+  }
 
   const tags = buildTags(DEFAULT_TAGS);
   tags.forEach((tag) => {
@@ -122,7 +174,15 @@ async function main() {
   logger.info("[schemathesis:local] Running Schemathesis with args:", args);
 
   try {
-    await runCommand(CLI, args, { cwd: repoRoot });
+    const env = {
+      ...process.env,
+      SCHEMATHESIS_SEED_FILE: process.env.SCHEMATHESIS_SEED_FILE ?? seedPath,
+      SCHEMATHESIS_HOOKS: process.env.SCHEMATHESIS_HOOKS ?? DEFAULT_HOOK_MODULE,
+      PYTHONPATH: [repoRoot, process.env.PYTHONPATH]
+        .filter(Boolean)
+        .join(path.delimiter),
+    };
+    await runCommand(CLI, args, { cwd: repoRoot, env });
     logger.info(
       `[schemathesis:local] Completed. Reports stored under ${reportDir}`,
     );

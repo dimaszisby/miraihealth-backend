@@ -48,11 +48,8 @@ export const listCategories = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
     const { query } = pickValidated(getAllMetricCategoriesSchema)(req);
-    const { limit, sort, q, after, includeTotal } = query;
-    const filter =
-      query["filter[name]"] && query["filter[name]"]!.trim().length > 0
-        ? { name: query["filter[name]"]!.trim() }
-        : undefined;
+    const { limit, sort, q, after, includeTotal, filterName } = query;
+    const filter = filterName ? { name: filterName } : undefined;
 
     const page = await feature.listCategories.execute({
       userId: req.user.id,
@@ -66,7 +63,7 @@ export const listCategories = catchAsync(
 
     const dto = {
       items: toListResponseDTO(page.items),
-      nextCursor: page.nextCursor,
+      nextCursor: page.nextCursor ?? null,
       sort: page.sort,
       limit: page.limit,
       ...(page.q ? { q: page.q } : {}),

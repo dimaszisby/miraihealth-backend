@@ -24,6 +24,8 @@ import {
 import { AuthRequest } from "@/types/request.context.js";
 import { env } from "@/config/envManager.js";
 import { buildCursorCacheKey } from "@/shared/cache/keys.js";
+import { methodNotAllowed } from "@/shared/middleware/method-guard.js";
+import { requireJsonObjectBody } from "@/shared/middleware/require-json-object.js";
 
 const asString = (value: unknown): string | undefined =>
   typeof value === "string" ? value : undefined;
@@ -84,7 +86,13 @@ export const createMetricRouter = () => {
   const router = Router();
   router.use(authMiddleware);
 
-  router.post("/", userRateLimiter, validate(createMetricSchema), createMetric);
+  router.post(
+    "/",
+    userRateLimiter,
+    requireJsonObjectBody(),
+    validate(createMetricSchema),
+    createMetric,
+  );
 
   router.get(
     "/",
@@ -103,6 +111,7 @@ export const createMetricRouter = () => {
   router.put(
     "/:id",
     userRateLimiter,
+    requireJsonObjectBody(),
     validate(updateMetricSchema),
     updateMetric,
   );
@@ -121,10 +130,16 @@ export const createMetricRouter = () => {
     router.post(
       "/dummy",
       userRateLimiter,
+      requireJsonObjectBody(),
       validate(generateDummyMetricsSchema),
       generateDummyMetrics,
     );
+    router.all("/dummy", methodNotAllowed(["POST"]));
   }
+
+  router.all("/", methodNotAllowed(["GET", "POST"]));
+  router.all("/:id", methodNotAllowed(["GET", "PUT", "DELETE"]));
+  router.all("/:metricId/trends", methodNotAllowed(["GET"]));
 
   return router;
 };

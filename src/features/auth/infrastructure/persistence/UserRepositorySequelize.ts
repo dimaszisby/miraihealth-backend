@@ -45,7 +45,7 @@ export class UserRepositorySequelize implements UserRepository {
       email: data.email,
       username: data.username,
       password: data.passwordHash,
-      isPublicProfile: true,
+      isPublicProfile: data.isPublicProfile,
       role: "user",
     });
     await created.reload();

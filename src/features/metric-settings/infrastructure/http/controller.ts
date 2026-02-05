@@ -53,12 +53,19 @@ export const getAllMetricSettingsViaCursor = catchAsync(
       ...query,
     });
 
-    successResponse(res, 200, {
-      ...result,
+    const dto = {
       items: result.items.map((item) =>
         toMetricSettingsResponseDTO(item.snapshot()),
       ),
-    });
+      nextCursor: result.nextCursor ?? null,
+      sort: result.sort,
+      limit: result.limit,
+      ...(result.q ? { q: result.q } : {}),
+      ...(result.filter ? { filter: result.filter } : {}),
+      ...(query.includeTotal ? { totalCount: result.totalCount ?? 0 } : {}),
+    };
+
+    successResponse(res, 200, dto, "Metric settings fetched successfully");
   },
 );
 

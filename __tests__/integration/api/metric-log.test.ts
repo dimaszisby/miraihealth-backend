@@ -160,4 +160,20 @@ describe("Metric Log API", () => {
     expect(res.status).toBe(400);
     expect(res.body.status).toBe("fail");
   });
+
+  it("requires log type to be provided explicitly", async () => {
+    const res = await api
+      .post("/api/v1/metric-logs")
+      .set("Authorization", authHeader(token))
+      .send({ metricId, logValue: 5 });
+
+    expect(res.status).toBe(400);
+    expect(res.body.status).toBe("fail");
+    const errorFields = (res.body.errors ?? []).map(
+      (err: { field?: string }) => err.field ?? "",
+    );
+    expect(errorFields.some((field: string) => field?.includes("type"))).toBe(
+      true,
+    );
+  });
 });

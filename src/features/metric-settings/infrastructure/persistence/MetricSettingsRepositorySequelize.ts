@@ -10,7 +10,13 @@ import {
   SortField,
   SortParam,
 } from "../../domain/repositories/MetricSettingsRepository.js";
-import { Op, OrderItem, UniqueConstraintError, WhereOptions } from "sequelize";
+import {
+  Op,
+  OrderItem,
+  UniqueConstraintError,
+  WhereOptions,
+  InstanceError,
+} from "sequelize";
 import type { MetricSettingsAttributes } from "./models/metric-settings.sequelize.js";
 
 const includeMetric = () => [
@@ -106,20 +112,34 @@ export class MetricSettingsRepositorySequelize
     const row = await models.MetricSettings.findByPk(snapshot.id);
     if (!row) throw new AppError("Metric Settings not found", 404);
 
-    await row.update({
-      isActive: snapshot.isActive,
-      goalEnabled: snapshot.goalEnabled,
-      goalType: snapshot.goalType,
-      goalValue: snapshot.goalValue,
-      timeFrameEnabled: snapshot.timeFrameEnabled,
-      startDate: snapshot.startDate,
-      deadlineDate: snapshot.deadlineDate,
-      alertEnabled: snapshot.alertEnabled,
-      alertThresholds: snapshot.alertThresholds,
-      isAchieved: snapshot.isAchieved,
-      displayOptions: snapshot.displayOptions,
-    });
-    await row.reload({ include: includeMetric() });
+    try {
+      await row.update({
+        isActive: snapshot.isActive,
+        goalEnabled: snapshot.goalEnabled,
+        goalType: snapshot.goalType,
+        goalValue: snapshot.goalValue,
+        timeFrameEnabled: snapshot.timeFrameEnabled,
+        startDate: snapshot.startDate,
+        deadlineDate: snapshot.deadlineDate,
+        alertEnabled: snapshot.alertEnabled,
+        alertThresholds: snapshot.alertThresholds,
+        isAchieved: snapshot.isAchieved,
+        displayOptions: snapshot.displayOptions,
+      });
+    } catch (error) {
+      if (error instanceof InstanceError) {
+        throw new AppError("Metric Settings not found", 404);
+      }
+      throw error;
+    }
+    try {
+      await row.reload({ include: includeMetric() });
+    } catch (error) {
+      if (error instanceof InstanceError) {
+        throw new AppError("Metric Settings not found", 404);
+      }
+      throw error;
+    }
     return toEntity(row);
   }
 

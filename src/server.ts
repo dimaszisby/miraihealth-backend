@@ -73,6 +73,7 @@ const app: Application = express();
 app.use(
   express.json({
     limit: env.REQUEST_BODY_LIMIT,
+    strict: false, // allow primitives + guard downstream to emit cleaner 400s
   }),
 );
 

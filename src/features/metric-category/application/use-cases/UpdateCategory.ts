@@ -26,7 +26,7 @@ export class UpdateCategory {
     if (name && name !== current.name) {
       const exists = await this.repo.existsByName(userId, name);
       if (exists) {
-        throw new AppError("Metric Category name already exists", 400);
+        throw new AppError("Metric Category name already exists", 409);
       }
     }
 

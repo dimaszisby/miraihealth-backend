@@ -93,6 +93,7 @@ Seeding / fixture notes:
   - `REDIS_URL=redis://localhost:6379`
   - `NODE_ENV=test`
   - `JWT_SECRET_TEST=${{ secrets.JWT_SECRET_TEST }}`
+  - `DISABLE_RATE_LIMITING=true` during `tests` and `contract_local` so Newman/Schemathesis see 2xx/4xx responses instead of global 429 throttles. Leave unset in other environments to keep production limits enforced.
   - `ALLOW_TEST_HTTP_SERVER=true` is injected by `npm run start:test` so the HTTP server can bind to port `4000` even in `NODE_ENV=test`.
 
 Secrets to define in GitHub:

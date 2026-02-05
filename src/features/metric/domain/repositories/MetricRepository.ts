@@ -14,6 +14,7 @@ export type CreateMetricDTO = {
 export interface MetricRepository {
   existsByName(userId: string, name: string): Promise<boolean>;
   categoryExists(userId: string, categoryId: string): Promise<boolean>;
+  originalMetricExists(userId: string, metricId: string): Promise<boolean>;
   create(data: CreateMetricDTO, tx: PersistenceTransaction): Promise<Metric>;
   findOwnedById(userId: string, metricId: string): Promise<Metric>;
   save(metric: Metric): Promise<Metric>;

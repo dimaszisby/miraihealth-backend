@@ -9,6 +9,7 @@ export type UpdateProfileInput = {
   username?: string;
   password?: string;
   isPublicProfile?: boolean;
+  role?: AuthUser["role"];
 };
 
 export class UpdateProfile {
@@ -26,13 +27,13 @@ export class UpdateProfile {
 
     if (input.email && input.email.toLowerCase() !== user.email) {
       if (await this.repo.existsByEmail(input.email.toLowerCase()))
-        throw new AppError("Email already in use", 401);
+        throw new AppError("Email already in use", 409);
       user.changeEmail(input.email);
     }
 
     if (input.username && input.username !== user.username) {
       if (await this.repo.existsByUsername(input.username))
-        throw new AppError("Username already in use", 401);
+        throw new AppError("Username already in use", 409);
       user.changeUsername(input.username);
     }
 
@@ -43,6 +44,10 @@ export class UpdateProfile {
     if (input.password) {
       const passwordHash = await this.hasher.hash(input.password);
       user.setPasswordHash(passwordHash);
+    }
+
+    if (input.role && input.role !== user.role) {
+      user.setRole(input.role);
     }
 
     return this.repo.save(user);

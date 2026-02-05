@@ -1,8 +1,24 @@
 import { z } from "zod";
+import { resolveBucket } from "../../domain/buckets.js";
 
 const DEFAULT_TZ = process.env.DEFAULT_TZ ?? "Asia/Jakarta";
 const BucketEnum = z.enum(["1h", "1d", "1w", "1m", "1y"]);
 const FillEnum = z.enum(["none", "zero", "nan"]);
+const MAX_BUCKETS = Number(process.env.VIZ_MAX_BUCKETS ?? 400);
+const MAX_DATE_RANGE_MS = 8_640_000_000_000_000; // JS Date min/max span (~275k years)
+const LAST_WINDOW_REGEX = /^[1-9][0-9]*(h|d|w|m|y)$/;
+type RelativeUnit = "h" | "d" | "w" | "m" | "y";
+const LAST_UNIT_MS: Record<RelativeUnit, number> = {
+  h: 60 * 60 * 1000,
+  d: 24 * 60 * 60 * 1000,
+  w: 7 * 24 * 60 * 60 * 1000,
+  m: 30 * 24 * 60 * 60 * 1000,
+  y: 365 * 24 * 60 * 60 * 1000,
+};
+const RelativeWindow = z
+  .string()
+  .regex(LAST_WINDOW_REGEX, "Use format like 7d, 30d, 12m, 1y")
+  .optional();
 
 const tzSchema = z
   .string()
@@ -24,12 +40,68 @@ const BUCKET_ANCHOR_MS: Record<string, number> = {
   "1y": 365 * 24 * 60 * 60 * 1000,
 };
 
-const AbsoluteRange = z
-  .object({
-    start: z.string().datetime("Invalid start date format"),
-    end: z.string().datetime("Invalid end date format"),
-  })
-  .superRefine(({ start, end }, ctx) => {
+function anchorNow(bucket?: string) {
+  const unitMs = BUCKET_ANCHOR_MS[bucket ?? ""] ?? 60 * 1000; // default minute
+  const anchored = Math.floor(Date.now() / unitMs) * unitMs;
+  return new Date(anchored);
+}
+
+function parseRelativeWindow(value: string) {
+  if (!LAST_WINDOW_REGEX.test(value)) return null;
+  const amount = Number(value.slice(0, -1));
+  if (!Number.isSafeInteger(amount) || amount <= 0) return null;
+  const unit = value.slice(-1) as RelativeUnit;
+  return { amount, unit };
+}
+
+function computeStartEndFromLast(last: string, bucket?: string) {
+  const end = anchorNow(bucket);
+  const parsed = parseRelativeWindow(last);
+  if (!parsed) {
+    return { startISO: end.toISOString(), endISO: end.toISOString() };
+  }
+  const { amount, unit } = parsed;
+  const start = new Date(end);
+  switch (unit) {
+    case "h":
+      start.setHours(end.getHours() - amount);
+      break;
+    case "d":
+      start.setDate(end.getDate() - amount);
+      break;
+    case "w":
+      start.setDate(end.getDate() - 7 * amount);
+      break;
+    case "m":
+      start.setMonth(end.getMonth() - amount);
+      break;
+    case "y":
+      start.setFullYear(end.getFullYear() - amount);
+      break;
+  }
+  return { startISO: start.toISOString(), endISO: end.toISOString() };
+}
+
+const validateAbsoluteRange = (
+  start: string | undefined,
+  end: string | undefined,
+  ctx: z.RefinementCtx,
+) => {
+  if (start && !end) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["end"],
+      message: "Provide end when start is supplied.",
+    });
+  }
+  if (!start && end) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["start"],
+      message: "Provide start when end is supplied.",
+    });
+  }
+  if (start && end) {
     const s = Date.parse(start);
     const e = Date.parse(end);
     if (Number.isNaN(s) || Number.isNaN(e) || e <= s) {
@@ -39,86 +111,152 @@ const AbsoluteRange = z
         message: "end must be after start",
       });
     }
+  }
+};
+
+const resolveRange = (
+  bucket: z.infer<typeof BucketEnum>,
+  start: string | undefined,
+  end: string | undefined,
+  last: string | undefined,
+) => {
+  if (start && end) {
+    return { startISO: start, endISO: end };
+  }
+  const resolvedLast = last ?? "30d";
+  return computeStartEndFromLast(resolvedLast, bucket);
+};
+
+const validateRelativeWindow = (
+  bucket: z.infer<typeof BucketEnum>,
+  start: string | undefined,
+  end: string | undefined,
+  last: string | undefined,
+  ctx: z.RefinementCtx,
+) => {
+  if (start && end) return;
+  if (!last) return;
+  const parsed = parseRelativeWindow(last);
+  if (!parsed) return;
+  const unitMs = LAST_UNIT_MS[parsed.unit];
+  const maxUnits = Math.floor(MAX_DATE_RANGE_MS / unitMs);
+  if (parsed.amount > maxUnits) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["last"],
+      message: "Relative range is too large.",
+    });
+    return;
+  }
+  const windowMs = parsed.amount * unitMs;
+  const spec = resolveBucket(bucket);
+  const est = Math.ceil(windowMs / spec.approxMs) + 2;
+  if (est > MAX_BUCKETS) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["last"],
+      message: `Range too large for ${spec.iso} (~${est} buckets, max=${MAX_BUCKETS})`,
+    });
+  }
+};
+
+const VisualizationQueryBase = z
+  .object({
+    bucket: BucketEnum.default("1d"),
+    tz: tzSchema,
+    fill: FillEnum.default("none"),
+    start: z.string().datetime("Invalid start date format").optional(),
+    end: z.string().datetime("Invalid end date format").optional(),
+    last: RelativeWindow,
+  })
+  .strict()
+  .superRefine((input, ctx) => {
+    validateAbsoluteRange(input.start, input.end, ctx);
+    if ((input.start || input.end) && input.last) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["last"],
+        message: "Provide either last or start/end, not both.",
+      });
+    }
+    validateRelativeWindow(
+      input.bucket,
+      input.start,
+      input.end,
+      input.last,
+      ctx,
+    );
   });
 
-const RelativeRange = z.object({
-  last: z
-    .string()
-    .regex(/^\d+(h|d|w|m|y)$/, "Use format like 7d, 30d, 12m, 1y"),
+const DashboardVisualizationQueryBase = z
+  .object({
+    bucket: BucketEnum.default("1d"),
+    tz: tzSchema,
+    fill: FillEnum.default("none"),
+    limit: z.coerce.number().int().positive().max(48).default(12),
+    start: z.string().datetime("Invalid start date format").optional(),
+    end: z.string().datetime("Invalid end date format").optional(),
+    last: RelativeWindow,
+  })
+  .strict()
+  .superRefine((input, ctx) => {
+    validateAbsoluteRange(input.start, input.end, ctx);
+    if ((input.start || input.end) && input.last) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["last"],
+        message: "Provide either last or start/end, not both.",
+      });
+    }
+    validateRelativeWindow(
+      input.bucket,
+      input.start,
+      input.end,
+      input.last,
+      ctx,
+    );
+  });
+
+const VisualizationQuery = VisualizationQueryBase.transform((input) => {
+  const { startISO, endISO } = resolveRange(
+    input.bucket,
+    input.start,
+    input.end,
+    input.last,
+  );
+  return {
+    bucket: input.bucket,
+    tz: input.tz,
+    fill: input.fill,
+    start: startISO,
+    end: endISO,
+  };
 });
 
-function anchorNow(bucket?: string) {
-  const unitMs = BUCKET_ANCHOR_MS[bucket ?? ""] ?? 60 * 1000; // default minute
-  const anchored = Math.floor(Date.now() / unitMs) * unitMs;
-  return new Date(anchored);
-}
+const DashboardVisualizationQuery = DashboardVisualizationQueryBase.transform(
+  (input) => {
+    const { startISO, endISO } = resolveRange(
+      input.bucket,
+      input.start,
+      input.end,
+      input.last,
+    );
+    return {
+      bucket: input.bucket,
+      tz: input.tz,
+      fill: input.fill,
+      limit: input.limit,
+      start: startISO,
+      end: endISO,
+    };
+  },
+);
 
-function computeStartEndFromLast(last: string, bucket?: string) {
-  const end = anchorNow(bucket);
-  const n = parseInt(last.slice(0, -1), 10);
-  const u = last.slice(-1);
-  const start = new Date(end);
-  switch (u) {
-    case "h":
-      start.setHours(end.getHours() - n);
-      break;
-    case "d":
-      start.setDate(end.getDate() - n);
-      break;
-    case "w":
-      start.setDate(end.getDate() - 7 * n);
-      break;
-    case "m":
-      start.setMonth(end.getMonth() - n);
-      break;
-    case "y":
-      start.setFullYear(end.getFullYear() - n);
-      break;
-  }
-  return { startISO: start.toISOString(), endISO: end.toISOString() };
-}
+export const getVisualizationSchema = z.object({
+  params: z.object({ metricId: z.string().uuid("Invalid metric ID format") }),
+  query: VisualizationQuery,
+});
 
-export const getVisualizationSchema = z
-  .object({
-    params: z.object({ metricId: z.string().uuid("Invalid metric ID format") }),
-    query: z
-      .object({
-        bucket: BucketEnum.default("1d"),
-        tz: tzSchema,
-        fill: FillEnum.default("none"),
-      })
-      .and(z.union([AbsoluteRange, RelativeRange])),
-  })
-  .transform(({ params, query }) => {
-    if ("last" in query) {
-      const { startISO, endISO } = computeStartEndFromLast(
-        query.last,
-        query.bucket,
-      );
-      return { params, query: { ...query, start: startISO, end: endISO } };
-    }
-
-    return { params, query };
-  });
-
-export const getDashboardVizSchema = z
-  .object({
-    query: z
-      .object({
-        bucket: BucketEnum.default("1d"),
-        tz: tzSchema,
-        fill: FillEnum.default("none"),
-        limit: z.coerce.number().int().positive().max(48).default(12),
-      })
-      .and(z.union([AbsoluteRange, RelativeRange])),
-  })
-  .transform(({ query }) => {
-    if ("last" in query) {
-      const { startISO, endISO } = computeStartEndFromLast(
-        query.last,
-        query.bucket,
-      );
-      return { query: { ...query, start: startISO, end: endISO } };
-    }
-    return { query };
-  });
+export const getDashboardVizSchema = z.object({
+  query: DashboardVisualizationQuery,
+});

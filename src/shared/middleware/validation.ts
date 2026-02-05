@@ -2,6 +2,7 @@ import { AuthRequest } from "@/types/request.context.js";
 import { Response, NextFunction } from "express";
 import { ZodError, ZodTypeAny } from "zod";
 import logger from "@/utils/logger.js";
+import { formatZodIssues } from "@/shared/utils/zod-error-formatter.js";
 
 type SchemaBag = {
   body?: ZodTypeAny;
@@ -10,11 +11,7 @@ type SchemaBag = {
 };
 
 const handleError = (res: Response, error: ZodError) => {
-  const formattedErrors = error.errors.map((err) => ({
-    field: err.path.join("."),
-    message: err.message,
-  }));
-
+  const formattedErrors = formatZodIssues(error);
   logger.error("Validation Errors:", formattedErrors);
   res.status(400).json({ status: "fail", errors: formattedErrors });
 };

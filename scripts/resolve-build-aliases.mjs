@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 
-/* eslint-disable no-console -- CLI helper intentionally logs to stdout/stderr */
-
 /**
  * Rewrite compiled imports in `dist/**` so bare "@/foo/bar" aliases become
  * relative paths that Node can resolve at runtime.

@@ -9,6 +9,7 @@ export type RegisterInput = {
   password: string;
   passwordConfirmation: string;
   username: string;
+  isPublicProfile?: boolean;
 };
 
 export type AuthResult = {
@@ -32,17 +33,19 @@ export class RegisterUser {
     const username = input.username.trim();
 
     if (await this.repo.existsByEmail(email)) {
-      throw new AppError("Email already in use", 400);
+      throw new AppError("Email already in use", 409);
     }
     if (await this.repo.existsByUsername(username)) {
-      throw new AppError("Username already in use", 400);
+      throw new AppError("Username already in use", 409);
     }
 
     const passwordHash = await this.hasher.hash(input.password);
+    const isPublicProfile = input.isPublicProfile ?? true;
     const user = await this.repo.create({
       email,
       username,
       passwordHash,
+      isPublicProfile,
     });
 
     const token = this.tokenProvider.sign({

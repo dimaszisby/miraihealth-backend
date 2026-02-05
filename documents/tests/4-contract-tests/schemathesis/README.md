@@ -7,13 +7,14 @@ This guide explains how to install Schemathesis, run the local/staging fuzzing c
 Schemathesis is a Python CLI. Use a virtual environment so Node dependencies stay untouched.
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate            # Windows: .venv\\Scripts\\activate
+python3 -m venv .venv-schemathesis
+source .venv-schemathesis/bin/activate            # Windows: .venv-schemathesis\\Scripts\\activate
 pip install --upgrade pip
 pip install -r documents/tests/4-contract-tests/schemathesis/requirements.txt
 ```
 
 > The requirements file pins Schemathesis for reproducibility. When upgrading the CLI, update the version there and re-run `pip install -r ...`.
+> `package.json` looks for `.venv-schemathesis/bin/schemathesis` when running the npm scripts, so keep the virtualenv at that path (or adjust the scripts accordingly).
 
 ## 2. Prerequisites
 
@@ -30,15 +31,39 @@ pip install -r documents/tests/4-contract-tests/schemathesis/requirements.txt
 4. **Rate limiter toggle** – `.env.test` sets `DISABLE_RATE_LIMITING=true` so Schemathesis/Newman can exercise endpoints without tripping the global/user/analytics throttles. Keep this `false` in other environments.
 5. **Python virtualenv active** – ensures the Schemathesis binary referenced by the runner scripts is discoverable.
 
+### Local run checklist
+
+Follow these steps every time you fuzz locally:
+
+1. Regenerate the spec + seed deterministic fixtures
+   ```bash
+   npm run docs:openapi:generate
+   npm run seed:contract-tests
+   ```
+2. Export a fresh JWT + base URL (tokens expire every 7 days)
+   ```bash
+   export SCHEMATHESIS_LOCAL_TOKEN=$(node -e 'const seed=require("./tmp/contract-seed.json"); if(!seed?.primaryUser?.token) process.exit(1); process.stdout.write(seed.primaryUser.token);')
+   export SCHEMATHESIS_LOCAL_BASE_URL=${SCHEMATHESIS_LOCAL_BASE_URL:-http://localhost:4000/api/v1}
+   ```
+   > When you boot the API via `.env.test`/`npm run start:test`, override the base URL to `http://localhost:8002/api/v1` so Schemathesis points at the same port.
+   > The local runner falls back to `tmp/contract-seed.json` automatically when `SCHEMATHESIS_LOCAL_TOKEN` isn't set, but exporting it yourself keeps the process explicit.
+3. Start the backend (`DISABLE_RATE_LIMITING=true ALLOW_TEST_HTTP_SERVER=true npm run start:test`) or use `npm run contract:local:full` which handles build → migrate → seed → start → run → teardown automatically.
+4. Run `npm run test:contract:schemathesis:local` (or the staging variant) once the health check passes.
+
 ## 3. Commands
 
 - `npm run test:contract:schemathesis:local`
   - Reads `SCHEMATHESIS_LOCAL_TOKEN` (JWT from `tmp/contract-seed.json`).
   - Optional overrides: `SCHEMATHESIS_LOCAL_BASE_URL` (defaults to `http://localhost:4000/api/v1`, so override to `http://localhost:8002/api/v1` when following the `.env.test` workflow above), `SCHEMATHESIS_LOCAL_ENDPOINT_TAGS`, `SCHEMATHESIS_LOCAL_ENDPOINTS`, `SCHEMATHESIS_LOCAL_WORKERS`, `SCHEMATHESIS_LOCAL_MAX_EXAMPLES`, `SCHEMATHESIS_LOCAL_PHASES`.
+  - Automatically loads deterministic IDs from `tmp/contract-seed.json` via `documents/tests/contract_hooks/seeded_ids.py` (wired through `SCHEMATHESIS_HOOKS`) so stateful endpoints (metrics → metric-settings → logs/analytics) reuse real fixtures instead of random UUIDs.
+  - The hook also injects seeded login credentials for `/auth/login`, normalizes metric update references (`categoryId`, `originalMetricId`) to valid seeded IDs, and generates unique usernames/emails + metric/category names to avoid false-positive 409 conflicts during fuzzing.
+- The npm script pins `SCHEMATHESIS_CLI=.venv-schemathesis/bin/schemathesis` and exports `SCHEMATHESIS_HOOKS=documents.tests.contract_hooks.seeded_ids`. It also prepends the repo root to `PYTHONPATH` so Schemathesis can import the hook module.
+  - When running Schemathesis manually with a module path (`documents.tests.contract_hooks.seeded_ids`), ensure `documents/__init__.py` and `documents/tests/__init__.py` exist so the package resolves.
   - Output: `documents/tests/4-contract-tests/schemathesis/reports/local/<timestamp>/{schemathesis-local.xml,schemathesis-local.har}`.
 - `npm run test:contract:schemathesis:staging`
   - Requires `SCHEMATHESIS_STAGING_BASE_URL` (e.g., `https://api-staging.lakira.app/api/v1`) and `SCHEMATHESIS_STAGING_TOKEN` (service account JWT).
   - Optional overrides: `SCHEMATHESIS_STAGING_ENDPOINT_TAGS`, `SCHEMATHESIS_STAGING_ENDPOINTS`, `SCHEMATHESIS_STAGING_WORKERS`, `SCHEMATHESIS_STAGING_MAX_EXAMPLES`, `SCHEMATHESIS_STAGING_PHASES`.
+  - Also pins `SCHEMATHESIS_CLI` to `.venv-schemathesis/bin/schemathesis`.
   - Output: `documents/tests/4-contract-tests/schemathesis/reports/staging/<timestamp>/{schemathesis-staging.xml,schemathesis-staging.har}`.
 
 Both scripts validate the OpenAPI file exists before invoking Schemathesis and print the full argument list so runs can be reproduced manually if needed.
@@ -74,6 +99,7 @@ Both scripts validate the OpenAPI file exists before invoking Schemathesis and p
 - **`schemathesis: command not found`** – ensure your Python virtualenv is activated or set `SCHEMATHESIS_CLI` to the binary path.
 - **`OpenAPI spec not found`** – run `npm run docs:openapi:generate`; runners bail out early if the JSON is missing to avoid stale results.
 - **401 responses** – regenerate the seed (`npm run seed:contract-tests`) and export the new `SCHEMATHESIS_LOCAL_TOKEN`. For staging, rotate the service account JWT and update GitHub secrets.
+- **Analytics endpoints returning 400** – every visualization request must include either a valid `last=` window or both `start` and `end` ISO timestamps, and `tz` must be a non-empty IANA zone. Leaving `tz` blank or supplying only one end of the window will trigger the validation errors Schemathesis currently surfaces.
 - **Burst of 429 failures** – the global rate limiter applies even to contract runs. Set `DISABLE_RATE_LIMITING=true` (as in `.env.test`) or whitelist the Schemathesis service account before rerunning.
 - **Random 404s / invalid IDs** – confirm `--stateful=links` is enabled (default) and that the OpenAPI spec includes the correct `operationId` relationships. If any endpoints require manual setup, document them in the plan + checklist.
 - **Slow runs** – tune `SCHEMATHESIS_*_MAX_EXAMPLES` or split the tag list (e.g., analytics vs metrics) while keeping the ≥90% coverage target outlined in the metrics tracker.

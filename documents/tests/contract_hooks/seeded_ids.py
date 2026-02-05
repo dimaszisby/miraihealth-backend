@@ -313,6 +313,8 @@ def inject_seeded_ids(context, case, kwargs) -> None:  # kwargs unused but requi
                 "",
             ):
                 body["originalMetricId"] = None
+            if "name" in body:
+                body["name"] = f"metric-{_unique_suffix()}"
             if not body:
                 body["name"] = f"metric-{_unique_suffix()}"
             _set_case_body(case, body)

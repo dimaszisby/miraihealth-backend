@@ -19,19 +19,38 @@ export class UpdateMetricSettings {
     const settings = await this.repo.findById(userId, settingsId);
     if (!settings) throw new AppError("Metric Settings not found", 404);
 
-    settings.updateDetails({
-      goalEnabled: payload.goalEnabled,
-      goalType: payload.goalType,
-      goalValue: payload.goalValue,
-      timeFrameEnabled: payload.timeFrameEnabled,
-      startDate: payload.startDate ? new Date(payload.startDate) : null,
-      deadlineDate: payload.deadlineDate
+    const update: Partial<UpdateMetricSettingsRequestDTO> = {};
+    if (payload.goalEnabled !== undefined)
+      update.goalEnabled = payload.goalEnabled;
+    if (payload.goalType !== undefined) update.goalType = payload.goalType;
+    if (payload.goalValue !== undefined) update.goalValue = payload.goalValue;
+    if (payload.timeFrameEnabled !== undefined) {
+      update.timeFrameEnabled = payload.timeFrameEnabled;
+    }
+    if (payload.startDate !== undefined) {
+      update.startDate = payload.startDate ? new Date(payload.startDate) : null;
+    }
+    if (payload.deadlineDate !== undefined) {
+      update.deadlineDate = payload.deadlineDate
         ? new Date(payload.deadlineDate)
-        : null,
-      alertEnabled: payload.alertEnabled,
-      alertThresholds: payload.alertThresholds,
-      displayOptions: payload.displayOptions ?? undefined,
-    });
+        : null;
+    }
+    if (payload.alertEnabled !== undefined)
+      update.alertEnabled = payload.alertEnabled;
+    if (payload.alertThresholds !== undefined) {
+      update.alertThresholds = payload.alertThresholds;
+    }
+    if (payload.displayOptions !== undefined) {
+      update.displayOptions = payload.displayOptions;
+    }
+
+    const hasDates =
+      update.startDate !== undefined || update.deadlineDate !== undefined;
+    if (update.timeFrameEnabled === undefined && hasDates) {
+      update.timeFrameEnabled = true;
+    }
+
+    settings.updateDetails(update);
 
     const saved = await this.repo.save(settings);
     await this.cache.invalidate(userId, settings.metricId, settings.id);

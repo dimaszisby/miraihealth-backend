@@ -8,6 +8,7 @@ import { validate } from "@/shared/middleware/validation.js";
 import { getDashboardVizSchema, getVisualizationSchema } from "./validators.js";
 import catchAsync from "@/utils/catch-async.js";
 import { analyticsRateLimiter } from "@/shared/middleware/rate-limiter.js";
+import { methodNotAllowed } from "@/shared/middleware/method-guard.js";
 
 const router = Router();
 
@@ -26,5 +27,8 @@ router.get(
   validate(getVisualizationSchema),
   catchAsync(handleGetVisualization),
 );
+
+router.all("/dashboard", methodNotAllowed(["GET"]));
+router.all("/metrics/:metricId", methodNotAllowed(["GET"]));
 
 export { router as visualizationRouter };

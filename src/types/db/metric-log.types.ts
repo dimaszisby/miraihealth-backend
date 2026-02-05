@@ -16,7 +16,7 @@ export interface MetricLogAttributesBase {
 
   /**
    * @property {number} logValue - The numerical value recorded for the metric at the time of logging.
-   * Must be greater than 0.
+   * Must be non-negative.
    */
   logValue: number;
 

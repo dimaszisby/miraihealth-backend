@@ -167,6 +167,26 @@
             }
           }
         }
+      },
+      "ConflictError": {
+        "description": "Resource conflict (duplicate or already exists)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "fail"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Resource already exists"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "schemas": {
@@ -265,8 +285,7 @@
           "limit": {
             "type": "integer",
             "minimum": 1,
-            "maximum": 100,
-            "default": 20
+            "maximum": 100
           },
           "sort": {
             "type": "string",
@@ -279,8 +298,7 @@
               "-name",
               "logCount",
               "-logCount"
-            ],
-            "default": "-createdAt"
+            ]
           },
           "q": {
             "type": "string",
@@ -290,17 +308,7 @@
             "type": "string"
           },
           "includeTotal": {
-            "type": "boolean",
-            "nullable": true,
-            "default": false
-          },
-          "filter[name]": {
-            "type": "string",
-            "minLength": 1
-          },
-          "filter[categoryId]": {
-            "type": "string",
-            "format": "uuid"
+            "type": "boolean"
           },
           "filter": {
             "type": "object",
@@ -310,8 +318,7 @@
                 "minLength": 1
               },
               "categoryId": {
-                "type": "string",
-                "format": "uuid"
+                "$ref": "#/components/schemas/Uuid"
               }
             }
           }
@@ -339,7 +346,8 @@
             ]
           },
           "q": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "after": {
             "type": "string"
@@ -347,8 +355,14 @@
           "includeTotal": {
             "type": "boolean"
           },
-          "filter[name]": {
-            "type": "string"
+          "filter": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
           }
         }
       },
@@ -374,7 +388,8 @@
             ]
           },
           "q": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "after": {
             "type": "string"
@@ -382,11 +397,17 @@
           "includeTotal": {
             "type": "boolean"
           },
-          "filter[metricId]": {
-            "$ref": "#/components/schemas/Uuid"
-          },
-          "filter[logValue]": {
-            "type": "number"
+          "filter": {
+            "type": "object",
+            "properties": {
+              "metricId": {
+                "$ref": "#/components/schemas/Uuid"
+              },
+              "logValue": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
           }
         }
       },
@@ -410,7 +431,8 @@
             ]
           },
           "q": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "after": {
             "type": "string"
@@ -418,131 +440,20 @@
           "includeTotal": {
             "type": "boolean"
           },
-          "filter[metricId]": {
-            "$ref": "#/components/schemas/Uuid"
-          },
-          "filter[isActive]": {
-            "type": "boolean"
+          "filter": {
+            "type": "object",
+            "properties": {
+              "metricId": {
+                "$ref": "#/components/schemas/Uuid"
+              },
+              "isActive": {
+                "type": "boolean"
+              }
+            }
           }
         }
       },
-      "LoginRequest": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email",
-            "example": "user@example.com"
-          },
-          "password": {
-            "type": "string",
-            "minLength": 6,
-            "example": "password123"
-          }
-        },
-        "required": ["email", "password"]
-      },
-      "LoginResponse": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string",
-            "example": "success"
-          },
-          "message": {
-            "type": "string",
-            "example": "Login successful"
-          },
-          "token": {
-            "type": "string",
-            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-          },
-          "user": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "$ref": "#/components/schemas/Uuid"
-              },
-              "username": {
-                "type": "string",
-                "example": "testuser"
-              },
-              "email": {
-                "type": "string",
-                "format": "email",
-                "example": "test@example.com"
-              },
-              "isPublicProfile": {
-                "type": "boolean",
-                "example": true
-              },
-              "role": {
-                "type": "string",
-                "enum": ["user", "admin"],
-                "example": "user"
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time",
-                "example": "2023-01-01T12:00:00Z"
-              },
-              "updatedAt": {
-                "type": "string",
-                "format": "date-time",
-                "example": "2023-01-01T12:00:00Z"
-              }
-            },
-            "required": [
-              "id",
-              "username",
-              "email",
-              "isPublicProfile",
-              "role",
-              "createdAt",
-              "updatedAt"
-            ]
-          }
-        },
-        "required": ["status", "message", "token", "user"]
-      },
-      "RegisterRequest": {
-        "type": "object",
-        "properties": {
-          "username": {
-            "type": "string",
-            "minLength": 3,
-            "example": "newuser"
-          },
-          "email": {
-            "type": "string",
-            "format": "email",
-            "example": "newuser@example.com"
-          },
-          "password": {
-            "type": "string",
-            "minLength": 6,
-            "example": "newpassword123"
-          },
-          "passwordConfirmation": {
-            "type": "string",
-            "minLength": 6,
-            "example": "newpassword123"
-          },
-          "isPublicProfile": {
-            "type": "boolean",
-            "default": true,
-            "example": true
-          },
-          "role": {
-            "type": "string",
-            "enum": ["user", "admin"],
-            "default": "user",
-            "example": "user"
-          }
-        },
-        "required": ["username", "email", "password", "passwordConfirmation"]
-      },
-      "UserResponse": {
+      "User": {
         "type": "object",
         "properties": {
           "id": {
@@ -587,6 +498,115 @@
           "updatedAt"
         ]
       },
+      "UserResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SuccessResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          }
+        ]
+      },
+      "UpdateUserResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SuccessResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "user": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                },
+                "required": ["user"]
+              }
+            }
+          }
+        ]
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\\\.[A-Za-z]{2,}$",
+            "example": "user@example.com"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6,
+            "example": "password123"
+          }
+        },
+        "required": ["email", "password"]
+      },
+      "LoginResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SuccessResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  },
+                  "user": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                },
+                "required": ["token", "user"]
+              }
+            }
+          }
+        ]
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "minLength": 3,
+            "example": "newuser"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\\\.[A-Za-z]{2,}$",
+            "example": "newuser@example.com"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6,
+            "example": "newpassword123"
+          },
+          "passwordConfirmation": {
+            "type": "string",
+            "minLength": 6,
+            "example": "newpassword123"
+          },
+          "isPublicProfile": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": ["username", "email", "password", "passwordConfirmation"]
+      },
       "UpdateUserRequest": {
         "type": "object",
         "properties": {
@@ -598,6 +618,7 @@
           "email": {
             "type": "string",
             "format": "email",
+            "pattern": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\\\.[A-Za-z]{2,}$",
             "example": "updated@example.com"
           },
           "password": {
@@ -668,34 +689,43 @@
         "properties": {
           "name": {
             "type": "string",
-            "example": "New Category"
+            "minLength": 1
           },
           "color": {
             "type": "string",
-            "example": "#123456"
+            "minLength": 1
           },
           "icon": {
             "type": "string",
-            "example": "✨"
+            "minLength": 1
           }
         },
-        "required": ["name", "color", "icon"]
+        "required": ["name", "color", "icon"],
+        "example": {
+          "name": "New Category",
+          "color": "#123456",
+          "icon": "✨"
+        }
       },
       "UpdateMetricCategoryRequest": {
         "type": "object",
         "properties": {
           "name": {
             "type": "string",
-            "example": "Updated Category Name"
+            "minLength": 1
           },
           "color": {
             "type": "string",
-            "example": "#654321"
+            "minLength": 1
           },
           "icon": {
             "type": "string",
-            "example": "🌟"
+            "minLength": 1
           }
+        },
+        "example": {
+          "name": "Updated Category",
+          "color": "#654321"
         }
       },
       "MetricCategoryListResponse": {
@@ -825,7 +855,8 @@
               },
               {
                 "type": "string",
-                "minLength": 1
+                "pattern": "^(settings|category|logs)(,(settings|category|logs))*$",
+                "example": "settings,category"
               }
             ],
             "default": "flat"
@@ -893,24 +924,18 @@
             "$ref": "#/components/schemas/Uuid"
           },
           "originalMetricId": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/Uuid"
-              },
-              {
-                "nullable": true
-              }
-            ]
+            "type": "string",
+            "nullable": true,
+            "format": "uuid",
+            "description": "A UUID identifier or null when unset",
+            "example": null
           },
           "categoryId": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/Uuid"
-              },
-              {
-                "nullable": true
-              }
-            ]
+            "type": "string",
+            "nullable": true,
+            "format": "uuid",
+            "description": "A UUID identifier or null when unset",
+            "example": null
           },
           "name": {
             "type": "string",
@@ -965,14 +990,20 @@
           },
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[^\\u0000-\\u001F\\u007F]*$"
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 512,
+            "pattern": "^[^\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]*$"
           },
           "defaultUnit": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 32,
+            "pattern": "^[^\\u0000-\\u001F\\u007F]*$"
           },
           "isPublic": {
             "type": "boolean",
@@ -996,20 +1027,27 @@
           },
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[^\\u0000-\\u001F\\u007F]*$"
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 512,
+            "pattern": "^[^\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]*$"
           },
           "defaultUnit": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 32,
+            "pattern": "^[^\\u0000-\\u001F\\u007F]*$"
           },
           "isPublic": {
-            "type": "boolean",
-            "default": false
+            "type": "boolean"
           }
-        }
+        },
+        "additionalProperties": false,
+        "minProperties": 1
       },
       "MetricListResponse": {
         "type": "array",
@@ -1033,6 +1071,7 @@
           },
           "logValue": {
             "type": "number",
+            "minimum": 0,
             "example": 10000
           },
           "loggedAt": {
@@ -1069,6 +1108,7 @@
           },
           "logValue": {
             "type": "number",
+            "minimum": 0,
             "example": 5000
           },
           "type": {
@@ -1082,13 +1122,14 @@
             "example": "2023-01-01T10:00:00Z"
           }
         },
-        "required": ["metricId", "logValue"]
+        "required": ["metricId", "logValue", "type"]
       },
       "UpdateMetricLogRequest": {
         "type": "object",
         "properties": {
           "logValue": {
             "type": "number",
+            "minimum": 0,
             "example": 12000
           },
           "type": {
@@ -1238,17 +1279,14 @@
               },
               "priority": {
                 "type": "number",
-                "nullable": true,
                 "example": 1
               },
               "chartType": {
                 "type": "string",
-                "nullable": true,
                 "example": "line"
               },
               "color": {
                 "type": "string",
-                "nullable": true,
                 "example": "#E897A3"
               }
             },
@@ -1284,130 +1322,333 @@
         ]
       },
       "CreateMetricSettingsRequest": {
-        "type": "object",
-        "properties": {
-          "metricId": {
-            "$ref": "#/components/schemas/Uuid"
-          },
-          "goalEnabled": {
-            "type": "boolean",
-            "example": true
-          },
-          "goalType": {
-            "type": "string",
-            "nullable": true,
-            "enum": ["cumulative", "incremental"]
-          },
-          "goalValue": {
-            "type": "number",
-            "nullable": true
-          },
-          "timeFrameEnabled": {
-            "type": "boolean"
-          },
-          "startDate": {
-            "type": "string",
-            "nullable": true,
-            "format": "date-time"
-          },
-          "deadlineDate": {
-            "type": "string",
-            "nullable": true,
-            "format": "date-time"
-          },
-          "alertEnabled": {
-            "type": "boolean"
-          },
-          "alertThresholds": {
-            "type": "number",
-            "nullable": true
-          },
-          "displayOptions": {
+        "anyOf": [
+          {
             "type": "object",
             "properties": {
-              "showOnDashboard": {
-                "type": "boolean",
-                "example": true
+              "metricId": {
+                "type": "string",
+                "format": "uuid"
               },
-              "priority": {
+              "timeFrameEnabled": {
+                "type": "boolean",
+                "default": false
+              },
+              "startDate": {
+                "type": "string",
+                "format": "date-time",
+                "example": "2023-01-01T00:00:00Z"
+              },
+              "deadlineDate": {
+                "type": "string",
+                "format": "date-time",
+                "example": "2023-01-01T00:00:00Z"
+              },
+              "alertEnabled": {
+                "type": "boolean",
+                "default": false
+              },
+              "alertThresholds": {
+                "type": "integer",
+                "nullable": true,
+                "minimum": 0,
+                "maximum": 100,
+                "default": 80
+              },
+              "displayOptions": {
+                "type": "object",
+                "properties": {
+                  "showOnDashboard": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "priority": {
+                    "type": "number",
+                    "default": 1
+                  },
+                  "chartType": {
+                    "type": "string",
+                    "default": "line"
+                  },
+                  "color": {
+                    "type": "string",
+                    "default": "#E897A3"
+                  }
+                },
+                "default": {
+                  "showOnDashboard": true,
+                  "priority": 1,
+                  "chartType": "line",
+                  "color": "#E897A3"
+                }
+              },
+              "goalEnabled": {
+                "type": "boolean",
+                "enum": [true]
+              },
+              "goalType": {
+                "type": "string",
+                "enum": ["cumulative", "incremental"]
+              },
+              "goalValue": {
+                "type": "number",
+                "minimum": 0,
+                "exclusiveMinimum": true
+              }
+            },
+            "required": ["metricId", "goalEnabled", "goalType", "goalValue"],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "metricId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "timeFrameEnabled": {
+                "type": "boolean",
+                "default": false
+              },
+              "startDate": {
+                "type": "string",
+                "format": "date-time",
+                "example": "2023-01-01T00:00:00Z"
+              },
+              "deadlineDate": {
+                "type": "string",
+                "format": "date-time",
+                "example": "2023-01-01T00:00:00Z"
+              },
+              "alertEnabled": {
+                "type": "boolean",
+                "default": false
+              },
+              "alertThresholds": {
+                "type": "integer",
+                "nullable": true,
+                "minimum": 0,
+                "maximum": 100,
+                "default": 80
+              },
+              "displayOptions": {
+                "type": "object",
+                "properties": {
+                  "showOnDashboard": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "priority": {
+                    "type": "number",
+                    "default": 1
+                  },
+                  "chartType": {
+                    "type": "string",
+                    "default": "line"
+                  },
+                  "color": {
+                    "type": "string",
+                    "default": "#E897A3"
+                  }
+                },
+                "default": {
+                  "showOnDashboard": true,
+                  "priority": 1,
+                  "chartType": "line",
+                  "color": "#E897A3"
+                }
+              },
+              "goalEnabled": {
+                "type": "boolean",
+                "enum": [false]
+              },
+              "goalType": {
+                "type": "string",
+                "nullable": true,
+                "enum": ["cumulative", "incremental"]
+              },
+              "goalValue": {
                 "type": "number",
                 "nullable": true,
-                "example": 1
-              },
-              "chartType": {
-                "type": "string",
-                "nullable": true,
-                "example": "line"
-              },
-              "color": {
-                "type": "string",
-                "nullable": true,
-                "example": "#E897A3"
+                "minimum": 0,
+                "exclusiveMinimum": true
               }
-            }
+            },
+            "required": ["metricId"]
           }
-        },
-        "required": ["metricId"]
+        ],
+        "example": {
+          "metricId": "55555555-eeee-4eee-8eee-000000000005",
+          "goalEnabled": true,
+          "goalType": "cumulative",
+          "goalValue": 100,
+          "timeFrameEnabled": false,
+          "displayOptions": {
+            "showOnDashboard": true,
+            "priority": 1,
+            "chartType": "line",
+            "color": "#E897A3"
+          }
+        }
       },
       "UpdateMetricSettingsRequest": {
-        "type": "object",
-        "properties": {
-          "goalEnabled": {
-            "type": "boolean"
-          },
-          "goalType": {
-            "type": "string",
-            "nullable": true,
-            "enum": ["cumulative", "incremental"]
-          },
-          "goalValue": {
-            "type": "number",
-            "nullable": true
-          },
-          "timeFrameEnabled": {
-            "type": "boolean"
-          },
-          "startDate": {
-            "type": "string",
-            "nullable": true,
-            "format": "date-time"
-          },
-          "deadlineDate": {
-            "type": "string",
-            "nullable": true,
-            "format": "date-time"
-          },
-          "alertEnabled": {
-            "type": "boolean"
-          },
-          "alertThresholds": {
-            "type": "number",
-            "nullable": true
-          },
-          "displayOptions": {
+        "anyOf": [
+          {
             "type": "object",
             "properties": {
-              "showOnDashboard": {
-                "type": "boolean",
-                "example": true
+              "metricId": {
+                "type": "string",
+                "format": "uuid"
               },
-              "priority": {
+              "timeFrameEnabled": {
+                "type": "boolean"
+              },
+              "startDate": {
+                "type": "string",
+                "format": "date-time",
+                "example": "2023-01-01T00:00:00Z"
+              },
+              "deadlineDate": {
+                "type": "string",
+                "format": "date-time",
+                "example": "2023-01-01T00:00:00Z"
+              },
+              "alertEnabled": {
+                "type": "boolean"
+              },
+              "alertThresholds": {
+                "type": "integer",
+                "nullable": true,
+                "minimum": 0,
+                "maximum": 100
+              },
+              "displayOptions": {
+                "type": "object",
+                "properties": {
+                  "showOnDashboard": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "priority": {
+                    "type": "number",
+                    "default": 1
+                  },
+                  "chartType": {
+                    "type": "string",
+                    "default": "line"
+                  },
+                  "color": {
+                    "type": "string",
+                    "default": "#E897A3"
+                  }
+                },
+                "default": {
+                  "showOnDashboard": true,
+                  "priority": 1,
+                  "chartType": "line",
+                  "color": "#E897A3"
+                }
+              },
+              "goalEnabled": {
+                "type": "boolean",
+                "enum": [true]
+              },
+              "goalType": {
+                "type": "string",
+                "enum": ["cumulative", "incremental"]
+              },
+              "goalValue": {
+                "type": "number",
+                "minimum": 0,
+                "exclusiveMinimum": true
+              }
+            },
+            "required": ["goalEnabled", "goalType", "goalValue"],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "metricId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "timeFrameEnabled": {
+                "type": "boolean"
+              },
+              "startDate": {
+                "type": "string",
+                "format": "date-time",
+                "example": "2023-01-01T00:00:00Z"
+              },
+              "deadlineDate": {
+                "type": "string",
+                "format": "date-time",
+                "example": "2023-01-01T00:00:00Z"
+              },
+              "alertEnabled": {
+                "type": "boolean"
+              },
+              "alertThresholds": {
+                "type": "integer",
+                "nullable": true,
+                "minimum": 0,
+                "maximum": 100
+              },
+              "displayOptions": {
+                "type": "object",
+                "properties": {
+                  "showOnDashboard": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "priority": {
+                    "type": "number",
+                    "default": 1
+                  },
+                  "chartType": {
+                    "type": "string",
+                    "default": "line"
+                  },
+                  "color": {
+                    "type": "string",
+                    "default": "#E897A3"
+                  }
+                },
+                "default": {
+                  "showOnDashboard": true,
+                  "priority": 1,
+                  "chartType": "line",
+                  "color": "#E897A3"
+                }
+              },
+              "goalEnabled": {
+                "type": "boolean",
+                "enum": [false]
+              },
+              "goalType": {
+                "type": "string",
+                "nullable": true,
+                "enum": ["cumulative", "incremental"]
+              },
+              "goalValue": {
                 "type": "number",
                 "nullable": true,
-                "example": 1
-              },
-              "chartType": {
-                "type": "string",
-                "nullable": true,
-                "example": "line"
-              },
-              "color": {
-                "type": "string",
-                "nullable": true,
-                "example": "#E897A3"
+                "minimum": 0,
+                "exclusiveMinimum": true
               }
-            }
+            },
+            "additionalProperties": false
           }
+        ],
+        "minProperties": 1,
+        "example": {
+          "goalEnabled": true,
+          "goalType": "incremental",
+          "goalValue": 25,
+          "timeFrameEnabled": true,
+          "startDate": "2024-01-01T00:00:00Z",
+          "deadlineDate": "2024-02-01T00:00:00Z"
         }
       },
       "UpdateDisplayOptionsRequest": {
@@ -1422,17 +1663,14 @@
               },
               "priority": {
                 "type": "number",
-                "nullable": true,
                 "example": 1
               },
               "chartType": {
                 "type": "string",
-                "nullable": true,
                 "example": "line"
               },
               "color": {
                 "type": "string",
-                "nullable": true,
                 "example": "#E897A3"
               }
             },
@@ -1506,9 +1744,14 @@
             "type": "object",
             "properties": {
               "category": {
-                "allOf": [
+                "anyOf": [
                   {
                     "$ref": "#/components/schemas/MetricCategory"
+                  },
+                  {
+                    "nullable": true,
+                    "description": "Null when the metric does not belong to a category",
+                    "example": null
                   },
                   {
                     "nullable": true
@@ -1516,9 +1759,14 @@
                 ]
               },
               "settings": {
-                "allOf": [
+                "anyOf": [
                   {
                     "$ref": "#/components/schemas/MetricSettings"
+                  },
+                  {
+                    "nullable": true,
+                    "description": "Null when metric settings have not been configured",
+                    "example": null
                   },
                   {
                     "nullable": true
@@ -1526,11 +1774,22 @@
                 ]
               },
               "logs": {
-                "type": "array",
-                "nullable": true,
-                "items": {
-                  "$ref": "#/components/schemas/MetricLog"
-                }
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/MetricLog"
+                    }
+                  },
+                  {
+                    "nullable": true,
+                    "description": "Null when no recent logs are available",
+                    "example": null
+                  },
+                  {
+                    "nullable": true
+                  }
+                ]
               }
             },
             "required": ["category", "settings", "logs"]
@@ -1823,14 +2082,19 @@
         "properties": {
           "bucket": {
             "type": "string",
-            "enum": ["1h", "1d", "1w", "1m", "1y"]
+            "enum": ["1h", "1d", "1w", "1m", "1y"],
+            "default": "1d"
           },
           "tz": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^([A-Za-z_]+(?:\\/[A-Za-z0-9_+-]+)+|UTC)$",
+            "default": "Asia/Jakarta"
           },
           "fill": {
             "type": "string",
-            "enum": ["none", "zero", "nan"]
+            "enum": ["none", "zero", "nan"],
+            "default": "none"
           },
           "start": {
             "type": "string",
@@ -1841,26 +2105,50 @@
             "format": "date-time"
           },
           "last": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[1-9][0-9]*(h|d|w|m|y)$"
           }
-        }
+        },
+        "additionalProperties": false
       },
       "DashboardVisualizationQueryParams": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/VisualizationQueryParams"
+        "type": "object",
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "enum": ["1h", "1d", "1w", "1m", "1y"],
+            "default": "1d"
           },
-          {
-            "type": "object",
-            "properties": {
-              "limit": {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 48
-              }
-            }
+          "tz": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^([A-Za-z_]+(?:\\/[A-Za-z0-9_+-]+)+|UTC)$",
+            "default": "Asia/Jakarta"
+          },
+          "fill": {
+            "type": "string",
+            "enum": ["none", "zero", "nan"],
+            "default": "none"
+          },
+          "start": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*(h|d|w|m|y)$"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 48
           }
-        ]
+        },
+        "additionalProperties": false
       }
     },
     "parameters": {}
@@ -1871,6 +2159,7 @@
         "tags": ["Auth"],
         "summary": "Register a new user",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -1893,6 +2182,9 @@
           "400": {
             "$ref": "#/components/responses/BadRequestError"
           },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
           }
@@ -1904,6 +2196,7 @@
         "tags": ["Auth"],
         "summary": "Log in a user",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -1928,6 +2221,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
@@ -1958,6 +2254,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
           }
@@ -1972,6 +2271,7 @@
           }
         ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -1986,7 +2286,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserResponse"
+                  "$ref": "#/components/schemas/UpdateUserResponse"
                 }
               }
             }
@@ -1996,6 +2296,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
@@ -2042,6 +2345,7 @@
           }
         ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -2056,7 +2360,19 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MetricCategory"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/MetricCategory"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -2066,6 +2382,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
@@ -2113,10 +2432,11 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1
             },
             "required": false,
-            "description": "Optional free-text search term",
+            "description": "Optional free-text search term (trimmed; must be at least 1 character).",
             "name": "q",
             "in": "query"
           },
@@ -2140,12 +2460,20 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
             },
             "required": false,
-            "description": "Filter categories by name",
-            "name": "filter[name]",
-            "in": "query"
+            "description": "Filter categories by name (deepObject).",
+            "name": "filter",
+            "in": "query",
+            "style": "deepObject",
+            "explode": true
           }
         ],
         "responses": {
@@ -2154,10 +2482,25 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MetricCategoryCursorResponse"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/MetricCategoryCursorResponse"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
@@ -2194,7 +2537,19 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MetricCategory"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/MetricCategory"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -2207,6 +2562,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
@@ -2247,7 +2605,19 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MetricCategory"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/MetricCategory"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -2260,6 +2630,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
@@ -2286,8 +2659,15 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "Metric category deleted successfully"
+          "200": {
+            "description": "Metric category deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
@@ -2297,6 +2677,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
@@ -2314,6 +2697,7 @@
           }
         ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -2328,7 +2712,19 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Metric"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Metric"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -2338,6 +2734,12 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
@@ -2357,10 +2759,10 @@
             "schema": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 100,
-              "default": 20
+              "maximum": 100
             },
             "required": false,
+            "description": "Maximum number of records to return (1-100)",
             "name": "limit",
             "in": "query"
           },
@@ -2376,10 +2778,10 @@
                 "-name",
                 "logCount",
                 "-logCount"
-              ],
-              "default": "-createdAt"
+              ]
             },
             "required": false,
+            "description": "Sort field (prefix with - for DESC)",
             "name": "sort",
             "in": "query"
           },
@@ -2389,6 +2791,7 @@
               "minLength": 1
             },
             "required": false,
+            "description": "Optional free-text search term (trimmed; must be at least 1 character).",
             "name": "q",
             "in": "query"
           },
@@ -2397,35 +2800,17 @@
               "type": "string"
             },
             "required": false,
+            "description": "Opaque cursor returned from the previous page",
             "name": "after",
             "in": "query"
           },
           {
             "schema": {
-              "type": "boolean",
-              "nullable": true,
-              "default": false
+              "type": "boolean"
             },
             "required": false,
+            "description": "Set to true to include totalCount in the response",
             "name": "includeTotal",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "required": false,
-            "name": "filter[name]",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": false,
-            "name": "filter[categoryId]",
             "in": "query"
           },
           {
@@ -2437,14 +2822,16 @@
                   "minLength": 1
                 },
                 "categoryId": {
-                  "type": "string",
-                  "format": "uuid"
+                  "$ref": "#/components/schemas/Uuid"
                 }
               }
             },
             "required": false,
+            "description": "Filter metrics by name and/or categoryId (deepObject).",
             "name": "filter",
-            "in": "query"
+            "in": "query",
+            "style": "deepObject",
+            "explode": true
           }
         ],
         "responses": {
@@ -2510,7 +2897,8 @@
                 },
                 {
                   "type": "string",
-                  "minLength": 1
+                  "pattern": "^(settings|category|logs)(,(settings|category|logs))*$",
+                  "example": "settings,category"
                 }
               ],
               "default": "flat"
@@ -2537,7 +2925,19 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MetricDetailResponse"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/MetricDetailResponse"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -2550,6 +2950,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
@@ -2590,7 +2993,19 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Metric"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Metric"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -2603,6 +3018,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
@@ -2629,8 +3047,27 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "Metric deleted successfully"
+          "200": {
+            "description": "Metric deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Metric"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
@@ -2640,6 +3077,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
@@ -2697,6 +3137,9 @@
           "404": {
             "$ref": "#/components/responses/NotFoundError"
           },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
           }
@@ -2743,7 +3186,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1
             },
             "required": false,
             "description": "Optional search term applied to log notes/metadata",
@@ -2770,21 +3214,23 @@
           },
           {
             "schema": {
-              "$ref": "#/components/schemas/Uuid"
+              "type": "object",
+              "properties": {
+                "metricId": {
+                  "$ref": "#/components/schemas/Uuid"
+                },
+                "logValue": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
             },
             "required": false,
-            "description": "Filter logs by metric identifier",
-            "name": "filter[metricId]",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "number"
-            },
-            "required": false,
-            "description": "Filter logs by an exact log value",
-            "name": "filter[logValue]",
-            "in": "query"
+            "description": "Filter logs by metricId and/or logValue (deepObject).",
+            "name": "filter",
+            "in": "query",
+            "style": "deepObject",
+            "explode": true
           }
         ],
         "responses": {
@@ -2848,7 +3294,19 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MetricLogStatsResponse"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/MetricLogStatsResponse"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -2861,6 +3319,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
@@ -2903,7 +3364,19 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MetricLog"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/MetricLog"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -2916,6 +3389,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
@@ -2956,7 +3432,19 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MetricLog"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/MetricLog"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -2969,6 +3457,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
@@ -2995,8 +3486,27 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "Metric log deleted successfully"
+          "200": {
+            "description": "Metric log deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/MetricLog"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
@@ -3006,6 +3516,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
@@ -3037,7 +3550,19 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MetricSettings"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/MetricSettings"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -3047,6 +3572,12 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
@@ -3092,10 +3623,11 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1
             },
             "required": false,
-            "description": "Optional free-text search term",
+            "description": "Optional free-text search term (trimmed; must be at least 1 character).",
             "name": "q",
             "in": "query"
           },
@@ -3119,21 +3651,22 @@
           },
           {
             "schema": {
-              "$ref": "#/components/schemas/Uuid"
+              "type": "object",
+              "properties": {
+                "metricId": {
+                  "$ref": "#/components/schemas/Uuid"
+                },
+                "isActive": {
+                  "type": "boolean"
+                }
+              }
             },
             "required": false,
-            "description": "Filter settings by metric identifier",
-            "name": "filter[metricId]",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "boolean"
-            },
-            "required": false,
-            "description": "Filter settings by active status",
-            "name": "filter[isActive]",
-            "in": "query"
+            "description": "Filter settings by metricId and/or isActive (deepObject).",
+            "name": "filter",
+            "in": "query",
+            "style": "deepObject",
+            "explode": true
           }
         ],
         "responses": {
@@ -3142,7 +3675,19 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MetricSettingsCursorResponse"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/MetricSettingsCursorResponse"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -3194,7 +3739,19 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MetricSettings"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/MetricSettings"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -3207,6 +3764,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
@@ -3256,7 +3816,19 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MetricSettings"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/MetricSettings"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -3304,8 +3876,15 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "Metric settings deleted successfully"
+          "200": {
+            "description": "Metric settings deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
@@ -3357,7 +3936,19 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MetricSettings"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/MetricSettings"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -3421,7 +4012,19 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MetricSettings"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/MetricSettings"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -3500,7 +4103,19 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TrendResponse"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/TrendResponse"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -3533,26 +4148,31 @@
           {
             "schema": {
               "type": "string",
-              "enum": ["1h", "1d", "1w", "1m", "1y"]
+              "enum": ["1h", "1d", "1w", "1m", "1y"],
+              "default": "1d"
             },
             "required": false,
-            "description": "Aggregation bucket size",
+            "description": "Aggregation bucket size (defaults to 1d when omitted).",
             "name": "bucket",
             "in": "query"
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^([A-Za-z_]+(?:\\/[A-Za-z0-9_+-]+)+|UTC)$",
+              "default": "Asia/Jakarta"
             },
             "required": false,
-            "description": "IANA timezone (e.g. Asia/Jakarta)",
+            "description": "IANA timezone (defaults to Asia/Jakarta when omitted). Leave the parameter out rather than sending an empty string.",
             "name": "tz",
             "in": "query"
           },
           {
             "schema": {
               "type": "string",
-              "enum": ["none", "zero", "nan"]
+              "enum": ["none", "zero", "nan"],
+              "default": "none"
             },
             "required": false,
             "description": "Missing bucket fill strategy",
@@ -3565,7 +4185,7 @@
               "format": "date-time"
             },
             "required": false,
-            "description": "Absolute start ISO timestamp",
+            "description": "Absolute start ISO timestamp. Must be paired with `end` when supplied; sending only one side of the range is invalid.",
             "name": "start",
             "in": "query"
           },
@@ -3575,16 +4195,17 @@
               "format": "date-time"
             },
             "required": false,
-            "description": "Absolute end ISO timestamp",
+            "description": "Absolute end ISO timestamp. Must be paired with `start` (and occur after it).",
             "name": "end",
             "in": "query"
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^[1-9][0-9]*(h|d|w|m|y)$"
             },
             "required": false,
-            "description": "Relative range such as 7d or 12m",
+            "description": "Relative range such as 7d or 12m (defaults to 30d; minimum is 1). Provide either this parameter or both `start` and `end`, not both; large windows may be rejected based on the bucket size.",
             "name": "last",
             "in": "query"
           },
@@ -3606,7 +4227,19 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DashboardVisualizationResponse"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/DashboardVisualizationResponse"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -3645,26 +4278,31 @@
           {
             "schema": {
               "type": "string",
-              "enum": ["1h", "1d", "1w", "1m", "1y"]
+              "enum": ["1h", "1d", "1w", "1m", "1y"],
+              "default": "1d"
             },
             "required": false,
-            "description": "Aggregation bucket size",
+            "description": "Aggregation bucket size (defaults to 1d when omitted).",
             "name": "bucket",
             "in": "query"
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^([A-Za-z_]+(?:\\/[A-Za-z0-9_+-]+)+|UTC)$",
+              "default": "Asia/Jakarta"
             },
             "required": false,
-            "description": "IANA timezone (e.g. Asia/Jakarta)",
+            "description": "IANA timezone (defaults to Asia/Jakarta when omitted). Leave the parameter out rather than sending an empty string.",
             "name": "tz",
             "in": "query"
           },
           {
             "schema": {
               "type": "string",
-              "enum": ["none", "zero", "nan"]
+              "enum": ["none", "zero", "nan"],
+              "default": "none"
             },
             "required": false,
             "description": "Missing bucket fill strategy",
@@ -3677,7 +4315,7 @@
               "format": "date-time"
             },
             "required": false,
-            "description": "Absolute start ISO timestamp",
+            "description": "Absolute start ISO timestamp. Must be paired with `end` when supplied; sending only one side of the range is invalid.",
             "name": "start",
             "in": "query"
           },
@@ -3687,16 +4325,17 @@
               "format": "date-time"
             },
             "required": false,
-            "description": "Absolute end ISO timestamp",
+            "description": "Absolute end ISO timestamp. Must be paired with `start` (and occur after it).",
             "name": "end",
             "in": "query"
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^[1-9][0-9]*(h|d|w|m|y)$"
             },
             "required": false,
-            "description": "Relative range such as 7d or 12m",
+            "description": "Relative range such as 7d or 12m (defaults to 30d; minimum is 1). Provide either this parameter or both `start` and `end`, not both; large windows may be rejected based on the bucket size.",
             "name": "last",
             "in": "query"
           }
@@ -3707,7 +4346,19 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VisualizationResponse"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/VisualizationResponse"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }

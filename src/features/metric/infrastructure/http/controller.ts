@@ -86,7 +86,7 @@ export const getUserMetricLibrariesViaCursor = catchAsync(
 
     const dto = {
       items: page.items.map(toMetricLibraryResponseDTO),
-      nextCursor: page.nextCursor,
+      nextCursor: page.nextCursor ?? null,
       sort: page.sort,
       limit: page.limit,
       ...(page.q ? { q: page.q } : {}),

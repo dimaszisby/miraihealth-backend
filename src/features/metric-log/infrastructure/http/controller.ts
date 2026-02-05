@@ -67,7 +67,7 @@ export const getUserLogLibrariesViaCursor = catchAsync(
 
     const dto = {
       items: toMetricLogListResponseDTO(page.items),
-      nextCursor: page.nextCursor,
+      nextCursor: page.nextCursor ?? null,
       sort: page.sort,
       limit: page.limit,
       ...(page.q ? { q: page.q } : {}),

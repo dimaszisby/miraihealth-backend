@@ -6,6 +6,7 @@ import {
   LoginResponseSchema,
   RegisterRequestSchema,
   UserResponseSchema,
+  UpdateUserResponseSchema,
   UpdateUserRequestSchema,
   MetricCategorySchema,
   CreateMetricCategoryRequestSchema,
@@ -58,6 +59,7 @@ registry.registerPath({
   summary: "Register a new user",
   request: {
     body: {
+      required: true,
       content: {
         "application/json": {
           schema: RegisterRequestSchema,
@@ -77,6 +79,9 @@ registry.registerPath({
     400: {
       $ref: "#/components/responses/BadRequestError",
     },
+    409: {
+      $ref: "#/components/responses/ConflictError",
+    },
     500: {
       $ref: "#/components/responses/InternalServerError",
     },
@@ -90,6 +95,7 @@ registry.registerPath({
   summary: "Log in a user",
   request: {
     body: {
+      required: true,
       content: {
         "application/json": {
           schema: LoginRequestSchema,
@@ -111,6 +117,9 @@ registry.registerPath({
     },
     401: {
       $ref: "#/components/responses/UnauthorizedError",
+    },
+    409: {
+      $ref: "#/components/responses/ConflictError",
     },
     500: {
       $ref: "#/components/responses/InternalServerError",
@@ -136,6 +145,9 @@ registry.registerPath({
     401: {
       $ref: "#/components/responses/UnauthorizedError",
     },
+    409: {
+      $ref: "#/components/responses/ConflictError",
+    },
     500: {
       $ref: "#/components/responses/InternalServerError",
     },
@@ -150,6 +162,7 @@ registry.registerPath({
   security: [{ BearerAuth: [] }],
   request: {
     body: {
+      required: true,
       content: {
         "application/json": {
           schema: UpdateUserRequestSchema,
@@ -162,7 +175,7 @@ registry.registerPath({
       description: "User profile updated successfully",
       content: {
         "application/json": {
-          schema: UserResponseSchema,
+          schema: UpdateUserResponseSchema,
         },
       },
     },
@@ -171,6 +184,9 @@ registry.registerPath({
     },
     401: {
       $ref: "#/components/responses/UnauthorizedError",
+    },
+    409: {
+      $ref: "#/components/responses/ConflictError",
     },
     500: {
       $ref: "#/components/responses/InternalServerError",
@@ -211,6 +227,7 @@ registry.registerPath({
   security: [{ BearerAuth: [] }],
   request: {
     body: {
+      required: true,
       content: {
         "application/json": {
           schema: CreateMetricCategoryRequestSchema,
@@ -223,7 +240,7 @@ registry.registerPath({
       description: "Metric category created successfully",
       content: {
         "application/json": {
-          schema: MetricCategorySchema,
+          schema: successEnvelope(MetricCategorySchema),
         },
       },
     },
@@ -232,6 +249,9 @@ registry.registerPath({
     },
     401: {
       $ref: "#/components/responses/UnauthorizedError",
+    },
+    409: {
+      $ref: "#/components/responses/ConflictError",
     },
     500: {
       $ref: "#/components/responses/InternalServerError",
@@ -253,9 +273,12 @@ registry.registerPath({
       description: "Cursor-based list of metric categories",
       content: {
         "application/json": {
-          schema: MetricCategoryCursorResponseSchema,
+          schema: successEnvelope(MetricCategoryCursorResponseSchema),
         },
       },
+    },
+    400: {
+      $ref: "#/components/responses/BadRequestError",
     },
     401: {
       $ref: "#/components/responses/UnauthorizedError",
@@ -280,7 +303,7 @@ registry.registerPath({
       description: "Metric category details",
       content: {
         "application/json": {
-          schema: MetricCategorySchema,
+          schema: successEnvelope(MetricCategorySchema),
         },
       },
     },
@@ -292,6 +315,9 @@ registry.registerPath({
     },
     404: {
       $ref: "#/components/responses/NotFoundError",
+    },
+    409: {
+      $ref: "#/components/responses/ConflictError",
     },
     500: {
       $ref: "#/components/responses/InternalServerError",
@@ -320,7 +346,7 @@ registry.registerPath({
       description: "Metric category updated successfully",
       content: {
         "application/json": {
-          schema: MetricCategorySchema,
+          schema: successEnvelope(MetricCategorySchema),
         },
       },
     },
@@ -332,6 +358,9 @@ registry.registerPath({
     },
     404: {
       $ref: "#/components/responses/NotFoundError",
+    },
+    409: {
+      $ref: "#/components/responses/ConflictError",
     },
     500: {
       $ref: "#/components/responses/InternalServerError",
@@ -349,8 +378,13 @@ registry.registerPath({
     params: GetByIdParamSchema,
   },
   responses: {
-    204: {
+    200: {
       description: "Metric category deleted successfully",
+      content: {
+        "application/json": {
+          schema: SuccessResponseSchema,
+        },
+      },
     },
     400: {
       $ref: "#/components/responses/BadRequestError",
@@ -360,6 +394,9 @@ registry.registerPath({
     },
     404: {
       $ref: "#/components/responses/NotFoundError",
+    },
+    409: {
+      $ref: "#/components/responses/ConflictError",
     },
     500: {
       $ref: "#/components/responses/InternalServerError",
@@ -376,6 +413,7 @@ registry.registerPath({
   security: [{ BearerAuth: [] }],
   request: {
     body: {
+      required: true,
       content: {
         "application/json": {
           schema: CreateMetricRequestSchema,
@@ -388,7 +426,7 @@ registry.registerPath({
       description: "Metric created successfully",
       content: {
         "application/json": {
-          schema: MetricSchema,
+          schema: successEnvelope(MetricSchema),
         },
       },
     },
@@ -397,6 +435,12 @@ registry.registerPath({
     },
     401: {
       $ref: "#/components/responses/UnauthorizedError",
+    },
+    404: {
+      $ref: "#/components/responses/NotFoundError",
+    },
+    409: {
+      $ref: "#/components/responses/ConflictError",
     },
     500: {
       $ref: "#/components/responses/InternalServerError",
@@ -449,7 +493,7 @@ registry.registerPath({
       description: "Metric details",
       content: {
         "application/json": {
-          schema: MetricDetailResponseSchema,
+          schema: successEnvelope(MetricDetailResponseSchema),
         },
       },
     },
@@ -461,6 +505,9 @@ registry.registerPath({
     },
     404: {
       $ref: "#/components/responses/NotFoundError",
+    },
+    409: {
+      $ref: "#/components/responses/ConflictError",
     },
     500: {
       $ref: "#/components/responses/InternalServerError",
@@ -489,7 +536,7 @@ registry.registerPath({
       description: "Metric updated successfully",
       content: {
         "application/json": {
-          schema: MetricSchema,
+          schema: successEnvelope(MetricSchema),
         },
       },
     },
@@ -501,6 +548,9 @@ registry.registerPath({
     },
     404: {
       $ref: "#/components/responses/NotFoundError",
+    },
+    409: {
+      $ref: "#/components/responses/ConflictError",
     },
     500: {
       $ref: "#/components/responses/InternalServerError",
@@ -518,8 +568,13 @@ registry.registerPath({
     params: GetByIdParamSchema,
   },
   responses: {
-    204: {
+    200: {
       description: "Metric deleted successfully",
+      content: {
+        "application/json": {
+          schema: successEnvelope(MetricSchema),
+        },
+      },
     },
     400: {
       $ref: "#/components/responses/BadRequestError",
@@ -529,6 +584,9 @@ registry.registerPath({
     },
     404: {
       $ref: "#/components/responses/NotFoundError",
+    },
+    409: {
+      $ref: "#/components/responses/ConflictError",
     },
     500: {
       $ref: "#/components/responses/InternalServerError",
@@ -569,6 +627,9 @@ registry.registerPath({
     },
     404: {
       $ref: "#/components/responses/NotFoundError",
+    },
+    409: {
+      $ref: "#/components/responses/ConflictError",
     },
     500: {
       $ref: "#/components/responses/InternalServerError",
@@ -620,7 +681,7 @@ registry.registerPath({
       description: "Aggregated statistics for the requested logs",
       content: {
         "application/json": {
-          schema: MetricLogStatsResponseSchema,
+          schema: successEnvelope(MetricLogStatsResponseSchema),
         },
       },
     },
@@ -632,6 +693,9 @@ registry.registerPath({
     },
     404: {
       $ref: "#/components/responses/NotFoundError",
+    },
+    409: {
+      $ref: "#/components/responses/ConflictError",
     },
     500: {
       $ref: "#/components/responses/InternalServerError",
@@ -654,7 +718,7 @@ registry.registerPath({
       description: "Metric log details",
       content: {
         "application/json": {
-          schema: MetricLogSchema,
+          schema: successEnvelope(MetricLogSchema),
         },
       },
     },
@@ -666,6 +730,9 @@ registry.registerPath({
     },
     404: {
       $ref: "#/components/responses/NotFoundError",
+    },
+    409: {
+      $ref: "#/components/responses/ConflictError",
     },
     500: {
       $ref: "#/components/responses/InternalServerError",
@@ -694,7 +761,7 @@ registry.registerPath({
       description: "Metric log updated successfully",
       content: {
         "application/json": {
-          schema: MetricLogSchema,
+          schema: successEnvelope(MetricLogSchema),
         },
       },
     },
@@ -706,6 +773,9 @@ registry.registerPath({
     },
     404: {
       $ref: "#/components/responses/NotFoundError",
+    },
+    409: {
+      $ref: "#/components/responses/ConflictError",
     },
     500: {
       $ref: "#/components/responses/InternalServerError",
@@ -723,8 +793,13 @@ registry.registerPath({
     params: GetByIdParamSchema,
   },
   responses: {
-    204: {
+    200: {
       description: "Metric log deleted successfully",
+      content: {
+        "application/json": {
+          schema: successEnvelope(MetricLogSchema),
+        },
+      },
     },
     400: {
       $ref: "#/components/responses/BadRequestError",
@@ -734,6 +809,9 @@ registry.registerPath({
     },
     404: {
       $ref: "#/components/responses/NotFoundError",
+    },
+    409: {
+      $ref: "#/components/responses/ConflictError",
     },
     500: {
       $ref: "#/components/responses/InternalServerError",
@@ -762,7 +840,7 @@ registry.registerPath({
       description: "Metric settings created successfully",
       content: {
         "application/json": {
-          schema: MetricSettingsSchema,
+          schema: successEnvelope(MetricSettingsSchema),
         },
       },
     },
@@ -771,6 +849,12 @@ registry.registerPath({
     },
     401: {
       $ref: "#/components/responses/UnauthorizedError",
+    },
+    409: {
+      $ref: "#/components/responses/ConflictError",
+    },
+    404: {
+      $ref: "#/components/responses/NotFoundError",
     },
     500: {
       $ref: "#/components/responses/InternalServerError",
@@ -792,7 +876,7 @@ registry.registerPath({
       description: "Cursor-based list of metric settings",
       content: {
         "application/json": {
-          schema: MetricSettingsCursorResponseSchema,
+          schema: successEnvelope(MetricSettingsCursorResponseSchema),
         },
       },
     },
@@ -823,7 +907,7 @@ registry.registerPath({
       description: "Metric settings details",
       content: {
         "application/json": {
-          schema: MetricSettingsSchema,
+          schema: successEnvelope(MetricSettingsSchema),
         },
       },
     },
@@ -835,6 +919,9 @@ registry.registerPath({
     },
     404: {
       $ref: "#/components/responses/NotFoundError",
+    },
+    409: {
+      $ref: "#/components/responses/ConflictError",
     },
     500: {
       $ref: "#/components/responses/InternalServerError",
@@ -864,7 +951,7 @@ registry.registerPath({
       description: "Metric settings updated successfully",
       content: {
         "application/json": {
-          schema: MetricSettingsSchema,
+          schema: successEnvelope(MetricSettingsSchema),
         },
       },
     },
@@ -894,8 +981,13 @@ registry.registerPath({
     query: MetricIdRequiredQuerySchema,
   },
   responses: {
-    204: {
+    200: {
       description: "Metric settings deleted successfully",
+      content: {
+        "application/json": {
+          schema: SuccessResponseSchema,
+        },
+      },
     },
     400: {
       $ref: "#/components/responses/BadRequestError",
@@ -927,7 +1019,7 @@ registry.registerPath({
       description: "Goal achievement updated successfully",
       content: {
         "application/json": {
-          schema: MetricSettingsSchema,
+          schema: successEnvelope(MetricSettingsSchema),
         },
       },
     },
@@ -968,7 +1060,7 @@ registry.registerPath({
       description: "Display options updated successfully",
       content: {
         "application/json": {
-          schema: MetricSettingsSchema,
+          schema: successEnvelope(MetricSettingsSchema),
         },
       },
     },
@@ -1003,7 +1095,7 @@ registry.registerPath({
       description: "Trend data for the metric",
       content: {
         "application/json": {
-          schema: TrendResponseSchema,
+          schema: successEnvelope(TrendResponseSchema),
         },
       },
     },
@@ -1037,7 +1129,7 @@ registry.registerPath({
       description: "Dashboard visualization payload",
       content: {
         "application/json": {
-          schema: DashboardVisualizationResponseSchema,
+          schema: successEnvelope(DashboardVisualizationResponseSchema),
         },
       },
     },
@@ -1068,7 +1160,7 @@ registry.registerPath({
       description: "Visualization payload for the requested metric",
       content: {
         "application/json": {
-          schema: VisualizationResponseSchema,
+          schema: successEnvelope(VisualizationResponseSchema),
         },
       },
     },

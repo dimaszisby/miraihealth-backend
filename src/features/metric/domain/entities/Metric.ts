@@ -1,5 +1,17 @@
 import { randomUUID } from "node:crypto";
 import { MetricDomain } from "@/types/domain/metric.domain.js";
+import AppError from "@/utils/AppError.js";
+import { ZodMessages } from "@/constants/zod/zod-messages.js";
+import {
+  METRIC_DESCRIPTION_RULE,
+  METRIC_NAME_RULE,
+  METRIC_UNIT_RULE,
+} from "@/shared/constants/metric-constraints.js";
+import {
+  getUnicodeLength,
+  hasInvalidControlChars,
+  hasUnpairedSurrogates,
+} from "@/shared/utils/text-validation.js";
 
 export type MetricProps = {
   id: string;
@@ -15,9 +27,8 @@ export type MetricProps = {
   deletedAt?: Date | null;
 };
 
-const MAX_NAME_LENGTH = 128;
-const MAX_UNIT_LENGTH = 32;
-const MAX_DESCRIPTION_LENGTH = 512;
+const hasInvalidMetricChars = (value: string, allowNewlines = false) =>
+  hasInvalidControlChars(value, allowNewlines) || hasUnpairedSurrogates(value);
 
 export class Metric implements MetricDomain {
   private constructor(private props: MetricProps) {}
@@ -40,31 +51,56 @@ export class Metric implements MetricDomain {
 
   rename(next: string) {
     const value = next.trim();
-    if (!value) throw new Error("Metric name cannot be empty");
-    if (value.length > MAX_NAME_LENGTH)
-      throw new Error("Metric name exceeds length limit");
+    const length = getUnicodeLength(value);
+    if (length < METRIC_NAME_RULE.min) {
+      throw new AppError(ZodMessages.metric.nameRequired, 400);
+    }
+    if (length > METRIC_NAME_RULE.max) {
+      throw new AppError(ZodMessages.metric.nameTooLong, 400);
+    }
+    if (hasInvalidMetricChars(value)) {
+      throw new AppError(ZodMessages.metric.invalidCharacters, 400);
+    }
     this.props.name = value;
     this.touch();
   }
 
   describe(next: string | null) {
-    if (next && next.length > MAX_DESCRIPTION_LENGTH)
-      throw new Error("Metric description exceeds length limit");
+    if (next !== null) {
+      if (getUnicodeLength(next) > METRIC_DESCRIPTION_RULE.max) {
+        throw new AppError(ZodMessages.metric.descriptionTooLong, 400);
+      }
+      if (hasInvalidMetricChars(next, true)) {
+        throw new AppError(ZodMessages.metric.invalidCharacters, 400);
+      }
+    }
     this.props.description = next ?? null;
     this.touch();
   }
 
   setDefaultUnit(unit: string) {
     const normalized = unit.trim();
-    if (!normalized) throw new Error("Default unit cannot be empty");
-    if (normalized.length > MAX_UNIT_LENGTH)
-      throw new Error("Default unit exceeds length limit");
+    const length = getUnicodeLength(normalized);
+    if (length < METRIC_UNIT_RULE.min) {
+      throw new AppError(ZodMessages.metric.unitRequired, 400);
+    }
+    if (length > METRIC_UNIT_RULE.max) {
+      throw new AppError(ZodMessages.metric.unitTooLong, 400);
+    }
+    if (hasInvalidMetricChars(normalized)) {
+      throw new AppError(ZodMessages.metric.invalidCharacters, 400);
+    }
     this.props.defaultUnit = normalized;
     this.touch();
   }
 
   moveToCategory(categoryId: string | null) {
     this.props.categoryId = categoryId;
+    this.touch();
+  }
+
+  setOriginalMetric(metricId: string | null) {
+    this.props.originalMetricId = metricId;
     this.touch();
   }
 
@@ -83,6 +119,7 @@ export class Metric implements MetricDomain {
       description: string | null;
       defaultUnit: string;
       categoryId: string | null;
+      originalMetricId: string | null;
       isPublic: boolean;
     }>,
   ) {
@@ -90,6 +127,8 @@ export class Metric implements MetricDomain {
     if (data.description !== undefined) this.describe(data.description);
     if (data.defaultUnit !== undefined) this.setDefaultUnit(data.defaultUnit);
     if (data.categoryId !== undefined) this.moveToCategory(data.categoryId);
+    if (data.originalMetricId !== undefined)
+      this.setOriginalMetric(data.originalMetricId);
     if (data.isPublic !== undefined) this.togglePublic(data.isPublic);
   }
 

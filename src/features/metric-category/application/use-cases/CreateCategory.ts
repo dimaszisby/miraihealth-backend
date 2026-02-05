@@ -13,7 +13,7 @@ export class CreateCategory {
 
   async execute({ userId, name, color, icon }: Input) {
     if (await this.repo.existsByName(userId, name)) {
-      throw new AppError("Category already exists", 400);
+      throw new AppError("Category already exists", 409);
     }
     const category = await this.repo.create(userId, { name, color, icon });
     if (this.cache.isEnabled()) {

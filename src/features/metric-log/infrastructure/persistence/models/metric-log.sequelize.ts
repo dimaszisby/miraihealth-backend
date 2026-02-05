@@ -59,9 +59,11 @@ export class MetricLog
           type: DataTypes.FLOAT,
           allowNull: false,
           validate: {
-            isPositive(value: number) {
-              if (value <= 0) {
-                throw new Error("Log value must be greater than 0.");
+            isNonNegative(value: number) {
+              if (value < 0) {
+                throw new Error(
+                  "Log value must be greater than or equal to 0.",
+                );
               }
             },
           },

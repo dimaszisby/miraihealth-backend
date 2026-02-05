@@ -3,8 +3,11 @@ import {
   zUUID,
   zDateOptional,
   zGoalValue,
+  zGoalValueRequired,
   zGoalType,
+  zGoalTypeRequired,
   zAlertThresholds,
+  zAlertThresholdsOptional,
   zDisplayOptions,
 } from "@/constants/zod/zod-rules.js";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
@@ -13,11 +16,18 @@ extendZodWithOpenApi(z);
 
 export const settingsParams = z.object({ id: zUUID });
 
-const settingsBodyBase = z.object({
+const timeFrameMixin = (data: {
+  timeFrameEnabled?: boolean;
+  startDate?: Date | null;
+  deadlineDate?: Date | null;
+}) =>
+  data.timeFrameEnabled === true &&
+  (!data.startDate ||
+    !data.deadlineDate ||
+    data.deadlineDate <= data.startDate);
+
+const settingsShared = z.object({
   metricId: zUUID,
-  goalEnabled: z.boolean().optional().default(false),
-  goalType: zGoalType,
-  goalValue: zGoalValue,
   timeFrameEnabled: z.boolean().optional().default(false),
   startDate: zDateOptional.optional().nullable(),
   deadlineDate: zDateOptional.optional().nullable(),
@@ -26,27 +36,37 @@ const settingsBodyBase = z.object({
   displayOptions: zDisplayOptions,
 });
 
-export const settingsBody = settingsBodyBase
-  .superRefine((data, ctx) => {
-    if (data.goalEnabled) {
-      if (data.goalType == null) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "goalType is required when goalEnabled is true.",
-          path: ["goalType"],
-        });
-      }
-      if (data.goalValue == null) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "goalValue is required when goalEnabled is true.",
-          path: ["goalValue"],
-        });
-      }
-    }
+const settingsUpdateShared = z
+  .object({
+    metricId: zUUID.optional(),
+    timeFrameEnabled: z.boolean().optional(),
+    startDate: zDateOptional.optional().nullable(),
+    deadlineDate: zDateOptional.optional().nullable(),
+    alertEnabled: z.boolean().optional(),
+    alertThresholds: zAlertThresholdsOptional.nullable(),
+    displayOptions: zDisplayOptions.optional(),
   })
+  .strict();
+
+const goalDisabledBody = settingsShared.extend({
+  goalEnabled: z.literal(false).optional(),
+  goalType: zGoalType.optional(),
+  goalValue: zGoalValue.optional(),
+});
+
+const goalEnabledBody = settingsShared
+  .extend({
+    goalEnabled: z.literal(true),
+    goalType: zGoalTypeRequired,
+    goalValue: zGoalValueRequired,
+  })
+  .strict();
+
+const rawSettingsBody = z.union([goalEnabledBody, goalDisabledBody]);
+
+export const settingsBody = rawSettingsBody
   .superRefine((data, ctx) => {
-    if (data.timeFrameEnabled) {
+    if (timeFrameMixin(data)) {
       if (!data.startDate) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -73,31 +93,43 @@ export const settingsBody = settingsBodyBase
         });
       }
     }
-  });
-
-export const settingsBodyPartial = settingsBodyBase
-  .partial()
-  .superRefine((data, ctx) => {
-    if (data.goalEnabled === true) {
-      if (data.goalType == null) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message:
-            "Include goalType when enabling goal (goalEnabled=true) in this request.",
-          path: ["goalType"],
-        });
-      }
-      if (data.goalValue == null) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message:
-            "Include goalValue when enabling goal (goalEnabled=true) in this request.",
-          path: ["goalValue"],
-        });
-      }
-    }
   })
+  .transform((data) => ({
+    ...data,
+    goalEnabled: data.goalEnabled ?? false,
+  }));
+
+const updateGoalDisabledBody = settingsUpdateShared
+  .extend({
+    goalEnabled: z.literal(false).optional(),
+    goalType: zGoalType.optional(),
+    goalValue: zGoalValue.optional(),
+  })
+  .strict();
+
+const updateGoalEnabledBody = settingsUpdateShared
+  .extend({
+    goalEnabled: z.literal(true),
+    goalType: zGoalTypeRequired,
+    goalValue: zGoalValueRequired,
+  })
+  .strict();
+
+const updateSettingsBody = z.union([
+  updateGoalEnabledBody,
+  updateGoalDisabledBody,
+]);
+
+export const settingsBodyPartial = updateSettingsBody
   .superRefine((data, ctx) => {
+    if (!Object.keys(data).length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Provide at least one field to update.",
+        path: [],
+      });
+      return;
+    }
     if (data.timeFrameEnabled === true) {
       if (!data.startDate) {
         ctx.addIssue({
@@ -127,25 +159,41 @@ export const settingsBodyPartial = settingsBodyBase
         });
       }
     }
-  });
+  })
+  .openapi({ minProperties: 1 });
 
-const MetricSettingsFilterSchema = z.object({
-  ["filter[metricId]"]: z.preprocess(
-    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-    zUUID.optional(),
-  ),
-  ["filter[isActive]"]: z.preprocess(
-    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-    z.coerce.boolean().optional(),
-  ),
-  filter: z
-    .object({
-      metricId: zUUID.optional(),
-      isActive: z.coerce.boolean().optional(),
-    })
-    .partial()
-    .optional(),
-});
+const coerceBooleanString = z
+  .union([z.boolean(), z.string()])
+  .transform((value) => {
+    if (typeof value === "boolean") return value;
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "true") return true;
+    if (normalized === "false") return false;
+    return value;
+  })
+  .pipe(z.boolean());
+
+const metricSettingsFilterObject = z
+  .object({
+    metricId: zUUID.optional(),
+    isActive: coerceBooleanString.optional(),
+  })
+  .partial()
+  .strict();
+
+const MetricSettingsFilterSchema = z
+  .object({
+    ["filter[metricId]"]: z.preprocess(
+      (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+      zUUID.optional(),
+    ),
+    ["filter[isActive]"]: z.preprocess(
+      (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+      coerceBooleanString.optional(),
+    ),
+    filter: metricSettingsFilterObject.optional(),
+  })
+  .strict();
 
 export const createMetricSettingsSchema = z.object({ body: settingsBody });
 export const updateMetricSettingsSchema = z.object({
@@ -156,7 +204,7 @@ export const updateMetricSettingsSchema = z.object({
 export const getMetricSettingsSchema = z.object({ params: settingsParams });
 export const deleteMetricSettingsSchema = z.object({ params: settingsParams });
 
-const listMetricSettingsViaCursorQuery = z
+const metricSettingsCursorBase = z
   .object({
     limit: z.coerce.number().int().min(1).max(100).default(20),
     sort: z
@@ -176,7 +224,10 @@ const listMetricSettingsViaCursorQuery = z
     after: z.string().optional(),
     includeTotal: z.coerce.boolean().default(false),
   })
-  .and(MetricSettingsFilterSchema)
+  .strict();
+
+const listMetricSettingsViaCursorQuery = metricSettingsCursorBase
+  .merge(MetricSettingsFilterSchema)
   .transform((value) => {
     const metricId = value["filter[metricId]"] ?? value.filter?.metricId;
     const isActive = value["filter[isActive]"] ?? value.filter?.isActive;

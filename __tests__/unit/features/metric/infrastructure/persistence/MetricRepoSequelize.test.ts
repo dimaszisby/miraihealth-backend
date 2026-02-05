@@ -1,6 +1,7 @@
 import { jest } from "@jest/globals";
 import { MetricRepoSequelize } from "@/features/metric/infrastructure/persistence/repositories/MetricRepoSequelize.js";
 import { models } from "@/infrastructure/db/models.js";
+import { Op } from "sequelize";
 
 const makeInstance = () => {
   const reload = jest.fn<(options?: any) => Promise<void>>();
@@ -36,9 +37,14 @@ describe("MetricRepoSequelize", () => {
     const exists = await repo.existsByName("user-1", "Steps");
 
     expect(exists).toBe(true);
-    expect(countSpy).toHaveBeenCalledWith({
-      where: { userId: "user-1", name: "Steps" },
-    });
+    expect(countSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          userId: "user-1",
+          [Op.and]: expect.anything(),
+        }),
+      }),
+    );
   });
 
   it("creates metric row and maps to domain", async () => {

@@ -31,6 +31,14 @@ export class CreateMetric {
       if (!exists) throw new AppError("Category not found", 404);
     }
 
+    if (input.originalMetricId) {
+      const exists = await this.repo.originalMetricExists(
+        input.userId,
+        input.originalMetricId,
+      );
+      if (!exists) throw new AppError("Original metric not found", 404);
+    }
+
     return this.tx.runInTransaction(async (t) => {
       const metric = await this.repo.create(input, t);
 

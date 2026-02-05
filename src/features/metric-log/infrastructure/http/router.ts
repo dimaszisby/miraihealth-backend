@@ -25,6 +25,8 @@ import { AuthRequest } from "@/types/request.context.js";
 import { env } from "@/config/envManager.js";
 import logger from "@/utils/logger.js";
 import { buildCursorCacheKey } from "@/shared/cache/keys.js";
+import { methodNotAllowed } from "@/shared/middleware/method-guard.js";
+import { requireJsonObjectBody } from "@/shared/middleware/require-json-object.js";
 
 const firstNonEmpty = (...vals: unknown[]) =>
   vals.find((v) => typeof v === "string" && v.trim().length > 0) as
@@ -110,12 +112,14 @@ export const createMetricLogRouter = () => {
     getUserLogLibrariesViaCursor,
   );
 
-  router.get(
-    "/stats",
-    validate(getAggregatedStatsSchema),
-    cacheMiddleware(logStatsCacheKey, 300),
-    getAggregatedStats,
-  );
+  router
+    .route("/stats")
+    .get(
+      validate(getAggregatedStatsSchema),
+      cacheMiddleware(logStatsCacheKey, 300),
+      getAggregatedStats,
+    )
+    .all(methodNotAllowed(["GET"]));
 
   router.get(
     "/:id",
@@ -127,6 +131,7 @@ export const createMetricLogRouter = () => {
   router.post(
     "/",
     userRateLimiter,
+    requireJsonObjectBody(),
     validate(createMetricLogSchema),
     createMetricLog,
   );
@@ -134,6 +139,7 @@ export const createMetricLogRouter = () => {
   router.put(
     "/:id",
     userRateLimiter,
+    requireJsonObjectBody(),
     validate(updateMetricLogSchema),
     updateLog,
   );
@@ -149,10 +155,15 @@ export const createMetricLogRouter = () => {
     router.post(
       "/:metricId/dummy",
       userRateLimiter,
+      requireJsonObjectBody(),
       validate(generateDummyMetricLogsSchema),
       generateDummyMetricLogs,
     );
+    router.all("/:metricId/dummy", methodNotAllowed(["POST"]));
   }
+
+  router.all("/", methodNotAllowed(["GET", "POST"]));
+  router.all("/:id", methodNotAllowed(["GET", "PUT", "DELETE"]));
 
   return router;
 };

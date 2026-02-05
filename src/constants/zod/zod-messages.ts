@@ -3,6 +3,7 @@ export const ZodMessages = {
     invalidUUID: "Invalid UUID",
     invalidDate: "Invalid date format",
     positiveNumber: "Must be a positive number",
+    searchQueryMin: "Search query must be at least 1 character",
   },
   api: {
     minLength: (field: string, min: number) =>
@@ -24,10 +25,16 @@ export const ZodMessages = {
   metricCategory: {
     invalidId: "Invalid Metric Category ID",
     nameRequired: "Name is required",
+    colorRequired: "Color is required",
+    iconRequired: "Icon is required",
   },
   metric: {
     nameRequired: "Name is required",
+    nameTooLong: "Name exceeds length limit",
     unitRequired: "Unit is required",
+    unitTooLong: "Unit exceeds length limit",
+    descriptionTooLong: "Description exceeds length limit",
+    invalidCharacters: "Contains invalid characters",
     invalidCategoryId: "Invalid categoryId",
     invalidOriginalMetricId: "Invalid originalMetricId",
     invalidMetricId: "Invalid Metric ID",

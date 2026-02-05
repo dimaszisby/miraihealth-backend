@@ -49,6 +49,7 @@ describe("UserRepositorySequelize", () => {
       email: "user@example.com",
       username: "tester",
       passwordHash: "hash",
+      isPublicProfile: true,
     });
 
     expect(createSpy).toHaveBeenCalledWith({
@@ -74,6 +75,7 @@ describe("UserRepositorySequelize", () => {
       email: "temp@example.com",
       username: "temp",
       passwordHash: "hash",
+      isPublicProfile: true,
     });
 
     user.changeEmail("new@example.com");

@@ -24,6 +24,8 @@ import {
 import { AuthRequest } from "@/types/request.context.js";
 import logger from "@/utils/logger.js";
 import { buildCursorCacheKey } from "@/shared/cache/keys.js";
+import { methodNotAllowed } from "@/shared/middleware/method-guard.js";
+import { requireJsonObjectBody } from "@/shared/middleware/require-json-object.js";
 
 // const metricSettingsCacheKey = (req: AuthRequest) =>
 //   `metricSettings:${req.user?.id}:${req.query.metricId || "all"}`;
@@ -102,6 +104,7 @@ export const createMetricSettingsRouter = () => {
   router.post(
     "/",
     userRateLimiter,
+    requireJsonObjectBody(),
     validate(createMetricSettingsSchema),
     createMetricSettings,
   );
@@ -109,6 +112,7 @@ export const createMetricSettingsRouter = () => {
   router.put(
     "/:id",
     userRateLimiter,
+    requireJsonObjectBody(),
     validate(updateMetricSettingsSchema),
     updateMetricSettings,
   );
@@ -130,9 +134,15 @@ export const createMetricSettingsRouter = () => {
   router.patch(
     "/:id/display",
     userRateLimiter,
+    requireJsonObjectBody(),
     validate(updateDisplayOptionsSchema),
     updateDisplayOptions,
   );
+
+  router.all("/", methodNotAllowed(["GET", "POST"]));
+  router.all("/:id", methodNotAllowed(["GET", "PUT", "DELETE"]));
+  router.all("/:id/achieve", methodNotAllowed(["PATCH"]));
+  router.all("/:id/display", methodNotAllowed(["PATCH"]));
 
   return router;
 };

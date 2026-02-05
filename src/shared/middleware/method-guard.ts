@@ -10,6 +10,7 @@ export function disallowTraceMethod(
   next: NextFunction,
 ) {
   if (req.method === "TRACE") {
+    res.setHeader("Allow", "GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS");
     res.status(405).json({
       status: "fail",
       message: "Method Not Allowed",
@@ -18,4 +19,18 @@ export function disallowTraceMethod(
   }
 
   next();
+}
+
+export function methodNotAllowed(allowed: string[]) {
+  const allowHeader = Array.from(
+    new Set(allowed.map((method) => method.toUpperCase()).concat(["OPTIONS"])),
+  ).join(",");
+
+  return (req: Request, res: Response) => {
+    res.setHeader("Allow", allowHeader);
+    res.status(405).json({
+      status: "fail",
+      message: "Method Not Allowed",
+    });
+  };
 }

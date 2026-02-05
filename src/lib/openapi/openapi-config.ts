@@ -145,6 +145,20 @@ export const openApiDocument = {
           },
         },
       },
+      ConflictError: {
+        description: "Resource conflict (duplicate or already exists)",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                status: { type: "string", example: "fail" },
+                message: { type: "string", example: "Resource already exists" },
+              },
+            },
+          },
+        },
+      },
     },
   },
 };

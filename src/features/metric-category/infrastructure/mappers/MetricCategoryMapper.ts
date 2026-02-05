@@ -44,6 +44,7 @@ export const toResponseDTO = (
   metricCategory: MetricCategoryDomain,
 ): MetricCategoryResponseDTO => ({
   id: metricCategory.id,
+  userId: metricCategory.userId,
   name: metricCategory.name,
   color: metricCategory.color,
   icon: metricCategory.icon,

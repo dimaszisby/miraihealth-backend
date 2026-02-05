@@ -22,6 +22,7 @@ export default [
       "src/migrations/**/*.cjs",
       "dist/**",
       "coverage/**",
+      ".venv-schemathesis/**",
     ],
   },
   // Register the @typescript-eslint plugin so its rules can be used
@@ -143,6 +144,13 @@ export default [
         ...globals.jest,
         ...globals.node,
       },
+    },
+  },
+  // Allow console usage in standalone scripts
+  {
+    files: ["scripts/**/*.{js,mjs,cjs,ts,tsx}"],
+    rules: {
+      "no-console": "off",
     },
   },
   // Override for CommonJS files (migrations, config files)

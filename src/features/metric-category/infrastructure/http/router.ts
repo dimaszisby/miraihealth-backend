@@ -26,6 +26,8 @@ import {
   METRIC_CATEGORY_CURSOR_FEATURE,
   METRIC_CATEGORY_CURSOR_VERSION,
 } from "@/features/metric-category/application/cache.constants.js";
+import { methodNotAllowed } from "@/shared/middleware/method-guard.js";
+import { requireJsonObjectBody } from "@/shared/middleware/require-json-object.js";
 
 const getQueryString = (value: unknown): string | undefined =>
   typeof value === "string" ? value : undefined;
@@ -63,6 +65,7 @@ export const createMetricCategoryRouter = () => {
   router.post(
     "/",
     userRateLimiter,
+    requireJsonObjectBody(),
     validate(createMetricCategorySchema),
     createCategory,
   );
@@ -84,6 +87,7 @@ export const createMetricCategoryRouter = () => {
   router.put(
     "/:id",
     userRateLimiter,
+    requireJsonObjectBody(),
     validate(updateMetricCategorySchema),
     updateCategory,
   );
@@ -99,10 +103,15 @@ export const createMetricCategoryRouter = () => {
     router.post(
       "/dummy",
       userRateLimiter,
+      requireJsonObjectBody(),
       validate(generateDummyMetricCategoriesSchema),
       generateDummyCategories,
     );
+    router.all("/dummy", methodNotAllowed(["POST"]));
   }
+
+  router.all("/", methodNotAllowed(["GET", "POST"]));
+  router.all("/:id", methodNotAllowed(["GET", "PUT", "DELETE"]));
 
   return router;
 };
