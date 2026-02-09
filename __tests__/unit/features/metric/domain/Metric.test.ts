@@ -1,4 +1,5 @@
 import { Metric } from "@/features/metric/domain/entities/Metric.js";
+import { ZodMessages } from "@/constants/zod/zod-messages.js";
 
 const baseProps = {
   id: "metric-1",
@@ -27,14 +28,14 @@ describe("Metric entity", () => {
 
   it("throws when renaming to empty value", () => {
     const metric = Metric.fromProps({ ...baseProps });
-    expect(() => metric.rename("   ")).toThrow("Metric name cannot be empty");
+    expect(() => metric.rename("   ")).toThrow(ZodMessages.metric.nameRequired);
   });
 
   it("enforces description length", () => {
     const metric = Metric.fromProps({ ...baseProps });
     const longDescription = "a".repeat(513);
     expect(() => metric.describe(longDescription)).toThrow(
-      "Metric description exceeds length limit",
+      ZodMessages.metric.descriptionTooLong,
     );
   });
 
@@ -44,7 +45,7 @@ describe("Metric entity", () => {
     expect(metric.defaultUnit).toBe("km");
 
     expect(() => metric.setDefaultUnit("")).toThrow(
-      "Default unit cannot be empty",
+      ZodMessages.metric.unitRequired,
     );
   });
 });

@@ -48,8 +48,13 @@ describe("metric-settings schemas", () => {
     });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues.map((issue) => issue.path.join("."))).toEqual(
-        expect.arrayContaining(["goalType", "goalValue"]),
+      expect(result.error.issues).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            code: "invalid_union",
+            path: [],
+          }),
+        ]),
       );
     }
   });
@@ -86,12 +91,14 @@ describe("metric-settings schemas", () => {
     });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(
-        result.error.issues.some((issue) => issue.path.includes("goalType")),
-      ).toBe(true);
-      expect(
-        result.error.issues.some((issue) => issue.path.includes("goalValue")),
-      ).toBe(true);
+      expect(result.error.issues).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            code: "invalid_union",
+            path: [],
+          }),
+        ]),
+      );
     }
   });
 

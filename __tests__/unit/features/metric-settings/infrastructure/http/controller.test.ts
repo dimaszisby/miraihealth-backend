@@ -103,6 +103,7 @@ describe("MetricSettings HTTP controller", () => {
         limit: 10,
         items: [expect.objectContaining({ id: entity.id })],
       }),
+      "Metric settings fetched successfully",
     );
   });
 

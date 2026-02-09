@@ -6,6 +6,11 @@ import type {
 type ControllerModule =
   typeof import("@/features/metric-log/infrastructure/http/controller.js");
 
+const pickValidatedMock = jest.fn();
+jest.mock("@/shared/middleware/validated.js", () => ({
+  pickValidated: (schema: unknown) => pickValidatedMock(schema),
+}));
+
 const createLogExecute = jest.fn<(args: any) => Promise<any>>();
 const getLogExecute = jest.fn<(args: any) => Promise<any>>();
 const updateLogExecute = jest.fn<(args: any) => Promise<any>>();
@@ -48,6 +53,11 @@ describe("Metric log controller", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    pickValidatedMock.mockImplementation(() => (req: any) => ({
+      body: req.body ?? {},
+      params: req.params ?? {},
+      query: req.query ?? {},
+    }));
     overrideMetricLogFeatureForTest({
       createLog: { execute: createLogExecute },
       getLog: { execute: getLogExecute },
@@ -138,10 +148,10 @@ describe("Metric log controller", () => {
     const req: any = {
       user: { id: userId },
       query: {
-        limit: "10",
+        limit: 10,
         sort: "-createdAt",
-        includeTotal: "true",
-        ["filter[metricId]"]: metricId,
+        includeTotal: true,
+        filter: { metricId },
       },
     };
     const res = makeRes();

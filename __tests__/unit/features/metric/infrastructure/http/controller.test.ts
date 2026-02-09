@@ -10,6 +10,11 @@ let getUserDetailMetricById: ControllerModule["getUserDetailMetricById"];
 let deleteMetric: ControllerModule["deleteMetric"];
 let overrideMetricFeatureForTest: ControllerModule["overrideMetricFeatureForTest"];
 
+const pickValidatedMock = jest.fn();
+jest.mock("@/shared/middleware/validated.js", () => ({
+  pickValidated: (schema: unknown) => pickValidatedMock(schema),
+}));
+
 type MetricFeature = ReturnType<typeof buildMetricFeature>;
 
 const createMetricExecute = jest.fn<(payload: any) => Promise<any>>();
@@ -56,6 +61,11 @@ beforeAll(async () => {
 describe("Metric HTTP controller", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    pickValidatedMock.mockImplementation(() => (req: any) => ({
+      body: req.body ?? {},
+      params: req.params ?? {},
+      query: req.query ?? {},
+    }));
     overrideMetricFeatureForTest(buildFeatureMocks());
   });
 

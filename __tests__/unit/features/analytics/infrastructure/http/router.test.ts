@@ -3,11 +3,13 @@ import { jest } from "@jest/globals";
 type RouterDouble = {
   use: jest.Mock;
   get: jest.Mock;
+  all: jest.Mock;
 };
 
 const makeRouterDouble = (): RouterDouble => ({
   use: jest.fn(),
   get: jest.fn(),
+  all: jest.fn(),
 });
 
 jest.mock("express", () => ({

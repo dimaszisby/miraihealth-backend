@@ -3,6 +3,7 @@ import { disallowTraceMethod } from "@/shared/middleware/method-guard.js";
 
 const createRes = () => {
   const res = {
+    setHeader: jest.fn(),
     status: jest.fn().mockReturnThis(),
     json: jest.fn().mockReturnThis(),
   };
@@ -17,6 +18,10 @@ describe("disallowTraceMethod", () => {
 
     disallowTraceMethod(req, res as any, next);
 
+    expect(res.setHeader).toHaveBeenCalledWith(
+      "Allow",
+      "GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS",
+    );
     expect(res.status).toHaveBeenCalledWith(405);
     expect(res.json).toHaveBeenCalledWith({
       status: "fail",

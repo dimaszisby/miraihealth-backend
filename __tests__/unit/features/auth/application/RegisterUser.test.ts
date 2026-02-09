@@ -66,6 +66,7 @@ describe("RegisterUser use case", () => {
       email: "user@example.com",
       username: "Tester",
       passwordHash: "secure-hash",
+      isPublicProfile: true,
     });
     expect(token.sign).toHaveBeenCalledWith({
       id: user.id,

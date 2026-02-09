@@ -9,9 +9,24 @@ type RouterDouble = {
   put: jest.Mock;
   delete: jest.Mock;
   patch: jest.Mock;
+  all: jest.Mock;
+  route: jest.Mock;
 };
 
+type RouteDouble = {
+  get: jest.Mock;
+  all: jest.Mock;
+};
+
+function makeRouteDouble(): RouteDouble {
+  const route = {} as RouteDouble;
+  route.get = jest.fn().mockReturnValue(route);
+  route.all = jest.fn().mockReturnValue(route);
+  return route;
+}
+
 function makeRouterDouble(): RouterDouble {
+  const routeDouble = makeRouteDouble();
   return {
     use: jest.fn(),
     get: jest.fn(),
@@ -19,6 +34,8 @@ function makeRouterDouble(): RouterDouble {
     put: jest.fn(),
     delete: jest.fn(),
     patch: jest.fn(),
+    all: jest.fn(),
+    route: jest.fn(() => routeDouble),
   };
 }
 
@@ -181,17 +198,20 @@ describe("metric log router", () => {
     );
     expect(cursorCache.ttl).toBe(300);
 
-    expect(router.get).toHaveBeenNthCalledWith(
-      2,
-      "/stats",
+    const statsRoute = router.route.mock.results[0]?.value as
+      | RouteDouble
+      | undefined;
+    expect(router.route).toHaveBeenCalledWith("/stats");
+    expect(statsRoute?.get).toHaveBeenCalledWith(
       statsValidator,
       statsCache,
       getAggregatedStatsMock,
     );
+    expect(statsRoute?.all).toHaveBeenCalledWith(expect.any(Function));
     expect(statsCache.ttl).toBe(300);
 
     expect(router.get).toHaveBeenNthCalledWith(
-      3,
+      2,
       "/:id",
       getValidator,
       detailCache,
@@ -203,6 +223,7 @@ describe("metric log router", () => {
       1,
       "/",
       userRateLimiterMock,
+      expect.anything(),
       createValidator,
       createMetricLogMock,
     );
@@ -210,6 +231,7 @@ describe("metric log router", () => {
     expect(router.put).toHaveBeenCalledWith(
       "/:id",
       userRateLimiterMock,
+      expect.anything(),
       updateValidator,
       updateLogMock,
     );
@@ -225,6 +247,7 @@ describe("metric log router", () => {
       2,
       "/:metricId/dummy",
       userRateLimiterMock,
+      expect.anything(),
       dummyValidator,
       generateDummyMetricLogsMock,
     );
@@ -238,6 +261,7 @@ describe("metric log router", () => {
     expect(router.post).toHaveBeenCalledWith(
       "/",
       userRateLimiterMock,
+      expect.any(Function),
       expect.anything(),
       createMetricLogMock,
     );

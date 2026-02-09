@@ -9,6 +9,7 @@ type RouterDouble = {
   put: jest.Mock;
   delete: jest.Mock;
   patch: jest.Mock;
+  all: jest.Mock;
 };
 
 function makeRouterDouble(): RouterDouble {
@@ -19,6 +20,7 @@ function makeRouterDouble(): RouterDouble {
     put: jest.fn(),
     delete: jest.fn(),
     patch: jest.fn(),
+    all: jest.fn(),
   };
 }
 
@@ -169,6 +171,7 @@ describe("metric router", () => {
       1,
       "/",
       userRateLimiterMock,
+      expect.anything(),
       createValidator,
       createMetricMock,
     );
@@ -195,6 +198,7 @@ describe("metric router", () => {
     expect(router.put).toHaveBeenCalledWith(
       "/:id",
       userRateLimiterMock,
+      expect.anything(),
       updateValidator,
       updateMetricMock,
     );
@@ -217,6 +221,7 @@ describe("metric router", () => {
       2,
       "/dummy",
       userRateLimiterMock,
+      expect.anything(),
       dummyValidator,
       generateDummyMetricsMock,
     );
@@ -230,6 +235,7 @@ describe("metric router", () => {
     expect(router.post).toHaveBeenCalledWith(
       "/",
       userRateLimiterMock,
+      expect.any(Function),
       expect.anything(),
       createMetricMock,
     );
