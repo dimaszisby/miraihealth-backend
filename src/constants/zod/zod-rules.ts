@@ -3,6 +3,7 @@ import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import { ZodMessages } from "@/constants/zod/zod-messages.js"; // centralized error messages
 import {
   METRIC_DESCRIPTION_RULE,
+  METRIC_LOG_VALUE_RULE,
   METRIC_NAME_RULE,
   METRIC_UNIT_RULE,
 } from "@/shared/constants/metric-constraints.js";
@@ -20,9 +21,15 @@ extendZodWithOpenApi(z);
  */
 
 // Reuse base rules
+const UUID_PATTERN =
+  "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$";
+const UUID_REGEX = new RegExp(UUID_PATTERN);
+
 export const zUUID = z
   .string()
-  .uuid({ message: ZodMessages.common.invalidUUID });
+  .uuid({ message: ZodMessages.common.invalidUUID })
+  .regex(UUID_REGEX, { message: ZodMessages.common.invalidUUID })
+  .openapi({ format: "uuid", pattern: UUID_PATTERN });
 export const zDateOptional = z
   .preprocess(
     (val) => (typeof val === "string" && val.trim() === "" ? undefined : val),
@@ -117,11 +124,13 @@ export const zMetricName = z
 export const zMetricCategoryId = z
   .string()
   .uuid({ message: ZodMessages.metric.invalidCategoryId })
+  .regex(UUID_REGEX, { message: ZodMessages.metric.invalidCategoryId })
   .nullable()
   .optional();
 export const zMetricOriginalId = z
   .string()
   .uuid({ message: ZodMessages.metric.invalidOriginalMetricId })
+  .regex(UUID_REGEX, { message: ZodMessages.metric.invalidOriginalMetricId })
   .nullable()
   .optional();
 export const zMetricDescription = z
@@ -179,8 +188,9 @@ export const zMetricDeletedAt = z.date().optional();
  */
 export const zGoalEnabled = z.boolean().optional().default(false);
 const goalTypeEnum = z.enum(["cumulative", "incremental"]);
+const goalTypeNullable = z.union([goalTypeEnum, z.null()]);
 export const zGoalTypeRequired = goalTypeEnum;
-export const zGoalType = goalTypeEnum.optional().nullable();
+export const zGoalType = goalTypeNullable.optional();
 const goalValueSchema = z
   .number()
   .positive(ZodMessages.metricSettings.goalValuePositive);
@@ -203,12 +213,23 @@ export const zAlertThresholdsOptional = z
   .min(0, { message: ZodMessages.metricSettings.alertThresholdMin })
   .max(100, { message: ZodMessages.metricSettings.alertThresholdMax })
   .optional();
+const zDisplayOptionText = z
+  .string()
+  .superRefine((value, ctx) => {
+    if (hasInvalidControlChars(value) || hasUnpairedSurrogates(value)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: ZodMessages.metricSettings.invalidDisplayOptions,
+      });
+    }
+  })
+  .openapi({ pattern: CONTROL_CHARS_PATTERN_SOURCE });
 export const zDisplayOptions = z
   .object({
     showOnDashboard: z.boolean().optional().default(true),
-    priority: z.number().optional().default(1),
-    chartType: z.string().optional().default("line"),
-    color: z.string().optional().default("#E897A3"),
+    priority: z.number().int().min(1).max(1000).optional().default(1),
+    chartType: zDisplayOptionText.optional().default("line"),
+    color: zDisplayOptionText.optional().default("#E897A3"),
   })
   .optional()
   .default({
@@ -223,7 +244,13 @@ export const zDisplayOptions = z
  */
 export const zPositiveFloat = z
   .number({ required_error: ZodMessages.metricLog.logValueRequired })
-  .min(0, { message: ZodMessages.metricLog.logValueNonNegative });
+  .finite({ message: ZodMessages.metricLog.logValueFinite })
+  .min(METRIC_LOG_VALUE_RULE.min, {
+    message: ZodMessages.metricLog.logValueNonNegative,
+  })
+  .max(METRIC_LOG_VALUE_RULE.max, {
+    message: ZodMessages.metricLog.logValueTooLarge,
+  });
 
 export const zLogType = z.enum(["manual", "automatic"], {
   required_error: ZodMessages.metricLog.logTypeInvalid,

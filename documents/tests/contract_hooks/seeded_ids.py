@@ -10,10 +10,12 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
+from urllib.parse import urlparse
 
 import math
 import re
@@ -28,6 +30,10 @@ except Exception:  # pragma: no cover - fallback for older runtimes
 SEED_FILE = Path(
     os.getenv("SCHEMATHESIS_SEED_FILE", "")
 ).expanduser()  # Defaults to repo/tmp/contract-seed.json
+FORCED_MODE = (os.getenv("SCHEMATHESIS_LOCAL_MODE_EFFECTIVE") or "").strip().lower()
+HOOK_DEBUG_ENABLED = (
+    os.getenv("SCHEMATHESIS_HOOK_DEBUG", "").strip().lower() in ("1", "true", "yes")
+)
 
 
 def _load_seed() -> Dict[str, Any]:
@@ -42,6 +48,7 @@ def _load_seed() -> Dict[str, Any]:
 SEED_DATA = _load_seed()
 METRICS = SEED_DATA.get("metrics") or {}
 CATEGORIES = SEED_DATA.get("categories") or {}
+DELETABLE = SEED_DATA.get("deletable") or {}
 PRIMARY_USER = SEED_DATA.get("primaryUser") or {}
 PRIMARY_USER_EMAIL = PRIMARY_USER.get("email")
 PRIMARY_USER_PASSWORD = PRIMARY_USER.get("password")
@@ -65,13 +72,38 @@ def _pick_category(keys: tuple[str, ...]) -> Optional[Dict[str, Any]]:
     return None
 
 
+def _rotate_ids_for_worker(values: list[str]) -> list[str]:
+    if not values:
+        return values
+    offset = os.getpid() % len(values)
+    if offset == 0:
+        return values
+    return values[offset:] + values[:offset]
+
+
 PRIMARY_METRIC = _pick_metric(("revenue", "productivity"))
 PRIMARY_METRIC_ID = (PRIMARY_METRIC or {}).get("id")
 PRIMARY_SETTINGS_ID = (PRIMARY_METRIC or {}).get("settingsId")
 PRIMARY_LOG_ID = (PRIMARY_METRIC or {}).get("latestLogId")
 PRIMARY_CATEGORY = _pick_category(("revenue", "productivity"))
 PRIMARY_CATEGORY_ID = (PRIMARY_CATEGORY or {}).get("id")
+DELETABLE_CATEGORY_IDS = _rotate_ids_for_worker(list(DELETABLE.get("categoryIds") or []))
+DELETABLE_METRIC_IDS = _rotate_ids_for_worker(list(DELETABLE.get("metricIds") or []))
+SETTINGS_CREATE_METRIC_IDS = _rotate_ids_for_worker(
+    list(DELETABLE.get("metricIdsWithoutSettings") or [])
+)
+DELETABLE_SETTINGS_IDS = _rotate_ids_for_worker(
+    list(DELETABLE.get("metricSettingsIds") or [])
+)
+DELETABLE_LOG_IDS = _rotate_ids_for_worker(list(DELETABLE.get("metricLogIds") or []))
+CREATED_METRIC_IDS: list[str] = []
+CREATED_CATEGORY_IDS: list[str] = []
+CREATED_LOG_IDS: list[str] = []
+CREATED_SETTINGS_IDS: list[str] = []
 LAST_CREATED_METRIC_ID: Optional[str] = None
+USED_SETTINGS_METRIC_IDS: set[str] = set()
+MAX_LOG_VALUE = 1_000_000
+LOGGED_AT_COUNTER = 0
 MAX_BUCKETS = int(os.getenv("VIZ_MAX_BUCKETS", "400"))
 LAST_WINDOW_RE = re.compile(r"^([1-9][0-9]*)([hdwmy])$")
 LAST_UNIT_SECONDS = {
@@ -95,6 +127,8 @@ BUCKET_UNIT = {
     "1m": "m",
     "1y": "y",
 }
+HEADER_NAME_RE = re.compile(r"^[A-Za-z0-9!#$%&'*+.^_`|~-]+$")
+HEADER_VALUE_RE = re.compile(r"^[\x20-\x7E]*$")
 
 
 def _ensure_mapping(mapping: Optional[Dict[str, Any]]) -> Dict[str, Any]:
@@ -116,17 +150,125 @@ def _update(mapping: Optional[Dict[str, Any]], values: Dict[str, Any]) -> Dict[s
     return target
 
 
+def _sanitize_headers(headers: Optional[Dict[str, Any]]) -> Dict[str, str]:
+    mapping = _ensure_mapping(headers)
+    if not mapping:
+        return {}
+    sanitized: Dict[str, str] = {}
+    for key, value in mapping.items():
+        if not isinstance(key, str) or not HEADER_NAME_RE.match(key):
+            continue
+        if isinstance(value, (list, tuple)):
+            if not value:
+                continue
+            value = value[0]
+        if value is None:
+            continue
+        if not isinstance(value, str):
+            value = str(value)
+        if not HEADER_VALUE_RE.match(value):
+            continue
+        sanitized[key] = value
+    return sanitized
+
+
+def _pop_deletable(pool: list[str], label: str) -> str:
+    if pool:
+        return pool.pop(0)
+    raise SkipTest(f"No seeded {label} IDs available for delete operations.")
+
+
+def _normalize_path(value: Any) -> Optional[str]:
+    if not isinstance(value, str):
+        return None
+    raw = value.strip()
+    if not raw:
+        return None
+
+    if raw.startswith("http://") or raw.startswith("https://"):
+        raw = urlparse(raw).path
+
+    raw = raw.split("?", 1)[0]
+    if not raw.startswith("/"):
+        raw = f"/{raw}"
+
+    normalized = raw.rstrip("/") or "/"
+    for prefix in ("/api/v1", "/api", "api/v1", "api"):
+        if normalized == prefix:
+            return "/"
+        prefixed = f"{prefix}/"
+        if normalized.startswith(prefixed):
+            return normalized[len(prefix) :]
+    return normalized
+
+
 def _is_path(case, target: str) -> bool:
-    path = getattr(case, "path", None)
-    if path is None and hasattr(case, "operation"):
-        path = getattr(case.operation, "path", None)
-    if path is None and hasattr(case, "endpoint"):
-        path = getattr(case.endpoint, "path", None)
-    return path == target
+    normalized_target = _normalize_path(target)
+    if normalized_target is None:
+        return False
+
+    candidates = [
+        getattr(case, "path", None),
+        getattr(getattr(case, "operation", None), "path", None),
+        getattr(getattr(case, "endpoint", None), "path", None),
+    ]
+    for candidate in candidates:
+        if _normalize_path(candidate) == normalized_target:
+            return True
+    return False
+
+
+def _debug_case_path(case, method: str, is_positive: bool) -> None:
+    if not HOOK_DEBUG_ENABLED:
+        return
+    if method != "POST":
+        return
+    flags = {
+        "login": _is_path(case, "/auth/login"),
+        "register": _is_path(case, "/auth/register"),
+        "categories": _is_path(case, "/metric-categories"),
+        "metrics": _is_path(case, "/metrics"),
+        "metricLogs": _is_path(case, "/metric-logs"),
+        "metricSettings": _is_path(case, "/metric-settings"),
+    }
+    if not any(flags.values()):
+        return
+    operation_path = getattr(getattr(case, "operation", None), "path", None)
+    endpoint_path = getattr(getattr(case, "endpoint", None), "path", None)
+    print(
+        "[schemathesis-hook] method=%s positive=%s path=%r operation_path=%r endpoint_path=%r flags=%s"
+        % (method, is_positive, getattr(case, "path", None), operation_path, endpoint_path, flags),
+        file=sys.stderr,
+    )
 
 
 def _unique_suffix() -> str:
     return uuid.uuid4().hex[:8]
+
+
+def _is_uuid(value: Any) -> bool:
+    if not isinstance(value, str) or not value:
+        return False
+    try:
+        uuid.UUID(value)
+        return True
+    except Exception:
+        return False
+
+
+def _next_settings_metric_id() -> Optional[str]:
+    while SETTINGS_CREATE_METRIC_IDS:
+        metric_id = SETTINGS_CREATE_METRIC_IDS.pop(0)
+        if metric_id and metric_id not in USED_SETTINGS_METRIC_IDS:
+            USED_SETTINGS_METRIC_IDS.add(metric_id)
+            return metric_id
+    return None
+
+
+def _next_logged_at() -> str:
+    global LOGGED_AT_COUNTER
+    LOGGED_AT_COUNTER += 1
+    return _to_iso(datetime.now(timezone.utc) + timedelta(seconds=LOGGED_AT_COUNTER))
 
 
 def _parse_iso(value: Any) -> Optional[datetime]:
@@ -184,6 +326,23 @@ def _coerce_bucket(value: Any) -> str:
     if isinstance(value, str) and value in BUCKET_SECONDS:
         return value
     return "1d"
+
+
+def _normalize_dashboard_limit(query: Dict[str, Any]) -> None:
+    raw = query.get("limit")
+    if raw is None:
+        return
+    try:
+        value = int(raw)
+    except Exception:
+        query["limit"] = 10
+        return
+    if value < 1:
+        query["limit"] = 1
+    elif value > 48:
+        query["limit"] = 48
+    else:
+        query["limit"] = value
 
 
 def _safe_last(bucket: Any) -> str:
@@ -260,11 +419,34 @@ def _set_case_body(case, body: Dict[str, Any]) -> None:
 
 
 def _is_positive_case(case) -> bool:
+    if FORCED_MODE == "positive":
+        return True
+    if FORCED_MODE == "negative":
+        return False
+
     meta = getattr(case, "meta", None)
     generation = getattr(meta, "generation", None)
     mode = getattr(generation, "mode", None)
     if mode is None:
         return True
+
+    # Schemathesis versions expose this field in different shapes:
+    # - Enum-like object with `is_positive`
+    # - Enum/string-like value
+    # Keep detection resilient so positive-only runs still get seed normalization.
+    is_positive = getattr(mode, "is_positive", None)
+    if is_positive is not None:
+        return bool(is_positive)
+
+    raw_mode = mode
+    if hasattr(mode, "value"):
+        raw_mode = getattr(mode, "value")
+    mode_text = str(raw_mode).strip().lower()
+    if "positive" in mode_text:
+        return True
+    if "negative" in mode_text:
+        return False
+
     return mode == GenerationMode.POSITIVE
 
 
@@ -272,11 +454,12 @@ def _is_positive_case(case) -> bool:
 def inject_seeded_ids(context, case, kwargs) -> None:  # kwargs unused but required by hook spec
     is_positive = _is_positive_case(case)
     method = getattr(case, "method", "GET").upper()
+    _debug_case_path(case, method, is_positive)
 
+    case.headers = _sanitize_headers(case.headers)
     if not is_positive:
         if _is_path(case, "/auth/register"):
             raise SkipTest("Skip negative register cases (false positives).")
-        return
 
     query = _ensure_mapping(case.query)
     if "" in query:
@@ -286,33 +469,58 @@ def inject_seeded_ids(context, case, kwargs) -> None:  # kwargs unused but requi
         _sanitize_filter(query)
         case.query = query
 
-    if method == "POST" and _is_path(case, "/auth/login"):
+    if is_positive and method == "POST" and _is_path(case, "/auth/login"):
         body = case.body if isinstance(case.body, dict) else {}
-        if PRIMARY_USER_EMAIL:
+        if PRIMARY_USER_EMAIL and PRIMARY_USER_PASSWORD:
             body["email"] = PRIMARY_USER_EMAIL
-        if PRIMARY_USER_PASSWORD:
             body["password"] = PRIMARY_USER_PASSWORD
         _set_case_body(case, body)
+    if is_positive and method == "PUT" and _is_path(case, "/auth/profile"):
+        body = case.body if isinstance(case.body, dict) else {}
+        username = PRIMARY_USER.get("username")
+        if isinstance(username, str) and username:
+            body["username"] = username
+        if isinstance(PRIMARY_USER_EMAIL, str) and PRIMARY_USER_EMAIL:
+            body["email"] = PRIMARY_USER_EMAIL
+        body["isPublicProfile"] = bool(PRIMARY_USER.get("isPublicProfile", True))
+        # Keep the credential baseline stable across generated auth flows.
+        body.pop("password", None)
+        body.pop("role", None)
+        _set_case_body(case, body)
+
+    # Keep generated negative cases intact so Schemathesis can assert rejection paths.
+    if not is_positive:
+        return
 
     # Metrics CRUD
     if _is_path(case, "/metrics/{id}"):
         override_id = PRIMARY_METRIC_ID
-        if method in ("PUT", "DELETE") and LAST_CREATED_METRIC_ID:
+        if method == "DELETE":
+            if CREATED_METRIC_IDS:
+                override_id = CREATED_METRIC_IDS.pop(0)
+            elif LAST_CREATED_METRIC_ID:
+                override_id = LAST_CREATED_METRIC_ID
+            elif DELETABLE_METRIC_IDS:
+                override_id = _pop_deletable(DELETABLE_METRIC_IDS, "metric")
+            else:
+                raise SkipTest("No deletable metric ID available for delete.")
+        elif method in ("PUT", "PATCH") and LAST_CREATED_METRIC_ID:
             override_id = LAST_CREATED_METRIC_ID
         case.path_parameters = _update(case.path_parameters, {"id": override_id})
         if method in ("PUT", "PATCH"):
             body = case.body if isinstance(case.body, dict) else {}
-            if (
-                "categoryId" in body
-                and body.get("categoryId") not in (None, "")
-                and PRIMARY_CATEGORY_ID is not None
-            ):
-                body["categoryId"] = PRIMARY_CATEGORY_ID
-            if "originalMetricId" in body and body.get("originalMetricId") not in (
-                None,
-                "",
-            ):
-                body["originalMetricId"] = None
+            if "categoryId" in body:
+                category_id = body.get("categoryId")
+                if category_id in (None, ""):
+                    body.pop("categoryId", None)
+                elif PRIMARY_CATEGORY_ID is not None and not _is_uuid(category_id):
+                    body["categoryId"] = PRIMARY_CATEGORY_ID
+            if "originalMetricId" in body:
+                original_id = body.get("originalMetricId")
+                if original_id in (None, ""):
+                    body.pop("originalMetricId", None)
+                elif not _is_uuid(original_id):
+                    body["originalMetricId"] = None
             if "name" in body:
                 body["name"] = f"metric-{_unique_suffix()}"
             if not body:
@@ -324,11 +532,30 @@ def inject_seeded_ids(context, case, kwargs) -> None:  # kwargs unused but requi
             case.path_parameters, {"metricId": PRIMARY_METRIC_ID}
         )
 
+    if _is_path(case, "/metric-categories/{id}"):
+        category_id = PRIMARY_CATEGORY_ID
+        if method == "DELETE":
+            if CREATED_CATEGORY_IDS:
+                category_id = CREATED_CATEGORY_IDS.pop(0)
+            else:
+                category_id = _pop_deletable(
+                    DELETABLE_CATEGORY_IDS, "metric category"
+                )
+        case.path_parameters = _update(case.path_parameters, {"id": category_id})
+        if method in ("PUT", "PATCH"):
+            body = case.body if isinstance(case.body, dict) else {}
+            body["name"] = f"category-{_unique_suffix()}"
+            body.setdefault("color", "#10B981")
+            body.setdefault("icon", "🧪")
+            _set_case_body(case, body)
+
     # Analytics dashboard range normalization (no seed data required).
     if _is_path(case, "/analytics/dashboard"):
         query = _ensure_mapping(case.query)
+        query["bucket"] = _coerce_bucket(query.get("bucket"))
         _normalize_range(query)
         _normalize_last(query, allow_with_range=False)
+        _normalize_dashboard_limit(query)
         _force_valid_tz(query)
         case.query = query
 
@@ -338,40 +565,59 @@ def inject_seeded_ids(context, case, kwargs) -> None:  # kwargs unused but requi
             case.path_parameters, {"metricId": PRIMARY_METRIC_ID}
         )
         query = _ensure_mapping(case.query)
+        query["bucket"] = _coerce_bucket(query.get("bucket"))
         _normalize_range(query)
         _normalize_last(query, allow_with_range=False)
         _force_valid_tz(query)
         case.query = query
 
     # Metric Settings endpoints with {id} + query metricId
-    if PRIMARY_SETTINGS_ID is not None and _is_path(case, "/metric-settings/{id}"):
-        case.path_parameters = _update(case.path_parameters, {"id": PRIMARY_SETTINGS_ID})
-        case.query = _update(case.query, {"metricId": PRIMARY_METRIC_ID})
+    if _is_path(case, "/metric-settings/{id}"):
+        settings_id = PRIMARY_SETTINGS_ID
+        if method == "DELETE":
+            if CREATED_SETTINGS_IDS:
+                settings_id = CREATED_SETTINGS_IDS.pop(0)
+            else:
+                settings_id = _pop_deletable(
+                    DELETABLE_SETTINGS_IDS, "metric settings"
+                )
+        case.path_parameters = _update(case.path_parameters, {"id": settings_id})
 
     if (
         PRIMARY_SETTINGS_ID is not None
         and _is_path(case, "/metric-settings/{id}/achieve")
     ):
         case.path_parameters = _update(case.path_parameters, {"id": PRIMARY_SETTINGS_ID})
-        case.query = _update(case.query, {"metricId": PRIMARY_METRIC_ID})
 
     if (
         PRIMARY_SETTINGS_ID is not None
         and _is_path(case, "/metric-settings/{id}/display")
     ):
         case.path_parameters = _update(case.path_parameters, {"id": PRIMARY_SETTINGS_ID})
-        case.query = _update(case.query, {"metricId": PRIMARY_METRIC_ID})
+        if method in ("PATCH", "PUT"):
+            body = case.body if isinstance(case.body, dict) else {}
+            display = body.get("displayOptions")
+            if not isinstance(display, dict) or not display:
+                body["displayOptions"] = {"showOnDashboard": True}
+            _set_case_body(case, body)
 
     # Metric Settings cursor filters
-    if _is_path(case, "/metric-settings"):
+    if method == "GET" and _is_path(case, "/metric-settings"):
         case.query = _update(case.query, {"filter[metricId]": PRIMARY_METRIC_ID})
 
     # Metric Logs endpoints
-    if PRIMARY_LOG_ID is not None and _is_path(case, "/metric-logs/{id}"):
-        case.path_parameters = _update(case.path_parameters, {"id": PRIMARY_LOG_ID})
-        case.query = _update(case.query, {"metricId": PRIMARY_METRIC_ID})
+    if _is_path(case, "/metric-logs/{id}"):
+        log_id = PRIMARY_LOG_ID
+        if method == "DELETE":
+            if CREATED_LOG_IDS:
+                log_id = CREATED_LOG_IDS.pop(0)
+            else:
+                log_id = _pop_deletable(DELETABLE_LOG_IDS, "metric log")
+        case.path_parameters = _update(case.path_parameters, {"id": log_id})
+        if method == "GET":
+            case.query = _update(case.query, {"metricId": PRIMARY_METRIC_ID})
 
-    if _is_path(case, "/metric-logs"):
+    if method == "GET" and _is_path(case, "/metric-logs"):
         case.query = _update(case.query, {"filter[metricId]": PRIMARY_METRIC_ID})
 
     if _is_path(case, "/metric-logs/stats"):
@@ -381,31 +627,43 @@ def inject_seeded_ids(context, case, kwargs) -> None:  # kwargs unused but requi
     if method == "POST" and _is_path(case, "/metric-logs"):
         body = case.body if isinstance(case.body, dict) else {}
         if PRIMARY_METRIC_ID is not None:
-            body.setdefault("metricId", PRIMARY_METRIC_ID)
+            body["metricId"] = PRIMARY_METRIC_ID
+        if body.get("type") not in ("manual", "automatic"):
+            body["type"] = "manual"
+        log_value = body.get("logValue")
+        if (
+            not isinstance(log_value, (int, float))
+            or log_value < 0
+            or log_value > MAX_LOG_VALUE
+        ):
+            body["logValue"] = 1
+        body["loggedAt"] = _next_logged_at()
         _set_case_body(case, body)
 
     if method == "POST" and _is_path(case, "/metric-settings"):
-        body = case.body if isinstance(case.body, dict) else {}
-        if PRIMARY_METRIC_ID is not None:
-            body.setdefault("metricId", PRIMARY_METRIC_ID)
-        if body.get("goalEnabled") is True:
-            if body.get("goalType") in (None, ""):
-                body["goalType"] = "cumulative"
-            if body.get("goalValue") is None:
-                body["goalValue"] = 1
-        start_dt = _parse_iso(body.get("startDate"))
-        deadline_dt = _parse_iso(body.get("deadlineDate"))
-        time_frame_enabled = body.get("timeFrameEnabled") is True
-        if (time_frame_enabled or "startDate" in body) and start_dt is None:
-            start_dt = datetime.now(timezone.utc)
-            body["startDate"] = _to_iso(start_dt)
-        if (time_frame_enabled or "deadlineDate" in body) and deadline_dt is None:
-            base_dt = start_dt or datetime.now(timezone.utc)
-            deadline_dt = base_dt + timedelta(days=1)
-            body["deadlineDate"] = _to_iso(deadline_dt)
-        if start_dt and deadline_dt and deadline_dt <= start_dt:
-            deadline_dt = start_dt + timedelta(days=1)
-            body["deadlineDate"] = _to_iso(deadline_dt)
+        metric_id = _next_settings_metric_id()
+        if not metric_id:
+            raise SkipTest(
+                "No seeded metric IDs available for metric settings creation."
+            )
+        USED_SETTINGS_METRIC_IDS.add(metric_id)
+        body = {
+            "metricId": metric_id,
+            "goalEnabled": False,
+            "goalType": None,
+            "goalValue": None,
+            "timeFrameEnabled": False,
+            "startDate": None,
+            "deadlineDate": None,
+            "alertEnabled": False,
+            "alertThresholds": None,
+            "displayOptions": {
+                "showOnDashboard": True,
+                "priority": 1,
+                "chartType": "line",
+                "color": "#E897A3",
+            },
+        }
         _set_case_body(case, body)
 
     if method in ("PUT", "PATCH") and _is_path(case, "/metric-settings/{id}"):
@@ -415,21 +673,41 @@ def inject_seeded_ids(context, case, kwargs) -> None:  # kwargs unused but requi
         if body.get("goalEnabled") is True:
             if body.get("goalType") in (None, ""):
                 body["goalType"] = "cumulative"
-            if body.get("goalValue") is None:
+            goal_value = body.get("goalValue")
+            if not isinstance(goal_value, (int, float)) or goal_value <= 0:
                 body["goalValue"] = 1
+        elif body.get("goalEnabled") is False:
+            if body.get("goalType") not in (None, "cumulative", "incremental"):
+                body.pop("goalType", None)
+            goal_value = body.get("goalValue")
+            if isinstance(goal_value, (int, float)) and goal_value <= 0:
+                body["goalValue"] = None
         start_dt = _parse_iso(body.get("startDate"))
         deadline_dt = _parse_iso(body.get("deadlineDate"))
         time_frame_enabled = body.get("timeFrameEnabled") is True
-        if (time_frame_enabled or "startDate" in body) and start_dt is None:
+        has_start = "startDate" in body
+        has_deadline = "deadlineDate" in body
+        requires_dates = time_frame_enabled or has_start or has_deadline
+        if requires_dates and start_dt is None:
             start_dt = datetime.now(timezone.utc)
             body["startDate"] = _to_iso(start_dt)
-        if (time_frame_enabled or "deadlineDate" in body) and deadline_dt is None:
+        if requires_dates and deadline_dt is None:
             base_dt = start_dt or datetime.now(timezone.utc)
             deadline_dt = base_dt + timedelta(days=1)
             body["deadlineDate"] = _to_iso(deadline_dt)
         if start_dt and deadline_dt and deadline_dt <= start_dt:
             deadline_dt = start_dt + timedelta(days=1)
             body["deadlineDate"] = _to_iso(deadline_dt)
+        if body.get("alertEnabled") is True:
+            threshold = body.get("alertThresholds")
+            if (
+                not isinstance(threshold, int)
+                or isinstance(threshold, bool)
+                or not (0 <= threshold <= 100)
+            ):
+                body["alertThresholds"] = 80
+        elif body.get("alertEnabled") is False:
+            body["alertThresholds"] = None
         _set_case_body(case, body)
 
     # Ensure creates use unique identifiers to avoid conflict 409s.
@@ -441,19 +719,33 @@ def inject_seeded_ids(context, case, kwargs) -> None:  # kwargs unused but requi
         password = body.get("password") or "newpassword123"
         body["password"] = password
         body["passwordConfirmation"] = password
-        body.setdefault("isPublicProfile", True)
+        body["isPublicProfile"] = True
         _set_case_body(case, body)
 
     if method == "POST" and _is_path(case, "/metric-categories"):
         body = case.body if isinstance(case.body, dict) else {}
         suffix = _unique_suffix()
         body["name"] = f"category-{suffix}"
+        body.setdefault("color", "#10B981")
+        body.setdefault("icon", "🧪")
         _set_case_body(case, body)
 
     if method == "POST" and _is_path(case, "/metrics"):
         body = case.body if isinstance(case.body, dict) else {}
         suffix = _unique_suffix()
         body["name"] = f"metric-{suffix}"
+        if "categoryId" in body:
+            category_id = body.get("categoryId")
+            if category_id in (None, ""):
+                body.pop("categoryId", None)
+            elif PRIMARY_CATEGORY_ID is not None and not _is_uuid(category_id):
+                body["categoryId"] = PRIMARY_CATEGORY_ID
+        if "originalMetricId" in body:
+            original_id = body.get("originalMetricId")
+            if original_id in (None, ""):
+                body.pop("originalMetricId", None)
+            elif PRIMARY_METRIC_ID is not None and not _is_uuid(original_id):
+                body["originalMetricId"] = PRIMARY_METRIC_ID
         _set_case_body(case, body)
 
 
@@ -473,3 +765,55 @@ def capture_created_metric(context, case, response) -> None:
     if isinstance(metric_id, str) and metric_id:
         global LAST_CREATED_METRIC_ID
         LAST_CREATED_METRIC_ID = metric_id
+        CREATED_METRIC_IDS.append(metric_id)
+
+
+@schemathesis.hook("after_call")
+def capture_created_metric_log(context, case, response) -> None:
+    if getattr(case, "method", "GET").upper() != "POST":
+        return
+    if not _is_path(case, "/metric-logs"):
+        return
+    if response.status_code not in (200, 201):
+        return
+    try:
+        payload = response.json()
+    except Exception:
+        return
+    log_id = payload.get("data", {}).get("id")
+    if isinstance(log_id, str) and log_id:
+        CREATED_LOG_IDS.append(log_id)
+
+
+@schemathesis.hook("after_call")
+def capture_created_metric_category(context, case, response) -> None:
+    if getattr(case, "method", "GET").upper() != "POST":
+        return
+    if not _is_path(case, "/metric-categories"):
+        return
+    if response.status_code not in (200, 201):
+        return
+    try:
+        payload = response.json()
+    except Exception:
+        return
+    category_id = payload.get("data", {}).get("id")
+    if isinstance(category_id, str) and category_id:
+        CREATED_CATEGORY_IDS.append(category_id)
+
+
+@schemathesis.hook("after_call")
+def capture_created_metric_settings(context, case, response) -> None:
+    if getattr(case, "method", "GET").upper() != "POST":
+        return
+    if not _is_path(case, "/metric-settings"):
+        return
+    if response.status_code not in (200, 201):
+        return
+    try:
+        payload = response.json()
+    except Exception:
+        return
+    settings_id = payload.get("data", {}).get("id")
+    if isinstance(settings_id, str) and settings_id:
+        CREATED_SETTINGS_IDS.append(settings_id)

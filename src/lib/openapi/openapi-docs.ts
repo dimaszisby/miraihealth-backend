@@ -1,5 +1,5 @@
-import { OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi";
-import type { ComponentsObject } from "openapi3-ts/oas30";
+import { OpenApiGeneratorV31 } from "@asteasolutions/zod-to-openapi";
+import type { ComponentsObject } from "openapi3-ts/oas31";
 import { openApiDocument, registry } from "./openapi-config.js";
 import {
   LoginRequestSchema,
@@ -26,6 +26,7 @@ import {
   MetricLogStatsResponseSchema,
   MetricLogCursorResponseSchema,
   MetricLogCursorQueryParamsSchema,
+  MetricDisplayOptionsSchema,
   MetricSettingsSchema,
   CreateMetricSettingsRequestSchema,
   UpdateMetricSettingsRequestSchema,
@@ -45,7 +46,6 @@ import {
 import {
   GetByIdParamSchema,
   GetTrendParamsSchema,
-  GetTrendQuerySchema,
 } from "@/types/api/zod-request-params.schema.js";
 
 // Register all schemas with the OpenAPIRegistry
@@ -900,7 +900,6 @@ registry.registerPath({
   security: [{ BearerAuth: [] }],
   request: {
     params: GetByIdParamSchema,
-    query: MetricIdRequiredQuerySchema,
   },
   responses: {
     200: {
@@ -937,7 +936,6 @@ registry.registerPath({
   security: [{ BearerAuth: [] }],
   request: {
     params: GetByIdParamSchema,
-    query: MetricIdRequiredQuerySchema,
     body: {
       content: {
         "application/json": {
@@ -978,7 +976,6 @@ registry.registerPath({
   security: [{ BearerAuth: [] }],
   request: {
     params: GetByIdParamSchema,
-    query: MetricIdRequiredQuerySchema,
   },
   responses: {
     200: {
@@ -1012,7 +1009,6 @@ registry.registerPath({
   security: [{ BearerAuth: [] }],
   request: {
     params: GetByIdParamSchema,
-    query: MetricIdRequiredQuerySchema,
   },
   responses: {
     200: {
@@ -1046,7 +1042,6 @@ registry.registerPath({
   security: [{ BearerAuth: [] }],
   request: {
     params: GetByIdParamSchema,
-    query: MetricIdRequiredQuerySchema,
     body: {
       content: {
         "application/json": {
@@ -1060,7 +1055,7 @@ registry.registerPath({
       description: "Display options updated successfully",
       content: {
         "application/json": {
-          schema: successEnvelope(MetricSettingsSchema),
+          schema: successEnvelope(MetricDisplayOptionsSchema),
         },
       },
     },
@@ -1088,7 +1083,6 @@ registry.registerPath({
   security: [{ BearerAuth: [] }],
   request: {
     params: GetTrendParamsSchema,
-    query: GetTrendQuerySchema,
   },
   responses: {
     200: {
@@ -1180,7 +1174,7 @@ registry.registerPath({
 });
 
 export const getOpenApiDocumentation = () => {
-  const generator = new OpenApiGeneratorV3(registry.definitions);
+  const generator = new OpenApiGeneratorV31(registry.definitions);
   // Generate a full OpenAPI document from the registry, seeded with the base config.
   const document = generator.generateDocument(openApiDocument);
 

@@ -128,13 +128,16 @@ async function main() {
         "[contract-local] Schemathesis CLI not found.\nInstall it once via:\n  python3 -m venv .venv-schemathesis\n  source .venv-schemathesis/bin/activate\n  pip install -r documents/tests/4-contract-tests/schemathesis/requirements.txt\nThen re-run this helper (or export SCHEMATHESIS_CLI pointing to an existing binary).",
       );
     }
+    const schemathesisProfile =
+      process.env.SCHEMATHESIS_LOCAL_PROFILE ?? "full";
     runStep(
-      "Run Schemathesis suite",
+      `Run Schemathesis suite (profile: ${schemathesisProfile})`,
       `${npmCmd} run test:contract:schemathesis:local`,
       {
         env: {
           SCHEMATHESIS_LOCAL_TOKEN: token,
           SCHEMATHESIS_LOCAL_BASE_URL: contractBaseUrl,
+          SCHEMATHESIS_LOCAL_PROFILE: schemathesisProfile,
           SCHEMATHESIS_CLI: schemathesisCli,
         },
       },

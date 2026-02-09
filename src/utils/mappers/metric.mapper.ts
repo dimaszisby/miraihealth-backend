@@ -44,15 +44,6 @@ const toCategoryRow = (
   metricCount: Number(category.metricCount ?? 0),
 });
 
-const toCategoryInfo = (
-  category: ReturnType<typeof toMetricCategoryDomain>,
-): MetricLibraryCategoryInfoDomain => ({
-  id: category.id,
-  name: category.name,
-  color: category.color,
-  icon: category.icon,
-});
-
 const validateUserId = (userId: string | null | undefined) => {
   if (!userId) {
     logger.error("Metric object missing userId");
@@ -146,9 +137,6 @@ export const toExtendedMetricDomain = (
   const categoryDomain = rawCategory
     ? toMetricCategoryDomain(toCategoryRow(rawCategory))
     : null;
-  const categorySummary = categoryDomain
-    ? toCategoryInfo(categoryDomain)
-    : null;
 
   const rawSettings = metric.MetricSettings ?? metric.settings ?? null;
   const settingsDomain = rawSettings
@@ -160,7 +148,7 @@ export const toExtendedMetricDomain = (
 
   return {
     ...domain,
-    category: categorySummary,
+    category: categoryDomain,
     settings: settingsDomain,
     logs: logsDomain,
   };
@@ -205,16 +193,7 @@ export const toUserMetricDetailResponseDTO = (
 
   // Map associated
   category: metric.category
-    ? toMetricCategoryResponseDTO(
-        toMetricCategoryDomain(
-          toCategoryRow({
-            id: metric.category.id,
-            name: metric.category.name,
-            icon: metric.category.icon,
-            color: metric.category.color,
-          }),
-        ),
-      )
+    ? toMetricCategoryResponseDTO(metric.category)
     : null,
   settings: metric.settings
     ? toMetricSettingsResponseDTO(metric.settings)

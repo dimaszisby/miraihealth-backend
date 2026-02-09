@@ -155,7 +155,9 @@ export class VisualizationReadRepoSequelize
   ): Promise<DashboardVizResponse> {
     const metrics = await this.fetchDashboardMetrics(params);
     const metricIds = metrics.map((metric) => metric.metric_id).sort();
-    const metricIdArrayLiteral = `{${metricIds.join(",")}}`;
+    const metricIdArrayLiteral = `{${metricIds
+      .map((id) => `"${id}"`)
+      .join(",")}}`;
     const versionFingerprint = buildVersionFingerprint(metrics);
 
     const cacheKey: DashboardVizCacheKey = {

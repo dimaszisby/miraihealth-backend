@@ -193,8 +193,9 @@
       "Uuid": {
         "type": "string",
         "format": "uuid",
+        "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
         "description": "A UUID identifier",
-        "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+        "example": "123e4567-e89b-42d3-a456-426614174000"
       },
       "Error": {
         "type": "object",
@@ -256,7 +257,6 @@
             "example": "Operation successful"
           },
           "data": {
-            "nullable": true,
             "description": "Response data"
           }
         },
@@ -302,7 +302,8 @@
           },
           "q": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "pattern": "^.*\\S.*$"
           },
           "after": {
             "type": "string"
@@ -315,7 +316,8 @@
             "properties": {
               "name": {
                 "type": "string",
-                "minLength": 1
+                "minLength": 1,
+                "pattern": "^.*\\S.*$"
               },
               "categoryId": {
                 "$ref": "#/components/schemas/Uuid"
@@ -347,7 +349,8 @@
           },
           "q": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "pattern": "^.*\\S.*$"
           },
           "after": {
             "type": "string"
@@ -360,7 +363,8 @@
             "properties": {
               "name": {
                 "type": "string",
-                "minLength": 1
+                "minLength": 1,
+                "pattern": "^.*\\S.*$"
               }
             }
           }
@@ -389,7 +393,8 @@
           },
           "q": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "pattern": "^.*\\S.*$"
           },
           "after": {
             "type": "string"
@@ -432,7 +437,8 @@
           },
           "q": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "pattern": "^.*\\S.*$"
           },
           "after": {
             "type": "string"
@@ -540,7 +546,7 @@
           "email": {
             "type": "string",
             "format": "email",
-            "pattern": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\\\.[A-Za-z]{2,}$",
+            "pattern": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
             "example": "user@example.com"
           },
           "password": {
@@ -587,7 +593,7 @@
           "email": {
             "type": "string",
             "format": "email",
-            "pattern": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\\\.[A-Za-z]{2,}$",
+            "pattern": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
             "example": "newuser@example.com"
           },
           "password": {
@@ -618,7 +624,7 @@
           "email": {
             "type": "string",
             "format": "email",
-            "pattern": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\\\.[A-Za-z]{2,}$",
+            "pattern": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
             "example": "updated@example.com"
           },
           "password": {
@@ -745,8 +751,7 @@
             "example": "Sleep Hours"
           },
           "description": {
-            "type": "string",
-            "nullable": true,
+            "type": ["string", "null"],
             "example": "Hours slept per day"
           },
           "defaultUnit": {
@@ -766,8 +771,7 @@
             "example": 42
           },
           "category": {
-            "type": "object",
-            "nullable": true,
+            "type": ["object", "null"],
             "properties": {
               "id": {
                 "$ref": "#/components/schemas/Uuid"
@@ -809,8 +813,7 @@
             }
           },
           "nextCursor": {
-            "type": "string",
-            "nullable": true,
+            "type": ["string", "null"],
             "description": "Opaque cursor for the next page",
             "example": "eyJpZCI6IjEyMyJ9"
           },
@@ -831,9 +834,7 @@
           },
           "filter": {
             "type": "object",
-            "additionalProperties": {
-              "nullable": true
-            },
+            "additionalProperties": {},
             "description": "Normalized filters applied to the query"
           },
           "totalCount": {
@@ -879,8 +880,7 @@
             }
           },
           "nextCursor": {
-            "type": "string",
-            "nullable": true,
+            "type": ["string", "null"],
             "description": "Opaque cursor for the next page",
             "example": "eyJpZCI6IjEyMyJ9"
           },
@@ -901,9 +901,7 @@
           },
           "filter": {
             "type": "object",
-            "additionalProperties": {
-              "nullable": true
-            },
+            "additionalProperties": {},
             "description": "Normalized filters applied to the query"
           },
           "totalCount": {
@@ -924,15 +922,13 @@
             "$ref": "#/components/schemas/Uuid"
           },
           "originalMetricId": {
-            "type": "string",
-            "nullable": true,
+            "type": ["string", "null"],
             "format": "uuid",
             "description": "A UUID identifier or null when unset",
             "example": null
           },
           "categoryId": {
-            "type": "string",
-            "nullable": true,
+            "type": ["string", "null"],
             "format": "uuid",
             "description": "A UUID identifier or null when unset",
             "example": null
@@ -942,8 +938,7 @@
             "example": "Daily Steps"
           },
           "description": {
-            "type": "string",
-            "nullable": true,
+            "type": ["string", "null"],
             "example": "Number of steps walked per day"
           },
           "defaultUnit": {
@@ -979,14 +974,14 @@
         "type": "object",
         "properties": {
           "categoryId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": ["string", "null"],
+            "format": "uuid",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
           },
           "originalMetricId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": ["string", "null"],
+            "format": "uuid",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
           },
           "name": {
             "type": "string",
@@ -1016,14 +1011,14 @@
         "type": "object",
         "properties": {
           "categoryId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": ["string", "null"],
+            "format": "uuid",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
           },
           "originalMetricId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": ["string", "null"],
+            "format": "uuid",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
           },
           "name": {
             "type": "string",
@@ -1104,44 +1099,58 @@
         "type": "object",
         "properties": {
           "metricId": {
-            "$ref": "#/components/schemas/Uuid"
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["manual", "automatic"]
           },
           "logValue": {
             "type": "number",
             "minimum": 0,
-            "example": 5000
-          },
-          "type": {
-            "type": "string",
-            "enum": ["manual", "automatic"],
-            "example": "manual"
+            "maximum": 1000000
           },
           "loggedAt": {
             "type": "string",
-            "format": "date-time",
-            "example": "2023-01-01T10:00:00Z"
+            "format": "date-time"
           }
         },
-        "required": ["metricId", "logValue", "type"]
+        "required": ["metricId", "type", "logValue"],
+        "example": {
+          "metricId": "55555555-eeee-4eee-8eee-000000000005",
+          "logValue": 5000,
+          "type": "manual",
+          "loggedAt": "2023-01-01T10:00:00Z"
+        }
       },
       "UpdateMetricLogRequest": {
         "type": "object",
         "properties": {
-          "logValue": {
-            "type": "number",
-            "minimum": 0,
-            "example": 12000
+          "metricId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
           },
           "type": {
             "type": "string",
-            "enum": ["manual", "automatic"],
-            "example": "manual"
+            "enum": ["manual", "automatic"]
+          },
+          "logValue": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000
           },
           "loggedAt": {
             "type": "string",
-            "format": "date-time",
-            "example": "2023-01-01T13:00:00Z"
+            "format": "date-time"
           }
+        },
+        "example": {
+          "logValue": 12000,
+          "type": "manual",
+          "loggedAt": "2023-01-01T13:00:00Z"
         }
       },
       "MetricLogListResponse": {
@@ -1178,8 +1187,7 @@
             }
           },
           "nextCursor": {
-            "type": "string",
-            "nullable": true,
+            "type": ["string", "null"],
             "description": "Opaque cursor for the next page",
             "example": "eyJpZCI6IjEyMyJ9"
           },
@@ -1200,9 +1208,7 @@
           },
           "filter": {
             "type": "object",
-            "additionalProperties": {
-              "nullable": true
-            },
+            "additionalProperties": {},
             "description": "Normalized filters applied to the query"
           },
           "totalCount": {
@@ -1231,14 +1237,22 @@
             "example": true
           },
           "goalType": {
-            "type": "string",
-            "nullable": true,
-            "enum": ["cumulative", "incremental"],
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": ["cumulative", "incremental"]
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "example": "cumulative"
           },
           "goalValue": {
-            "type": "number",
-            "nullable": true,
+            "type": ["number", "null"],
             "example": 10000
           },
           "timeFrameEnabled": {
@@ -1246,14 +1260,12 @@
             "example": false
           },
           "startDate": {
-            "type": "string",
-            "nullable": true,
+            "type": ["string", "null"],
             "format": "date-time",
             "example": "2023-01-01T00:00:00Z"
           },
           "deadlineDate": {
-            "type": "string",
-            "nullable": true,
+            "type": ["string", "null"],
             "format": "date-time",
             "example": "2023-02-01T00:00:00Z"
           },
@@ -1262,8 +1274,7 @@
             "example": false
           },
           "alertThresholds": {
-            "type": "number",
-            "nullable": true,
+            "type": ["number", "null"],
             "example": 80
           },
           "isAchieved": {
@@ -1278,15 +1289,19 @@
                 "example": true
               },
               "priority": {
-                "type": "number",
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1000,
                 "example": 1
               },
               "chartType": {
                 "type": "string",
+                "pattern": "^[^\\u0000-\\u001F\\u007F]*$",
                 "example": "line"
               },
               "color": {
                 "type": "string",
+                "pattern": "^[^\\u0000-\\u001F\\u007F]*$",
                 "example": "#E897A3"
               }
             },
@@ -1328,19 +1343,20 @@
             "properties": {
               "metricId": {
                 "type": "string",
-                "format": "uuid"
+                "format": "uuid",
+                "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
               },
               "timeFrameEnabled": {
                 "type": "boolean",
                 "default": false
               },
               "startDate": {
-                "type": "string",
+                "type": ["string", "null"],
                 "format": "date-time",
                 "example": "2023-01-01T00:00:00Z"
               },
               "deadlineDate": {
-                "type": "string",
+                "type": ["string", "null"],
                 "format": "date-time",
                 "example": "2023-01-01T00:00:00Z"
               },
@@ -1349,8 +1365,7 @@
                 "default": false
               },
               "alertThresholds": {
-                "type": "integer",
-                "nullable": true,
+                "type": ["integer", "null"],
                 "minimum": 0,
                 "maximum": 100,
                 "default": 80
@@ -1363,15 +1378,19 @@
                     "default": true
                   },
                   "priority": {
-                    "type": "number",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000,
                     "default": 1
                   },
                   "chartType": {
                     "type": "string",
+                    "pattern": "^[^\\u0000-\\u001F\\u007F]*$",
                     "default": "line"
                   },
                   "color": {
                     "type": "string",
+                    "pattern": "^[^\\u0000-\\u001F\\u007F]*$",
                     "default": "#E897A3"
                   }
                 },
@@ -1392,8 +1411,7 @@
               },
               "goalValue": {
                 "type": "number",
-                "minimum": 0,
-                "exclusiveMinimum": true
+                "exclusiveMinimum": 0
               }
             },
             "required": ["metricId", "goalEnabled", "goalType", "goalValue"],
@@ -1404,19 +1422,20 @@
             "properties": {
               "metricId": {
                 "type": "string",
-                "format": "uuid"
+                "format": "uuid",
+                "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
               },
               "timeFrameEnabled": {
                 "type": "boolean",
                 "default": false
               },
               "startDate": {
-                "type": "string",
+                "type": ["string", "null"],
                 "format": "date-time",
                 "example": "2023-01-01T00:00:00Z"
               },
               "deadlineDate": {
-                "type": "string",
+                "type": ["string", "null"],
                 "format": "date-time",
                 "example": "2023-01-01T00:00:00Z"
               },
@@ -1425,8 +1444,7 @@
                 "default": false
               },
               "alertThresholds": {
-                "type": "integer",
-                "nullable": true,
+                "type": ["integer", "null"],
                 "minimum": 0,
                 "maximum": 100,
                 "default": 80
@@ -1439,15 +1457,19 @@
                     "default": true
                   },
                   "priority": {
-                    "type": "number",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000,
                     "default": 1
                   },
                   "chartType": {
                     "type": "string",
+                    "pattern": "^[^\\u0000-\\u001F\\u007F]*$",
                     "default": "line"
                   },
                   "color": {
                     "type": "string",
+                    "pattern": "^[^\\u0000-\\u001F\\u007F]*$",
                     "default": "#E897A3"
                   }
                 },
@@ -1463,15 +1485,22 @@
                 "enum": [false]
               },
               "goalType": {
-                "type": "string",
-                "nullable": true,
-                "enum": ["cumulative", "incremental"]
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": ["cumulative", "incremental"]
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "goalValue": {
-                "type": "number",
-                "nullable": true,
-                "minimum": 0,
-                "exclusiveMinimum": true
+                "type": ["number", "null"],
+                "exclusiveMinimum": 0
               }
             },
             "required": ["metricId"]
@@ -1498,18 +1527,19 @@
             "properties": {
               "metricId": {
                 "type": "string",
-                "format": "uuid"
+                "format": "uuid",
+                "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
               },
               "timeFrameEnabled": {
                 "type": "boolean"
               },
               "startDate": {
-                "type": "string",
+                "type": ["string", "null"],
                 "format": "date-time",
                 "example": "2023-01-01T00:00:00Z"
               },
               "deadlineDate": {
-                "type": "string",
+                "type": ["string", "null"],
                 "format": "date-time",
                 "example": "2023-01-01T00:00:00Z"
               },
@@ -1517,8 +1547,7 @@
                 "type": "boolean"
               },
               "alertThresholds": {
-                "type": "integer",
-                "nullable": true,
+                "type": ["integer", "null"],
                 "minimum": 0,
                 "maximum": 100
               },
@@ -1530,15 +1559,19 @@
                     "default": true
                   },
                   "priority": {
-                    "type": "number",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000,
                     "default": 1
                   },
                   "chartType": {
                     "type": "string",
+                    "pattern": "^[^\\u0000-\\u001F\\u007F]*$",
                     "default": "line"
                   },
                   "color": {
                     "type": "string",
+                    "pattern": "^[^\\u0000-\\u001F\\u007F]*$",
                     "default": "#E897A3"
                   }
                 },
@@ -1559,8 +1592,7 @@
               },
               "goalValue": {
                 "type": "number",
-                "minimum": 0,
-                "exclusiveMinimum": true
+                "exclusiveMinimum": 0
               }
             },
             "required": ["goalEnabled", "goalType", "goalValue"],
@@ -1571,18 +1603,19 @@
             "properties": {
               "metricId": {
                 "type": "string",
-                "format": "uuid"
+                "format": "uuid",
+                "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
               },
               "timeFrameEnabled": {
                 "type": "boolean"
               },
               "startDate": {
-                "type": "string",
+                "type": ["string", "null"],
                 "format": "date-time",
                 "example": "2023-01-01T00:00:00Z"
               },
               "deadlineDate": {
-                "type": "string",
+                "type": ["string", "null"],
                 "format": "date-time",
                 "example": "2023-01-01T00:00:00Z"
               },
@@ -1590,8 +1623,7 @@
                 "type": "boolean"
               },
               "alertThresholds": {
-                "type": "integer",
-                "nullable": true,
+                "type": ["integer", "null"],
                 "minimum": 0,
                 "maximum": 100
               },
@@ -1603,15 +1635,19 @@
                     "default": true
                   },
                   "priority": {
-                    "type": "number",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000,
                     "default": 1
                   },
                   "chartType": {
                     "type": "string",
+                    "pattern": "^[^\\u0000-\\u001F\\u007F]*$",
                     "default": "line"
                   },
                   "color": {
                     "type": "string",
+                    "pattern": "^[^\\u0000-\\u001F\\u007F]*$",
                     "default": "#E897A3"
                   }
                 },
@@ -1627,20 +1663,28 @@
                 "enum": [false]
               },
               "goalType": {
-                "type": "string",
-                "nullable": true,
-                "enum": ["cumulative", "incremental"]
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": ["cumulative", "incremental"]
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "goalValue": {
-                "type": "number",
-                "nullable": true,
-                "minimum": 0,
-                "exclusiveMinimum": true
+                "type": ["number", "null"],
+                "exclusiveMinimum": 0
               }
             },
             "additionalProperties": false
           }
         ],
+        "description": "Updates must include at least one recognized field. When enabling time frames, include both startDate and deadlineDate.",
         "minProperties": 1,
         "example": {
           "goalEnabled": true,
@@ -1658,22 +1702,26 @@
             "type": "object",
             "properties": {
               "showOnDashboard": {
-                "type": "boolean",
-                "example": true
+                "type": "boolean"
               },
               "priority": {
-                "type": "number",
-                "example": 1
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1000
               },
               "chartType": {
                 "type": "string",
-                "example": "line"
+                "minLength": 1,
+                "pattern": "^[^\\u0000-\\u001F\\u007F]*$"
               },
               "color": {
                 "type": "string",
-                "example": "#E897A3"
+                "minLength": 1,
+                "pattern": "^[^\\u0000-\\u001F\\u007F]*$"
               }
             },
+            "additionalProperties": false,
+            "minProperties": 1,
             "example": {
               "showOnDashboard": true,
               "priority": 2,
@@ -1700,8 +1748,7 @@
             }
           },
           "nextCursor": {
-            "type": "string",
-            "nullable": true,
+            "type": ["string", "null"],
             "description": "Opaque cursor for the next page",
             "example": "eyJpZCI6IjEyMyJ9"
           },
@@ -1722,9 +1769,7 @@
           },
           "filter": {
             "type": "object",
-            "additionalProperties": {
-              "nullable": true
-            },
+            "additionalProperties": {},
             "description": "Normalized filters applied to the query"
           },
           "totalCount": {
@@ -1749,12 +1794,12 @@
                     "$ref": "#/components/schemas/MetricCategory"
                   },
                   {
-                    "nullable": true,
+                    "type": "null",
                     "description": "Null when the metric does not belong to a category",
                     "example": null
                   },
                   {
-                    "nullable": true
+                    "type": "null"
                   }
                 ]
               },
@@ -1764,12 +1809,12 @@
                     "$ref": "#/components/schemas/MetricSettings"
                   },
                   {
-                    "nullable": true,
+                    "type": "null",
                     "description": "Null when metric settings have not been configured",
                     "example": null
                   },
                   {
-                    "nullable": true
+                    "type": "null"
                   }
                 ]
               },
@@ -1782,12 +1827,12 @@
                     }
                   },
                   {
-                    "nullable": true,
+                    "type": "null",
                     "description": "Null when no recent logs are available",
                     "example": null
                   },
                   {
-                    "nullable": true
+                    "type": "null"
                   }
                 ]
               }
@@ -1811,19 +1856,10 @@
         "required": ["date", "value"]
       },
       "TrendResponse": {
-        "type": "object",
-        "properties": {
-          "metricId": {
-            "$ref": "#/components/schemas/Uuid"
-          },
-          "trend": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TrendDataPoint"
-            }
-          }
-        },
-        "required": ["metricId", "trend"]
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/TrendDataPoint"
+        }
       },
       "GetTrendRequest": {
         "type": "object",
@@ -1874,8 +1910,7 @@
                   "example": "2023-01-01T00:00:00Z"
                 },
                 "value": {
-                  "type": "number",
-                  "nullable": true,
+                  "type": ["number", "null"],
                   "example": 42.5
                 }
               },
@@ -1886,18 +1921,15 @@
             "type": "object",
             "properties": {
               "average": {
-                "type": "number",
-                "nullable": true,
+                "type": ["number", "null"],
                 "example": 35.1
               },
               "min": {
-                "type": "number",
-                "nullable": true,
+                "type": ["number", "null"],
                 "example": 5
               },
               "max": {
-                "type": "number",
-                "nullable": true,
+                "type": ["number", "null"],
                 "example": 80
               },
               "count": {
@@ -1965,23 +1997,19 @@
                   "example": "hours"
                 },
                 "category_name": {
-                  "type": "string",
-                  "nullable": true,
+                  "type": ["string", "null"],
                   "example": "Wellness"
                 },
                 "category_icon": {
-                  "type": "string",
-                  "nullable": true,
+                  "type": ["string", "null"],
                   "example": "😴"
                 },
                 "category_color": {
-                  "type": "string",
-                  "nullable": true,
+                  "type": ["string", "null"],
                   "example": "#663399"
                 },
                 "priority": {
-                  "type": "number",
-                  "nullable": true,
+                  "type": ["number", "null"],
                   "example": 1
                 },
                 "series": {
@@ -1995,8 +2023,7 @@
                         "example": "2023-01-01T00:00:00Z"
                       },
                       "value": {
-                        "type": "number",
-                        "nullable": true,
+                        "type": ["number", "null"],
                         "example": 42.5
                       }
                     },
@@ -2007,18 +2034,15 @@
                   "type": "object",
                   "properties": {
                     "average": {
-                      "type": "number",
-                      "nullable": true,
+                      "type": ["number", "null"],
                       "example": 35.1
                     },
                     "min": {
-                      "type": "number",
-                      "nullable": true,
+                      "type": ["number", "null"],
                       "example": 5
                     },
                     "max": {
-                      "type": "number",
-                      "nullable": true,
+                      "type": ["number", "null"],
                       "example": 80
                     },
                     "count": {
@@ -2433,7 +2457,8 @@
           {
             "schema": {
               "type": "string",
-              "minLength": 1
+              "minLength": 1,
+              "pattern": "^.*\\S.*$"
             },
             "required": false,
             "description": "Optional free-text search term (trimmed; must be at least 1 character).",
@@ -2464,7 +2489,8 @@
               "properties": {
                 "name": {
                   "type": "string",
-                  "minLength": 1
+                  "minLength": 1,
+                  "pattern": "^.*\\S.*$"
                 }
               }
             },
@@ -2788,7 +2814,8 @@
           {
             "schema": {
               "type": "string",
-              "minLength": 1
+              "minLength": 1,
+              "pattern": "^.*\\S.*$"
             },
             "required": false,
             "description": "Optional free-text search term (trimmed; must be at least 1 character).",
@@ -2819,7 +2846,8 @@
               "properties": {
                 "name": {
                   "type": "string",
-                  "minLength": 1
+                  "minLength": 1,
+                  "pattern": "^.*\\S.*$"
                 },
                 "categoryId": {
                   "$ref": "#/components/schemas/Uuid"
@@ -3187,7 +3215,8 @@
           {
             "schema": {
               "type": "string",
-              "minLength": 1
+              "minLength": 1,
+              "pattern": "^.*\\S.*$"
             },
             "required": false,
             "description": "Optional search term applied to log notes/metadata",
@@ -3624,7 +3653,8 @@
           {
             "schema": {
               "type": "string",
-              "minLength": 1
+              "minLength": 1,
+              "pattern": "^.*\\S.*$"
             },
             "required": false,
             "description": "Optional free-text search term (trimmed; must be at least 1 character).",
@@ -3722,15 +3752,6 @@
             "description": "A UUID identifier for the resource",
             "name": "id",
             "in": "path"
-          },
-          {
-            "schema": {
-              "$ref": "#/components/schemas/Uuid"
-            },
-            "required": true,
-            "description": "Metric identifier required for ownership validation",
-            "name": "metricId",
-            "in": "query"
           }
         ],
         "responses": {
@@ -3790,15 +3811,6 @@
             "description": "A UUID identifier for the resource",
             "name": "id",
             "in": "path"
-          },
-          {
-            "schema": {
-              "$ref": "#/components/schemas/Uuid"
-            },
-            "required": true,
-            "description": "Metric identifier required for ownership validation",
-            "name": "metricId",
-            "in": "query"
           }
         ],
         "requestBody": {
@@ -3864,15 +3876,6 @@
             "description": "A UUID identifier for the resource",
             "name": "id",
             "in": "path"
-          },
-          {
-            "schema": {
-              "$ref": "#/components/schemas/Uuid"
-            },
-            "required": true,
-            "description": "Metric identifier required for ownership validation",
-            "name": "metricId",
-            "in": "query"
           }
         ],
         "responses": {
@@ -3919,15 +3922,6 @@
             "description": "A UUID identifier for the resource",
             "name": "id",
             "in": "path"
-          },
-          {
-            "schema": {
-              "$ref": "#/components/schemas/Uuid"
-            },
-            "required": true,
-            "description": "Metric identifier required for ownership validation",
-            "name": "metricId",
-            "in": "query"
           }
         ],
         "responses": {
@@ -3986,15 +3980,6 @@
             "description": "A UUID identifier for the resource",
             "name": "id",
             "in": "path"
-          },
-          {
-            "schema": {
-              "$ref": "#/components/schemas/Uuid"
-            },
-            "required": true,
-            "description": "Metric identifier required for ownership validation",
-            "name": "metricId",
-            "in": "query"
           }
         ],
         "requestBody": {
@@ -4020,7 +4005,35 @@
                       "type": "object",
                       "properties": {
                         "data": {
-                          "$ref": "#/components/schemas/MetricSettings"
+                          "type": "object",
+                          "properties": {
+                            "showOnDashboard": {
+                              "type": "boolean",
+                              "example": true
+                            },
+                            "priority": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 1000,
+                              "example": 1
+                            },
+                            "chartType": {
+                              "type": "string",
+                              "pattern": "^[^\\u0000-\\u001F\\u007F]*$",
+                              "example": "line"
+                            },
+                            "color": {
+                              "type": "string",
+                              "pattern": "^[^\\u0000-\\u001F\\u007F]*$",
+                              "example": "#E897A3"
+                            }
+                          },
+                          "required": [
+                            "showOnDashboard",
+                            "priority",
+                            "chartType",
+                            "color"
+                          ]
                         }
                       }
                     }
@@ -4062,39 +4075,6 @@
             "description": "UUID identifier of the metric",
             "name": "metricId",
             "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "required": false,
-            "description": "Start date for trend data (ISO 8601 format)",
-            "name": "startDate",
-            "in": "query",
-            "example": "2023-01-01T00:00:00Z"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "required": false,
-            "description": "End date for trend data (ISO 8601 format)",
-            "name": "endDate",
-            "in": "query",
-            "example": "2023-01-31T23:59:59Z"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": ["daily", "weekly", "monthly"]
-            },
-            "required": false,
-            "description": "Aggregation interval for trend data",
-            "name": "interval",
-            "in": "query",
-            "example": "daily"
           }
         ],
         "responses": {
@@ -4378,5 +4358,6 @@
         }
       }
     }
-  }
+  },
+  "webhooks": {}
 }

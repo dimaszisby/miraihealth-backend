@@ -10,6 +10,11 @@ import {
   zAlertThresholdsOptional,
   zDisplayOptions,
 } from "@/constants/zod/zod-rules.js";
+import { ZodMessages } from "@/constants/zod/zod-messages.js";
+import {
+  hasInvalidControlChars,
+  hasUnpairedSurrogates,
+} from "@/shared/utils/text-validation.js";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 
 extendZodWithOpenApi(z);
@@ -26,11 +31,20 @@ const timeFrameMixin = (data: {
     !data.deadlineDate ||
     data.deadlineDate <= data.startDate);
 
+const zDateOptionalNullable = zDateOptional
+  .optional()
+  .nullable()
+  .openapi({
+    type: ["string", "null"],
+    format: "date-time",
+    example: "2023-01-01T00:00:00Z",
+  });
+
 const settingsShared = z.object({
   metricId: zUUID,
   timeFrameEnabled: z.boolean().optional().default(false),
-  startDate: zDateOptional.optional().nullable(),
-  deadlineDate: zDateOptional.optional().nullable(),
+  startDate: zDateOptionalNullable,
+  deadlineDate: zDateOptionalNullable,
   alertEnabled: z.boolean().optional().default(false),
   alertThresholds: zAlertThresholds.nullable(),
   displayOptions: zDisplayOptions,
@@ -40,8 +54,8 @@ const settingsUpdateShared = z
   .object({
     metricId: zUUID.optional(),
     timeFrameEnabled: z.boolean().optional(),
-    startDate: zDateOptional.optional().nullable(),
-    deadlineDate: zDateOptional.optional().nullable(),
+    startDate: zDateOptionalNullable,
+    deadlineDate: zDateOptionalNullable,
     alertEnabled: z.boolean().optional(),
     alertThresholds: zAlertThresholdsOptional.nullable(),
     displayOptions: zDisplayOptions.optional(),
@@ -130,7 +144,12 @@ export const settingsBodyPartial = updateSettingsBody
       });
       return;
     }
-    if (data.timeFrameEnabled === true) {
+    const hasDateField =
+      data.startDate !== undefined || data.deadlineDate !== undefined;
+    const requiresDates =
+      data.timeFrameEnabled === true ||
+      (data.timeFrameEnabled === undefined && hasDateField);
+    if (requiresDates) {
       if (!data.startDate) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -160,7 +179,11 @@ export const settingsBodyPartial = updateSettingsBody
       }
     }
   })
-  .openapi({ minProperties: 1 });
+  .openapi({
+    minProperties: 1,
+    description:
+      "Updates must include at least one recognized field. When enabling time frames, include both startDate and deadlineDate.",
+  });
 
 const coerceBooleanString = z
   .union([z.boolean(), z.string()])
@@ -250,10 +273,41 @@ export const listMetricSettingsViaCursorSchema = z.object({
   query: listMetricSettingsViaCursorQuery,
 });
 
+const displayOptionTextPatch = z
+  .string()
+  .trim()
+  .min(1, { message: ZodMessages.metricSettings.invalidDisplayOptions })
+  .superRefine((value, ctx) => {
+    if (hasInvalidControlChars(value) || hasUnpairedSurrogates(value)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: ZodMessages.metricSettings.invalidDisplayOptions,
+      });
+    }
+  });
+
+const displayOptionsPatch = z
+  .object({
+    showOnDashboard: z.boolean().optional(),
+    priority: z.number().int().min(1).max(1000).optional(),
+    chartType: displayOptionTextPatch.optional(),
+    color: displayOptionTextPatch.optional(),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    if (!Object.keys(value).length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Provide at least one display option field to update.",
+        path: [],
+      });
+    }
+  });
+
 export const updateDisplayOptionsSchema = z.object({
   params: settingsParams,
   body: z.object({
-    displayOptions: zDisplayOptions,
+    displayOptions: displayOptionsPatch,
   }),
 });
 

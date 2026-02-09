@@ -121,7 +121,15 @@ export class MetricReadRepoSequelize implements MetricReadRepository {
       includeArr.push({
         model: models.MetricCategory,
         as: "category",
-        attributes: ["id", "name", "color", "icon", "createdAt", "updatedAt"],
+        attributes: [
+          "id",
+          "userId",
+          "name",
+          "color",
+          "icon",
+          "createdAt",
+          "updatedAt",
+        ],
       });
     }
 
@@ -155,6 +163,7 @@ export class MetricReadRepoSequelize implements MetricReadRepository {
         as: "logs",
         attributes: [
           "id",
+          "metricId",
           "logValue",
           "type",
           "loggedAt",

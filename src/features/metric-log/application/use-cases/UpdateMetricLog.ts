@@ -25,7 +25,13 @@ export class UpdateMetricLog {
     if (!log) throw new AppError("Log not found", 404);
 
     if (typeof updates.logValue !== "undefined") {
-      log.setLogValue(updates.logValue);
+      try {
+        log.setLogValue(updates.logValue);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Invalid log value";
+        throw new AppError(message, 400);
+      }
     }
     if (typeof updates.type !== "undefined") {
       log.setType(updates.type);

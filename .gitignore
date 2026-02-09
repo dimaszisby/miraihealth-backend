@@ -90,3 +90,8 @@ documents/documentation/code-for-export-reference/
 
 # actionlint docs
 docs
+
+# local actionlint artifacts (downloaded binaries / archives)
+actionlint
+actionlint_*.tar.gz
+man/actionlint.1

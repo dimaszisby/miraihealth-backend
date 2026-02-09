@@ -20,7 +20,65 @@ const SEED_IDS = {
   revenueLogOldest: "99999999-cccc-4ccc-8ccc-00000000000a",
   productivityLogLatest: "aaaaaaa1-dddd-4ddd-8ddd-00000000000b",
   productivityLogOldest: "aaaaaaa1-dddd-4ddd-8ddd-00000000000c",
+  deletableCategory: "aaaaaaaa-aaaa-4aaa-8aaa-000000000010",
+  deletableMetric1: "bbbbbbbb-bbbb-4bbb-8bbb-000000000011",
+  deletableMetric2: "bbbbbbbb-bbbb-4bbb-8bbb-000000000012",
+  deletableMetric3: "bbbbbbbb-bbbb-4bbb-8bbb-000000000019",
+  deletableMetric4: "bbbbbbbb-bbbb-4bbb-8bbb-00000000001a",
+  deletableMetricSettings1: "cccccccc-cccc-4ccc-8ccc-000000000013",
+  deletableMetricSettings2: "cccccccc-cccc-4ccc-8ccc-000000000014",
+  deletableMetricSettings3: "cccccccc-cccc-4ccc-8ccc-00000000001b",
+  deletableMetricSettings4: "cccccccc-cccc-4ccc-8ccc-00000000001c",
+  deletableLog1: "dddddddd-dddd-4ddd-8ddd-000000000015",
+  deletableLog2: "dddddddd-dddd-4ddd-8ddd-000000000016",
+  deletableLog3: "dddddddd-dddd-4ddd-8ddd-00000000001d",
+  deletableLog4: "dddddddd-dddd-4ddd-8ddd-00000000001e",
+  deletableLog5: "dddddddd-dddd-4ddd-8ddd-00000000001f",
+  deletableLog6: "dddddddd-dddd-4ddd-8ddd-000000000020",
+  settingsFreeMetric1: "eeeeeeee-eeee-4eee-8eee-000000000017",
+  settingsFreeMetric2: "eeeeeeee-eeee-4eee-8eee-000000000018",
+  settingsFreeMetric3: "eeeeeeee-eeee-4eee-8eee-000000000021",
+  settingsFreeMetric4: "eeeeeeee-eeee-4eee-8eee-000000000022",
+  settingsFreeMetric5: "eeeeeeee-eeee-4eee-8eee-000000000023",
+  settingsFreeMetric6: "eeeeeeee-eeee-4eee-8eee-000000000024",
 } as const;
+
+const DELETE_ONLY_METRIC_IDS = [
+  "bbbbbbbb-bbbb-4bbb-8bbb-000000000025",
+  "bbbbbbbb-bbbb-4bbb-8bbb-000000000026",
+  "bbbbbbbb-bbbb-4bbb-8bbb-000000000027",
+  "bbbbbbbb-bbbb-4bbb-8bbb-000000000028",
+];
+
+const EXTRA_DELETABLE_CATEGORY_IDS = Array.from(
+  { length: 120 },
+  (_, index) =>
+    `aaaaaaaa-aaaa-4aaa-8aaa-${String(30 + index).padStart(12, "0")}`,
+);
+
+const EXTRA_DELETABLE_SETTINGS_METRIC_IDS = Array.from(
+  { length: 24 },
+  (_, index) =>
+    `bbbbbbbb-bbbb-4bbb-8bbb-${String(30 + index).padStart(12, "0")}`,
+);
+
+const EXTRA_DELETABLE_SETTINGS_IDS = Array.from(
+  { length: 24 },
+  (_, index) =>
+    `cccccccc-cccc-4ccc-8ccc-${String(30 + index).padStart(12, "0")}`,
+);
+
+const EXTRA_DELETABLE_LOG_IDS = Array.from(
+  { length: 120 },
+  (_, index) =>
+    `dddddddd-dddd-4ddd-8ddd-${String(100 + index).padStart(12, "0")}`,
+);
+
+const EXTRA_SETTINGS_FREE_METRIC_IDS = Array.from(
+  { length: 600 },
+  (_, index) =>
+    `eeeeeeee-eeee-4eee-8eee-${String(25 + index).padStart(12, "0")}`,
+);
 
 const BASE_DATES = {
   oldest: new Date("2024-12-15T00:00:00.000Z"),
@@ -100,6 +158,37 @@ async function seedData(transaction: Transaction) {
     { transaction },
   );
 
+  const deletableCategory = await models.MetricCategory.create(
+    {
+      id: SEED_IDS.deletableCategory,
+      userId: primaryUser.id,
+      name: "Deletable",
+      color: "#10B981",
+      icon: "🧪",
+      createdAt: now,
+      updatedAt: now,
+    },
+    { transaction },
+  );
+
+  const extraDeletableCategories = [];
+  for (const [index, id] of EXTRA_DELETABLE_CATEGORY_IDS.entries()) {
+    extraDeletableCategories.push(
+      await models.MetricCategory.create(
+        {
+          id,
+          userId: primaryUser.id,
+          name: `Deletable Extra ${index + 1}`,
+          color: "#10B981",
+          icon: "🧪",
+          createdAt: now,
+          updatedAt: now,
+        },
+        { transaction },
+      ),
+    );
+  }
+
   const revenueMetric = await models.Metric.create(
     {
       id: SEED_IDS.revenueMetric,
@@ -114,6 +203,216 @@ async function seedData(transaction: Transaction) {
     },
     { transaction },
   );
+
+  const deletableMetric1 = await models.Metric.create(
+    {
+      id: SEED_IDS.deletableMetric1,
+      userId: primaryUser.id,
+      categoryId: deletableCategory.id,
+      name: "Delete Pool Metric 1",
+      defaultUnit: "count",
+      description: "Used for contract delete tests",
+      isPublic: false,
+      createdAt: now,
+      updatedAt: now,
+    },
+    { transaction },
+  );
+
+  const deletableMetric2 = await models.Metric.create(
+    {
+      id: SEED_IDS.deletableMetric2,
+      userId: primaryUser.id,
+      categoryId: deletableCategory.id,
+      name: "Delete Pool Metric 2",
+      defaultUnit: "count",
+      description: "Used for contract delete tests",
+      isPublic: false,
+      createdAt: now,
+      updatedAt: now,
+    },
+    { transaction },
+  );
+
+  const deletableMetric3 = await models.Metric.create(
+    {
+      id: SEED_IDS.deletableMetric3,
+      userId: primaryUser.id,
+      categoryId: deletableCategory.id,
+      name: "Delete Pool Metric 3",
+      defaultUnit: "count",
+      description: "Used for contract delete tests",
+      isPublic: false,
+      createdAt: now,
+      updatedAt: now,
+    },
+    { transaction },
+  );
+
+  const deletableMetric4 = await models.Metric.create(
+    {
+      id: SEED_IDS.deletableMetric4,
+      userId: primaryUser.id,
+      categoryId: deletableCategory.id,
+      name: "Delete Pool Metric 4",
+      defaultUnit: "count",
+      description: "Used for contract delete tests",
+      isPublic: false,
+      createdAt: now,
+      updatedAt: now,
+    },
+    { transaction },
+  );
+
+  const deleteOnlyMetrics = [];
+  for (const [index, id] of DELETE_ONLY_METRIC_IDS.entries()) {
+    deleteOnlyMetrics.push(
+      await models.Metric.create(
+        {
+          id,
+          userId: primaryUser.id,
+          categoryId: deletableCategory.id,
+          name: `Delete Only Metric ${index + 1}`,
+          defaultUnit: "count",
+          description: "Used for contract delete tests",
+          isPublic: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        { transaction },
+      ),
+    );
+  }
+
+  const extraDeletableSettingMetrics = [];
+  for (const [index, id] of EXTRA_DELETABLE_SETTINGS_METRIC_IDS.entries()) {
+    extraDeletableSettingMetrics.push(
+      await models.Metric.create(
+        {
+          id,
+          userId: primaryUser.id,
+          categoryId: deletableCategory.id,
+          name: `Delete Settings Metric ${index + 1}`,
+          defaultUnit: "count",
+          description: "Used for contract settings delete tests",
+          isPublic: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        { transaction },
+      ),
+    );
+  }
+
+  const settingsFreeMetric1 = await models.Metric.create(
+    {
+      id: SEED_IDS.settingsFreeMetric1,
+      userId: primaryUser.id,
+      categoryId: deletableCategory.id,
+      name: "Settings Pool Metric 1",
+      defaultUnit: "count",
+      description: "Used for contract settings create tests",
+      isPublic: false,
+      createdAt: now,
+      updatedAt: now,
+    },
+    { transaction },
+  );
+
+  const settingsFreeMetric2 = await models.Metric.create(
+    {
+      id: SEED_IDS.settingsFreeMetric2,
+      userId: primaryUser.id,
+      categoryId: deletableCategory.id,
+      name: "Settings Pool Metric 2",
+      defaultUnit: "count",
+      description: "Used for contract settings create tests",
+      isPublic: false,
+      createdAt: now,
+      updatedAt: now,
+    },
+    { transaction },
+  );
+
+  const settingsFreeMetric3 = await models.Metric.create(
+    {
+      id: SEED_IDS.settingsFreeMetric3,
+      userId: primaryUser.id,
+      categoryId: deletableCategory.id,
+      name: "Settings Pool Metric 3",
+      defaultUnit: "count",
+      description: "Used for contract settings create tests",
+      isPublic: false,
+      createdAt: now,
+      updatedAt: now,
+    },
+    { transaction },
+  );
+
+  const settingsFreeMetric4 = await models.Metric.create(
+    {
+      id: SEED_IDS.settingsFreeMetric4,
+      userId: primaryUser.id,
+      categoryId: deletableCategory.id,
+      name: "Settings Pool Metric 4",
+      defaultUnit: "count",
+      description: "Used for contract settings create tests",
+      isPublic: false,
+      createdAt: now,
+      updatedAt: now,
+    },
+    { transaction },
+  );
+
+  const settingsFreeMetric5 = await models.Metric.create(
+    {
+      id: SEED_IDS.settingsFreeMetric5,
+      userId: primaryUser.id,
+      categoryId: deletableCategory.id,
+      name: "Settings Pool Metric 5",
+      defaultUnit: "count",
+      description: "Used for contract settings create tests",
+      isPublic: false,
+      createdAt: now,
+      updatedAt: now,
+    },
+    { transaction },
+  );
+
+  const settingsFreeMetric6 = await models.Metric.create(
+    {
+      id: SEED_IDS.settingsFreeMetric6,
+      userId: primaryUser.id,
+      categoryId: deletableCategory.id,
+      name: "Settings Pool Metric 6",
+      defaultUnit: "count",
+      description: "Used for contract settings create tests",
+      isPublic: false,
+      createdAt: now,
+      updatedAt: now,
+    },
+    { transaction },
+  );
+
+  const extraSettingsFreeMetrics = [];
+  for (const [index, id] of EXTRA_SETTINGS_FREE_METRIC_IDS.entries()) {
+    extraSettingsFreeMetrics.push(
+      await models.Metric.create(
+        {
+          id,
+          userId: primaryUser.id,
+          categoryId: deletableCategory.id,
+          name: `Settings Pool Metric ${index + 7}`,
+          defaultUnit: "count",
+          description: "Used for contract settings create tests",
+          isPublic: false,
+          createdAt: now,
+          updatedAt: now,
+        },
+        { transaction },
+      ),
+    );
+  }
 
   const productivityMetric = await models.Metric.create(
     {
@@ -182,6 +481,143 @@ async function seedData(transaction: Transaction) {
     { transaction },
   );
 
+  const deletableMetricSettings1 = await models.MetricSettings.create(
+    {
+      id: SEED_IDS.deletableMetricSettings1,
+      metricId: deletableMetric1.id,
+      goalEnabled: false,
+      goalType: null,
+      goalValue: null,
+      timeFrameEnabled: false,
+      startDate: null,
+      deadlineDate: null,
+      alertEnabled: false,
+      alertThresholds: null,
+      displayOptions: {
+        showOnDashboard: false,
+        priority: 10,
+        chartType: "line",
+        color: "#10B981",
+      },
+      isAchieved: false,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    },
+    { transaction },
+  );
+
+  const deletableMetricSettings2 = await models.MetricSettings.create(
+    {
+      id: SEED_IDS.deletableMetricSettings2,
+      metricId: deletableMetric2.id,
+      goalEnabled: false,
+      goalType: null,
+      goalValue: null,
+      timeFrameEnabled: false,
+      startDate: null,
+      deadlineDate: null,
+      alertEnabled: false,
+      alertThresholds: null,
+      displayOptions: {
+        showOnDashboard: false,
+        priority: 11,
+        chartType: "line",
+        color: "#10B981",
+      },
+      isAchieved: false,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    },
+    { transaction },
+  );
+
+  const deletableMetricSettings3 = await models.MetricSettings.create(
+    {
+      id: SEED_IDS.deletableMetricSettings3,
+      metricId: deletableMetric3.id,
+      goalEnabled: false,
+      goalType: null,
+      goalValue: null,
+      timeFrameEnabled: false,
+      startDate: null,
+      deadlineDate: null,
+      alertEnabled: false,
+      alertThresholds: null,
+      displayOptions: {
+        showOnDashboard: false,
+        priority: 12,
+        chartType: "line",
+        color: "#10B981",
+      },
+      isAchieved: false,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    },
+    { transaction },
+  );
+
+  const deletableMetricSettings4 = await models.MetricSettings.create(
+    {
+      id: SEED_IDS.deletableMetricSettings4,
+      metricId: deletableMetric4.id,
+      goalEnabled: false,
+      goalType: null,
+      goalValue: null,
+      timeFrameEnabled: false,
+      startDate: null,
+      deadlineDate: null,
+      alertEnabled: false,
+      alertThresholds: null,
+      displayOptions: {
+        showOnDashboard: false,
+        priority: 13,
+        chartType: "line",
+        color: "#10B981",
+      },
+      isAchieved: false,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    },
+    { transaction },
+  );
+
+  const extraDeletableSettings = [];
+  for (const [index, id] of EXTRA_DELETABLE_SETTINGS_IDS.entries()) {
+    const metric = extraDeletableSettingMetrics[index];
+    if (!metric) continue;
+    extraDeletableSettings.push(
+      await models.MetricSettings.create(
+        {
+          id,
+          metricId: metric.id,
+          goalEnabled: false,
+          goalType: null,
+          goalValue: null,
+          timeFrameEnabled: false,
+          startDate: null,
+          deadlineDate: null,
+          alertEnabled: false,
+          alertThresholds: null,
+          displayOptions: {
+            showOnDashboard: false,
+            priority: 20 + index,
+            chartType: "line",
+            color: "#10B981",
+          },
+          isAchieved: false,
+          isActive: true,
+          createdAt: now,
+          updatedAt: now,
+        },
+        { transaction },
+      ),
+    );
+  }
+
   const revenueLogs = await models.MetricLog.bulkCreate(
     [
       {
@@ -205,6 +641,100 @@ async function seedData(transaction: Transaction) {
     ],
     { transaction },
   );
+
+  type SeedMetricLogEntry = {
+    id: string;
+    metricId: string;
+    logValue: number;
+    type: "manual" | "automatic";
+    loggedAt: Date;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+
+  const deletableLogEntries: SeedMetricLogEntry[] = [
+    {
+      id: SEED_IDS.deletableLog1,
+      metricId: deletableMetric1.id,
+      logValue: 10,
+      type: "manual",
+      loggedAt: BASE_DATES.mid,
+      createdAt: BASE_DATES.mid,
+      updatedAt: BASE_DATES.mid,
+    },
+    {
+      id: SEED_IDS.deletableLog2,
+      metricId: deletableMetric2.id,
+      logValue: 20,
+      type: "manual",
+      loggedAt: BASE_DATES.mid,
+      createdAt: BASE_DATES.mid,
+      updatedAt: BASE_DATES.mid,
+    },
+    {
+      id: SEED_IDS.deletableLog3,
+      metricId: deletableMetric1.id,
+      logValue: 30,
+      type: "manual",
+      loggedAt: BASE_DATES.latest,
+      createdAt: BASE_DATES.latest,
+      updatedAt: BASE_DATES.latest,
+    },
+    {
+      id: SEED_IDS.deletableLog4,
+      metricId: deletableMetric2.id,
+      logValue: 40,
+      type: "manual",
+      loggedAt: BASE_DATES.latest,
+      createdAt: BASE_DATES.latest,
+      updatedAt: BASE_DATES.latest,
+    },
+    {
+      id: SEED_IDS.deletableLog5,
+      metricId: deletableMetric3.id,
+      logValue: 50,
+      type: "manual",
+      loggedAt: BASE_DATES.mid,
+      createdAt: BASE_DATES.mid,
+      updatedAt: BASE_DATES.mid,
+    },
+    {
+      id: SEED_IDS.deletableLog6,
+      metricId: deletableMetric4.id,
+      logValue: 60,
+      type: "manual",
+      loggedAt: BASE_DATES.mid,
+      createdAt: BASE_DATES.mid,
+      updatedAt: BASE_DATES.mid,
+    },
+  ];
+
+  const deletableLogMetrics = [
+    deletableMetric1,
+    deletableMetric2,
+    deletableMetric3,
+    deletableMetric4,
+  ];
+  for (const [index, id] of EXTRA_DELETABLE_LOG_IDS.entries()) {
+    const metric = deletableLogMetrics[index % deletableLogMetrics.length];
+    if (!metric) continue;
+    const loggedAt = new Date(
+      BASE_DATES.oldest.getTime() + (index + 1) * 60 * 1000,
+    );
+    deletableLogEntries.push({
+      id,
+      metricId: metric.id,
+      logValue: 100 + index,
+      type: "manual",
+      loggedAt,
+      createdAt: loggedAt,
+      updatedAt: loggedAt,
+    });
+  }
+
+  const deletableLogs = await models.MetricLog.bulkCreate(deletableLogEntries, {
+    transaction,
+  });
 
   const productivityLogs = await models.MetricLog.bulkCreate(
     [
@@ -237,9 +767,30 @@ async function seedData(transaction: Transaction) {
     productivityCategory,
     revenueMetric,
     productivityMetric,
+    deletableCategory,
+    extraDeletableCategories,
+    deletableMetric1,
+    deletableMetric2,
+    deletableMetric3,
+    deletableMetric4,
+    deleteOnlyMetrics,
+    extraDeletableSettingMetrics,
+    settingsFreeMetric1,
+    settingsFreeMetric2,
+    settingsFreeMetric3,
+    settingsFreeMetric4,
+    settingsFreeMetric5,
+    settingsFreeMetric6,
+    extraSettingsFreeMetrics,
     revenueMetricSettings,
     productivityMetricSettings,
+    deletableMetricSettings1,
+    deletableMetricSettings2,
+    deletableMetricSettings3,
+    deletableMetricSettings4,
+    extraDeletableSettings,
     revenueLogs,
+    deletableLogs,
     productivityLogs,
   };
 }
@@ -309,6 +860,32 @@ async function main() {
         latestLogId: result.productivityLogs[1]?.id ?? null,
         latestValue: result.productivityLogs[1]?.logValue ?? null,
       },
+    },
+    deletable: {
+      categoryIds: [
+        result.deletableCategory.id,
+        ...result.extraDeletableCategories.map((category) => category.id),
+      ],
+      metricIds: result.deleteOnlyMetrics.map((metric) => metric.id),
+      metricIdsWithoutSettings: [
+        result.settingsFreeMetric1.id,
+        result.settingsFreeMetric2.id,
+        result.settingsFreeMetric3.id,
+        result.settingsFreeMetric4.id,
+        result.settingsFreeMetric5.id,
+        result.settingsFreeMetric6.id,
+        ...result.extraSettingsFreeMetrics.map((metric) => metric.id),
+      ],
+      metricSettingsIds: [
+        result.deletableMetricSettings1.id,
+        result.deletableMetricSettings2.id,
+        result.deletableMetricSettings3.id,
+        result.deletableMetricSettings4.id,
+        ...result.extraDeletableSettings.map((settings) => settings.id),
+      ],
+      metricLogIds: result.deletableLogs
+        .map((log) => log?.id ?? null)
+        .filter(Boolean),
     },
   };
 

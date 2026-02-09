@@ -10,11 +10,19 @@ import {
   settingsBody,
   settingsBodyPartial,
 } from "@/features/metric-settings/infrastructure/http/schema.zod.js";
+import { metricLogBody } from "@/features/metric-log/infrastructure/http/schema.zod.js";
 
 // Common Schemas
-const EMAIL_PATTERN = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\\\.[A-Za-z]{2,}$";
+const EMAIL_PATTERN = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
 const EMAIL_REGEX = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 const TZ_REGEX = /^([A-Za-z_]+(?:\/[A-Za-z0-9_+-]+)+|UTC)$/;
+const UUID_PATTERN =
+  "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$";
+const UUID_REGEX = new RegExp(UUID_PATTERN);
+const CONTROL_CHARS_PATTERN = "^[^\\u0000-\\u001F\\u007F]*$";
+const CONTROL_CHARS_REGEX = new RegExp(CONTROL_CHARS_PATTERN);
+const NON_WHITESPACE_PATTERN = "^.*\\S.*$";
+const NON_WHITESPACE_REGEX = /^.*\S.*$/;
 
 const emailSchema = (example: string) =>
   z
@@ -25,9 +33,10 @@ const emailSchema = (example: string) =>
 
 export const UuidSchema = registerSchema(
   "Uuid",
-  z.string().uuid().openapi({
+  z.string().uuid().regex(UUID_REGEX).openapi({
     description: "A UUID identifier",
-    example: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    example: "123e4567-e89b-42d3-a456-426614174000",
+    pattern: UUID_PATTERN,
   }),
 );
 
@@ -205,6 +214,19 @@ const cursorSearchParam = queryParamMetadata(
   "q",
   "Optional free-text search term (trimmed; must be at least 1 character).",
 );
+const cursorSearchSchema = z
+  .string()
+  .min(1)
+  .regex(NON_WHITESPACE_REGEX)
+  .openapi({
+    ...cursorSearchParam,
+    pattern: NON_WHITESPACE_PATTERN,
+  });
+const nonWhitespaceSearchFieldSchema = z
+  .string()
+  .min(1)
+  .regex(NON_WHITESPACE_REGEX)
+  .openapi({ pattern: NON_WHITESPACE_PATTERN });
 
 export const MetricCursorQueryParamsSchema = registerSchema(
   "MetricCursorQueryParams",
@@ -229,12 +251,12 @@ export const MetricCursorQueryParamsSchema = registerSchema(
       ] as const)
       .optional()
       .openapi(cursorSortParam()),
-    q: z.string().min(1).optional().openapi(cursorSearchParam),
+    q: cursorSearchSchema.optional(),
     after: z.string().optional().openapi(cursorAfterParam),
     includeTotal: z.boolean().optional().openapi(cursorIncludeTotalParam),
     filter: z
       .object({
-        name: z.string().min(1).optional(),
+        name: nonWhitespaceSearchFieldSchema.optional(),
         categoryId: UuidSchema.optional(),
       })
       .partial()
@@ -271,12 +293,12 @@ export const MetricCategoryCursorQueryParamsSchema = registerSchema(
       ] as const)
       .optional()
       .openapi(cursorSortParam()),
-    q: z.string().min(1).optional().openapi(cursorSearchParam),
+    q: cursorSearchSchema.optional(),
     after: z.string().optional().openapi(cursorAfterParam),
     includeTotal: z.boolean().optional().openapi(cursorIncludeTotalParam),
     filter: z
       .object({
-        name: z.string().min(1).optional(),
+        name: nonWhitespaceSearchFieldSchema.optional(),
       })
       .partial()
       .optional()
@@ -315,13 +337,15 @@ export const MetricLogCursorQueryParamsSchema = registerSchema(
     q: z
       .string()
       .min(1)
+      .regex(NON_WHITESPACE_REGEX)
       .optional()
-      .openapi(
-        queryParamMetadata(
+      .openapi({
+        ...queryParamMetadata(
           "q",
           "Optional search term applied to log notes/metadata",
         ),
-      ),
+        pattern: NON_WHITESPACE_PATTERN,
+      }),
     after: z.string().optional().openapi(cursorAfterParam),
     includeTotal: z.boolean().optional().openapi(cursorIncludeTotalParam),
     filter: z
@@ -361,7 +385,7 @@ export const MetricSettingsCursorQueryParamsSchema = registerSchema(
       ] as const)
       .optional()
       .openapi(cursorSortParam()),
-    q: z.string().min(1).optional().openapi(cursorSearchParam),
+    q: cursorSearchSchema.optional(),
     after: z.string().optional().openapi(cursorAfterParam),
     includeTotal: z.boolean().optional().openapi(cursorIncludeTotalParam),
     filter: z
@@ -653,31 +677,24 @@ export const MetricLogSchema = registerSchema(
 
 export const CreateMetricLogRequestSchema = registerSchema(
   "CreateMetricLogRequest",
-  z.object({
-    metricId: UuidSchema,
-    logValue: z.number().min(0).openapi({ example: 5000 }),
-    type: z.enum(["manual", "automatic"]).openapi({ example: "manual" }),
-    loggedAt: z
-      .string()
-      .datetime()
-      .optional()
-      .openapi({ example: "2023-01-01T10:00:00Z" }),
+  metricLogBody.openapi({
+    example: {
+      metricId: "55555555-eeee-4eee-8eee-000000000005",
+      logValue: 5000,
+      type: "manual",
+      loggedAt: "2023-01-01T10:00:00Z",
+    },
   }),
 );
 
 export const UpdateMetricLogRequestSchema = registerSchema(
   "UpdateMetricLogRequest",
-  z.object({
-    logValue: z.number().min(0).optional().openapi({ example: 12000 }),
-    type: z
-      .enum(["manual", "automatic"])
-      .optional()
-      .openapi({ example: "manual" }),
-    loggedAt: z
-      .string()
-      .datetime()
-      .optional()
-      .openapi({ example: "2023-01-01T13:00:00Z" }),
+  metricLogBody.partial().openapi({
+    example: {
+      logValue: 12000,
+      type: "manual",
+      loggedAt: "2023-01-01T13:00:00Z",
+    },
   }),
 );
 
@@ -704,12 +721,23 @@ export const MetricLogCursorResponseSchema = registerSchema(
 );
 
 // Metric Settings Schemas
-const MetricDisplayOptionsSchema = z.object({
+export const MetricDisplayOptionsSchema = z.object({
   showOnDashboard: z.boolean().openapi({ example: true }),
-  priority: z.number().openapi({ example: 1 }),
-  chartType: z.string().openapi({ example: "line" }),
-  color: z.string().openapi({ example: "#E897A3" }),
+  priority: z.number().int().min(1).max(1000).openapi({ example: 1 }),
+  chartType: z
+    .string()
+    .regex(CONTROL_CHARS_REGEX)
+    .openapi({ example: "line", pattern: CONTROL_CHARS_PATTERN }),
+  color: z
+    .string()
+    .regex(CONTROL_CHARS_REGEX)
+    .openapi({ example: "#E897A3", pattern: CONTROL_CHARS_PATTERN }),
 });
+
+const MetricSettingsGoalTypeSchema = z.union([
+  z.enum(["cumulative", "incremental"]),
+  z.null(),
+]);
 
 export const MetricSettingsSchema = registerSchema(
   "MetricSettings",
@@ -718,10 +746,7 @@ export const MetricSettingsSchema = registerSchema(
     metricId: UuidSchema,
     isActive: z.boolean().openapi({ example: true }),
     goalEnabled: z.boolean().openapi({ example: true }),
-    goalType: z
-      .enum(["cumulative", "incremental"])
-      .nullable()
-      .openapi({ example: "cumulative" }),
+    goalType: MetricSettingsGoalTypeSchema.openapi({ example: "cumulative" }),
     goalValue: z.number().nullable().openapi({ example: 10000 }),
     timeFrameEnabled: z.boolean().openapi({ example: false }),
     startDate: z
@@ -796,17 +821,43 @@ export const UpdateMetricSettingsRequestSchema = registerSchema(
   }),
 );
 
+const displayOptionPatchTextSchema = z
+  .string()
+  .min(1)
+  .regex(CONTROL_CHARS_REGEX)
+  .openapi({ pattern: CONTROL_CHARS_PATTERN });
+
+const MetricDisplayOptionsPatchSchema = z
+  .object({
+    showOnDashboard: z.boolean().optional(),
+    priority: z.number().int().min(1).max(1000).optional(),
+    chartType: displayOptionPatchTextSchema.optional(),
+    color: displayOptionPatchTextSchema.optional(),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    if (!Object.keys(value).length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Provide at least one display option field to update.",
+        path: [],
+      });
+    }
+  })
+  .openapi({
+    minProperties: 1,
+    example: {
+      showOnDashboard: true,
+      priority: 2,
+      chartType: "bar",
+      color: "#00FFAA",
+    },
+  });
+
 export const UpdateDisplayOptionsRequestSchema = registerSchema(
   "UpdateDisplayOptionsRequest",
   z.object({
-    displayOptions: MetricDisplayOptionsSchema.partial().openapi({
-      example: {
-        showOnDashboard: true,
-        priority: 2,
-        chartType: "bar",
-        color: "#00FFAA",
-      },
-    }),
+    displayOptions: MetricDisplayOptionsPatchSchema,
   }),
 );
 
@@ -848,10 +899,7 @@ export const TrendDataPointSchema = registerSchema(
 
 export const TrendResponseSchema = registerSchema(
   "TrendResponse",
-  z.object({
-    metricId: UuidSchema,
-    trend: z.array(TrendDataPointSchema),
-  }),
+  z.array(TrendDataPointSchema),
 );
 
 export const GetTrendRequestSchema = registerSchema(

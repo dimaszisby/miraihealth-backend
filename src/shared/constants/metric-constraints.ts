@@ -11,3 +11,8 @@ export const METRIC_UNIT_RULE = {
 export const METRIC_DESCRIPTION_RULE = {
   max: 512,
 };
+
+export const METRIC_LOG_VALUE_RULE = {
+  min: 0,
+  max: 1_000_000,
+};

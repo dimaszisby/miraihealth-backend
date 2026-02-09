@@ -38,6 +38,45 @@ const DEFAULT_TAGS =
 const HEALTH_TIMEOUT_MS = Number(
   process.env.SCHEMATHESIS_HEALTH_TIMEOUT_MS ?? 10000,
 );
+const LOCAL_PROFILE_PRESETS = {
+  quick: {
+    mode: "positive",
+    checks:
+      "not_a_server_error,status_code_conformance,content_type_conformance,response_headers_conformance,response_schema_conformance,positive_data_acceptance",
+    phases: "examples",
+    workers: "2",
+    maxExamples: "10",
+    maxFailures: "10",
+    suppressHealthChecks: "too_slow,filter_too_much",
+  },
+  gate: {
+    mode: "positive",
+    checks:
+      "not_a_server_error,status_code_conformance,content_type_conformance,response_headers_conformance,response_schema_conformance,positive_data_acceptance",
+    phases: "examples,coverage,fuzzing",
+    workers: "2",
+    maxExamples: "15",
+    maxFailures: "15",
+    suppressHealthChecks: "too_slow,filter_too_much",
+  },
+  full: {
+    mode: "positive",
+    checks:
+      "not_a_server_error,status_code_conformance,content_type_conformance,response_headers_conformance,response_schema_conformance,positive_data_acceptance",
+    phases: "examples,coverage,fuzzing,stateful",
+    workers: "4",
+    maxExamples: "50",
+    maxFailures: "30",
+    suppressHealthChecks: "too_slow,filter_too_much",
+  },
+  exploratory: {
+    mode: "all",
+    checks: "all",
+    phases: "examples,coverage,fuzzing,stateful",
+    workers: "4",
+    maxExamples: "50",
+  },
+};
 
 function buildTags(tagString) {
   return tagString
@@ -63,6 +102,19 @@ function runCommand(command, args, options = {}) {
       );
     });
   });
+}
+
+function resolveLocalProfile(input) {
+  const raw = String(input ?? "quick")
+    .trim()
+    .toLowerCase();
+  if (raw in LOCAL_PROFILE_PRESETS) {
+    return raw;
+  }
+  logger.warn(
+    `[schemathesis:local] Unknown SCHEMATHESIS_LOCAL_PROFILE="${raw}". Falling back to "quick".`,
+  );
+  return "quick";
 }
 
 async function main() {
@@ -125,21 +177,38 @@ async function main() {
 
   const junitPath = path.join(reportDir, "schemathesis-local.xml");
   const harPath = path.join(reportDir, "schemathesis-local.har");
+  const profile = resolveLocalProfile(process.env.SCHEMATHESIS_LOCAL_PROFILE);
+  const preset = LOCAL_PROFILE_PRESETS[profile];
+  const mode = process.env.SCHEMATHESIS_LOCAL_MODE ?? preset.mode;
+  const checks =
+    process.env.SCHEMATHESIS_LOCAL_CHECKS ?? preset.checks ?? "all";
+  const phases = process.env.SCHEMATHESIS_LOCAL_PHASES ?? preset.phases;
+  const workers = process.env.SCHEMATHESIS_LOCAL_WORKERS ?? preset.workers;
+  const maxExamples =
+    process.env.SCHEMATHESIS_LOCAL_MAX_EXAMPLES ?? preset.maxExamples;
+  const suppressHealthChecks =
+    process.env.SCHEMATHESIS_LOCAL_SUPPRESS_HEALTH_CHECKS ??
+    preset.suppressHealthChecks;
+  const maxFailures =
+    process.env.SCHEMATHESIS_LOCAL_MAX_FAILURES ?? preset.maxFailures;
+  const requestTimeout = process.env.SCHEMATHESIS_LOCAL_REQUEST_TIMEOUT;
+  const seed = process.env.SCHEMATHESIS_LOCAL_SEED;
 
   const args = [
     "run",
     specPath,
     "--url",
     baseUrl,
+    "--mode",
+    mode,
     "--checks",
-    "all",
+    checks,
     "--phases",
-    process.env.SCHEMATHESIS_LOCAL_PHASES ??
-      "examples,coverage,fuzzing,stateful",
+    phases,
     "--workers",
-    process.env.SCHEMATHESIS_LOCAL_WORKERS ?? "auto",
+    workers,
     "--max-examples",
-    process.env.SCHEMATHESIS_LOCAL_MAX_EXAMPLES ?? "50",
+    maxExamples,
     "--report",
     "junit,har",
     "--report-junit-path",
@@ -149,6 +218,24 @@ async function main() {
     "--header",
     `Authorization: Bearer ${token}`,
   ];
+  if (suppressHealthChecks) {
+    suppressHealthChecks
+      .split(",")
+      .map((check) => check.trim())
+      .filter(Boolean)
+      .forEach((check) => {
+        args.push("--suppress-health-check", check);
+      });
+  }
+  if (maxFailures) {
+    args.push("--max-failures", maxFailures);
+  }
+  if (requestTimeout) {
+    args.push("--request-timeout", requestTimeout);
+  }
+  if (seed) {
+    args.push("--seed", seed);
+  }
   try {
     await fs.access(hookFilePath);
   } catch {
@@ -171,11 +258,16 @@ async function main() {
       });
   }
 
+  logger.info(
+    `[schemathesis:local] Profile "${profile}" resolved to mode=${mode}, phases=${phases}, workers=${workers}, maxExamples=${maxExamples}, maxFailures=${maxFailures ?? "unset"}, suppressHealthChecks=${suppressHealthChecks ?? "unset"}.`,
+  );
   logger.info("[schemathesis:local] Running Schemathesis with args:", args);
 
   try {
     const env = {
       ...process.env,
+      SCHEMATHESIS_LOCAL_TOKEN: token,
+      SCHEMATHESIS_LOCAL_MODE_EFFECTIVE: mode,
       SCHEMATHESIS_SEED_FILE: process.env.SCHEMATHESIS_SEED_FILE ?? seedPath,
       SCHEMATHESIS_HOOKS: process.env.SCHEMATHESIS_HOOKS ?? DEFAULT_HOOK_MODULE,
       PYTHONPATH: [repoRoot, process.env.PYTHONPATH]
