@@ -22,9 +22,17 @@
 
 - `npm run test:contract:local` – seeds deterministic data (unless `SKIP_CONTRACT_SEED=true`) and runs all Newman collections against the locally running backend using `documents/tests/4-contract-tests/postman-newman/environments/lakira-local.postman_environment.json`.
 - `npm run test:contract:staging` – runs the same collections against staging using secrets injected via `STAGING_*` environment variables.
-- `npm run test:contract:schemathesis:local` – runs Schemathesis against the generated OpenAPI file using `SCHEMATHESIS_LOCAL_TOKEN` from `tmp/contract-seed.json` (override `SCHEMATHESIS_LOCAL_BASE_URL=http://localhost:8002/api/v1` when booting via `.env.test`).
+- `npm run test:contract:schemathesis:local` – runs Schemathesis against the generated OpenAPI file using `SCHEMATHESIS_LOCAL_TOKEN` from `tmp/contract-seed.json`.
+- `npm run test:contract:schemathesis:local:quick` – fast local smoke loop (`examples` only).
+- `npm run test:contract:schemathesis:local:gate` – PR-like depth (`examples,coverage,fuzzing`).
+- `npm run test:contract:schemathesis:local:full` – deepest deterministic local depth (`mode=positive`, `examples,coverage,fuzzing,stateful`).
+- `npm run test:contract:schemathesis:local:exploratory` – non-blocking noisy depth (`mode=all`) for explicit negative-case exploration.
 - `npm run test:contract:schemathesis:staging` – Schemathesis fuzzing pointed at staging; requires `SCHEMATHESIS_STAGING_BASE_URL` + `SCHEMATHESIS_STAGING_TOKEN`.
-- `npm run contract:local:full` – one-stop helper that builds the backend, runs migrations + seeds, boots `npm run start:test` with `DISABLE_RATE_LIMITING=true`, waits for `/api/v1/health`, then executes both Newman and Schemathesis before tearing the server down. Preferred way to reproduce the CI `contract_local` job locally. Defaults to `PORT=4000` for parity with GitHub Actions; override via `CONTRACT_LOCAL_PORT=8002 npm run contract:local:full` if you need a different port (the helper will propagate the same port to the wait-on probes and Schemathesis base URL). The helper auto-detects `.venv-schemathesis/bin/schemathesis` (or uses `SCHEMATHESIS_CLI` if you set one), so run the Python virtualenv installation once before invoking it.
+- `npm run contract:local:quick` – orchestrated local run (build/migrate/seed/start + Newman + Schemathesis quick profile).
+- `npm run contract:local:gate` – orchestrated local run with gate profile.
+- `npm run contract:local:full` – orchestrated local run with full profile. Preferred for parity with CI deep checks.
+- `npm run contract:local:exploratory` – orchestrated local run with exploratory profile (`mode=all`) for opt-in deep fuzzing.
+- All orchestration scripts default to `PORT=4000` for parity with GitHub Actions; override via `CONTRACT_LOCAL_PORT=8002 npm run contract:local:quick` if needed (the helper propagates the same port to wait-on probes and Schemathesis base URL). The helper auto-detects `.venv-schemathesis/bin/schemathesis` (or uses `SCHEMATHESIS_CLI` if you set one), so run the Python virtualenv installation once before invoking it.
 - Scripts will live under `documents/tests/4-contract-tests/postman-newman/scripts/` and `documents/tests/4-contract-tests/schemathesis/scripts/`.
 - Install Schemathesis via `python -m venv .venv && source .venv/bin/activate && pip install -r documents/tests/4-contract-tests/schemathesis/requirements.txt` (see the Schemathesis README for Windows commands).
 - Reports:
@@ -55,9 +63,25 @@
    ```
 5. **Run Schemathesis locally**
    ```bash
-   npm run test:contract:schemathesis:local
+   npm run test:contract:schemathesis:local:quick
    ```
    Reports land under `documents/tests/4-contract-tests/schemathesis/reports/local/<timestamp>/`.
+
+### Local profile recommendations
+
+- Day-to-day local development: `npm run contract:local:quick`
+- Pre-push / pre-PR confidence: `npm run contract:local:gate`
+- Deep deterministic debugging / release confidence: `npm run contract:local:full`
+- Optional negative-case exploration: `npm run contract:local:exploratory`
+- `quick` is fail-fast by default (`SCHEMATHESIS_LOCAL_MODE=positive`, `SCHEMATHESIS_LOCAL_WORKERS=2`, `SCHEMATHESIS_LOCAL_MAX_FAILURES=10`, `SCHEMATHESIS_LOCAL_SUPPRESS_HEALTH_CHECKS=too_slow,filter_too_much`).
+- `gate` is bounded for local use (`SCHEMATHESIS_LOCAL_MODE=positive`, `SCHEMATHESIS_LOCAL_WORKERS=2`, `SCHEMATHESIS_LOCAL_MAX_EXAMPLES=15`, `SCHEMATHESIS_LOCAL_MAX_FAILURES=15`, `SCHEMATHESIS_LOCAL_SUPPRESS_HEALTH_CHECKS=too_slow,filter_too_much`) so coverage/fuzzing remains practical on laptops.
+- `full` remains positive-mode but deeper (`stateful`, `workers=4`, `max-examples=50`, `max-failures=30`), while `exploratory` keeps `mode=all` for non-blocking deep fuzzing.
+
+You can also force profile selection directly with:
+
+```bash
+SCHEMATHESIS_LOCAL_PROFILE=quick npm run test:contract:schemathesis:local
+```
 
 ## Environment & Data
 
@@ -67,13 +91,18 @@
 - Set `DISABLE_RATE_LIMITING=true` when running Schemathesis/Newman locally so the global limiter does not emit 429s during contract fuzzing (see `.env.test`); keep it `false` elsewhere.
 - After running `npm run seed:contract-tests`, the Newman runner automatically loads the latest `primaryUser.token` from `tmp/contract-seed.json` and injects it into the runtime environment (you only need to copy it manually if you’re running collections from the Postman UI).
 - All `POST /metric-logs` requests must include an explicit `type` (`"manual"` or `"automatic"`). The backend no longer defaults this value during validation so that contract tests can assert correct error handling for malformed payloads.
+- UUID validation now uses assertion-level constraints (`format` + strict UUID `pattern`) in shared Zod/OpenAPI schemas. This avoids OpenAPI 3.1 `format`-only ambiguity where generators may treat empty strings as schema-compliant.
 - POST/PUT/PATCH endpoints that accept request bodies expect JSON objects — sending a bare string/number/`null` now returns a `400` via the shared guard middleware. When fuzzing with Schemathesis, prefer `{}` as a starting point if you want to probe “empty object” behaviour. (`PATCH /metric-settings/{id}/achieve` does **not** take a body.)
 - `PUT /metrics/{id}` requires at least one **recognized** update field; empty or unknown-only payloads return `400` (unknown keys are rejected to avoid no-op updates).
 - Metric settings creation/update enforces the domain invariant: when `goalEnabled=true`, both `goalType` and `goalValue` must be provided (and the OpenAPI schema documents this via `oneOf`). The same applies to `timeFrameEnabled`; include `startDate` + `deadlineDate` when enabling the time frame, and updates that provide dates without `timeFrameEnabled` will treat the time frame as enabled for that request.
 - `PUT /metric-settings/{id}` also requires at least one **recognized** update field; defaults are not injected on partial updates to avoid unintended changes (unknown keys are rejected).
+- `GET /metric-settings/{id}` is path-ID driven; `metricId` is **not** a required query parameter for this endpoint.
+- `GET /metrics/{metricId}/trends` currently validates only the path `metricId`; `startDate/endDate/interval` query parameters are not part of the enforced contract.
+- `PATCH /metric-settings/{id}/display` now requires a `displayOptions` object with at least one explicit field (empty `{}` is rejected).
 - Cursor-style queries (`/metrics`, `/metric-logs`, `/metric-settings`, `/metric-categories`) strip/trim `q`, reject empty search strings, and disallow unexpected `filter[...]` keys. Schemathesis will see deterministic `400`s for malformed params; treat those as expected rather than bugs.
 - When Schemathesis needs existing IDs (e.g., to avoid 404s), prefer pulling them from `tmp/contract-seed.json` after `npm run seed:contract-tests` and pass them via environment variables or `--header "x-contract-metric-id: …"` helpers. This keeps fuzzing reproducible.
-- The Schemathesis hook in `documents/tests/contract_hooks/seeded_ids.py` normalizes analytics ranges, clamps `last` windows to safe bucket sizes, forces valid IANA `tz` values (falls back to `UTC` when invalid), and skips negative `/auth/register` cases to avoid generator false positives. Analytics normalization applies to **positive** cases only so schema-violating inputs still exercise rejection paths; keep these overrides aligned with API validation rules.
+- The seed output now includes `deletable` ID pools for destructive operations (metrics/categories/settings/logs). The Schemathesis hook consumes these for `DELETE` calls to avoid wiping primary fixtures and skips delete cases once the pool is exhausted. The log pool is intentionally large to keep stateful fuzzing deterministic.
+- The Schemathesis hook in `documents/tests/contract_hooks/seeded_ids.py` normalizes analytics ranges, clamps `last` windows to safe bucket sizes, forces valid IANA `tz` values (falls back to `UTC` when invalid), injects valid login credentials for positive `/auth/login` cases, and skips negative `/auth/register` cases to avoid generator false positives. Analytics normalization applies to **positive** cases only so schema-violating inputs still exercise rejection paths; keep these overrides aligned with API validation rules.
 - Generated JWTs expire every 7 days; rerun the seed command to refresh `tmp/contract-seed.json` before contract tests so a fresh token is available for the automation layer.
 - Staging credentials must be injected via GitHub secrets and _not_ stored in JSON. Use Newman `--env-var` overrides and set `SCHEMATHESIS_STAGING_*` variables at runtime.
 - Seeding scripts are owned by the backend repo (see `scripts/seed-contract-tests.ts` invoked via `npm run seed:contract-tests`).

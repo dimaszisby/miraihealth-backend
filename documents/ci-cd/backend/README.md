@@ -12,6 +12,8 @@ It describes:
 
 For high-level project-wide strategy, see `documents/ci-cd/CI_CD_STRATEGY.md`.
 
+For migrated non-blocking CI/contract follow-ups, see `documents/ci-cd/backend/FOLLOW_UP_BACKLOG.md`.
+
 ---
 
 ## 2. Goals
