@@ -106,7 +106,7 @@ describe("Metric API", () => {
         name: "Bad Category",
         defaultUnit: "cm",
         isPublic: false,
-        categoryId: "11111111-1111-1111-1111-111111111111",
+        categoryId: "00000000-0000-4000-8000-000000000999",
       });
 
     expect(res.status).toBe(404);

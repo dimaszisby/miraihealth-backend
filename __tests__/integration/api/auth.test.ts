@@ -26,7 +26,7 @@ describe("Auth API", () => {
 
     const res = await api.post("/api/v1/auth/register").send(payload);
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(409);
     expect(res.body.status).toBe("fail");
   });
 

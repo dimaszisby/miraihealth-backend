@@ -192,7 +192,7 @@ describe("Metric Settings API", () => {
   });
 
   it("returns 404 for unknown settings", async () => {
-    const unknownId = "11111111-1111-1111-1111-111111111111";
+    const unknownId = "00000000-0000-4000-8000-000000000999";
     const res = await api
       .get(`/api/v1/metric-settings/${unknownId}`)
       .set("Authorization", authHeader(token))

@@ -94,7 +94,7 @@ describe("Metric Category API", () => {
       .set("Authorization", authHeader(token))
       .send(payload);
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(409);
     expect(res.body.status).toBe("fail");
   });
 
