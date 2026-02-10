@@ -272,6 +272,7 @@ jobs:
         env:
           SCHEMATHESIS_LOCAL_TOKEN: ${{ steps.schemathesis-token.outputs.value }}
           SCHEMATHESIS_LOCAL_BASE_URL: http://localhost:4000/api/v1
+          SCHEMATHESIS_CLI: schemathesis
         run: npm run test:contract:schemathesis:local
 
       - name: Dump backend logs on failure

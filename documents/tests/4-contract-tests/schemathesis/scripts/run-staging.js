@@ -2,6 +2,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import fs from "node:fs/promises";
+import fsSync from "node:fs";
 import { spawn } from "node:child_process";
 import logger from "../../../../../scripts/logger.js";
 
@@ -21,7 +22,6 @@ const specPath = path.join(
   "lakira-backend-openapi.json",
 );
 
-const CLI = process.env.SCHEMATHESIS_CLI ?? "schemathesis";
 const DEFAULT_TAGS =
   process.env.SCHEMATHESIS_STAGING_ENDPOINT_TAGS ??
   "Auth,Analytics,Metrics,Metric Logs,Metric Settings,Metric Categories,Trends";
@@ -52,9 +52,31 @@ function runCommand(command, args, options = {}) {
   });
 }
 
+function findBundledSchemathesisCli() {
+  const candidates = [
+    path.join(repoRoot, ".venv-schemathesis", "bin", "schemathesis"),
+    path.join(
+      repoRoot,
+      ".venv-schemathesis",
+      "Scripts",
+      process.platform === "win32" ? "schemathesis.exe" : "schemathesis",
+    ),
+  ];
+  return candidates.find((candidate) => fsSync.existsSync(candidate));
+}
+
+function resolveSchemathesisCli() {
+  const configured = process.env.SCHEMATHESIS_CLI?.trim();
+  if (configured) {
+    return configured;
+  }
+  return findBundledSchemathesisCli() ?? "schemathesis";
+}
+
 async function main() {
   const baseUrl = process.env.SCHEMATHESIS_STAGING_BASE_URL;
   const token = process.env.SCHEMATHESIS_STAGING_TOKEN;
+  const cli = resolveSchemathesisCli();
   if (!baseUrl || !token) {
     logger.error(
       "[schemathesis:staging] Missing SCHEMATHESIS_STAGING_BASE_URL or SCHEMATHESIS_STAGING_TOKEN environment variables.",
@@ -119,16 +141,17 @@ async function main() {
   }
 
   logger.info("[schemathesis:staging] Running Schemathesis with args:", args);
+  logger.info(`[schemathesis:staging] Using Schemathesis CLI: ${cli}`);
 
   try {
-    await runCommand(CLI, args, { cwd: repoRoot });
+    await runCommand(cli, args, { cwd: repoRoot });
     logger.info(
       `[schemathesis:staging] Completed. Reports stored under ${reportDir}`,
     );
   } catch (error) {
     if (error.code === "ENOENT") {
       logger.error(
-        `[schemathesis:staging] Unable to find "${CLI}". Install Schemathesis via "pip install -r documents/tests/4-contract-tests/schemathesis/requirements.txt" or point SCHEMATHESIS_CLI to the binary.`,
+        `[schemathesis:staging] Unable to find "${cli}". Install Schemathesis via "pip install -r documents/tests/4-contract-tests/schemathesis/requirements.txt" or point SCHEMATHESIS_CLI to the binary.`,
       );
     } else {
       logger.error("[schemathesis:staging] Schemathesis run failed", error);

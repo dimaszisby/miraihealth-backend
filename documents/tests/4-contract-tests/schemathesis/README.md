@@ -14,7 +14,7 @@ pip install -r documents/tests/4-contract-tests/schemathesis/requirements.txt
 ```
 
 > The requirements file pins Schemathesis for reproducibility. When upgrading the CLI, update the version there and re-run `pip install -r ...`.
-> `package.json` looks for `.venv-schemathesis/bin/schemathesis` when running the npm scripts, so keep the virtualenv at that path (or adjust the scripts accordingly).
+> The runners resolve the CLI in this order: `SCHEMATHESIS_CLI` (if set), local `.venv-schemathesis` binary (if present), then `schemathesis` from `PATH`.
 
 ## 2. Prerequisites
 
@@ -29,7 +29,7 @@ pip install -r documents/tests/4-contract-tests/schemathesis/requirements.txt
    Wait for `[SERVER] Lakira backend running on port 8002` (default test port) before executing Schemathesis, then stop the process via `Ctrl+C` afterward.
 
 4. **Rate limiter toggle** – `.env.test` sets `DISABLE_RATE_LIMITING=true` so Schemathesis/Newman can exercise endpoints without tripping the global/user/analytics throttles. Keep this `false` in other environments.
-5. **Python virtualenv active** – ensures the Schemathesis binary referenced by the runner scripts is discoverable.
+5. **Schemathesis CLI available** – either activate the local virtualenv or ensure `schemathesis` is available on `PATH`.
 
 ### Local run checklist
 
@@ -68,13 +68,13 @@ Follow these steps every time you fuzz locally:
     - `npm run test:contract:schemathesis:local:exploratory`
   - Automatically loads deterministic IDs from `tmp/contract-seed.json` via `documents/tests/contract_hooks/seeded_ids.py` (wired through `SCHEMATHESIS_HOOKS`) so stateful endpoints (metrics → metric-settings → logs/analytics) reuse real fixtures instead of random UUIDs.
   - The hook also injects seeded login credentials for `/auth/login`, normalizes metric update references (`categoryId`, `originalMetricId`) to valid seeded IDs, and generates unique usernames/emails + metric/category names to avoid false-positive 409 conflicts during fuzzing.
-- The npm script pins `SCHEMATHESIS_CLI=.venv-schemathesis/bin/schemathesis` and exports `SCHEMATHESIS_HOOKS=documents.tests.contract_hooks.seeded_ids`. It also prepends the repo root to `PYTHONPATH` so Schemathesis can import the hook module.
+- The runner exports `SCHEMATHESIS_HOOKS=documents.tests.contract_hooks.seeded_ids` and prepends the repo root to `PYTHONPATH` so Schemathesis can import the hook module.
   - When running Schemathesis manually with a module path (`documents.tests.contract_hooks.seeded_ids`), ensure `documents/__init__.py` and `documents/tests/__init__.py` exist so the package resolves.
   - Output: `documents/tests/4-contract-tests/schemathesis/reports/local/<timestamp>/{schemathesis-local.xml,schemathesis-local.har}`.
 - `npm run test:contract:schemathesis:staging`
   - Requires `SCHEMATHESIS_STAGING_BASE_URL` (e.g., `https://api-staging.lakira.app/api/v1`) and `SCHEMATHESIS_STAGING_TOKEN` (service account JWT).
   - Optional overrides: `SCHEMATHESIS_STAGING_ENDPOINT_TAGS`, `SCHEMATHESIS_STAGING_ENDPOINTS`, `SCHEMATHESIS_STAGING_WORKERS`, `SCHEMATHESIS_STAGING_MAX_EXAMPLES`, `SCHEMATHESIS_STAGING_PHASES`.
-  - Also pins `SCHEMATHESIS_CLI` to `.venv-schemathesis/bin/schemathesis`.
+  - Uses the same CLI resolution order (`SCHEMATHESIS_CLI` -> local `.venv-schemathesis` -> `PATH`).
   - Output: `documents/tests/4-contract-tests/schemathesis/reports/staging/<timestamp>/{schemathesis-staging.xml,schemathesis-staging.har}`.
 
 Both scripts validate the OpenAPI file exists before invoking Schemathesis and print the full argument list so runs can be reproduced manually if needed.

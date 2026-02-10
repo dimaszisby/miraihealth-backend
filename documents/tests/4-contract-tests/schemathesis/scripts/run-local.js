@@ -2,6 +2,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import fs from "node:fs/promises";
+import fsSync from "node:fs";
 import { spawn } from "node:child_process";
 import logger from "../../../../../scripts/logger.js";
 
@@ -31,7 +32,6 @@ const hookFilePath = path.join(
   "seeded_ids.py",
 );
 
-const CLI = process.env.SCHEMATHESIS_CLI ?? "schemathesis";
 const DEFAULT_TAGS =
   process.env.SCHEMATHESIS_LOCAL_ENDPOINT_TAGS ??
   "Auth,Analytics,Metrics,Metric Logs,Metric Settings,Metric Categories,Trends";
@@ -102,6 +102,27 @@ function runCommand(command, args, options = {}) {
       );
     });
   });
+}
+
+function findBundledSchemathesisCli() {
+  const candidates = [
+    path.join(repoRoot, ".venv-schemathesis", "bin", "schemathesis"),
+    path.join(
+      repoRoot,
+      ".venv-schemathesis",
+      "Scripts",
+      process.platform === "win32" ? "schemathesis.exe" : "schemathesis",
+    ),
+  ];
+  return candidates.find((candidate) => fsSync.existsSync(candidate));
+}
+
+function resolveSchemathesisCli() {
+  const configured = process.env.SCHEMATHESIS_CLI?.trim();
+  if (configured) {
+    return configured;
+  }
+  return findBundledSchemathesisCli() ?? "schemathesis";
 }
 
 function resolveLocalProfile(input) {
@@ -193,6 +214,7 @@ async function main() {
     process.env.SCHEMATHESIS_LOCAL_MAX_FAILURES ?? preset.maxFailures;
   const requestTimeout = process.env.SCHEMATHESIS_LOCAL_REQUEST_TIMEOUT;
   const seed = process.env.SCHEMATHESIS_LOCAL_SEED;
+  const cli = resolveSchemathesisCli();
 
   const args = [
     "run",
@@ -261,6 +283,7 @@ async function main() {
   logger.info(
     `[schemathesis:local] Profile "${profile}" resolved to mode=${mode}, phases=${phases}, workers=${workers}, maxExamples=${maxExamples}, maxFailures=${maxFailures ?? "unset"}, suppressHealthChecks=${suppressHealthChecks ?? "unset"}.`,
   );
+  logger.info(`[schemathesis:local] Using Schemathesis CLI: ${cli}`);
   logger.info("[schemathesis:local] Running Schemathesis with args:", args);
 
   try {
@@ -274,14 +297,14 @@ async function main() {
         .filter(Boolean)
         .join(path.delimiter),
     };
-    await runCommand(CLI, args, { cwd: repoRoot, env });
+    await runCommand(cli, args, { cwd: repoRoot, env });
     logger.info(
       `[schemathesis:local] Completed. Reports stored under ${reportDir}`,
     );
   } catch (error) {
     if (error.code === "ENOENT") {
       logger.error(
-        `[schemathesis:local] Unable to find "${CLI}". Install Schemathesis via "pip install -r documents/tests/4-contract-tests/schemathesis/requirements.txt" or point SCHEMATHESIS_CLI to the binary.`,
+        `[schemathesis:local] Unable to find "${cli}". Install Schemathesis via "pip install -r documents/tests/4-contract-tests/schemathesis/requirements.txt" or point SCHEMATHESIS_CLI to the binary.`,
       );
     } else {
       logger.error("[schemathesis:local] Schemathesis run failed", error);
