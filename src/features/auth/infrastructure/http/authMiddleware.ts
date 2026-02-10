@@ -1,12 +1,12 @@
-import { env } from "@/config/zodEnv";
+import { env } from "@/config/envManager.js";
 import { Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import AppError from "@/utils/AppError";
-import { AuthRequest } from "@/types/request.context";
-import { UserDomain } from "@/types/domain/user.domain";
-import { UserRepository } from "../../domain/repositories/UserRepository";
-import { UserRepositorySequelize } from "../persistence/UserRepositorySequelize";
-import { AuthUser } from "../../domain/entities/AuthUser";
+import AppError from "@/utils/AppError.js";
+import { AuthRequest } from "@/types/request.context.js";
+import { UserDomain } from "@/types/domain/user.domain.js";
+import { UserRepository } from "../../domain/repositories/UserRepository.js";
+import { UserRepositorySequelize } from "../persistence/UserRepositorySequelize.js";
+import { AuthUser } from "../../domain/entities/AuthUser.js";
 
 type Dependencies = {
   userRepo: UserRepository;
@@ -27,7 +27,9 @@ const toUserDomain = (user: AuthUser): UserDomain => ({
   deletedAt: user.deletedAt,
 });
 
-export const createAuthMiddleware = (deps: Dependencies = defaultDependencies()) => {
+export const createAuthMiddleware = (
+  deps: Dependencies = defaultDependencies(),
+) => {
   const { userRepo } = deps;
   return async (req: AuthRequest, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
@@ -37,7 +39,9 @@ export const createAuthMiddleware = (deps: Dependencies = defaultDependencies())
 
     const token = authHeader.split(" ")[1];
     try {
-      const decoded = jwt.verify(token, env.JWT_SECRET as string) as { id: string };
+      const decoded = jwt.verify(token, env.JWT_SECRET as string) as {
+        id: string;
+      };
       const authUser = await userRepo.findById(decoded.id);
 
       if (!authUser) {
@@ -46,7 +50,7 @@ export const createAuthMiddleware = (deps: Dependencies = defaultDependencies())
 
       req.user = toUserDomain(authUser);
       next();
-    } catch (error) {
+    } catch {
       return next(new AppError("Unauthorized: Invalid token", 401));
     }
   };

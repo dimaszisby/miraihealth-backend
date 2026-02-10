@@ -1,5 +1,7 @@
-import { models } from "@/infrastructure/db/models";
-import { MetricAccessPort } from "../ports/MetricAccessPort";
+import type { FindOptions, Includeable, WhereOptions } from "sequelize";
+import { models } from "../../../../infrastructure/db/models.js";
+import type { MetricLogAttributes } from "../../infrastructure/persistence/models/metric-log.sequelize.js";
+import { MetricAccessPort } from "../ports/MetricAccessPort.js";
 
 type Input = {
   userId: string;
@@ -11,34 +13,38 @@ type Stats = {
   min: number;
   max: number;
 };
+type LogWithValue = Pick<MetricLogAttributes, "logValue">;
+const EMPTY_STATS: Stats = { average: 0, min: 0, max: 0 };
 
 export class GetMetricLogStats {
   constructor(private access: MetricAccessPort) {}
 
   async execute({ userId, metricId }: Input): Promise<Stats> {
-    const where: any = {};
-    const query: any = { where };
-
     if (metricId) {
       await this.access.ensureMetricOwnership(userId, metricId);
-      where.metricId = metricId;
-    } else {
-      query.include = [
-        {
-          model: models.Metric,
-          as: "metric",
-          attributes: [],
-          required: true,
-          where: { userId },
-        },
-      ];
     }
 
-    const logs = await models.MetricLog.findAll(query);
-    if (!logs.length) return { average: 0, min: 0, max: 0 };
+    const where: WhereOptions<MetricLogAttributes> = metricId
+      ? { metricId }
+      : {};
+    const query: FindOptions<MetricLogAttributes> = { where };
 
-    const values = logs.map((log: any) => Number(log.logValue) || 0);
-    const total = values.reduce((sum, v) => sum + v, 0);
+    if (!metricId) {
+      const metricInclude: Includeable = {
+        model: models.Metric,
+        as: "metric",
+        attributes: [],
+        required: true,
+        where: { userId },
+      };
+      query.include = [metricInclude];
+    }
+
+    const logs = (await models.MetricLog.findAll(query)) as LogWithValue[];
+    if (!logs.length) return EMPTY_STATS;
+
+    const values = logs.map((log) => Number(log.logValue) || 0);
+    const total = values.reduce((sum, value) => sum + value, 0);
     return {
       average: total / values.length,
       min: Math.min(...values),

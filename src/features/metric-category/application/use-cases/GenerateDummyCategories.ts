@@ -1,8 +1,8 @@
-import { MetricCategoryRepository } from "../../domain/repositories/MetricCategoryRepository";
-import { CachePort } from "../ports/CachePort";
-import { MetricCategory } from "../../domain/entities/MetricCategory";
-import { MetricCategoryFactory } from "../../domain/services/MetricCategoryFactory";
-import { METRIC_CATEGORY_CURSOR_NAMESPACE_ALL } from "@/features/metric-category/application/cache.constants";
+import { MetricCategoryRepository } from "../../domain/repositories/MetricCategoryRepository.js";
+import { CachePort } from "../ports/CachePort.js";
+import { MetricCategory } from "../../domain/entities/MetricCategory.js";
+import { MetricCategoryFactory } from "../../domain/services/MetricCategoryFactory.js";
+import { METRIC_CATEGORY_CURSOR_NAMESPACE_ALL } from "@/features/metric-category/application/cache.constants.js";
 
 type Input = {
   userId: string;
@@ -13,7 +13,7 @@ export class GenerateDummyCategories {
   constructor(
     private repo: MetricCategoryRepository,
     private cache: CachePort,
-    private factory: MetricCategoryFactory
+    private factory: MetricCategoryFactory,
   ) {}
 
   async execute({ userId, count }: Input): Promise<MetricCategory[]> {
@@ -31,7 +31,7 @@ export class GenerateDummyCategories {
 
     if (this.cache.isEnabled()) {
       await this.cache.delByPattern(
-        `${METRIC_CATEGORY_CURSOR_NAMESPACE_ALL}:${userId}:*`
+        `${METRIC_CATEGORY_CURSOR_NAMESPACE_ALL}:${userId}:*`,
       );
     }
 

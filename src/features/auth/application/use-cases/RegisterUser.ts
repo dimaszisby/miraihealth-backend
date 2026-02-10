@@ -1,14 +1,15 @@
-import AppError from "@/utils/AppError";
-import { UserRepository } from "../../domain/repositories/UserRepository";
-import { PasswordHasher } from "../ports/PasswordHasher";
-import { TokenProvider } from "../ports/TokenProvider";
-import { AuthUser } from "../../domain/entities/AuthUser";
+import AppError from "@/utils/AppError.js";
+import { UserRepository } from "../../domain/repositories/UserRepository.js";
+import { PasswordHasher } from "../ports/PasswordHasher.js";
+import { TokenProvider } from "../ports/TokenProvider.js";
+import { AuthUser } from "../../domain/entities/AuthUser.js";
 
 export type RegisterInput = {
   email: string;
   password: string;
   passwordConfirmation: string;
   username: string;
+  isPublicProfile?: boolean;
 };
 
 export type AuthResult = {
@@ -20,7 +21,7 @@ export class RegisterUser {
   constructor(
     private repo: UserRepository,
     private hasher: PasswordHasher,
-    private tokenProvider: TokenProvider
+    private tokenProvider: TokenProvider,
   ) {}
 
   async execute(input: RegisterInput): Promise<AuthResult> {
@@ -32,17 +33,19 @@ export class RegisterUser {
     const username = input.username.trim();
 
     if (await this.repo.existsByEmail(email)) {
-      throw new AppError("Email already in use", 400);
+      throw new AppError("Email already in use", 409);
     }
     if (await this.repo.existsByUsername(username)) {
-      throw new AppError("Username already in use", 400);
+      throw new AppError("Username already in use", 409);
     }
 
     const passwordHash = await this.hasher.hash(input.password);
+    const isPublicProfile = input.isPublicProfile ?? true;
     const user = await this.repo.create({
       email,
       username,
       passwordHash,
+      isPublicProfile,
     });
 
     const token = this.tokenProvider.sign({

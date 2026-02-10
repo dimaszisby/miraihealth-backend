@@ -1,4 +1,4 @@
-import { BucketSpec } from "../../domain/buckets";
+import { BucketSpec } from "../../domain/buckets.js";
 
 // Query for logs in a singular metric
 // used for data visualizations in Metric Details Page

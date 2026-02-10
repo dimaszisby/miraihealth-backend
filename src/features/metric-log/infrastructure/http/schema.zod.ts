@@ -5,26 +5,69 @@ import {
   zPositiveFloat,
   zUUID,
   zISODateTime,
-} from "@/constants/zod/zod-rules";
+} from "@/constants/zod/zod-rules.js";
 import { z } from "zod";
-import { ZodMessages } from "@/constants/zod/zod-messages";
+import { ZodMessages } from "@/constants/zod/zod-messages.js";
 
 extendZodWithOpenApi(z);
 
-const FilterSchema = z.object({
-  ["filter[logValue]"]: z.number().min(1).optional(),
-  ["filter[metricId]"]: z.preprocess(
-    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-    zUUID.optional()
-  ),
-  filter: z
-    .object({
-      logValue: z.number().min(1).optional(),
-      metricId: zUUID.optional(),
-    })
-    .partial()
-    .optional(),
-});
+const normalizedSearchParam = z
+  .union([z.string(), z.undefined(), z.null()])
+  .transform((value) => {
+    if (typeof value !== "string") return undefined;
+    return value.trim();
+  })
+  .refine(
+    (value) => value === undefined || value.length > 0,
+    ZodMessages.common.searchQueryMin,
+  );
+
+const strictBooleanQuery = z
+  .union([z.boolean(), z.string()])
+  .transform((value) => {
+    if (typeof value === "boolean") return value;
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "true") return true;
+    if (normalized === "false") return false;
+    return value;
+  })
+  .pipe(z.boolean());
+
+const coerceNonNegativeNumber = z.preprocess((value) => {
+  if (typeof value === "number") return value;
+
+  if (Array.isArray(value)) {
+    value = value[0];
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed.length) return undefined;
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) ? parsed : value;
+  }
+
+  return value;
+}, z.number().min(0));
+
+const filterObject = z
+  .object({
+    logValue: coerceNonNegativeNumber.optional(),
+    metricId: zUUID.optional(),
+  })
+  .partial()
+  .strict();
+
+const FilterSchema = z
+  .object({
+    ["filter[logValue]"]: coerceNonNegativeNumber.optional(),
+    ["filter[metricId]"]: z.preprocess(
+      (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+      zUUID.optional(),
+    ),
+    filter: filterObject.optional(),
+  })
+  .strict();
 
 export const metricLogParams = z.object({
   id: z.string().uuid({ message: ZodMessages.metricLog.invalidId }),
@@ -32,7 +75,7 @@ export const metricLogParams = z.object({
 
 export const metricLogBody = z.object({
   metricId: zUUID,
-  type: zLogType.optional().default("manual"),
+  type: zLogType,
   logValue: zPositiveFloat,
   loggedAt: zISODateTime.optional(),
 });
@@ -54,7 +97,7 @@ export const listMetricsQuery = z.object({
   sortOrder: z.enum(["ASC", "DESC"]).default("DESC"),
 });
 
-export const listMetricQueryViaCursor = z
+const listMetricCursorBase = z
   .object({
     limit: z.coerce.number().int().min(1).max(100).default(20),
     sort: z
@@ -69,20 +112,24 @@ export const listMetricQueryViaCursor = z
         "-loggedAt",
       ] as const)
       .default("-createdAt"),
-    q: z.preprocess(
-      (v) => (typeof v === "string" ? v.trim() : v),
-      z.string().min(1).optional()
-    ),
-    after: z.string().optional(),
-    includeTotal: z.coerce.boolean().default(false),
+    q: normalizedSearchParam,
+    after: z
+      .union([z.string(), z.undefined(), z.null()])
+      .transform((value) =>
+        typeof value === "string" && value.trim().length ? value : undefined,
+      ),
+    includeTotal: strictBooleanQuery.optional().default(false),
   })
-  .and(FilterSchema)
+  .strict();
+
+export const listMetricQueryViaCursor = listMetricCursorBase
+  .merge(FilterSchema)
   .transform((v) => {
     const logValue = v["filter[logValue]"] ?? v.filter?.logValue;
     const metricId = v["filter[metricId]"] ?? v.filter?.metricId;
 
     const filter: { logValue?: number; metricId?: string } = {};
-    if (logValue) filter.logValue = logValue;
+    if (logValue !== undefined) filter.logValue = logValue;
     if (metricId) filter.metricId = metricId;
 
     return {
@@ -121,7 +168,9 @@ export const listMetricLogsViaCursorSchema = z.object({
   query: listMetricQueryViaCursor,
 });
 export const deleteMetricLogSchema = z.object({ params: metricLogParams });
-export const getAggregatedStatsSchema = z.object({ query: aggregatedStatsQuery });
+export const getAggregatedStatsSchema = z.object({
+  query: aggregatedStatsQuery,
+});
 
 export const generateDummyMetricLogsBody = z.object({
   metricId: zUUID,

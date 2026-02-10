@@ -3,6 +3,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
+import logger from "../src/utils/logger.js";
 
 import { getOpenApiDocumentation } from "../src/lib/openapi/openapi-docs.js";
 
@@ -19,15 +20,16 @@ async function generateOpenApiSpec() {
 
   const document = getOpenApiDocumentation();
 
-  fs.writeFileSync(outputFile, JSON.stringify(document, null, 2), {
+  const payload = `${JSON.stringify(document, null, 2)}\n`;
+
+  fs.writeFileSync(outputFile, payload, {
     encoding: "utf-8",
   });
 
-  console.log(`[OpenAPI] Specification generated at ${outputFile}`);
+  logger.info(`[OpenAPI] Specification generated at ${outputFile}`);
 }
 
 generateOpenApiSpec().catch((error) => {
-  console.error("[OpenAPI] Failed to generate specification:", error);
+  logger.error("[OpenAPI] Failed to generate specification:", error);
   process.exitCode = 1;
 });
-

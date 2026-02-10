@@ -1,7 +1,7 @@
-import { models } from "@/infrastructure/db/models";
-import AppError from "@/utils/AppError";
-import logger from "@/utils/logger";
-import { MetricSettings } from "../../domain/entities/MetricSettings";
+import { models } from "@/infrastructure/db/models.js";
+import AppError from "@/utils/AppError.js";
+import logger from "@/utils/logger.js";
+import { MetricSettings } from "../../domain/entities/MetricSettings.js";
 import {
   CreateMetricSettingsDTO,
   ListMetricSettingsOptions,
@@ -9,8 +9,15 @@ import {
   MetricSettingsRepository,
   SortField,
   SortParam,
-} from "../../domain/repositories/MetricSettingsRepository";
-import { Op, OrderItem, UniqueConstraintError, WhereOptions } from "sequelize";
+} from "../../domain/repositories/MetricSettingsRepository.js";
+import {
+  Op,
+  OrderItem,
+  UniqueConstraintError,
+  WhereOptions,
+  InstanceError,
+} from "sequelize";
+import type { MetricSettingsAttributes } from "./models/metric-settings.sequelize.js";
 
 const includeMetric = () => [
   {
@@ -20,7 +27,12 @@ const includeMetric = () => [
   },
 ];
 
-const toEntity = (row: any): MetricSettings =>
+type MetricSettingsRow = MetricSettingsAttributes & {
+  metric?: { userId?: string } | null;
+  displayOptions?: MetricSettingsAttributes["displayOptions"] | null;
+};
+
+const toEntity = (row: MetricSettingsRow): MetricSettings =>
   MetricSettings.fromPersistence({
     id: row.id,
     metricId: row.metricId,
@@ -43,8 +55,8 @@ const toEntity = (row: any): MetricSettings =>
       chartType: row.displayOptions?.chartType ?? "line",
       color: row.displayOptions?.color ?? "#E897A3",
     },
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
+    createdAt: row.createdAt ?? new Date(0),
+    updatedAt: row.updatedAt ?? new Date(0),
   });
 
 export class MetricSettingsRepositorySequelize
@@ -63,7 +75,10 @@ export class MetricSettingsRepositorySequelize
         err instanceof UniqueConstraintError &&
         err.errors.some((e) => e.path === "metric_id" || e.path === "metricId")
       ) {
-        throw new AppError("Metric settings already exist for this metric", 409);
+        throw new AppError(
+          "Metric settings already exist for this metric",
+          409,
+        );
       }
       throw err;
     }
@@ -79,7 +94,7 @@ export class MetricSettingsRepositorySequelize
 
   async findById(
     userId: string,
-    settingsId: string
+    settingsId: string,
   ): Promise<MetricSettings | null> {
     const row = await models.MetricSettings.findOne({
       where: { id: settingsId },
@@ -97,20 +112,34 @@ export class MetricSettingsRepositorySequelize
     const row = await models.MetricSettings.findByPk(snapshot.id);
     if (!row) throw new AppError("Metric Settings not found", 404);
 
-    await row.update({
-      isActive: snapshot.isActive,
-      goalEnabled: snapshot.goalEnabled,
-      goalType: snapshot.goalType,
-      goalValue: snapshot.goalValue,
-      timeFrameEnabled: snapshot.timeFrameEnabled,
-      startDate: snapshot.startDate,
-      deadlineDate: snapshot.deadlineDate,
-      alertEnabled: snapshot.alertEnabled,
-      alertThresholds: snapshot.alertThresholds,
-      isAchieved: snapshot.isAchieved,
-      displayOptions: snapshot.displayOptions,
-    });
-    await row.reload({ include: includeMetric() });
+    try {
+      await row.update({
+        isActive: snapshot.isActive,
+        goalEnabled: snapshot.goalEnabled,
+        goalType: snapshot.goalType,
+        goalValue: snapshot.goalValue,
+        timeFrameEnabled: snapshot.timeFrameEnabled,
+        startDate: snapshot.startDate,
+        deadlineDate: snapshot.deadlineDate,
+        alertEnabled: snapshot.alertEnabled,
+        alertThresholds: snapshot.alertThresholds,
+        isAchieved: snapshot.isAchieved,
+        displayOptions: snapshot.displayOptions,
+      });
+    } catch (error) {
+      if (error instanceof InstanceError) {
+        throw new AppError("Metric Settings not found", 404);
+      }
+      throw error;
+    }
+    try {
+      await row.reload({ include: includeMetric() });
+    } catch (error) {
+      if (error instanceof InstanceError) {
+        throw new AppError("Metric Settings not found", 404);
+      }
+      throw error;
+    }
     return toEntity(row);
   }
 
@@ -119,7 +148,7 @@ export class MetricSettingsRepositorySequelize
   }
 
   async listByCursor(
-    opts: ListMetricSettingsOptions
+    opts: ListMetricSettingsOptions,
   ): Promise<ListMetricSettingsResult> {
     const { field, dir } = normalizeSort(opts.sort);
     const pageSize = Math.min(Math.max(opts.limit || 20, 1), 100);
@@ -161,8 +190,10 @@ export class MetricSettingsRepositorySequelize
       const last = items[items.length - 1];
       const snap = last.snapshot();
       const payload: CursorPayload = { sort: opts.sort, id: snap.id };
-      if (field === "createdAt") payload.createdAt = snap.createdAt.toISOString();
-      if (field === "updatedAt") payload.updatedAt = snap.updatedAt.toISOString();
+      if (field === "createdAt")
+        payload.createdAt = snap.createdAt.toISOString();
+      if (field === "updatedAt")
+        payload.updatedAt = snap.updatedAt.toISOString();
       if (field === "isActive") payload.isActive = snap.isActive;
       nextCursor = encodeCursor(payload);
     }
@@ -188,7 +219,7 @@ type CursorPayload = {
 };
 
 const normalizeSort = (
-  sort: SortParam
+  sort: SortParam,
 ): { field: SortField; dir: "ASC" | "DESC" } => {
   const dir = sort.startsWith("-") ? "DESC" : "ASC";
   const field = (sort.startsWith("-") ? sort.slice(1) : sort) as SortField;
@@ -199,7 +230,7 @@ const normalizeSort = (
 
 const buildWhere = (
   filter?: { metricId?: string; isActive?: boolean },
-  q?: string
+  q?: string,
 ): WhereOptions => {
   const and: WhereOptions[] = [];
   if (filter?.metricId) and.push({ metricId: filter.metricId });
@@ -213,7 +244,7 @@ const buildWhere = (
 const buildCursorPredicate = (
   cursor: CursorPayload,
   field: SortField,
-  dir: "ASC" | "DESC"
+  dir: "ASC" | "DESC",
 ): WhereOptions => {
   const ltgt = dir === "DESC" ? Op.lt : Op.gt;
   const eq = Op.eq;
@@ -223,7 +254,9 @@ const buildCursorPredicate = (
     return {
       [Op.or]: [
         { createdAt: { [ltgt]: C } },
-        { [Op.and]: [{ createdAt: { [eq]: C } }, { id: { [ltgt]: cursor.id } }] },
+        {
+          [Op.and]: [{ createdAt: { [eq]: C } }, { id: { [ltgt]: cursor.id } }],
+        },
       ],
     };
   }
@@ -232,14 +265,21 @@ const buildCursorPredicate = (
     return {
       [Op.or]: [
         { updatedAt: { [ltgt]: U } },
-        { [Op.and]: [{ updatedAt: { [eq]: U } }, { id: { [ltgt]: cursor.id } }] },
+        {
+          [Op.and]: [{ updatedAt: { [eq]: U } }, { id: { [ltgt]: cursor.id } }],
+        },
       ],
     };
   }
   return {
     [Op.or]: [
       { isActive: { [ltgt]: cursor.isActive! } },
-      { [Op.and]: [{ isActive: { [eq]: cursor.isActive! } }, { id: { [ltgt]: cursor.id } }] },
+      {
+        [Op.and]: [
+          { isActive: { [eq]: cursor.isActive! } },
+          { id: { [ltgt]: cursor.id } },
+        ],
+      },
     ],
   };
 };

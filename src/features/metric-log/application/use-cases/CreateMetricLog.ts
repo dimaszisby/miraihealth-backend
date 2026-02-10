@@ -1,9 +1,9 @@
-import AppError from "@/utils/AppError";
-import { parseIsoToDate } from "@/utils/date-io";
-import { MetricLogRepository } from "../../domain/repositories/MetricLogRepository";
-import { MetricLog } from "../../domain/entities/MetricLog";
-import { MetricAccessPort } from "../ports/MetricAccessPort";
-import { CachePort } from "../ports/CachePort";
+import AppError from "@/utils/AppError.js";
+import { parseIsoToDate } from "@/utils/date-io.js";
+import { MetricLogRepository } from "../../domain/repositories/MetricLogRepository.js";
+import { MetricLog } from "../../domain/entities/MetricLog.js";
+import { MetricAccessPort } from "../ports/MetricAccessPort.js";
+import { CachePort } from "../ports/CachePort.js";
 
 type Input = {
   userId: string;
@@ -17,7 +17,7 @@ export class CreateMetricLog {
   constructor(
     private repo: MetricLogRepository,
     private metricAccess: MetricAccessPort,
-    private cache: CachePort
+    private cache: CachePort,
   ) {}
 
   async execute(input: Input): Promise<MetricLog> {
@@ -30,8 +30,8 @@ export class CreateMetricLog {
       input.loggedAt instanceof Date
         ? input.loggedAt
         : input.loggedAt
-        ? (parseIsoToDate(input.loggedAt) as Date)
-        : new Date();
+          ? (parseIsoToDate(input.loggedAt) as Date)
+          : new Date();
 
     if (Number.isNaN(timestamp.getTime())) {
       throw new AppError("loggedAt is invalid", 400);
@@ -40,7 +40,7 @@ export class CreateMetricLog {
     if (await this.repo.existsAtTimestamp(metricId, timestamp)) {
       throw new AppError(
         "A log entry already exists for this timestamp for this metric",
-        400
+        409,
       );
     }
 

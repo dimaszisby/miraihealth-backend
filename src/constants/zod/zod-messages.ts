@@ -1,14 +1,15 @@
-// src/constants/zod-messages.ts
-
 export const ZodMessages = {
   common: {
     invalidUUID: "Invalid UUID",
     invalidDate: "Invalid date format",
     positiveNumber: "Must be a positive number",
+    searchQueryMin: "Search query must be at least 1 character",
   },
   api: {
-    minLength: (field: string, min: number) => `${field} must be at least ${min} characters long.`,
-    maxLength: (field: string, max: number) => `${field} must be at most ${max} characters long.`,
+    minLength: (field: string, min: number) =>
+      `${field} must be at least ${min} characters long.`,
+    maxLength: (field: string, max: number) =>
+      `${field} must be at most ${max} characters long.`,
     invalidEmail: "Invalid email address.",
     invalidUUID: (field: string) => `Invalid ${field} format.`,
     positiveNumber: (field: string) => `${field} must be a positive number.`,
@@ -24,10 +25,16 @@ export const ZodMessages = {
   metricCategory: {
     invalidId: "Invalid Metric Category ID",
     nameRequired: "Name is required",
+    colorRequired: "Color is required",
+    iconRequired: "Icon is required",
   },
   metric: {
     nameRequired: "Name is required",
+    nameTooLong: "Name exceeds length limit",
     unitRequired: "Unit is required",
+    unitTooLong: "Unit exceeds length limit",
+    descriptionTooLong: "Description exceeds length limit",
+    invalidCharacters: "Contains invalid characters",
     invalidCategoryId: "Invalid categoryId",
     invalidOriginalMetricId: "Invalid originalMetricId",
     invalidMetricId: "Invalid Metric ID",
@@ -41,14 +48,16 @@ export const ZodMessages = {
     alertThresholdMax: "Alert threshold must be at most 100",
     invalidMetricId: "Invalid metric ID",
     invalidMetricSettingsId: "Invalid metric settings ID",
+    invalidDisplayOptions: "Display options contain invalid characters",
   },
   metricLog: {
     invalidId: "Invalid Metric Log ID",
     invalidMetricId: "Invalid Metric ID",
     logValueRequired: "Log value is required",
     logValueNonNegative: "Log value must be non-negative",
+    logValueFinite: "Log value must be a finite number",
+    logValueTooLarge: "Log value exceeds the supported range",
     logTypeInvalid: "Invalid log type",
     logDateInvalid: "Invalid date format",
   },
 };
-

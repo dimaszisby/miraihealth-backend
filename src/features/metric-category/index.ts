@@ -1,5 +1,5 @@
 export {
   metricCategoryRouter,
   createMetricCategoryRouter,
-} from "./infrastructure/http/router";
-export { buildMetricCategoryFeature } from "./feature";
+} from "./infrastructure/http/router.js";
+export { buildMetricCategoryFeature } from "./feature.js";

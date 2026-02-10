@@ -1,0 +1,10 @@
+node_modules
+dist
+coverage
+logs
+*.log
+Dockerfile
+docker/**
+scripts/**/*.cjs
+*.env
+*.local

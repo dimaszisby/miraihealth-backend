@@ -1,9 +1,10 @@
-import { AuthUser } from "../entities/AuthUser";
+import { AuthUser } from "../entities/AuthUser.js";
 
 export type CreateUserDTO = {
   email: string;
   username: string;
   passwordHash: string;
+  isPublicProfile: boolean;
 };
 
 export interface UserRepository {

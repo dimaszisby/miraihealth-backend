@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { PasswordHasher } from "../../application/ports/PasswordHasher";
+import { PasswordHasher } from "../../application/ports/PasswordHasher.js";
 
 export class BcryptPasswordHasher implements PasswordHasher {
   constructor(private rounds = 10) {}

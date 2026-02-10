@@ -1,5 +1,5 @@
 import express, { Application } from "express";
-import { env } from "./config/zodEnv.js";
+import { env } from "./config/envManager.js";
 import cors from "cors";
 import helmet from "helmet";
 import xssClean from "xss-clean";
@@ -7,6 +7,7 @@ import hpp from "hpp";
 import http from "http";
 import swaggerUi from "swagger-ui-express";
 import { getOpenApiDocumentation } from "./lib/openapi/openapi-docs.js";
+import logger from "@/utils/logger.js";
 
 // Routes
 import { authRouter } from "./features/auth/index.js";
@@ -14,25 +15,26 @@ import { metricRouter } from "./features/metric/index.js";
 import { metricLogRouter } from "./features/metric-log/index.js";
 import { metricSettingsRouter } from "./features/metric-settings/index.js";
 import { metricCategoryRouter } from "./features/metric-category/index.js";
-import { visualizationRouter } from "@/features/analytics/infrastructure/http/router";
+import { visualizationRouter } from "@/features/analytics/infrastructure/http/router.js";
 import { buildMetricLogFeature } from "./features/metric-log/feature.js";
 import { overrideMetricLogFeatureForTest } from "./features/metric-log/infrastructure/http/controller.js";
 import { AnalyticsVisualizationInvalidationAdapter } from "./features/analytics/infrastructure/cache/VisualizationInvalidationAdapter.js";
 
 // Other Setup
-import { globalRateLimiter } from "@/shared/middleware/rate-limiter";
-import { errorHandler } from "@/shared/middleware/error";
+import { globalRateLimiter } from "@/shared/middleware/rate-limiter.js";
+import { errorHandler } from "@/shared/middleware/error.js";
 import { disconnectRedis } from "./utils/redis-client.js";
 import sequelize from "./config/db.js";
 import { loadModels } from "./infrastructure/db/models.js";
-import { authMiddleware } from "./features/auth/infrastructure/http/authMiddleware";
+import { authMiddleware } from "./features/auth/infrastructure/http/authMiddleware.js";
+import { disallowTraceMethod } from "@/shared/middleware/method-guard.js";
 
 const visualizationInvalidationAdapter =
   new AnalyticsVisualizationInvalidationAdapter();
 overrideMetricLogFeatureForTest(
   buildMetricLogFeature({
     visualizationInvalidator: visualizationInvalidationAdapter,
-  })
+  }),
 );
 
 /**
@@ -46,13 +48,22 @@ overrideMetricLogFeatureForTest(
  */
 
 const skipDbBootstrap = process.env.SKIP_DB_LIFECYCLE === "true";
-// * Sequelize
-if (!skipDbBootstrap) {
-  loadModels();
-  await sequelize.authenticate();
-} else {
-  console.log("[SERVER] SKIP_DB_LIFECYCLE enabled — skipping initial DB bootstrap.");
-}
+const initialDbBootstrap = async () => {
+  if (!skipDbBootstrap) {
+    loadModels();
+    await sequelize.authenticate();
+  } else {
+    logger.info(
+      "[SERVER] SKIP_DB_LIFECYCLE enabled — skipping initial DB bootstrap.",
+    );
+  }
+};
+
+const serverBootstrapPromise = initialDbBootstrap().catch((error) => {
+  logger.error("[SERVER] Initial database bootstrap failed.", error);
+  throw error;
+});
+export const serverReady = serverBootstrapPromise;
 
 // * Environment Variables
 
@@ -62,7 +73,8 @@ const app: Application = express();
 app.use(
   express.json({
     limit: env.REQUEST_BODY_LIMIT,
-  })
+    strict: false, // allow primitives + guard downstream to emit cleaner 400s
+  }),
 );
 
 // Security Enhancements
@@ -70,13 +82,16 @@ app.use(helmet()); // Secure HTTP headers
 app.use(xssClean()); // Prevent XSS attacks
 app.use(hpp()); // Prevent HTTP Parameter Pollution
 
+// Disallow TRACE (and similar unsupported verbs) globally so contracts receive 405 responses.
+app.use(disallowTraceMethod);
+
 // Configure CORS
 app.use(
   cors({
     origin: env.CORS_ORIGIN || "http://localhost:3000",
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true, // Allow cookies and auth headers
-  })
+  }),
 );
 
 // Global Rate Limiter (Uncomment when needed)
@@ -90,6 +105,14 @@ app.use("/api/v1/metric-settings", metricSettingsRouter);
 app.use("/api/v1/metric-logs", metricLogRouter);
 // DDD based routes
 app.use("/api/v1/analytics", visualizationRouter);
+
+app.get("/api/v1/health", (_req, res) => {
+  res.json({
+    status: "ok",
+    environment: env.NODE_ENV,
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // Serve OpenAPI documentation
 // TODO: Developer Note -> Learn more about OpenAPI and Swagger integration
@@ -105,7 +128,7 @@ app.use(
   "/api/v1/docs",
   ...swaggerGuards,
   swaggerUi.serve,
-  swaggerUi.setup(openApiDocument)
+  swaggerUi.setup(openApiDocument),
 );
 
 // * Global Error Handler
@@ -114,28 +137,28 @@ app.use(errorHandler);
 // HTTP Server Reference
 let server: http.Server | null = null;
 
-// Helper function for checking test environment
-const isTestEnv = (env: string): env is "test" => env === "test";
-
 const startServer = async () => {
   try {
-    if (env.NODE_ENV === "test") {
-      console.log("[SERVER] Running in test environment. Server not started.");
+    const isTestEnv = env.NODE_ENV === "test";
+    if (isTestEnv && !env.ALLOW_TEST_HTTP_SERVER) {
+      logger.info(
+        "[SERVER] Running in test environment with ALLOW_TEST_HTTP_SERVER=false. Server bootstrap skipped.",
+      );
       return;
     }
 
     // Authenticate database connection
     await sequelize.authenticate();
-    console.log("[SERVER] Database connection established successfully.");
+    logger.info("[SERVER] Database connection established successfully.");
 
     // Start HTTP Server
     const PORT = env.PORT || 5000;
     server = app.listen(PORT, () => {
-      console.log(`[SERVER] Lakira backend running on port ${PORT}`);
+      logger.info(`[SERVER] Lakira backend running on port ${PORT}`);
     });
   } catch (error) {
-    console.error("[SERVER ERROR] Server initialization failed:", error);
-    process.exit(1); 
+    logger.error("[SERVER ERROR] Server initialization failed:", error);
+    process.exit(1);
   }
 };
 
@@ -147,47 +170,47 @@ const startServer = async () => {
  * - Log shutdown
  */
 const shutdown = async (signal: string) => {
-  console.log(`\n[SERVER] Received ${signal}, initiating shutdown...`);
+  logger.info(`\n[SERVER] Received ${signal}, initiating shutdown...`);
 
   try {
     if (server) {
-      console.log("[SERVER] Closing HTTP server...");
+      logger.info("[SERVER] Closing HTTP server...");
       await new Promise((resolve) => server!.close(resolve));
     }
 
     // Close database connection
-    console.log("[SERVER] Closing database connection...");
+    logger.info("[SERVER] Closing database connection...");
     await sequelize.close();
 
     // Close Redis connection
-    console.log("[SERVER] Closing Redis connection...");
+    logger.info("[SERVER] Closing Redis connection...");
     await disconnectRedis();
 
-    console.log("[SERVER] Cleanup completed. Exiting.");
+    logger.info("[SERVER] Cleanup completed. Exiting.");
     process.exit(0);
   } catch (error) {
-    console.error("[SERVER] during shutdown:", error);
+    logger.error("[SERVER] during shutdown:", error);
     process.exitCode = 1;
   }
 };
 
 // Handle termination signals
 ["SIGTERM", "SIGINT"].forEach((signal) =>
-  process.on(signal, () => shutdown(signal))
+  process.on(signal, () => shutdown(signal)),
 );
 
 // Handle uncaught exceptions and promise rejections
 process.on("uncaughtException", (error) => {
-  console.error("[SERVER ERROR] Uncaught Exception:", error);
+  logger.error("[SERVER ERROR] Uncaught Exception:", error);
   shutdown("Uncaught Exception");
 });
 
 process.on("unhandledRejection", (reason, promise) => {
-  console.error(
+  logger.error(
     "[SERVER ERROR] Unhandled Promise Rejection at:",
     promise,
     "reason:",
-    reason
+    reason,
   );
   shutdown("Unhandled Rejection");
 });

@@ -1,12 +1,9 @@
-import { MetricSettings } from "../persistence/models/metric-settings.sequelize";
-import { MetricSettingsDomain } from "@/types/domain/metric-settings.domain";
-import {
-  DisplayOptionsDTO,
-  MetricSettingsResponseDTO,
-} from "../http/dto";
+import { MetricSettings } from "../persistence/models/metric-settings.sequelize.js";
+import { MetricSettingsDomain } from "@/types/domain/metric-settings.domain.js";
+import { DisplayOptionsDTO, MetricSettingsResponseDTO } from "../http/dto.js";
 
 export const toDomainMetricSettings = (
-  settings: MetricSettings
+  settings: MetricSettings,
 ): MetricSettingsDomain => ({
   id: settings.id,
   metricId: settings.metricId,
@@ -26,7 +23,7 @@ export const toDomainMetricSettings = (
 });
 
 export const toMetricSettingsResponseDTO = (
-  domain: MetricSettingsDomain
+  domain: MetricSettingsDomain,
 ): MetricSettingsResponseDTO => {
   const startDateString = domain.startDate?.toISOString() ?? null;
   const deadlineDateString = domain.deadlineDate?.toISOString() ?? null;
@@ -51,7 +48,7 @@ export const toMetricSettingsResponseDTO = (
 };
 
 export const toDisplayOptionsResponseDTO = (
-  displayOptions: MetricSettingsDomain["displayOptions"]
+  displayOptions: MetricSettingsDomain["displayOptions"],
 ): DisplayOptionsDTO => ({
   showOnDashboard: displayOptions?.showOnDashboard ?? false,
   priority: displayOptions?.priority ?? 1,
@@ -60,15 +57,20 @@ export const toDisplayOptionsResponseDTO = (
 });
 
 export const toDomainDisplayOptions = (
-  settings: MetricSettings
+  settings: MetricSettings,
 ): MetricSettingsDomain["displayOptions"] =>
   normalizeDisplayOptions(settings.displayOptions);
 
+type DisplayOptionsRow =
+  | Partial<MetricSettingsDomain["displayOptions"]>
+  | null
+  | undefined;
+
 const normalizeDisplayOptions = (
-  opts: any = {}
+  opts: DisplayOptionsRow = {},
 ): MetricSettingsDomain["displayOptions"] => ({
-  showOnDashboard: opts.showOnDashboard ?? false,
-  priority: opts.priority ?? 1,
-  chartType: opts.chartType ?? "line",
-  color: opts.color ?? "#E897A3",
+  showOnDashboard: opts?.showOnDashboard ?? false,
+  priority: opts?.priority ?? 1,
+  chartType: opts?.chartType ?? "line",
+  color: opts?.color ?? "#E897A3",
 });

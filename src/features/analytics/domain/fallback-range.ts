@@ -1,4 +1,4 @@
-import { resolveBucket, type BucketAlias, type BucketSpec } from "./buckets";
+import { resolveBucket, type BucketAlias, type BucketSpec } from "./buckets.js";
 
 const DEFAULT_HORIZON_MS = 1000 * 60 * 60 * 24 * 180; // 180 days
 const ORDERED_BUCKETS: BucketAlias[] = ["1h", "1d", "1w", "1m", "1y"];
@@ -41,7 +41,7 @@ export function computeFallbackRange({
   let spec = resolveBucket(bucketAlias);
   const baseSpan = Math.min(
     maxHorizonMs,
-    Math.max(requestedSpan, spec.approxMs)
+    Math.max(requestedSpan, spec.approxMs),
   );
   let fallbackEnd = last;
   let fallbackStart = new Date(fallbackEnd.getTime() - baseSpan);
@@ -59,7 +59,9 @@ export function computeFallbackRange({
 
   if (estimatedBuckets > guardBuckets) {
     const maxSpan = guardBuckets * spec.approxMs;
-    fallbackStart = new Date(Math.max(fallbackEnd.getTime() - maxSpan, fallbackStart.getTime()));
+    fallbackStart = new Date(
+      Math.max(fallbackEnd.getTime() - maxSpan, fallbackStart.getTime()),
+    );
     estimatedBuckets = estimateBuckets(fallbackStart, fallbackEnd, spec);
   }
 
@@ -105,7 +107,8 @@ function requestedDurationMs(range: RangeDescriptor) {
 
 function normalizeDate(value: string | Date | null): Date | null {
   if (!value) return null;
-  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  if (value instanceof Date)
+    return Number.isNaN(value.getTime()) ? null : value;
   const asDate = new Date(value);
   return Number.isNaN(asDate.getTime()) ? null : asDate;
 }

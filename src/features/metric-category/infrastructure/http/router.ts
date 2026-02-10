@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { env } from "@/config/zodEnv";
+import { env } from "@/config/envManager.js";
 import {
   createCategory,
   listCategories,
@@ -7,11 +7,11 @@ import {
   updateCategory,
   deleteCategory,
   generateDummyCategories,
-} from "./controller";
-import { authMiddleware } from "@/features/auth/infrastructure/http/authMiddleware";
-import { cacheMiddleware } from "@/shared/middleware/cache";
-import { userRateLimiter } from "@/shared/middleware/rate-limiter";
-import { validate } from "@/shared/middleware/validation";
+} from "./controller.js";
+import { authMiddleware } from "@/features/auth/infrastructure/http/authMiddleware.js";
+import { cacheMiddleware } from "@/shared/middleware/cache.js";
+import { userRateLimiter } from "@/shared/middleware/rate-limiter.js";
+import { validate } from "@/shared/middleware/validation.js";
 import {
   createMetricCategorySchema,
   updateMetricCategorySchema,
@@ -19,28 +19,37 @@ import {
   getAllMetricCategoriesSchema,
   deleteMetricCategorySchema,
   generateDummyMetricCategoriesSchema,
-} from "@/features/metric-category/infrastructure/http/schema.zod";
-import { AuthRequest } from "@/types/request.context";
-import { buildCursorCacheKey } from "@/shared/cache/keys";
+} from "@/features/metric-category/infrastructure/http/schema.zod.js";
+import { AuthRequest } from "@/types/request.context.js";
+import { buildCursorCacheKey } from "@/shared/cache/keys.js";
 import {
   METRIC_CATEGORY_CURSOR_FEATURE,
   METRIC_CATEGORY_CURSOR_VERSION,
-} from "@/features/metric-category/application/cache.constants";
+} from "@/features/metric-category/application/cache.constants.js";
+import { methodNotAllowed } from "@/shared/middleware/method-guard.js";
+import { requireJsonObjectBody } from "@/shared/middleware/require-json-object.js";
+
+const getQueryString = (value: unknown): string | undefined =>
+  typeof value === "string" ? value : undefined;
 
 const categoriesCacheKey = (req: AuthRequest) => {
-  const { limit = 20, sort = "-createdAt", q, after } = req.query as any;
-  const fname = (req.query["filter[name]"] as string) ?? "";
-  const includeTotal = String(req.query.includeTotal ?? "false");
+  const limitParam = getQueryString(req.query.limit);
+  const sortParam = getQueryString(req.query.sort);
+  const qParam = getQueryString(req.query.q);
+  const afterParam = getQueryString(req.query.after);
+  const filterName = getQueryString(req.query["filter[name]"]);
+  const includeTotal = getQueryString(req.query.includeTotal) ?? "false";
+
   return buildCursorCacheKey({
     feature: METRIC_CATEGORY_CURSOR_FEATURE,
     version: METRIC_CATEGORY_CURSOR_VERSION,
     userId: req.user?.id,
     segments: [
-      ["l", limit],
-      ["s", sort],
-      ["q", q ?? ""],
-      ["fn", fname],
-      ["after", after ?? ""],
+      ["l", Number(limitParam ?? 20)],
+      ["s", sortParam ?? "-createdAt"],
+      ["q", qParam ?? ""],
+      ["fn", filterName ?? ".js"],
+      ["after", afterParam ?? ""],
       ["it", includeTotal],
     ],
   });
@@ -56,46 +65,53 @@ export const createMetricCategoryRouter = () => {
   router.post(
     "/",
     userRateLimiter,
+    requireJsonObjectBody(),
     validate(createMetricCategorySchema),
-    createCategory
+    createCategory,
   );
 
   router.get(
     "/",
     validate(getAllMetricCategoriesSchema),
     cacheMiddleware(categoriesCacheKey, 300),
-    listCategories
+    listCategories,
   );
 
   router.get(
     "/:id",
     validate(getMetricCategorySchema),
     cacheMiddleware(categoryCacheKey, 600),
-    getCategory
+    getCategory,
   );
 
   router.put(
     "/:id",
     userRateLimiter,
+    requireJsonObjectBody(),
     validate(updateMetricCategorySchema),
-    updateCategory
+    updateCategory,
   );
 
   router.delete(
     "/:id",
     userRateLimiter,
     validate(deleteMetricCategorySchema),
-    deleteCategory
+    deleteCategory,
   );
 
   if (env.ENABLE_DUMMY_ENDPOINTS) {
     router.post(
       "/dummy",
       userRateLimiter,
+      requireJsonObjectBody(),
       validate(generateDummyMetricCategoriesSchema),
-      generateDummyCategories
+      generateDummyCategories,
     );
+    router.all("/dummy", methodNotAllowed(["POST"]));
   }
+
+  router.all("/", methodNotAllowed(["GET", "POST"]));
+  router.all("/:id", methodNotAllowed(["GET", "PUT", "DELETE"]));
 
   return router;
 };

@@ -64,6 +64,14 @@ export class AuthUser {
     this.touch();
   }
 
+  setRole(role: AuthUserProps["role"]) {
+    if (!["user", "admin"].includes(role)) {
+      throw new Error("Invalid role");
+    }
+    this.props.role = role;
+    this.touch();
+  }
+
   setPasswordHash(hash: string) {
     this.props.passwordHash = hash;
     this.touch();

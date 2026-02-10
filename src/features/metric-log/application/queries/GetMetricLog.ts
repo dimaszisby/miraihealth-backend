@@ -1,6 +1,6 @@
-import AppError from "@/utils/AppError";
-import { MetricLogRepository } from "../../domain/repositories/MetricLogRepository";
-import { MetricLog } from "../../domain/entities/MetricLog";
+import AppError from "@/utils/AppError.js";
+import { MetricLogRepository } from "../../domain/repositories/MetricLogRepository.js";
+import { MetricLog } from "../../domain/entities/MetricLog.js";
 
 type Input = {
   userId: string;

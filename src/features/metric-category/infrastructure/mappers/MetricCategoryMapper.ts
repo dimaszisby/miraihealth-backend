@@ -1,6 +1,5 @@
-import { MetricCategory as MetricCategorySequelize } from "@/features/metric-category/infrastructure/persistence/models/metric-category.sequelize";
-import { MetricCategory as MetricCategoryDomain } from "@/features/metric-category/domain/entities/MetricCategory";
-import { MetricCategoryResponseDTO } from "@/features/metric-category/infrastructure/http/dto";
+import { MetricCategory as MetricCategoryDomain } from "@/features/metric-category/domain/entities/MetricCategory.js";
+import { MetricCategoryResponseDTO } from "@/features/metric-category/infrastructure/http/dto.js";
 
 export type MetricCategoryRow = {
   id: string;
@@ -35,16 +34,17 @@ export const toDomain = (row: MetricCategoryRow): MetricCategoryDomain =>
  */
 // Dev Note Update: ADDED
 export const toListDomain = (
-  rows: MetricCategoryRow[]
+  rows: MetricCategoryRow[],
 ): MetricCategoryDomain[] => rows.map(toDomain);
 
 /**
  * * Mapper: Domain → DTO (for responses)
  */
 export const toResponseDTO = (
-  metricCategory: MetricCategoryDomain
+  metricCategory: MetricCategoryDomain,
 ): MetricCategoryResponseDTO => ({
   id: metricCategory.id,
+  userId: metricCategory.userId,
   name: metricCategory.name,
   color: metricCategory.color,
   icon: metricCategory.icon,
@@ -54,7 +54,7 @@ export const toResponseDTO = (
 });
 
 export const toListResponseDTO = (
-  metricCategories: MetricCategoryDomain[]
+  metricCategories: MetricCategoryDomain[],
 ): MetricCategoryResponseDTO[] => {
   return metricCategories.map(toResponseDTO);
 };

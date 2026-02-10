@@ -104,4 +104,3 @@ When changing workflow structure:
 2. Update `.github/workflows/frontend-ci.yml`
 3. Update `documents/ci-cd/frontend/README.md`
 4. Mention the change in PR descriptions
-

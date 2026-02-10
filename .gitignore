@@ -72,3 +72,26 @@ Thumbs.db
 
 # Ignore coverage reports
 coverage/
+
+# Schemathesis / Hypothesis artifacts
+.hypothesis/
+.venv/
+.venv-*/
+venv/
+venv-*/
+.python-version
+
+# generated test reports
+documents/tests/4-contract-tests/schemathesis/reports/
+documents/tests/4-contract-tests/postman-newman/reports/
+
+# local/export reference (untracked)
+documents/documentation/code-for-export-reference/
+
+# actionlint docs
+docs
+
+# local actionlint artifacts (downloaded binaries / archives)
+actionlint
+actionlint_*.tar.gz
+man/actionlint.1

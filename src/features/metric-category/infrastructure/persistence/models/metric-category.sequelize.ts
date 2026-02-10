@@ -1,8 +1,8 @@
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { MetricCategoryAttributesBase } from "@/features/metric-category/infrastructure/persistence/models/metric-category.attribute.js";
-import type { DbModels } from "@/infrastructure/db/types";
-import { User } from "@/features/auth/infrastructure/persistence/models/user.sequelize";
-import { Metric } from "@/features/metric/infrastructure/persistence/models/metric.sequelize";
+import type { DbModels } from "@/infrastructure/db/types.js";
+import { User } from "@/features/auth/infrastructure/persistence/models/user.sequelize.js";
+import { Metric } from "@/features/metric/infrastructure/persistence/models/metric.sequelize.js";
 
 /**
  * * MetricCategory Model
@@ -25,8 +25,10 @@ export interface MetricCategoryAttributes extends MetricCategoryAttributesBase {
 }
 
 // Define optional fields for Sequelize
-export interface MetricCategoryCreationAttributes
-  extends Optional<MetricCategoryAttributes, "id"> {}
+export type MetricCategoryCreationAttributes = Optional<
+  MetricCategoryAttributes,
+  "id"
+>;
 
 export class MetricCategory
   extends Model<MetricCategoryAttributes, MetricCategoryCreationAttributes>
@@ -88,7 +90,7 @@ export class MetricCategory
         paranoid: true,
         underscored: true,
         schema: "public",
-      }
+      },
     );
 
     return MetricCategory;

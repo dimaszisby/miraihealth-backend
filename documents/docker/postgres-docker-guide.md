@@ -4,8 +4,8 @@ This guide provides step-by-step instructions on how to install, configure, and 
 
 ## Prerequisites
 
-*   Docker installed on your system.
-*   Basic understanding of Docker concepts.
+- Docker installed on your system.
+- Basic understanding of Docker concepts.
 
 ## 0. Test Workflow & Troubleshooting
 
@@ -63,6 +63,7 @@ docker run -d \
 ```
 
 -- Dev DB
+
 ```bash
 docker run -d \
   --name postgres_db \
@@ -86,6 +87,7 @@ psql -h localhost -p 5432 -U your_db_user -d your_db_name
 ```
 
 -- NOTE: For development database
+
 ```bash
 psql -h localhost -p 5432 -U postgres -d lakira_development
 ```
@@ -136,10 +138,10 @@ For larger databases, consider using `pg_dump` with compression (e.g., `pg_dump 
 
 PostgreSQL's architecture is based on a client/server model. The core components include:
 
-*   **Postmaster:** The main process that listens for incoming connections and spawns new server processes.
-*   **Server Processes:** Each client connection is handled by a dedicated server process.
-*   **Background Processes:** These processes perform various maintenance tasks, such as autovacuuming, WAL archiving, and statistics collection.
-*   **Shared Memory:** Used for communication and data sharing between processes.
+- **Postmaster:** The main process that listens for incoming connections and spawns new server processes.
+- **Server Processes:** Each client connection is handled by a dedicated server process.
+- **Background Processes:** These processes perform various maintenance tasks, such as autovacuuming, WAL archiving, and statistics collection.
+- **Shared Memory:** Used for communication and data sharing between processes.
 
 [Diagram of PostgreSQL Architecture]
 
@@ -191,20 +193,20 @@ Implementing sharding requires careful planning and application-level logic to r
 
 Here are some common issues encountered when running PostgreSQL in Docker and how to troubleshoot them:
 
-*   **Connection refused:** Make sure the PostgreSQL container is running and that the port 5432 is exposed. Check Docker logs for errors.
-*   **Authentication failed:** Make sure you are using the correct username and password. Verify the environment variables are set correctly.
-*   **Data loss:** Make sure you are using a Docker volume to persist the data. Check the volume configuration.
-*   **Performance issues:** Monitor the container's resource usage (CPU, memory, disk I/O). Adjust resource limits in the `docker-compose.yml` file.
+- **Connection refused:** Make sure the PostgreSQL container is running and that the port 5432 is exposed. Check Docker logs for errors.
+- **Authentication failed:** Make sure you are using the correct username and password. Verify the environment variables are set correctly.
+- **Data loss:** Make sure you are using a Docker volume to persist the data. Check the volume configuration.
+- **Performance issues:** Monitor the container's resource usage (CPU, memory, disk I/O). Adjust resource limits in the `docker-compose.yml` file.
 
 ## 10. Best Practices for Security and Data Management
 
-*   **Use strong passwords:** Always use strong passwords for your database users.
-*   **Restrict access:** Restrict access to the database to only the necessary users and applications. Use network policies to limit access to the container.
-*   **Regular backups:** Create regular backups of your database to protect against data loss. Automate backups using a cron job or a dedicated backup service.
-*   **Secure your Docker environment:** Follow best practices for securing your Docker environment. Use a minimal base image, scan for vulnerabilities, and keep your Docker version up to date.
-*   **Monitor your database:** Monitor the database for performance issues and security threats. Use monitoring tools to track key metrics.
-*   **Use a dedicated network:** Place your PostgreSQL container on a dedicated Docker network to isolate it from other containers.
-*   **Limit resource usage:** Set resource limits (CPU, memory) for the container to prevent it from consuming excessive resources.
+- **Use strong passwords:** Always use strong passwords for your database users.
+- **Restrict access:** Restrict access to the database to only the necessary users and applications. Use network policies to limit access to the container.
+- **Regular backups:** Create regular backups of your database to protect against data loss. Automate backups using a cron job or a dedicated backup service.
+- **Secure your Docker environment:** Follow best practices for securing your Docker environment. Use a minimal base image, scan for vulnerabilities, and keep your Docker version up to date.
+- **Monitor your database:** Monitor the database for performance issues and security threats. Use monitoring tools to track key metrics.
+- **Use a dedicated network:** Place your PostgreSQL container on a dedicated Docker network to isolate it from other containers.
+- **Limit resource usage:** Set resource limits (CPU, memory) for the container to prevent it from consuming excessive resources.
 
 ## 11. Addressing Version Discrepancies and Upgrades
 
@@ -215,59 +217,64 @@ When running Docker containers, it's important to stay up-to-date with the lates
 If `docker scout quickview postgres:17-alpine` indicates that a newer version (e.g., 1.17.0) is available, follow these steps to investigate:
 
 1.  **Verify the Reported Version:**
-    *   First, confirm the currently running PostgreSQL version inside the container:
+
+    - First, confirm the currently running PostgreSQL version inside the container:
 
     ```bash
     docker exec -it postgres_db psql -U postgres -c "SELECT version();"
     ```
 
-    *   Compare this version with the version reported by `docker scout quickview`.
+    - Compare this version with the version reported by `docker scout quickview`.
 
 2.  **Identify the Source of the Update Recommendation:**
-    *   `docker scout quickview` might be recommending an update due to:
-        *   **Base Image Updates:** The `postgres:17-alpine` base image itself has been updated with a newer PostgreSQL version.
-        *   **Package Updates:** The Alpine Linux packages within the image have been updated.
+
+    - `docker scout quickview` might be recommending an update due to:
+      - **Base Image Updates:** The `postgres:17-alpine` base image itself has been updated with a newer PostgreSQL version.
+      - **Package Updates:** The Alpine Linux packages within the image have been updated.
 
 3.  **Check the Changelog:**
-    *   Review the PostgreSQL release notes for the recommended version (e.g., 1.17.0) to understand the changes, bug fixes, and security improvements.
-    *   Also, check the Alpine Linux changelog for any relevant package updates.
+    - Review the PostgreSQL release notes for the recommended version (e.g., 1.17.0) to understand the changes, bug fixes, and security improvements.
+    - Also, check the Alpine Linux changelog for any relevant package updates.
 
 ### 11.2. Safe Upgrade Strategies
 
 Before upgrading, consider the potential impact on your application and data. Always follow a safe upgrade strategy:
 
 1.  **Testing:**
-    *   Create a staging environment that mirrors your production environment.
-    *   Upgrade the PostgreSQL container in the staging environment.
-    *   Run thorough tests to ensure your application is compatible with the new version and that there are no performance regressions.
+
+    - Create a staging environment that mirrors your production environment.
+    - Upgrade the PostgreSQL container in the staging environment.
+    - Run thorough tests to ensure your application is compatible with the new version and that there are no performance regressions.
 
 2.  **Backup:**
-    *   Before upgrading the production environment, create a full backup of your PostgreSQL database. This will allow you to rollback if necessary.
+
+    - Before upgrading the production environment, create a full backup of your PostgreSQL database. This will allow you to rollback if necessary.
 
     ```bash
     docker exec -it postgres_db pg_dump -U your_db_user -d your_db_name > backup.sql
     ```
 
 3.  **Upgrade Procedure:**
-    *   Stop the existing PostgreSQL container:
+
+    - Stop the existing PostgreSQL container:
 
     ```bash
     docker stop postgres_db
     ```
 
-    *   Remove the existing container:
+    - Remove the existing container:
 
     ```bash
     docker rm postgres_db
     ```
 
-    *   Pull the latest `postgres:17-alpine` image:
+    - Pull the latest `postgres:17-alpine` image:
 
     ```bash
     docker pull postgres:17-alpine
     ```
 
-    *   Create a new container with the updated image, using the same volume for data persistence:
+    - Create a new container with the updated image, using the same volume for data persistence:
 
     ```bash
     docker run -d \
@@ -282,13 +289,14 @@ Before upgrading, consider the potential impact on your application and data. Al
     ```
 
 4.  **Verification:**
-    *   After the upgrade, verify that the PostgreSQL version has been updated:
+
+    - After the upgrade, verify that the PostgreSQL version has been updated:
 
     ```bash
     docker exec -it postgres_db psql -U postgres -c "SELECT version();"
     ```
 
-    *   Run basic tests to ensure the database is functioning correctly.
+    - Run basic tests to ensure the database is functioning correctly.
 
 ### 11.3. Minimizing Downtime
 
@@ -304,9 +312,9 @@ If you encounter issues after the upgrade, you can rollback to the previous vers
 
 ### 11.5. Ensuring Data Integrity
 
-*   Always create a backup before upgrading.
-*   Run thorough tests after upgrading to verify data integrity.
-*   Monitor the database for any signs of data corruption.
+- Always create a backup before upgrading.
+- Run thorough tests after upgrading to verify data integrity.
+- Monitor the database for any signs of data corruption.
 
 ## 12. Verifying Data Migration and Application Functionality After Version Change
 
@@ -314,19 +322,19 @@ After changing the PostgreSQL version, it's crucial to verify that the data migr
 
 1.  **Data Migration Verification:**
 
-    *   **Check Data Integrity:** Run queries to verify that the data is intact and consistent. Compare the data in the new version with a backup of the old version.
-    *   **Check Data Types:** Ensure that the data types are compatible with the new version. Some data types might have changed in PostgreSQL 17.
-    *   **Check Constraints:** Verify that all constraints are still valid and that there are no constraint violations.
+    - **Check Data Integrity:** Run queries to verify that the data is intact and consistent. Compare the data in the new version with a backup of the old version.
+    - **Check Data Types:** Ensure that the data types are compatible with the new version. Some data types might have changed in PostgreSQL 17.
+    - **Check Constraints:** Verify that all constraints are still valid and that there are no constraint violations.
 
 2.  **Application Functionality Verification:**
 
-    *   **Run Application Tests:** Run all application tests to ensure that the application is functioning correctly with the new PostgreSQL version.
-    *   **Check Application Logs:** Check the application logs for any errors or warnings.
-    *   **Monitor Application Performance:** Monitor the application performance to ensure that there are no performance regressions.
+    - **Run Application Tests:** Run all application tests to ensure that the application is functioning correctly with the new PostgreSQL version.
+    - **Check Application Logs:** Check the application logs for any errors or warnings.
+    - **Monitor Application Performance:** Monitor the application performance to ensure that there are no performance regressions.
 
 3.  **Compatibility with Homebrew PostgreSQL 17:**
 
-    *   If you have existing implementations that rely on a local PostgreSQL version 17 instance managed via Homebrew, ensure that the application can connect to both the Docker container and the local Homebrew instance.
-    *   Verify that the connection parameters (host, port, password, database name) are configured correctly for both environments.
+    - If you have existing implementations that rely on a local PostgreSQL version 17 instance managed via Homebrew, ensure that the application can connect to both the Docker container and the local Homebrew instance.
+    - Verify that the connection parameters (host, port, password, database name) are configured correctly for both environments.
 
 This guide provides a comprehensive overview of how to use PostgreSQL with Docker. For more information, please refer to the official PostgreSQL and Docker documentation.

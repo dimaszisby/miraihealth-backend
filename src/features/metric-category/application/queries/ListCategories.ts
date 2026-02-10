@@ -1,17 +1,17 @@
-import { MetricCategoryRepository } from "../../domain/repositories/MetricCategoryRepository";
-import { ListQuery, ListResult } from "../../domain/types";
-import { CachePort } from "../ports/CachePort";
-import { MetricCategory } from "../../domain/entities/MetricCategory";
-import { buildCursorCacheKey } from "@/shared/cache/keys";
+import { MetricCategoryRepository } from "../../domain/repositories/MetricCategoryRepository.js";
+import { ListQuery, ListResult } from "../../domain/types.js";
+import { CachePort } from "../ports/CachePort.js";
+import { MetricCategory } from "../../domain/entities/MetricCategory.js";
+import { buildCursorCacheKey } from "@/shared/cache/keys.js";
 import {
   METRIC_CATEGORY_CURSOR_FEATURE,
   METRIC_CATEGORY_CURSOR_VERSION,
-} from "@/features/metric-category/application/cache.constants";
+} from "@/features/metric-category/application/cache.constants.js";
 
 export class ListCategories {
   constructor(
     private repo: MetricCategoryRepository,
-    private cache: CachePort
+    private cache: CachePort,
   ) {}
 
   async execute(q: ListQuery): Promise<ListResult<MetricCategory>> {

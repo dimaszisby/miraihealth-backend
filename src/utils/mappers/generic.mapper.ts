@@ -1,5 +1,3 @@
-// src/utils/mappers/generic.mapper.ts
-
 export const extendDomain = <T extends object, U extends object>(
   domain: T,
   extras: Partial<U>,

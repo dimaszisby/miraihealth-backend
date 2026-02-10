@@ -1,12 +1,12 @@
-import { Response, NextFunction } from "express";
-import AppError from "@/utils/AppError";
-import { successResponse } from "@/utils/response-formatter";
-import catchAsync from "@/utils/catch-async";
-import { AuthRequest } from "@/types/request.context";
+import { Response } from "express";
+import AppError from "@/utils/AppError.js";
+import { successResponse } from "@/utils/response-formatter.js";
+import catchAsync from "@/utils/catch-async.js";
+import { AuthRequest } from "@/types/request.context.js";
 import {
   toMetricLogListResponseDTO,
   toMetricLogResponseDTO,
-} from "@/utils/mappers/metric-log.mapper";
+} from "@/utils/mappers/metric-log.mapper.js";
 import {
   createMetricLogSchema,
   deleteMetricLogSchema,
@@ -15,11 +15,11 @@ import {
   getMetricLogByIdSchema,
   listMetricLogsViaCursorSchema,
   updateMetricLogSchema,
-} from "./schema.zod";
-import { assertAuthenticated } from "@/utils/auth-guards";
-import logger from "@/utils/logger";
-import { buildMetricLogFeature } from "@/features/metric-log/feature";
-import { pickValidated } from "@/shared/middleware/validated";
+} from "./schema.zod.js";
+import { assertAuthenticated } from "@/utils/auth-guards.js";
+import logger from "@/utils/logger.js";
+import { buildMetricLogFeature } from "@/features/metric-log/feature.js";
+import { pickValidated } from "@/shared/middleware/validated.js";
 
 type MetricLogFeature = ReturnType<typeof buildMetricLogFeature>;
 let metricLogFeature: MetricLogFeature = buildMetricLogFeature();
@@ -29,7 +29,7 @@ export const overrideMetricLogFeatureForTest = (feature: MetricLogFeature) => {
 };
 
 export const createMetricLog = catchAsync(
-  async (req: AuthRequest, res: Response, _next: NextFunction) => {
+  async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
 
     const { body } = pickValidated(createMetricLogSchema)(req);
@@ -45,7 +45,7 @@ export const createMetricLog = catchAsync(
     const dto = toMetricLogResponseDTO(logDomain);
 
     successResponse(res, 201, dto, "Metric Log created successfully");
-  }
+  },
 );
 
 export const getUserLogLibrariesViaCursor = catchAsync(
@@ -67,7 +67,7 @@ export const getUserLogLibrariesViaCursor = catchAsync(
 
     const dto = {
       items: toMetricLogListResponseDTO(page.items),
-      nextCursor: page.nextCursor,
+      nextCursor: page.nextCursor ?? null,
       sort: page.sort,
       limit: page.limit,
       ...(page.q ? { q: page.q } : {}),
@@ -76,7 +76,7 @@ export const getUserLogLibrariesViaCursor = catchAsync(
     };
 
     successResponse(res, 200, dto, "Metric Logs cursor fetched successfully");
-  }
+  },
 );
 
 export const getLogById = catchAsync(
@@ -96,39 +96,45 @@ export const getLogById = catchAsync(
     }
 
     successResponse(res, 200, toMetricLogResponseDTO(logDomain));
-  }
+  },
 );
 
-export const updateLog = catchAsync(
-  async (req: AuthRequest, res: Response) => {
-    assertAuthenticated(req);
+export const updateLog = catchAsync(async (req: AuthRequest, res: Response) => {
+  assertAuthenticated(req);
 
-    const { body, params } = pickValidated(updateMetricLogSchema)(req);
-    const { logValue, type, loggedAt } = body;
+  const { body, params } = pickValidated(updateMetricLogSchema)(req);
+  const { logValue, type, loggedAt } = body;
 
-    const logDomain = await metricLogFeature.updateLog.execute({
-      userId: req.user.id,
-      logId: params.id,
-      updates: { logValue, type, loggedAt },
-    });
+  const logDomain = await metricLogFeature.updateLog.execute({
+    userId: req.user.id,
+    logId: params.id,
+    updates: { logValue, type, loggedAt },
+  });
 
-    successResponse(res, 200, toMetricLogResponseDTO(logDomain), "Log updated successfully");
-  }
-);
+  successResponse(
+    res,
+    200,
+    toMetricLogResponseDTO(logDomain),
+    "Log updated successfully",
+  );
+});
 
-export const deleteLog = catchAsync(
-  async (req: AuthRequest, res: Response) => {
-    assertAuthenticated(req);
+export const deleteLog = catchAsync(async (req: AuthRequest, res: Response) => {
+  assertAuthenticated(req);
 
-    const { params } = pickValidated(deleteMetricLogSchema)(req);
-    const logDomain = await metricLogFeature.deleteLog.execute({
-      userId: req.user.id,
-      logId: params.id,
-    });
+  const { params } = pickValidated(deleteMetricLogSchema)(req);
+  const logDomain = await metricLogFeature.deleteLog.execute({
+    userId: req.user.id,
+    logId: params.id,
+  });
 
-    successResponse(res, 200, toMetricLogResponseDTO(logDomain), "Log deleted successfully");
-  }
-);
+  successResponse(
+    res,
+    200,
+    toMetricLogResponseDTO(logDomain),
+    "Log deleted successfully",
+  );
+});
 
 export const getAggregatedStats = catchAsync(
   async (req: AuthRequest, res: Response) => {
@@ -139,7 +145,7 @@ export const getAggregatedStats = catchAsync(
       metricId: query.metricId,
     });
     successResponse(res, 200, stats);
-  }
+  },
 );
 
 export const generateDummyMetricLogs = catchAsync(
@@ -165,7 +171,7 @@ export const generateDummyMetricLogs = catchAsync(
       res,
       201,
       toMetricLogListResponseDTO(dummyLogs),
-      `${count} dummy metric logs generated successfully`
+      `${count} dummy metric logs generated successfully`,
     );
-  }
+  },
 );

@@ -1,30 +1,52 @@
-import { models } from "@/infrastructure/db/models";
-import { Transaction } from "sequelize";
-import { CreateMetricDTO, MetricRepository } from "../../../domain/repositories/MetricRepository";
-import { Metric } from "../../../domain/entities/Metric";
-import { PersistenceTransaction } from "../../../application/ports/PersistenceTransaction";
-import { MetricRow, toDomain } from "../mappers/MetricMapper";
-import AppError from "@/utils/AppError";
+import { models } from "@/infrastructure/db/models.js";
+import { InstanceError, Op, Sequelize, Transaction } from "sequelize";
+import {
+  CreateMetricDTO,
+  MetricRepository,
+} from "../../../domain/repositories/MetricRepository.js";
+import { Metric } from "../../../domain/entities/Metric.js";
+import { PersistenceTransaction } from "../../../application/ports/PersistenceTransaction.js";
+import { MetricRow, toDomain } from "../mappers/MetricMapper.js";
+import AppError from "@/utils/AppError.js";
 
 export class MetricRepoSequelize implements MetricRepository {
   async existsByName(userId: string, name: string): Promise<boolean> {
-    const count = await models.Metric.count({ where: { userId, name } });
+    const normalized = name.trim().toLowerCase();
+    const count = await models.Metric.count({
+      where: {
+        userId,
+        [Op.and]: Sequelize.where(
+          Sequelize.fn("lower", Sequelize.col("name")),
+          normalized,
+        ),
+      },
+    });
     return count > 0;
   }
 
-  async categoryExists(
-    userId: string,
-    categoryId: string
-  ): Promise<boolean> {
+  async categoryExists(userId: string, categoryId: string): Promise<boolean> {
     const count = await models.MetricCategory.count({
       where: { userId, id: categoryId },
     });
     return count > 0;
   }
 
+  async originalMetricExists(
+    userId: string,
+    metricId: string,
+  ): Promise<boolean> {
+    const count = await models.Metric.count({
+      where: {
+        id: metricId,
+        [Op.or]: [{ isPublic: true }, { userId }],
+      },
+    });
+    return count > 0;
+  }
+
   async create(
     data: CreateMetricDTO,
-    tx: PersistenceTransaction
+    tx: PersistenceTransaction,
   ): Promise<Metric> {
     const transaction = tx as Transaction;
     const created = await models.Metric.create(
@@ -37,7 +59,7 @@ export class MetricRepoSequelize implements MetricRepository {
         defaultUnit: data.defaultUnit,
         isPublic: data.isPublic,
       },
-      { transaction }
+      { transaction },
     );
 
     await created.reload({ transaction });
@@ -99,7 +121,14 @@ export class MetricRepoSequelize implements MetricRepository {
       originalMetricId: snapshot.originalMetricId ?? null,
       isPublic: snapshot.isPublic,
     });
-    await instance.reload();
+    try {
+      await instance.reload();
+    } catch (error) {
+      if (error instanceof InstanceError) {
+        throw new AppError("Metric not found", 404);
+      }
+      throw error;
+    }
 
     return toDomain({
       id: instance.id,

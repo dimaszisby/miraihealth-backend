@@ -1,6 +1,6 @@
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
-import { MetricAttributesBase } from "@/types/db/metric.types";
-import type { DbModels } from "@/infrastructure/db/types";
+import { MetricAttributesBase } from "@/types/db/metric.types.js";
+import type { DbModels } from "@/infrastructure/db/types.js";
 import { MetricCategory } from "@/features/metric-category/infrastructure/persistence/models/metric-category.sequelize.js";
 import { MetricSettings } from "@/features/metric-settings/infrastructure/persistence/models/metric-settings.sequelize.js";
 import { MetricLog } from "@/features/metric-log/infrastructure/persistence/models/metric-log.sequelize.js";
@@ -14,8 +14,7 @@ export interface MetricAttributes extends MetricAttributesBase {
   updatedAt?: Date;
 }
 
-export interface MetricCreationAttributes
-  extends Optional<MetricAttributes, "id"> {}
+export type MetricCreationAttributes = Optional<MetricAttributes, "id">;
 
 export class Metric
   extends Model<MetricAttributes, MetricCreationAttributes>
@@ -74,7 +73,7 @@ export class Metric
           allowNull: false,
         },
         description: {
-          type: DataTypes.STRING,
+          type: DataTypes.TEXT,
           allowNull: true,
         },
         defaultUnit: {
@@ -98,7 +97,7 @@ export class Metric
         paranoid: true,
         underscored: true,
         schema: "public",
-      }
+      },
     );
 
     return Metric;

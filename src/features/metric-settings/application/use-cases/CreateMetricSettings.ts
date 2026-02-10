@@ -1,11 +1,11 @@
-import AppError from "@/utils/AppError";
-import { MetricSettings } from "../../domain/entities/MetricSettings";
+import AppError from "@/utils/AppError.js";
+import { MetricSettings } from "../../domain/entities/MetricSettings.js";
 import {
   CreateMetricSettingsDTO,
   MetricSettingsRepository,
-} from "../../domain/repositories/MetricSettingsRepository";
-import { CacheInvalidationPort } from "../ports/CacheInvalidationPort";
-import { MetricAccessPort } from "../ports/MetricAccessPort";
+} from "../../domain/repositories/MetricSettingsRepository.js";
+import { CacheInvalidationPort } from "../ports/CacheInvalidationPort.js";
+import { MetricAccessPort } from "../ports/MetricAccessPort.js";
 
 export type CreateMetricSettingsInput = Partial<CreateMetricSettingsDTO> & {
   userId: string;
@@ -16,7 +16,7 @@ export class CreateMetricSettings {
   constructor(
     private repo: MetricSettingsRepository,
     private cache: CacheInvalidationPort,
-    private metricAccess: MetricAccessPort
+    private metricAccess: MetricAccessPort,
   ) {}
 
   async execute(input: CreateMetricSettingsInput): Promise<MetricSettings> {

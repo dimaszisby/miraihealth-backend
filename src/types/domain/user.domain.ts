@@ -1,5 +1,3 @@
-// types/domain/user.domain.ts
-
 /**
  * @file src/types/domain/user.domain.ts
  * @description Defines the domain model interface for a User.

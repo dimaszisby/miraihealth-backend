@@ -2,12 +2,13 @@ import { Router } from "express";
 import {
   handleGetDashboardVisualization,
   handleGetVisualization,
-} from "./controller";
-import { authMiddleware } from "@/features/auth/infrastructure/http/authMiddleware";
-import { validate } from "@/shared/middleware/validation";
-import { getDashboardVizSchema, getVisualizationSchema } from "./validators";
-import catchAsync from "@/utils/catch-async";
-import { analyticsRateLimiter } from "@/shared/middleware/rate-limiter";
+} from "./controller.js";
+import { authMiddleware } from "@/features/auth/infrastructure/http/authMiddleware.js";
+import { validate } from "@/shared/middleware/validation.js";
+import { getDashboardVizSchema, getVisualizationSchema } from "./validators.js";
+import catchAsync from "@/utils/catch-async.js";
+import { analyticsRateLimiter } from "@/shared/middleware/rate-limiter.js";
+import { methodNotAllowed } from "@/shared/middleware/method-guard.js";
 
 const router = Router();
 
@@ -17,14 +18,17 @@ router.get(
   "/dashboard",
   analyticsRateLimiter,
   validate(getDashboardVizSchema),
-  catchAsync(handleGetDashboardVisualization)
+  catchAsync(handleGetDashboardVisualization),
 );
 
 router.get(
   "/metrics/:metricId",
   analyticsRateLimiter,
   validate(getVisualizationSchema),
-  catchAsync(handleGetVisualization)
+  catchAsync(handleGetVisualization),
 );
+
+router.all("/dashboard", methodNotAllowed(["GET"]));
+router.all("/metrics/:metricId", methodNotAllowed(["GET"]));
 
 export { router as visualizationRouter };

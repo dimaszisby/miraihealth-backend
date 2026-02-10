@@ -1,5 +1,3 @@
-// src/config/zodEnv.ts
-
 import "./loadEnv.js";
 import { z } from "zod";
 
@@ -35,13 +33,16 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().optional(),
 
   // Database URLs (separate environment variables for dev/test/prod)
+  DATABASE_URL: z.string().optional(),
   DEVELOPMENT_DATABASE_URL: z.string().optional(),
   TEST_DATABASE_URL: z.string().optional(),
   STAGING_DATABASE_URL: z.string().optional(),
   PRODUCTION_DATABASE_URL: z.string().optional(),
 
   // IF you rely on a DB_HOST/DB_PORT approach:
-  DB_HOST: z.string().default(process.env.NODE_ENV === "test" ? "db" : "127.0.0.1"),
+  DB_HOST: z
+    .string()
+    .default(process.env.NODE_ENV === "test" ? "db" : "127.0.0.1"),
   DB_PORT: z
     .string()
     .transform((val) => parseInt(val, 10))
@@ -53,7 +54,9 @@ const envSchema = z.object({
     .default("true"),
 
   // Redis
-  REDIS_HOST: z.string().default(process.env.NODE_ENV === "test" ? "redis" : "127.0.0.1"),
+  REDIS_HOST: z
+    .string()
+    .default(process.env.NODE_ENV === "test" ? "redis" : "127.0.0.1"),
   REDIS_PORT: z
     .string()
     .transform((val) => {
@@ -69,6 +72,10 @@ const envSchema = z.object({
     .string()
     .transform((val) => val === "true") // Convert string to boolean
     .default(process.env.NODE_ENV === "test" ? "false" : "true"),
+  ENABLE_REDIS_INTEGRATION: z
+    .string()
+    .transform((val) => val === "true")
+    .default("false"),
   RATE_LIMIT_GLOBAL_MAX: z
     .string()
     .transform((val) => {
@@ -96,13 +103,23 @@ const envSchema = z.object({
   // Database
   DB_USER: z
     .string()
-    .min(1, { message: "DB_USER is required. Set an explicit value in your .env file." }),
+    .min(1, {
+      message: "DB_USER is required. Set an explicit value in your .env file.",
+    })
+    .optional(),
   DB_PASSWORD: z
     .string()
-    .min(1, { message: "DB_PASSWORD is required. Set an explicit value in your .env file." }),
+    .min(1, {
+      message:
+        "DB_PASSWORD is required. Set an explicit value in your .env file.",
+    })
+    .optional(),
   DB_NAME: z
     .string()
-    .min(1, { message: "DB_NAME is required. Set an explicit value in your .env file." }),
+    .min(1, {
+      message: "DB_NAME is required. Set an explicit value in your .env file.",
+    })
+    .optional(),
 
   ENABLE_DUMMY_ENDPOINTS: z
     .string()
@@ -120,6 +137,16 @@ const envSchema = z.object({
     })
     .default("30"),
 
+  DISABLE_RATE_LIMITING: z
+    .string()
+    .transform((val) => val === "true")
+    .default("false"),
+
+  ALLOW_TEST_HTTP_SERVER: z
+    .string()
+    .transform((val) => val === "true")
+    .default("false"),
+
   // HTTP
   REQUEST_BODY_LIMIT: z.string().default("1mb"),
   SWAGGER_REQUIRE_AUTH: z
@@ -131,16 +158,76 @@ const envSchema = z.object({
 /**
  * Infer the TypeScript type from the validated schema
  */
-type Env = z.infer<typeof envSchema>;
+type RawEnv = z.infer<typeof envSchema>;
+type Env = RawEnv &
+  Required<Pick<RawEnv, "DB_USER" | "DB_PASSWORD" | "DB_NAME">>;
+
+const DATABASE_URL_KEYS = {
+  development: "DEVELOPMENT_DATABASE_URL",
+  test: "TEST_DATABASE_URL",
+  staging: "STAGING_DATABASE_URL",
+  production: "PRODUCTION_DATABASE_URL",
+} as const satisfies Record<RawEnv["NODE_ENV"], keyof RawEnv>;
+
+const normalizeDatabaseConfig = (parsedEnv: RawEnv): Env => {
+  const envName = parsedEnv.NODE_ENV;
+  const envSpecificKey = DATABASE_URL_KEYS[envName];
+
+  const connectionUrl =
+    parsedEnv[envSpecificKey] ?? parsedEnv.DATABASE_URL ?? null;
+
+  if (connectionUrl) {
+    try {
+      const url = new URL(connectionUrl);
+      if (url.username) {
+        parsedEnv.DB_USER =
+          parsedEnv.DB_USER ?? decodeURIComponent(url.username);
+      }
+      if (url.password) {
+        parsedEnv.DB_PASSWORD =
+          parsedEnv.DB_PASSWORD ?? decodeURIComponent(url.password);
+      }
+      if (url.hostname) {
+        parsedEnv.DB_HOST = url.hostname;
+      }
+      if (url.port) {
+        const parsedPort = Number(url.port);
+        if (!Number.isNaN(parsedPort)) {
+          parsedEnv.DB_PORT = parsedPort;
+        }
+      }
+      const dbName = url.pathname.replace(/^\//, "");
+      if (dbName) {
+        parsedEnv.DB_NAME = parsedEnv.DB_NAME ?? decodeURIComponent(dbName);
+      }
+      parsedEnv[envSpecificKey] = parsedEnv[envSpecificKey] ?? connectionUrl;
+    } catch (error) {
+      throw new Error(
+        `[ERROR] DATABASE_URL (${connectionUrl}) is invalid: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  if (!parsedEnv.DB_USER || !parsedEnv.DB_PASSWORD || !parsedEnv.DB_NAME) {
+    throw new Error(
+      "[ERROR] Database configuration is incomplete. Provide DATABASE_URL or DB_USER/DB_PASSWORD/DB_NAME.",
+    );
+  }
+
+  return parsedEnv as Env;
+};
+
+const buildEnv = (): Env => {
+  const parsedEnv = envSchema.parse(process.env);
+  return normalizeDatabaseConfig(parsedEnv);
+};
 
 /**
  * Parse and export the validated and type-safe environment object.
  * If validation fails, it will throw an error and terminate the process.
  */
-const env: Env = envSchema.parse(process.env);
+const env: Env = buildEnv();
 
-if (!env.TEST_DATABASE_URL && env.NODE_ENV === "test") {
-  throw new Error("[ERROR] TEST_DATABASE_URL is missing in .env.test!");
-}
-
-export { env, Env };
+export { env, Env, buildEnv };

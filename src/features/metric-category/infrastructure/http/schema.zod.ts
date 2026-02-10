@@ -1,13 +1,35 @@
 import { z } from "zod";
-import { ZodMessages } from "@/constants/zod/zod-messages";
+import { ZodMessages } from "@/constants/zod/zod-messages.js";
 import {
   zMetricCategoryName,
   zMetricCategoryColor,
   zMetricCategoryIcon,
-} from "@/constants/zod/zod-rules";
+} from "@/constants/zod/zod-rules.js";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 
 extendZodWithOpenApi(z);
+
+const normalizedSearchParam = z
+  .union([z.string(), z.undefined(), z.null()])
+  .transform((value) => {
+    if (typeof value !== "string") return undefined;
+    return value.trim();
+  })
+  .refine(
+    (value) => value === undefined || value.length > 0,
+    ZodMessages.common.searchQueryMin,
+  );
+
+const strictBooleanQuery = z
+  .union([z.boolean(), z.string()])
+  .transform((value) => {
+    if (typeof value === "boolean") return value;
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "true") return true;
+    if (normalized === "false") return false;
+    return value;
+  })
+  .pipe(z.boolean());
 
 // * Base
 export const metricCategoryBody = z.object({
@@ -20,25 +42,50 @@ export const metricCategoryParams = z.object({
   id: z.string().uuid({ message: ZodMessages.metricCategory.invalidId }),
 });
 
-export const listCategoriesQuery = z.object({
-  limit: z.coerce.number().int().min(1).max(100).default(20),
-  sort: z
-    .enum([
-      "createdAt",
-      "-createdAt",
-      "updatedAt",
-      "-updatedAt",
-      "name",
-      "-name",
-      "metricCount",
-      "-metricCount",
-    ] as const)
-    .default("-createdAt"),
-  q: z.string().trim().min(1).optional(),
-  ["filter[name]"]: z.string().trim().min(1).optional(),
-  after: z.string().optional(),
-  includeTotal: z.coerce.boolean().default(false),
-});
+const filterObject = z
+  .object({
+    name: normalizedSearchParam,
+  })
+  .partial()
+  .strict();
+
+export const listCategoriesQuery = z
+  .object({
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+    sort: z
+      .enum([
+        "createdAt",
+        "-createdAt",
+        "updatedAt",
+        "-updatedAt",
+        "name",
+        "-name",
+        "metricCount",
+        "-metricCount",
+      ] as const)
+      .default("-createdAt"),
+    q: normalizedSearchParam,
+    ["filter[name]"]: normalizedSearchParam.optional(),
+    filter: filterObject.optional(),
+    after: z
+      .union([z.string(), z.undefined(), z.null()])
+      .transform((value) =>
+        typeof value === "string" && value.trim().length ? value : undefined,
+      ),
+    includeTotal: strictBooleanQuery.optional().default(false),
+  })
+  .strict()
+  .transform((raw) => {
+    const filterName = raw["filter[name]"] ?? raw.filter?.name;
+    return {
+      limit: raw.limit,
+      sort: raw.sort,
+      q: raw.q,
+      filterName,
+      after: raw.after,
+      includeTotal: raw.includeTotal,
+    };
+  });
 
 // * Schema Implementations
 export const createMetricCategorySchema = z.object({
@@ -48,7 +95,9 @@ export const updateMetricCategorySchema = z.object({
   params: metricCategoryParams,
   body: metricCategoryBody.partial(),
 });
-export const getMetricCategorySchema = z.object({ params: metricCategoryParams });
+export const getMetricCategorySchema = z.object({
+  params: metricCategoryParams,
+});
 export const deleteMetricCategorySchema = z.object({
   params: metricCategoryParams,
 });

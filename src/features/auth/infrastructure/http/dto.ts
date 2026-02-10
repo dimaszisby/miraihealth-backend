@@ -3,7 +3,7 @@ import {
   createUserSchema,
   updateUserSchema,
   loginUserSchema,
-} from "./schema.zod";
+} from "./schema.zod.js";
 
 export interface UserResponseDTO {
   readonly id: string;

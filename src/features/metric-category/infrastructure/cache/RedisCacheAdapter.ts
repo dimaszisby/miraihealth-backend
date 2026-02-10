@@ -1,5 +1,5 @@
-import { redisClient, invalidateCacheByPattern } from "@/utils/redis-client";
-import { CachePort } from "../../application/ports/CachePort";
+import { redisClient, invalidateCacheByPattern } from "@/utils/redis-client.js";
+import { CachePort } from "../../application/ports/CachePort.js";
 
 export class RedisCacheAdapter implements CachePort {
   isEnabled() {

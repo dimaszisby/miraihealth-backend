@@ -1,5 +1,5 @@
-import { MetricRepository } from "../../domain/repositories/MetricRepository";
-import { CachePort } from "../ports/CachePort";
+import { MetricRepository } from "../../domain/repositories/MetricRepository.js";
+import { CachePort } from "../ports/CachePort.js";
 
 type Input = {
   userId: string;
@@ -9,7 +9,7 @@ type Input = {
 export class DeleteMetric {
   constructor(
     private repo: MetricRepository,
-    private cache: CachePort
+    private cache: CachePort,
   ) {}
 
   async execute({ userId, metricId }: Input) {

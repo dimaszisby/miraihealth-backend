@@ -1,42 +1,34 @@
 const path = require("path");
 const dotenv = require("dotenv");
-const { execFileSync } = require("child_process");
 
 const envFile = `.env.${process.env.NODE_ENV || "development"}`;
 dotenv.config({ path: path.resolve(envFile) });
 
-function loadValidatedEnv() {
+function loadEnvFromBuild() {
+  const distPath = path.resolve(__dirname, "..", "..", "dist", "config", "envManager.js");
   try {
-    const repoRoot = path.resolve(__dirname, "..", "..");
-    const inlineModule = `
-      import("./src/config/zodEnv.ts")
-        .then(({ env }) => {
-          process.stdout.write(JSON.stringify(env));
-        })
-        .catch((error) => {
-          console.error(error);
-          process.exit(1);
-        });
-    `;
-    const output = execFileSync(
-      "node",
-      ["--loader", "ts-node/esm", "-e", inlineModule],
-      {
-        encoding: "utf-8",
-        stdio: ["pipe", "pipe", "inherit"],
-        cwd: repoRoot,
-      }
-    ).trim();
-
-    return JSON.parse(output);
+    const { loadEnvOrExit } = require(distPath);
+    return loadEnvOrExit();
   } catch (error) {
+    const message =
+      error instanceof Error ? error.message : String(error);
+    const errorCode =
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error
+        ? error.code
+        : undefined;
+    const hint =
+      errorCode === "MODULE_NOT_FOUND"
+        ? `Ensure the project is built (npm run build) so ${distPath} exists.`
+        : "";
     throw new Error(
-      `[ERROR] Failed to load validated environment configuration: ${error.message}`
+      `[ERROR] Failed to load validated environment configuration: ${message} ${hint}`.trim()
     );
   }
 }
 
-const env = loadValidatedEnv();
+const env = loadEnvFromBuild();
 
 const buildSslOptions = () =>
   env.DB_SSL_REJECT_UNAUTHORIZED
@@ -48,8 +40,8 @@ const config = {
     url: env.DEVELOPMENT_DATABASE_URL,
     dialect: "postgres",
     logging: console.log,
-    username: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
+    username: env.DB_USER,
+    password: env.DB_PASSWORD,
     database: env.DB_NAME,
     host: env.DB_HOST,
     port: env.DB_PORT,
@@ -59,8 +51,8 @@ const config = {
     url: env.TEST_DATABASE_URL,
     dialect: "postgres",
     logging: false,
-    username: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
+    username: env.DB_USER,
+    password: env.DB_PASSWORD,
     database: env.DB_NAME,
     host: env.DB_HOST,
     port: env.DB_PORT,
@@ -86,7 +78,7 @@ const config = {
 
 // Ensure the environment exists
 const activeEnv = env.NODE_ENV;
-if (!config[activeEnv]) {
+if (!Object.prototype.hasOwnProperty.call(config, activeEnv)) {
   throw new Error(
     `[ERROR]: No configuration found for environment: ${activeEnv}`,
   );

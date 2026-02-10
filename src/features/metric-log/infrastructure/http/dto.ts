@@ -3,7 +3,7 @@ import {
   createMetricLogSchema,
   updateMetricLogSchema,
   generateDummyMetricLogsSchema,
-} from "./schema.zod";
+} from "./schema.zod.js";
 
 export interface MetricLogResponseDTO {
   readonly id: string;

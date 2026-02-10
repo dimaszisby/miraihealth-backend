@@ -1,12 +1,14 @@
 # Dashboard Lifecycle Query Performance Snapshot
 
 ## Context
+
 - Date: 2024-02-10
 - Environment: Local Postgres 17-alpine container (`docker run --rm --name analytics-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=lakira_dev -p 55432:5432 postgres:17-alpine`).
 - Dataset: 3 metrics × 721 hourly logs each (2,163 rows) inserted via `generate_series` (see `docker exec analytics-db psql ... INSERT ...`).
 - Indexes: composite `ix_metric_logs_metric_id_logged_at` present.
 
 ## Query
+
 ```
 EXPLAIN ANALYZE
 WITH covered_metrics AS (
@@ -52,6 +54,7 @@ ORDER BY cm.metric_id;
 ```
 
 ## Result Summary
+
 ```
 Merge Left Join  (cost=55.14..57.41 rows=3 width=56) (actual time=4.562..5.324 rows=3 loops=1)
   Merge Cond: (cm.metric_id = ml.metric_id)
@@ -61,9 +64,11 @@ Execution Time: 5.962 ms
 ```
 
 Interpretation:
+
 - With ~2k rows, the lifecycle aggregation completes in ~6 ms, dominated by the sort + window aggregate. The planner leveraged the composite index for the hash join on `(metric_id, logged_at)`.
 - Expect roughly linear scaling with metrics included in `covered_metrics`; add monitoring once real datasets (~10^4 logs/metric) are available.
 
 ## Next Steps
+
 - Re-run this EXPLAIN periodically on staging data to ensure row estimates/p95 latency remain within the <300 ms SLA.
 - Once fallback logic queries additional windows, capture a companion EXPLAIN for the bucketed series query to compare resource usage.

@@ -1,12 +1,12 @@
-import { models } from "@/infrastructure/db/models";
+import { models } from "@/infrastructure/db/models.js";
 import { Transaction } from "sequelize";
-import { MetricSettingsPort } from "../../../application/ports/MetricSettingsPort";
-import { PersistenceTransaction } from "../../../application/ports/PersistenceTransaction";
+import { MetricSettingsPort } from "../../../application/ports/MetricSettingsPort.js";
+import { PersistenceTransaction } from "../../../application/ports/PersistenceTransaction.js";
 
 export class MetricSettingsPortSequelize implements MetricSettingsPort {
   async createDefault(
     metricId: string,
-    tx: PersistenceTransaction
+    tx: PersistenceTransaction,
   ): Promise<void> {
     const transaction = tx as Transaction;
     await models.MetricSettings.create(
@@ -29,7 +29,7 @@ export class MetricSettingsPortSequelize implements MetricSettingsPort {
           color: "#E897A3",
         },
       },
-      { transaction }
+      { transaction },
     );
   }
 }

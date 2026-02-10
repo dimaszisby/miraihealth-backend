@@ -15,15 +15,15 @@ This document is aimed at the Lakira frontend (Next.js) project as a practical r
 
 ## Overview of Route Groups
 
-| Group                | Prefix                      | Auth        | Notes                                       |
-| -------------------- | --------------------------- | ----------- | ------------------------------------------- |
-| Auth                 | `/api/v1/auth`             | Public + JWT | Register, login, profile, logout            |
-| Metrics              | `/api/v1/metrics`          | JWT         | Create/list/update/delete metrics, trends   |
-| Metric Categories    | `/api/v1/metric-categories`| JWT         | CRUD for metric categories                  |
-| Metric Settings      | `/api/v1/metric-settings`  | JWT         | Goal, alert, display settings per metric    |
-| Metric Logs          | `/api/v1/metric-logs`      | JWT         | Create/list/update/delete logs, stats       |
-| Analytics            | `/api/v1/analytics`        | JWT         | Dashboard and per-metric visualizations     |
-| API Docs (Swagger)   | `/api/v1/docs`             | Public or JWT (env) | Interactive API reference           |
+| Group              | Prefix                      | Auth                | Notes                                     |
+| ------------------ | --------------------------- | ------------------- | ----------------------------------------- |
+| Auth               | `/api/v1/auth`              | Public + JWT        | Register, login, profile, logout          |
+| Metrics            | `/api/v1/metrics`           | JWT                 | Create/list/update/delete metrics, trends |
+| Metric Categories  | `/api/v1/metric-categories` | JWT                 | CRUD for metric categories                |
+| Metric Settings    | `/api/v1/metric-settings`   | JWT                 | Goal, alert, display settings per metric  |
+| Metric Logs        | `/api/v1/metric-logs`       | JWT                 | Create/list/update/delete logs, stats     |
+| Analytics          | `/api/v1/analytics`         | JWT                 | Dashboard and per-metric visualizations   |
+| API Docs (Swagger) | `/api/v1/docs`              | Public or JWT (env) | Interactive API reference                 |
 
 ---
 
@@ -41,13 +41,13 @@ This document is aimed at the Lakira frontend (Next.js) project as a practical r
 
 ### Summary
 
-| Method | Path          | Auth   | Rate Limit        | Description                          |
-| ------ | ------------- | ------ | ----------------- | ------------------------------------ |
-| POST   | `/register`   | Public | Standard (global) | Register a new user and return token |
-| POST   | `/login`      | Public | `userRateLimiter` | Login and return token               |
-| GET    | `/profile`    | JWT    | Standard (global) | Get current user profile             |
-| PUT    | `/profile`    | JWT    | `userRateLimiter` | Update current user profile          |
-| POST   | `/logout`     | JWT    | Standard (global) | Logical logout (client clears token) |
+| Method | Path        | Auth   | Rate Limit        | Description                          |
+| ------ | ----------- | ------ | ----------------- | ------------------------------------ |
+| POST   | `/register` | Public | Standard (global) | Register a new user and return token |
+| POST   | `/login`    | Public | `userRateLimiter` | Login and return token               |
+| GET    | `/profile`  | JWT    | Standard (global) | Get current user profile             |
+| PUT    | `/profile`  | JWT    | `userRateLimiter` | Update current user profile          |
+| POST   | `/logout`   | JWT    | Standard (global) | Logical logout (client clears token) |
 
 ### Request & Response Shapes (high-level)
 
@@ -140,15 +140,15 @@ All metric routes are **protected** and use `authMiddleware`.
 
 ### Summary
 
-| Method | Path                    | Auth | Description                                              |
-| ------ | ----------------------- | ---- | -------------------------------------------------------- |
-| POST   | `/`                     | JWT  | Create a metric                                          |
-| GET    | `/`                     | JWT  | List metrics (cursor-based pagination)                   |
-| GET    | `/:id`                  | JWT  | Get metric detail (optional includes & logs)             |
-| PUT    | `/:id`                  | JWT  | Update metric                                            |
-| DELETE | `/:id`                  | JWT  | Delete metric                                            |
-| GET    | `/:metricId/trends`     | JWT  | Get trend data for a metric                             |
-| POST   | `/dummy` (optional)     | JWT  | Generate dummy metrics (enabled only in some envs)       |
+| Method | Path                | Auth | Description                                        |
+| ------ | ------------------- | ---- | -------------------------------------------------- |
+| POST   | `/`                 | JWT  | Create a metric                                    |
+| GET    | `/`                 | JWT  | List metrics (cursor-based pagination)             |
+| GET    | `/:id`              | JWT  | Get metric detail (optional includes & logs)       |
+| PUT    | `/:id`              | JWT  | Update metric                                      |
+| DELETE | `/:id`              | JWT  | Delete metric                                      |
+| GET    | `/:metricId/trends` | JWT  | Get trend data for a metric                        |
+| POST   | `/dummy` (optional) | JWT  | Generate dummy metrics (enabled only in some envs) |
 
 > Note: `/dummy` endpoints are primarily for testing and should not be used by the production frontend unless explicitly intended.
 
@@ -203,14 +203,14 @@ All routes are **protected** and use `authMiddleware`.
 
 ### Summary
 
-| Method | Path      | Auth | Description                                 |
-| ------ | --------- | ---- | ------------------------------------------- |
-| POST   | `/`       | JWT  | Create a metric category                    |
-| GET    | `/`       | JWT  | List metric categories (cursor-based)       |
-| GET    | `/:id`    | JWT  | Get category by id                          |
-| PUT    | `/:id`    | JWT  | Update category                             |
-| DELETE | `/:id`    | JWT  | Delete category                             |
-| POST   | `/dummy`  | JWT  | Generate dummy categories (testing only)    |
+| Method | Path     | Auth | Description                              |
+| ------ | -------- | ---- | ---------------------------------------- |
+| POST   | `/`      | JWT  | Create a metric category                 |
+| GET    | `/`      | JWT  | List metric categories (cursor-based)    |
+| GET    | `/:id`   | JWT  | Get category by id                       |
+| PUT    | `/:id`   | JWT  | Update category                          |
+| DELETE | `/:id`   | JWT  | Delete category                          |
+| POST   | `/dummy` | JWT  | Generate dummy categories (testing only) |
 
 ### List Categories – GET `/api/v1/metric-categories`
 
@@ -239,15 +239,15 @@ All routes are **protected** and use `authMiddleware`.
 
 ### Summary
 
-| Method | Path            | Auth | Description                                      |
-| ------ | --------------- | ---- | ------------------------------------------------ |
-| GET    | `/`             | JWT  | List settings (cursor-based; filter by metricId) |
-| GET    | `/:id`          | JWT  | Get settings by id                               |
-| POST   | `/`             | JWT  | Create settings for a metric                     |
-| PUT    | `/:id`          | JWT  | Update settings                                  |
-| DELETE | `/:id`          | JWT  | Delete settings                                  |
-| PATCH  | `/:id/achieve`  | JWT  | Mark goal as achieved / update achievement flag  |
-| PATCH  | `/:id/display`  | JWT  | Update display options                           |
+| Method | Path           | Auth | Description                                      |
+| ------ | -------------- | ---- | ------------------------------------------------ |
+| GET    | `/`            | JWT  | List settings (cursor-based; filter by metricId) |
+| GET    | `/:id`         | JWT  | Get settings by id                               |
+| POST   | `/`            | JWT  | Create settings for a metric                     |
+| PUT    | `/:id`         | JWT  | Update settings                                  |
+| DELETE | `/:id`         | JWT  | Delete settings                                  |
+| PATCH  | `/:id/achieve` | JWT  | Mark goal as achieved / update achievement flag  |
+| PATCH  | `/:id/display` | JWT  | Update display options                           |
 
 ### List Settings – GET `/api/v1/metric-settings`
 
@@ -283,15 +283,15 @@ All log routes are **protected** and use `authMiddleware`.
 
 ### Summary
 
-| Method | Path                   | Auth | Description                                            |
-| ------ | ---------------------- | ---- | ------------------------------------------------------ |
-| GET    | `/`                    | JWT  | List logs (cursor-based; filter by metric, value)      |
-| GET    | `/stats`               | JWT  | Aggregated stats for logs                              |
-| GET    | `/:id`                 | JWT  | Get a single log by id                                 |
-| POST   | `/`                    | JWT  | Create a log                                           |
-| PUT    | `/:id`                 | JWT  | Update a log                                           |
-| DELETE | `/:id`                 | JWT  | Delete a log                                           |
-| POST   | `/:metricId/dummy`     | JWT  | Generate dummy logs (testing only; env controlled)     |
+| Method | Path               | Auth | Description                                        |
+| ------ | ------------------ | ---- | -------------------------------------------------- |
+| GET    | `/`                | JWT  | List logs (cursor-based; filter by metric, value)  |
+| GET    | `/stats`           | JWT  | Aggregated stats for logs                          |
+| GET    | `/:id`             | JWT  | Get a single log by id                             |
+| POST   | `/`                | JWT  | Create a log                                       |
+| PUT    | `/:id`             | JWT  | Update a log                                       |
+| DELETE | `/:id`             | JWT  | Delete a log                                       |
+| POST   | `/:metricId/dummy` | JWT  | Generate dummy logs (testing only; env controlled) |
 
 ### Create Log – POST `/api/v1/metric-logs`
 
@@ -334,10 +334,10 @@ All analytics routes are **protected** and use `authMiddleware` + `analyticsRate
 
 ### Summary
 
-| Method | Path                 | Auth | Description                                             |
-| ------ | -------------------- | ---- | ------------------------------------------------------- |
-| GET    | `/dashboard`         | JWT  | Multi-metric dashboard visualization                    |
-| GET    | `/metrics/:metricId` | JWT  | Detailed visualization for a single metric              |
+| Method | Path                 | Auth | Description                                |
+| ------ | -------------------- | ---- | ------------------------------------------ |
+| GET    | `/dashboard`         | JWT  | Multi-metric dashboard visualization       |
+| GET    | `/metrics/:metricId` | JWT  | Detailed visualization for a single metric |
 
 ### Shared Query Concepts
 
@@ -388,4 +388,3 @@ Query params:
 For deep integration or client SDK generation, the frontend can also rely on the OpenAPI JSON at:
 
 - `documents/openapi/lakira-backend-openapi.json`
-

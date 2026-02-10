@@ -7,11 +7,11 @@ import {
   updateGoalAchievement,
   updateDisplayOptions,
   getAllMetricSettingsViaCursor,
-} from "./controller";
-import { authMiddleware } from "@/features/auth/infrastructure/http/authMiddleware";
-import { cacheMiddleware } from "@/shared/middleware/cache";
-import { userRateLimiter } from "@/shared/middleware/rate-limiter";
-import { validate } from "@/shared/middleware/validation";
+} from "./controller.js";
+import { authMiddleware } from "@/features/auth/infrastructure/http/authMiddleware.js";
+import { cacheMiddleware } from "@/shared/middleware/cache.js";
+import { userRateLimiter } from "@/shared/middleware/rate-limiter.js";
+import { validate } from "@/shared/middleware/validation.js";
 import {
   createMetricSettingsSchema,
   updateMetricSettingsSchema,
@@ -20,13 +20,15 @@ import {
   listMetricSettingsViaCursorSchema,
   updateDisplayOptionsSchema,
   goalAchievementSchema,
-} from "./schema.zod";
-import { AuthRequest } from "@/types/request.context";
-import logger from "@/utils/logger";
-import { buildCursorCacheKey } from "@/shared/cache/keys";
+} from "./schema.zod.js";
+import { AuthRequest } from "@/types/request.context.js";
+import logger from "@/utils/logger.js";
+import { buildCursorCacheKey } from "@/shared/cache/keys.js";
+import { methodNotAllowed } from "@/shared/middleware/method-guard.js";
+import { requireJsonObjectBody } from "@/shared/middleware/require-json-object.js";
 
-const metricSettingsCacheKey = (req: AuthRequest) =>
-  `metricSettings:${req.user?.id}:${req.query.metricId || "all"}`;
+// const metricSettingsCacheKey = (req: AuthRequest) =>
+//   `metricSettings:${req.user?.id}:${req.query.metricId || "all"}`;
 
 const metricSettingCacheKey = (req: AuthRequest) =>
   `metricSetting:${req.user?.id}:${req.params.id}`;
@@ -36,26 +38,32 @@ const firstNonEmpty = (...vals: unknown[]) =>
     | string
     | undefined;
 
-const bool01 = (v: any) => (v === true || v === "true" ? "1" : "0");
+const bool01 = (v: unknown) => (v === true || v === "true" ? "1" : "0");
+
+const asString = (value: unknown): string | undefined =>
+  typeof value === "string" ? value : undefined;
 
 const METRIC_SETTINGS_CURSOR_FEATURE = "metric-settings";
 const METRIC_SETTINGS_CURSOR_VERSION = 1;
 
 const metricSettingsCursorCacheKey = (req: AuthRequest) => {
-  const q = req.query as any;
-  const filter = (q && typeof q.filter === "object" && q.filter) || {};
+  const q = req.query;
+  const filter =
+    (typeof q.filter === "object" && q.filter !== null
+      ? (q.filter as Record<string, unknown>)
+      : undefined) ?? {};
 
   const metricId =
     firstNonEmpty(
-      filter.metricId,
-      q["filter[metricId]"],
-      q.metricId,
-      req.params?.metricId
+      asString(filter.metricId),
+      asString(q["filter[metricId]"]),
+      asString(q.metricId),
+      req.params?.metricId,
     ) ?? "_";
 
-  const limit = Number(q.limit ?? 20);
-  const sort = String(q.sort ?? "-createdAt");
-  const after = typeof q.after === "string" ? q.after : "";
+  const limit = Number(asString(q.limit) ?? 20);
+  const sort = asString(q.sort) ?? "-createdAt";
+  const after = asString(q.after) ?? "";
   const it = bool01(q.includeTotal);
 
   const key = buildCursorCacheKey({
@@ -83,50 +91,58 @@ export const createMetricSettingsRouter = () => {
     "/",
     validate(listMetricSettingsViaCursorSchema),
     cacheMiddleware(metricSettingsCursorCacheKey, 300),
-    getAllMetricSettingsViaCursor
+    getAllMetricSettingsViaCursor,
   );
 
   router.get(
     "/:id",
     validate(getMetricSettingsSchema),
     cacheMiddleware(metricSettingCacheKey, 300),
-    getMetricSettingsById
+    getMetricSettingsById,
   );
 
   router.post(
     "/",
     userRateLimiter,
+    requireJsonObjectBody(),
     validate(createMetricSettingsSchema),
-    createMetricSettings
+    createMetricSettings,
   );
 
   router.put(
     "/:id",
     userRateLimiter,
+    requireJsonObjectBody(),
     validate(updateMetricSettingsSchema),
-    updateMetricSettings
+    updateMetricSettings,
   );
 
   router.delete(
     "/:id",
     userRateLimiter,
     validate(deleteMetricSettingsSchema),
-    deleteMetricSettings
+    deleteMetricSettings,
   );
 
   router.patch(
     "/:id/achieve",
     userRateLimiter,
     validate(goalAchievementSchema),
-    updateGoalAchievement
+    updateGoalAchievement,
   );
 
   router.patch(
     "/:id/display",
     userRateLimiter,
+    requireJsonObjectBody(),
     validate(updateDisplayOptionsSchema),
-    updateDisplayOptions
+    updateDisplayOptions,
   );
+
+  router.all("/", methodNotAllowed(["GET", "POST"]));
+  router.all("/:id", methodNotAllowed(["GET", "PUT", "DELETE"]));
+  router.all("/:id/achieve", methodNotAllowed(["PATCH"]));
+  router.all("/:id/display", methodNotAllowed(["PATCH"]));
 
   return router;
 };

@@ -16,23 +16,28 @@ These guidelines define **how to design, write, and maintain** GitHub Actions wo
 ## 2. General Principles
 
 1. **Pipelines as Code**
+
    - All CI/CD logic lives in `.github/workflows/*.yml`.
    - Avoid manual, undocumented release steps for anything critical.
 
 2. **Fail Fast, Then Go Deep**
+
    - Run lint and typecheck first.
    - Only run unit/integration/contract tests after basic checks pass.
 
 3. **Deterministic & Idempotent**
+
    - Tests must not depend on wall-clock time or random data unless explicitly controlled.
    - DB migrations and seeds should be safe to re-run without corrupting data.
 
 4. **Security by Default**
+
    - Secrets always come from `secrets.*`.
    - No credentials or tokens may be hard-coded in workflows.
 
 5. **Observability**
    - Upload key reports (Jest, Newman) as artifacts.
+   - When running coverage jobs, rename/persist per-suite folders (e.g., `coverage/jest-unit`, `coverage/jest-integration`) before uploading so they are not overwritten.
    - Configure timeouts and clear failure points.
 
 ---
@@ -50,13 +55,15 @@ on:
   push:
     branches:
       - main
-      - develop
-      - 'feature/**'
+      - dev
+      - "feature/**"
   pull_request:
     branches:
       - main
-      - develop
+      - dev
 ```
+
+> Working directory tip: set `defaults.run.working-directory` to the literal backend path (e.g., `.` or `./apps/backend`). GitHub Actions forbids `${{ env.* }}` expressions in this field, so edit the string directly when relocating the backend code.
 
 ### 3.2 Jobs & Dependencies
 
@@ -192,13 +199,20 @@ Typical environment variables for these jobs:
 
 ```yaml
 env:
-  DATABASE_URL: postgres://postgres:${{ secrets.POSTGRES_PASSWORD_TEST }}@postgres:5432/lakira_ci
-  REDIS_URL: redis://redis:6379
+  DATABASE_URL: postgres://postgres:${{ secrets.POSTGRES_PASSWORD_TEST }}@localhost:5432/lakira_ci
+  DB_HOST: localhost
+  DB_PORT: 5432
+  DB_USER: postgres
+  DB_PASSWORD: ${{ secrets.POSTGRES_PASSWORD_TEST }}
+  DB_NAME: lakira_ci
+  REDIS_URL: redis://localhost:6379
   NODE_ENV: test
   JWT_SECRET: ${{ secrets.JWT_SECRET_TEST }}
 ```
 
-> Special Note for Codex: Treat `postgres` and `redis` as canonical service hostnames when generating DB/Redis configuration for CI—do not introduce alternative env var names without updating this guideline first.
+> Special Note for Codex: Jobs that run on GitHub’s hosted Ubuntu runner must talk to services via `localhost:<port>` because Actions forwards service ports to the host network. Only use service hostnames (`postgres`, `redis`) if the job itself runs inside a container. Keep `DATABASE_URL` as the canonical variable and surface `DB_*` envs only when scripts require username/password/database fields explicitly.
+
+> Keep `wait-on` pinned as a dev dependency so the workflow never wastes time pulling it on-demand via `npx`.
 
 ---
 
@@ -299,12 +313,12 @@ on:
   push:
     branches:
       - main
-      - develop
-      - 'feature/**'
+      - dev
+      - "feature/**"
   pull_request:
     branches:
       - main
-      - develop
+      - dev
 
 concurrency:
   group: backend-ci-${{ github.ref }}
@@ -352,8 +366,13 @@ jobs:
           --health-timeout=5s
           --health-retries=5
     env:
-      DATABASE_URL: postgres://postgres:${{ secrets.POSTGRES_PASSWORD_TEST }}@postgres:5432/lakira_ci
-      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgres://postgres:${{ secrets.POSTGRES_PASSWORD_TEST }}@localhost:5432/lakira_ci
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: ${{ secrets.POSTGRES_PASSWORD_TEST }}
+      DB_NAME: lakira_ci
+      REDIS_URL: redis://localhost:6379
       NODE_ENV: test
       JWT_SECRET: ${{ secrets.JWT_SECRET_TEST }}
     steps:
@@ -395,8 +414,13 @@ jobs:
           --health-timeout=5s
           --health-retries=5
     env:
-      DATABASE_URL: postgres://postgres:${{ secrets.POSTGRES_PASSWORD_TEST }}@postgres:5432/lakira_ci
-      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgres://postgres:${{ secrets.POSTGRES_PASSWORD_TEST }}@localhost:5432/lakira_ci
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: ${{ secrets.POSTGRES_PASSWORD_TEST }}
+      DB_NAME: lakira_ci
+      REDIS_URL: redis://localhost:6379
       NODE_ENV: test
       JWT_SECRET: ${{ secrets.JWT_SECRET_TEST }}
     steps:
@@ -406,13 +430,41 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - run: npm run build
       - run: npm run db:migrate:test
       - name: Start backend
-        run: npm run start:test &
+        run: |
+          nohup npm run start:test > /tmp/backend.log 2>&1 &
+          echo $! > /tmp/backend.pid
       - name: Wait for backend
-        run: npx wait-on http://localhost:4000/api/v1/health
+        run: |
+          wait_with_logs() {
+            "$@" || {
+              echo "---- backend.log (tail) ----"
+              tail -n 200 /tmp/backend.log || true
+              echo "--------------------------------"
+              exit 1
+            }
+          }
+          wait_with_logs npx wait-on tcp:4000 --timeout 180000
+          wait_with_logs npx wait-on http://localhost:4000/api/v1/health --timeout 180000
       - name: Run contract tests (local)
         run: npm run test:contract:local
+      - name: Dump backend logs on failure
+        if: always()
+        run: |
+          if [ "${{ job.status }}" != "success" ]; then
+            echo "---- backend.log (tail) ----"
+            tail -n 200 /tmp/backend.log || true
+            echo "--------------------------------"
+          fi
+      - name: Stop backend
+        if: always()
+        run: |
+          if [ -f /tmp/backend.pid ]; then
+            kill "$(cat /tmp/backend.pid)" || true
+            rm -f /tmp/backend.pid
+          fi
       - name: Upload Newman reports (local)
         uses: actions/upload-artifact@v4
         with:

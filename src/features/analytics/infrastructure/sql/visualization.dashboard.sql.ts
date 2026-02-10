@@ -1,4 +1,4 @@
-import type { BucketSpec } from "../../domain/buckets";
+import type { BucketSpec } from "../../domain/buckets.js";
 
 // Query for logs in a multiple metrics
 // used for data visualizations in Dasboard Page

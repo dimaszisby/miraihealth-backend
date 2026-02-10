@@ -1,12 +1,12 @@
-import AppError from "@/utils/AppError";
-import { Metric } from "../../domain/entities/Metric";
+import AppError from "@/utils/AppError.js";
+import { Metric } from "../../domain/entities/Metric.js";
 import {
   CreateMetricDTO,
   MetricRepository,
-} from "../../domain/repositories/MetricRepository";
-import { CachePort } from "../ports/CachePort";
-import { MetricSettingsPort } from "../ports/MetricSettingsPort";
-import { TransactionPort } from "../ports/TransactionPort";
+} from "../../domain/repositories/MetricRepository.js";
+import { CachePort } from "../ports/CachePort.js";
+import { MetricSettingsPort } from "../ports/MetricSettingsPort.js";
+import { TransactionPort } from "../ports/TransactionPort.js";
 
 type Input = CreateMetricDTO;
 
@@ -15,7 +15,7 @@ export class CreateMetric {
     private repo: MetricRepository,
     private settings: MetricSettingsPort,
     private cache: CachePort,
-    private tx: TransactionPort
+    private tx: TransactionPort,
   ) {}
 
   async execute(input: Input): Promise<Metric> {
@@ -26,9 +26,17 @@ export class CreateMetric {
     if (input.categoryId) {
       const exists = await this.repo.categoryExists(
         input.userId,
-        input.categoryId
+        input.categoryId,
       );
       if (!exists) throw new AppError("Category not found", 404);
+    }
+
+    if (input.originalMetricId) {
+      const exists = await this.repo.originalMetricExists(
+        input.userId,
+        input.originalMetricId,
+      );
+      if (!exists) throw new AppError("Original metric not found", 404);
     }
 
     return this.tx.runInTransaction(async (t) => {

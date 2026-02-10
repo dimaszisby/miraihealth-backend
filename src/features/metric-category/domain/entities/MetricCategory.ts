@@ -11,9 +11,9 @@ export type MetricCategoryProps = {
 };
 
 import crypto from "node:crypto";
-import { MetricCategoryName } from "../value-objects/MetricCategoryName";
-import { MetricCategoryColor } from "../value-objects/MetricCategoryColor";
-import { MetricCategoryIcon } from "../value-objects/MetricCategoryIcon";
+import { MetricCategoryName } from "../value-objects/MetricCategoryName.js";
+import { MetricCategoryColor } from "../value-objects/MetricCategoryColor.js";
+import { MetricCategoryIcon } from "../value-objects/MetricCategoryIcon.js";
 
 export class MetricCategory {
   private constructor(private props: MetricCategoryProps) {}
@@ -22,7 +22,10 @@ export class MetricCategory {
     return new MetricCategory(p);
   }
 
-  static create(userId: string, params: { name: string; color?: string; icon?: string }) {
+  static create(
+    userId: string,
+    params: { name: string; color?: string; icon?: string },
+  ) {
     return new MetricCategory({
       id: crypto.randomUUID(),
       userId,

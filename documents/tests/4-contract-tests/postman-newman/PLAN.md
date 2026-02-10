@@ -32,15 +32,17 @@ This plan initially focuses on the analytics and metrics domain, but the structu
 - `collections/lakira-metrics-contract.postman_collection.json`
 - `collections/lakira-metric-logs-contract.postman_collection.json`
 - `collections/lakira-metric-settings-contract.postman_collection.json`
-- `collections/lakira-auth-contract.postman_collection.json` :contentReference[oaicite:0]{index=0}  
+- `collections/lakira-auth-contract.postman_collection.json`
 
 **Endpoints covered (from `lakira-backend-openapi.json`):**
 
 - **Analytics**
+
   - `GET /analytics/dashboard`
   - `GET /analytics/metrics/{metricId}`
 
 - **Metrics**
+
   - `GET /metrics`
   - `POST /metrics`
   - `GET /metrics/{id}`
@@ -49,6 +51,7 @@ This plan initially focuses on the analytics and metrics domain, but the structu
   - `GET /metrics/{metricId}/trends`
 
 - **Metric Logs**
+
   - `GET /metric-logs`
   - `POST /metric-logs`
   - `GET /metric-logs/{id}`
@@ -56,6 +59,7 @@ This plan initially focuses on the analytics and metrics domain, but the structu
   - `GET /metric-logs/stats`
 
 - **Metric Settings**
+
   - `GET /metric-settings`
   - `POST /metric-settings`
   - `GET /metric-settings/{id}`
@@ -97,11 +101,13 @@ This plan initially focuses on the analytics and metrics domain, but the structu
   `documents/openapi/lakira-backend-openapi.json`
 
 - **Backend Architecture Docs**
-  - `documents/documentation/architecture/lakira-backend-db-schema.md` – tables and relationships. :contentReference[oaicite:1]{index=1}  
+
+  - `documents/documentation/architecture/lakira-backend-db-schema.md` – tables and relationships.
   - `documents/documentation/architecture/lakira-backend-routes.md` – route overview.
   - `documents/documentation/architecture/lakira-backend-types.md` – DTOs and shared types.
 
 - **Feature-level Docs**
+
   - Analytics:
     - `documents/development/features/analytics/analytics-backend-overhaul-plan.md`
     - `documents/development/features/analytics/analytics-backend-overhaul-checklist.md`
@@ -117,12 +123,15 @@ This plan initially focuses on the analytics and metrics domain, but the structu
     - `documents/development/features/auth/README.md`
 
 - **Frontend/Product Docs**
+
   - `documents/documentation/product/lakira-frontend-prd.md`
   - `ui-documentation.json` – UI analytics & dashboard visual requirements.
 
 - **Testing Docs**
   - `documents/tests/TESTING_STRATEGY.md`
   - `documents/tests/README.md`
+- **Staging Runbook**
+  - `documents/tests/4-contract-tests/postman-newman/STAGING_RUNBOOK.md`
 
 ---
 
@@ -131,10 +140,12 @@ This plan initially focuses on the analytics and metrics domain, but the structu
 ### 4.1 Technique
 
 - **Specification-based contract testing**
+
   - Use the OpenAPI spec as the primary contract.
   - Maintain Postman collections whose requests and assertions mirror the spec.
 
 - **Environment-driven**
+
   - Run the same collections against:
     - **Local** backend (`lakira-local.postman_environment.json`).
     - **Staging** backend (`lakira-staging.postman_environment.json`).
@@ -143,16 +154,19 @@ This plan initially focuses on the analytics and metrics domain, but the structu
   - All collections must be runnable via Newman:
     - Locally via npm scripts (e.g. `npm run test:contract:local`).
     - In CI (e.g. `npm run test:contract:staging` during pipeline).
+  - `contract_local` job is required on PR branches (branch protection enforced per `documents/ci-cd/backend/README.md` §7). Staging runs follow the checklist in `postman-newman/STAGING_RUNBOOK.md`.
 
 ### 4.2 Contract Assertions
 
 Each Postman request should assert:
 
 1. **Status codes**
+
    - Success codes: `200`, `201`, `204` as defined in OpenAPI for each endpoint.
    - Error codes: `400`, `401`, `403`, `404`, `500` (and any other feature-specific codes).
 
 2. **Response body shape**
+
    - Required fields exist and have the correct type.
    - No unintentional breaking changes to key field names.
    - For analytics dashboard (`GET /analytics/dashboard`) the **v2 payload** must at least include:
@@ -176,13 +190,14 @@ Each Postman request should assert:
        - `etagSeed`
 
 3. **Headers**
+
    - All JSON responses: `Content-Type: application/json` (or `application/json; charset=utf-8`).
    - Analytics dashboard & metric visualization:
      - `ETag` set on `200` responses.
      - `Cache-Control` aligned with dashboard caching policy (private + `max-age` + `stale-while-revalidate`).
 
 4. **Error contracts**
-   - `BadRequestError` (`400`):  
+   - `BadRequestError` (`400`):
      ```json
      {
        "status": "fail",
@@ -195,7 +210,7 @@ Each Postman request should assert:
        ]
      }
      ```
-   - `UnauthorizedError` (`401`):  
+   - `UnauthorizedError` (`401`):
      ```json
      {
        "status": "fail",
@@ -210,14 +225,15 @@ Each Postman request should assert:
 
 ### 5.1 Analytics
 
-**Endpoints:**  
+**Endpoints:**
 
-- `GET /analytics/dashboard`  
+- `GET /analytics/dashboard`
 - `GET /analytics/metrics/{metricId}`
 
 **Scenarios:**
 
 1. **Happy path – Dashboard**
+
    - Authenticated user with metrics and logs.
    - Asserts:
      - `200 OK`
@@ -226,12 +242,14 @@ Each Postman request should assert:
      - Full v2 payload fields as described in §4.2.
 
 2. **Happy path – Single metric visualization**
+
    - `GET /analytics/metrics/{metricId}` with valid UUID and params.
    - Asserts:
      - `200 OK`
      - Valid visualization response structure (`series`, `stats`, etc.) as per `VisualizationResponse` schema.
 
 3. **Conditional requests (ETag / If-None-Match)**
+
    - First request: capture `ETag` from `200` response.
    - Second request: send `If-None-Match` with same value.
    - Asserts:
@@ -241,6 +259,7 @@ Each Postman request should assert:
      - `Cache-Control` header preserved.
 
 4. **Invalid parameters**
+
    - Invalid bucket (`bucket=yearly`).
    - Invalid time range (`start > end`, invalid `last` format, etc.).
    - Asserts:
@@ -248,6 +267,7 @@ Each Postman request should assert:
      - `errors[]` contains validation failures.
 
 5. **Auth & security**
+
    - Missing token, invalid token.
    - Asserts:
      - `401 Unauthorized`
@@ -275,12 +295,14 @@ Each Postman request should assert:
 **Key scenarios:**
 
 1. **Create metric**
+
    - `POST /metrics` with valid payload.
    - Asserts:
      - `201 Created`
      - Response contains newly created metric with expected fields.
 
 2. **List metrics**
+
    - `GET /metrics` for authenticated user.
    - Asserts:
      - `200 OK`
@@ -288,26 +310,31 @@ Each Postman request should assert:
      - Pagination/filters behave as expected (if applicable).
 
 3. **Get metric detail**
+
    - `GET /metrics/{id}` for existing metric.
    - Asserts:
      - `200 OK`
      - Fields match `MetricDetail` schema.
 
 4. **Update metric**
+
    - `PUT /metrics/{id}` with valid changes.
    - Asserts:
      - `200 OK`
      - Updated fields reflected in response.
 
 5. **Delete metric**
+
    - `DELETE /metrics/{id}`.
    - Asserts:
      - `204 No Content`
      - Subsequent `GET /metrics/{id}` returns `404`.
 
-6. **Trends**
+6. **Trends + caching**
+
    - `GET /metrics/{metricId}/trends` with valid params.
    - Validates trending payload structure for charting (buckets, values, meta).
+   - If the endpoint supports conditional requests, repeat the analytics flow (capture `ETag`, assert `304` on `If-None-Match`).
 
 7. **Validation & auth errors**
    - Missing required fields on create/update → `400`.
@@ -329,30 +356,35 @@ Each Postman request should assert:
 **Key scenarios:**
 
 1. **Create metric log**
+
    - `POST /metric-logs` with valid payload.
    - Asserts:
      - `201 Created`
      - Response includes ID, metric reference, value, log date.
 
 2. **List metric logs**
+
    - `GET /metric-logs` with filters (metricId, date range).
    - Asserts:
      - `200 OK`
      - Logs returned match filter constraints.
 
 3. **Get metric log detail**
+
    - `GET /metric-logs/{id}` for an existing log.
    - Asserts:
      - `200 OK`
      - Fields match log schema.
 
 4. **Delete metric log**
+
    - `DELETE /metric-logs/{id}`.
    - Asserts:
      - `204 No Content`
      - Subsequent `GET` for same ID → `404`.
 
 5. **Stats endpoint**
+
    - `GET /metric-logs/stats` with valid parameters.
    - Asserts:
      - `200 OK`
@@ -362,6 +394,7 @@ Each Postman request should assert:
    - Invalid payload → `400`.
    - Missing/invalid token → `401`.
    - Non-existent ID → `404`.
+   - Rate limit handling: ensure `.env.test` sets `DISABLE_RATE_LIMITING=true` so tests do not fail with `429` during bulk log scenarios (documented in README + checklist).
 
 ---
 
@@ -380,36 +413,42 @@ Each Postman request should assert:
 **Key scenarios:**
 
 1. **Create settings**
+
    - `POST /metric-settings` with valid payload.
    - Asserts:
      - `201 Created`
      - Mapping to metric ID and user is correct.
 
 2. **List settings**
+
    - `GET /metric-settings`.
    - Asserts:
      - `200 OK`
      - Returns settings for current user only.
 
 3. **Update settings**
+
    - `PUT /metric-settings/{id}`.
    - Asserts:
      - `200 OK`
      - Updated values reflected in response.
 
 4. **Toggle achievement**
+
    - `PATCH /metric-settings/{id}/achieve`.
    - Asserts:
      - `200 OK`
      - `achievedAt` or equivalent flag updated correctly.
 
 5. **Toggle display**
+
    - `PATCH /metric-settings/{id}/display`.
    - Asserts:
      - `200 OK`
      - `showOnDashboard` / display settings updated correctly.
 
 6. **Delete settings**
+
    - `DELETE /metric-settings/{id}` → `204`.
    - Follow-up `GET` → `404`.
 
@@ -433,30 +472,35 @@ Each Postman request should assert:
 **Key scenarios:**
 
 1. **Register**
+
    - Valid registration payload.
    - Asserts:
      - `201 Created`
      - Response contains primary user fields (id, email, username).
 
 2. **Login**
+
    - Correct credentials.
    - Asserts:
      - `200 OK`
      - Response includes token (JWT) and user profile.
 
 3. **Profile read**
+
    - `GET /auth/profile` with valid token.
    - Asserts:
      - `200 OK`
      - Follows profile schema.
 
 4. **Profile update**
+
    - `PUT /auth/profile` with valid payload.
    - Asserts:
      - `200 OK`
      - Changes reflected in response.
 
 5. **Logout**
+
    - `POST /auth/logout`.
    - Asserts:
      - `200 OK`
@@ -474,6 +518,7 @@ Each Postman request should assert:
 ### 6.1 Environments
 
 - **Local**
+
   - Environment file: `environments/lakira-local.postman_environment.json`
   - `{{baseUrl}}` → local backend (e.g. `http://localhost:3000` or Docker port).
   - Auth variables: tokens for seeded test users.
@@ -486,6 +531,7 @@ Each Postman request should assert:
 ### 6.2 Test Data
 
 - Seed scripts must create:
+
   - At least one **test user** with:
     - A small but realistic set of metrics and logs.
     - Metric settings and categories sufficient to exercise analytics.
@@ -544,3 +590,23 @@ Each Postman request should assert:
 
    ```bash
    npm run test:contract:local
+   ```
+
+   This script will:
+
+   - Run database migrations + `npm run seed:contract-tests` if needed.
+   - Execute `run-contract-local.js` to run every collection (auth, analytics, metrics, metric logs, metric settings) with the local environment file.
+   - Store HTML/JUnit reports under `documents/tests/4-contract-tests/postman-newman/reports/local/<timestamp>/`.
+
+### 8.2 CI / Staging
+
+1. Ensure branch protection requires the `contract_local` job on `main`/`develop` (see `documents/ci-cd/backend/README.md` §7) so PRs cannot merge without a green contract gate.
+2. Confirm staging secrets + Render deploy hook listed in `STAGING_RUNBOOK.md` are populated in GitHub Actions and match the deterministic seed output (`tmp/contract-seed.json`).
+3. Workflow sequence:
+   - `deploy_staging` triggers the Render deploy hook and polls `STAGING_HEALTH_URL` until HTTP 200 (5-minute timeout). Investigate Render logs immediately if health fails.
+   - `contract_staging` runs `npm run test:contract:staging`, overriding the Postman environment with seeded IDs/tokens from secrets. Reports land under `postman-newman/reports/staging/<timestamp>/` and must be uploaded as the `newman-contract-staging` artifact.
+   - (Upcoming) Schemathesis-on-staging will run after Newman once runtime budgets and tokens are available; artifacts will be uploaded as `schemathesis-contract-staging`.
+4. After each staging run:
+   - Record runtime + artifact links in `documents/tests/4-contract-tests/metrics-tracker.md`.
+   - Log any regressions or infra gaps in `documents/tests/4-contract-tests/incidents.md` (reference the runbook and CI job URL).
+   - Rotate secrets as needed and capture the rotation date per the runbook’s checklist.

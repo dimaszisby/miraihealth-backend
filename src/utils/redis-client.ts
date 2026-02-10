@@ -1,6 +1,6 @@
 import { createClient, RedisClientType } from "redis";
-import logger from "./logger.js"; // Update the import path
-import { env } from "../config/zodEnv.js";
+import logger from "./logger.js";
+import { env } from "../config/envManager.js";
 
 // Redis client configuration
 const redisConfig = {
@@ -17,6 +17,7 @@ const redisConfig = {
 const redisClient: RedisClientType = createClient(redisConfig);
 
 const isTestEnv = env.NODE_ENV === "test";
+const redisIntegrationEnabled = env.ENABLE_REDIS_INTEGRATION;
 
 // Gracefully handle Redis errors
 redisClient.on("error", (err: Error) => {
@@ -28,18 +29,22 @@ redisClient.on("error", (err: Error) => {
 
 redisClient.on("connect", () => logger.info("[REDIS] Connected to Redis"));
 redisClient.on("reconnecting", () =>
-  logger.warn("[REDIS] Reconnecting to Redis...")
+  logger.warn("[REDIS] Reconnecting to Redis..."),
 );
 redisClient.on("end", () => logger.warn("[REDIS] Redis connection closed."));
 
 // Ensure connection before exporting
 const connectRedis = async () => {
   try {
-    const shouldConnect = !isTestEnv;
+    const shouldConnect = !isTestEnv || redisIntegrationEnabled;
 
     if (shouldConnect) {
       await redisClient.connect();
-      logger.info("[REDIS] Redis connection established.");
+      logger.info(
+        `[REDIS] Redis connection established${
+          redisIntegrationEnabled && isTestEnv ? " (tests opted in)" : ""
+        }.`,
+      );
     } else {
       logger.info("[REDIS] Skipping Redis connection in test environment.");
     }

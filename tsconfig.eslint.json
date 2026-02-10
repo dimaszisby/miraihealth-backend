@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./tsconfig.json",
+  "include": [
+    "*.js",
+    "*.mjs",
+    "*.cjs",
+    "*.ts",
+    "*.tsx",
+    "src/**/*",
+    "scripts/**/*",
+    "documents/**/*",
+    "__tests__/**/*",
+    "tmp/**/*"
+  ],
+  "exclude": ["dist", "node_modules"]
+}

@@ -1,6 +1,6 @@
-import AppError from "@/utils/AppError";
-import { UserRepository } from "../../domain/repositories/UserRepository";
-import { AuthUser } from "../../domain/entities/AuthUser";
+import AppError from "@/utils/AppError.js";
+import { UserRepository } from "../../domain/repositories/UserRepository.js";
+import { AuthUser } from "../../domain/entities/AuthUser.js";
 
 export class GetProfile {
   constructor(private repo: UserRepository) {}
