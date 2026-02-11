@@ -1,6 +1,6 @@
-import type { VizResponse } from "../../domain/types";
-import type { BucketAlias, BucketSpec } from "../../domain/buckets";
-import type { FillMode } from "../../domain/types";
+import type { VizResponse } from "../../domain/types.js";
+import type { BucketAlias, BucketSpec } from "../../domain/buckets.js";
+import type { FillMode } from "../../domain/types.js";
 
 export type VisualizationQueryParams = {
   userId: string;
@@ -79,6 +79,6 @@ export type DashboardVizResponse = {
 export interface VisualizationReadRepository {
   fetchVisualization(params: VisualizationQueryParams): Promise<VizResponse>;
   fetchDashboardVisualization(
-    params: DashboardVisualizationParams
+    params: DashboardVisualizationParams,
   ): Promise<DashboardVizResponse>;
 }

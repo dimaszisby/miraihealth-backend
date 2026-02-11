@@ -8,6 +8,7 @@
 ---
 
 ## 1. Executive Summary
+
 - The production schema currently exposes only primary-key and uniqueness indexes, plus one composite index on `metric_logs`. Every high-frequency query (lists, cursor pagination, analytics fan-out) scans on non-indexed predicates such as `user_id`, `deleted_at`, and text searches, creating O(N) latency as data grows beyond a few thousand rows.
 - `metric_logs`—the highest-cardinality table powering dashboards (`visualization*.sql`) and log CRUD (`MetricLogQueryRepoSequelize`)—is protected by both a unique constraint and a duplicate b-tree index on `(metric_id, logged_at)`. Range scans on `created_at`, `logged_at`, and `log_value` as well as ownership joins (`metric_id -> metrics.user_id`) currently spill to sequential scans, which will become the dominant production cost.
 - Missing relational guarantees (e.g., `metric_settings` should be one-to-one with `metrics`, `metrics.name` should be unique per user) leave gaps between application-level validation and database enforcement, risking phantom duplicates and complicating cache invalidation logic.
@@ -16,6 +17,7 @@
 ---
 
 ## 2. Methodology & Inputs
+
 - Schema migrations at `src/migrations/*.cjs` with emphasis on table creation files dated `20250109`.
 - Sequelize models for the scoped tables (e.g., `src/features/metric/.../models/*.ts`).
 - Query workloads from repositories:
@@ -30,13 +32,13 @@
 
 ## 3. Current Index Inventory
 
-| Table | Existing Indexes | Notes |
-| --- | --- | --- |
-| `users` | PK on `id`; unique constraints on `username`, `email`. | Covers current find-by-email/username workload; no case-insensitive support. |
-| `metric_categories` | PK on `id`. | No FK or search indexes (`user_id`, `name`, `deleted_at` all unindexed). |
-| `metrics` | PK on `id`. | No coverage for `user_id`, `category_id`, `deleted_at`, or `name`. |
-| `metric_settings` | PK on `id`. | No uniqueness on `metric_id`; no JSONB expression indexes for dashboard filters. |
-| `metric_logs` | PK on `id`; unique constraint `uq_metric_logs_metric_id_logged_at`; additional b-tree `ix_metric_logs_metric_id_logged_at`. | Duplicate indexes on same columns; no support for other sort keys or time-series scans. |
+| Table               | Existing Indexes                                                                                                            | Notes                                                                                   |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `users`             | PK on `id`; unique constraints on `username`, `email`.                                                                      | Covers current find-by-email/username workload; no case-insensitive support.            |
+| `metric_categories` | PK on `id`.                                                                                                                 | No FK or search indexes (`user_id`, `name`, `deleted_at` all unindexed).                |
+| `metrics`           | PK on `id`.                                                                                                                 | No coverage for `user_id`, `category_id`, `deleted_at`, or `name`.                      |
+| `metric_settings`   | PK on `id`.                                                                                                                 | No uniqueness on `metric_id`; no JSONB expression indexes for dashboard filters.        |
+| `metric_logs`       | PK on `id`; unique constraint `uq_metric_logs_metric_id_logged_at`; additional b-tree `ix_metric_logs_metric_id_logged_at`. | Duplicate indexes on same columns; no support for other sort keys or time-series scans. |
 
 > **Gap:** Postgres does not auto-index FK columns, so every `WHERE user_id = ? AND deleted_at IS NULL` clause currently performs seq scans despite being the dominating predicate across repositories.
 
@@ -45,6 +47,7 @@
 ## 4. Workload Analysis & Gaps
 
 ### 4.1 Users (`src/features/auth/.../UserRepositorySequelize.ts`)
+
 - Queries: uniqueness checks (`existsByEmail/Username`), direct lookups via `findByEmail`, `findById`.
 - Findings:
   - Indexes created via unique constraints already cover exact-match lookups.
@@ -53,6 +56,7 @@
 - Action: No immediate change required; monitor requirements for case-insensitive lookups.
 
 ### 4.2 Metric Categories (`MetricCategoryRepoSequelize.ts`)
+
 - Queries filter `userId` + `deletedAt: null` (lines 34-140) and perform name `ILIKE` searches with cursor pagination by `createdAt`, `updatedAt`, `LOWER(name)`, and derived `metricCount`.
 - Issues:
   - Lack of `(user_id, deleted_at)` index means every category list for a user scans the entire table; this is the first call on most dashboards.
@@ -66,6 +70,7 @@
   - Support the correlated subquery with `metrics (category_id, deleted_at)` partial index (see §4.3).
 
 ### 4.3 Metrics (`MetricReadRepoSequelize.ts`)
+
 - Workload: user-scoped lists sorted by `createdAt`, `updatedAt`, `LOWER(name)`, and derived log counts; filters on `categoryId`, text search on `name`, and joins to `metric_category`, `metric_settings`, and `metric_logs` (lines 23-195).
 - Issues:
   - No supporting index for `(user_id, deleted_at)` filter + cursor sort keys; every list and count becomes a table scan.
@@ -79,6 +84,7 @@
   - Consider `GIN (LOWER(name) gin_trgm_ops)` to align with name search.
 
 ### 4.4 Metric Settings (`MetricSettingsRepositorySequelize.ts`)
+
 - Workload: `findById` enforces ownership via join to `metrics` (lines 38-86); `listByCursor` filters by `metricId`, `isActive`, and sorts by `createdAt`, `updatedAt`, `isActive` (lines 100-205). Dashboard query (`VisualizationReadRepoSequelize.fetchDashboardMetrics`) scans `metric_settings` filtering on JSON attributes `display_options->>'showOnDashboard'` and `is_active`.
 - Issues:
   - Schema intends 1:1 relationship between `metrics` and `metric_settings`, but there is no unique constraint on `metric_id`. Duplicate rows would confuse caches and the dashboard query.
@@ -91,6 +97,7 @@
   - If priority ordering remains common, index `( (display_options->>'priority')::int )`.
 
 ### 4.5 Metric Logs & Analytics (`MetricLogRepoSequelize.ts`, `MetricLogQueryRepoSequelize.ts`, `visualization*.sql.ts`)
+
 - Workload summary:
   - CRUD ensures uniqueness at `(metric_id, logged_at)` (lines 15-78) and fetches logs for ownership via join on `metrics.user_id`.
   - Listing endpoint sorts by `createdAt`, `updatedAt`, `loggedAt`, or `logValue`, and filters by `metricId`, `logValue`, or numeric search (lines 13-199 of the query repo).
@@ -114,6 +121,7 @@
 ## 5. Recommended Index Blueprint
 
 ### 5.1 Foundation (sprint-ready, safe to backfill online)
+
 ```sql
 -- Metric categories
 CREATE INDEX CONCURRENTLY idx_metric_categories_user_active
@@ -165,6 +173,7 @@ CREATE INDEX CONCURRENTLY idx_metric_settings_dashboard_flag
 ```
 
 ### 5.2 Analytics & Log Scale
+
 ```sql
 -- Replace duplicate log index with covering + BRIN combos
 DROP INDEX CONCURRENTLY IF EXISTS ix_metric_logs_metric_id_logged_at;
@@ -188,6 +197,7 @@ CREATE INDEX CONCURRENTLY idx_metrics_id_user_active
 ```
 
 ### 5.3 Forward-looking (after monitoring impact)
+
 - Evaluate monthly partitioning for `metric_logs` when daily inserts exceed ~2M rows. Native declarative partitioning by `logged_at` keeps analytics from touching cold data.
 - Consider partial index `ON metric_logs (metric_id) WHERE logged_at >= now() - interval '90 days'` if most UI queries are near-real-time.
 - For `metrics` and `metric_categories`, monitor `pg_stat_statements` to decide whether `GIN` indexes meaningfully reduce `ILIKE` latency before committing to their maintenance overhead.
@@ -195,6 +205,7 @@ CREATE INDEX CONCURRENTLY idx_metrics_id_user_active
 ---
 
 ## 6. Validation & Operational Checklist
+
 1. **Migrations:** Use `sequelize-cli` to emit `CREATE INDEX CONCURRENTLY` statements. Each statement should be idempotent and wrapped in separate transactions so production traffic remains online.
 2. **Query Plans:** Capture current `EXPLAIN (ANALYZE, BUFFERS)` for representative queries (list metrics, list categories, log listing, dashboard SQL) and confirm index usage post-deployment. Store plans in an internal runbook for regression detection.
 3. **Monitoring:**
@@ -208,17 +219,18 @@ CREATE INDEX CONCURRENTLY idx_metrics_id_user_active
 
 ## 7. Appendix – Query ⇄ Index Mapping
 
-| Code Path | Query Characteristics | Supporting Index |
-| --- | --- | --- |
-| `MetricReadRepoSequelize.listMetrics` (`src/features/metric/.../MetricReadRepoSequelize.ts:23-93`) | `WHERE user_id = ? AND deleted_at IS NULL` with sorts on `created_at`, `updated_at`, `LOWER(name)` and optional `category_id` filter. | `idx_metrics_user_created`, `idx_metrics_user_updated`, `uq_metrics_user_name`, `idx_metrics_category_active`. |
-| `MetricCategoryRepoSequelize.list` (`src/features/metric-category/.../MetricCategoryRepoSequelize.ts:34-151`) | User-scoped pagination + `%term%` search + derived metric count. | `idx_metric_categories_user_active`, `uq_metric_categories_user_name`, `gin_metric_categories_name_trgm`, `idx_metrics_category_active`. |
-| `MetricSettingsRepositorySequelize.listByCursor` (`src/features/metric-settings/.../MetricSettingsRepositorySequelize.ts:100-205`) | Filters on `metric_id`, `is_active`, sorts by `created_at/updated_at/is_active`. | `uq_metric_settings_metric`, `idx_metric_settings_active_metric`, `idx_metric_settings_dashboard_flag`. |
-| `MetricLogQueryRepoSequelize.listLogs` (`src/features/metric-log/.../MetricLogQueryRepoSequelize.ts:13-199`) | Ownership enforced via join; sorts on `created_at`, `updated_at`, `logged_at`, `log_value`; filters by `metric_id`. | `idx_metric_logs_metric_created`, `idx_metric_logs_metric_logged`, `idx_metric_logs_metric_log_value`, `idx_metrics_id_user_active`. |
-| `visualization*.sql.ts` (`src/features/analytics/infrastructure/sql/*.ts`) | Time-bucket aggregations over `metric_logs` filtered by metric(s) and `logged_at` range. | `idx_metric_logs_metric_logged`, `brin_metric_logs_logged` (range pruning), future partitions. |
+| Code Path                                                                                                                          | Query Characteristics                                                                                                                 | Supporting Index                                                                                                                         |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `MetricReadRepoSequelize.listMetrics` (`src/features/metric/.../MetricReadRepoSequelize.ts:23-93`)                                 | `WHERE user_id = ? AND deleted_at IS NULL` with sorts on `created_at`, `updated_at`, `LOWER(name)` and optional `category_id` filter. | `idx_metrics_user_created`, `idx_metrics_user_updated`, `uq_metrics_user_name`, `idx_metrics_category_active`.                           |
+| `MetricCategoryRepoSequelize.list` (`src/features/metric-category/.../MetricCategoryRepoSequelize.ts:34-151`)                      | User-scoped pagination + `%term%` search + derived metric count.                                                                      | `idx_metric_categories_user_active`, `uq_metric_categories_user_name`, `gin_metric_categories_name_trgm`, `idx_metrics_category_active`. |
+| `MetricSettingsRepositorySequelize.listByCursor` (`src/features/metric-settings/.../MetricSettingsRepositorySequelize.ts:100-205`) | Filters on `metric_id`, `is_active`, sorts by `created_at/updated_at/is_active`.                                                      | `uq_metric_settings_metric`, `idx_metric_settings_active_metric`, `idx_metric_settings_dashboard_flag`.                                  |
+| `MetricLogQueryRepoSequelize.listLogs` (`src/features/metric-log/.../MetricLogQueryRepoSequelize.ts:13-199`)                       | Ownership enforced via join; sorts on `created_at`, `updated_at`, `logged_at`, `log_value`; filters by `metric_id`.                   | `idx_metric_logs_metric_created`, `idx_metric_logs_metric_logged`, `idx_metric_logs_metric_log_value`, `idx_metrics_id_user_active`.     |
+| `visualization*.sql.ts` (`src/features/analytics/infrastructure/sql/*.ts`)                                                         | Time-bucket aggregations over `metric_logs` filtered by metric(s) and `logged_at` range.                                              | `idx_metric_logs_metric_logged`, `brin_metric_logs_logged` (range pruning), future partitions.                                           |
 
 ---
 
 ### Next Steps
+
 1. Socialize this review with product/analytics stakeholders and align on rollout order (start with Foundation indexes).
 2. Draft Sequelize migrations for each index/constraint group, ensuring `CONCURRENTLY` semantics.
 3. Capture baseline query plans/metrics before deploying and compare afterward to validate gains.

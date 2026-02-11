@@ -1,4 +1,7 @@
-import { OpenAPIRegistry, extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
+import {
+  OpenAPIRegistry,
+  extendZodWithOpenApi,
+} from "@asteasolutions/zod-to-openapi";
 import { z } from "zod";
 
 extendZodWithOpenApi(z);
@@ -137,6 +140,20 @@ export const openApiDocument = {
               properties: {
                 status: { type: "string", example: "error" },
                 message: { type: "string", example: "Internal Server Error" },
+              },
+            },
+          },
+        },
+      },
+      ConflictError: {
+        description: "Resource conflict (duplicate or already exists)",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                status: { type: "string", example: "fail" },
+                message: { type: "string", example: "Resource already exists" },
               },
             },
           },

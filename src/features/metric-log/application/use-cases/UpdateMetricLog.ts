@@ -1,8 +1,8 @@
-import AppError from "@/utils/AppError";
-import { parseIsoToDate } from "@/utils/date-io";
-import { MetricLogRepository } from "../../domain/repositories/MetricLogRepository";
-import { MetricLog } from "../../domain/entities/MetricLog";
-import { CachePort } from "../ports/CachePort";
+import AppError from "@/utils/AppError.js";
+import { parseIsoToDate } from "@/utils/date-io.js";
+import { MetricLogRepository } from "../../domain/repositories/MetricLogRepository.js";
+import { MetricLog } from "../../domain/entities/MetricLog.js";
+import { CachePort } from "../ports/CachePort.js";
 
 type Input = {
   userId: string;
@@ -17,7 +17,7 @@ type Input = {
 export class UpdateMetricLog {
   constructor(
     private repo: MetricLogRepository,
-    private cache: CachePort
+    private cache: CachePort,
   ) {}
 
   async execute({ userId, logId, updates }: Input): Promise<MetricLog> {
@@ -25,7 +25,13 @@ export class UpdateMetricLog {
     if (!log) throw new AppError("Log not found", 404);
 
     if (typeof updates.logValue !== "undefined") {
-      log.setLogValue(updates.logValue);
+      try {
+        log.setLogValue(updates.logValue);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Invalid log value";
+        throw new AppError(message, 400);
+      }
     }
     if (typeof updates.type !== "undefined") {
       log.setType(updates.type);
@@ -38,12 +44,10 @@ export class UpdateMetricLog {
       if (Number.isNaN(timestamp.getTime())) {
         throw new AppError("loggedAt is invalid", 400);
       }
-      if (
-        await this.repo.existsAtTimestamp(log.metricId, timestamp, log.id)
-      ) {
+      if (await this.repo.existsAtTimestamp(log.metricId, timestamp, log.id)) {
         throw new AppError(
           "A log entry already exists for this timestamp for this metric",
-          400
+          409,
         );
       }
       log.setLoggedAt(timestamp);

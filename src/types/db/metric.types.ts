@@ -1,5 +1,3 @@
-// src/types/db/metric.types.ts
-
 /**
  * @interface MetricAttributesBase
  * @description Defines the core, non-database-specific attributes for a Metric entity.

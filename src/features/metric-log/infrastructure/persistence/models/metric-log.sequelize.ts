@@ -6,8 +6,8 @@ import {
   NonAttribute,
   BelongsToGetAssociationMixin,
 } from "sequelize";
-import { MetricLogAttributesBase } from "@/types/db/metric-log.types";
-import type { DbModels } from "@/infrastructure/db/types";
+import { MetricLogAttributesBase } from "@/types/db/metric-log.types.js";
+import type { DbModels } from "@/infrastructure/db/types.js";
 import { Metric } from "@/features/metric/infrastructure/persistence/models/metric.sequelize.js";
 
 export interface MetricLogAttributes extends MetricLogAttributesBase {
@@ -17,8 +17,7 @@ export interface MetricLogAttributes extends MetricLogAttributesBase {
   updatedAt?: Date;
 }
 
-export interface MetricLogCreationAttributes
-  extends Optional<MetricLogAttributes, "id"> {}
+export type MetricLogCreationAttributes = Optional<MetricLogAttributes, "id">;
 
 export class MetricLog
   extends Model<MetricLogAttributes, MetricLogCreationAttributes>
@@ -60,9 +59,11 @@ export class MetricLog
           type: DataTypes.FLOAT,
           allowNull: false,
           validate: {
-            isPositive(value: number) {
-              if (value <= 0) {
-                throw new Error("Log value must be greater than 0.");
+            isNonNegative(value: number) {
+              if (value < 0) {
+                throw new Error(
+                  "Log value must be greater than or equal to 0.",
+                );
               }
             },
           },
@@ -79,7 +80,7 @@ export class MetricLog
         tableName: "metric_logs",
         underscored: true,
         schema: "public",
-      }
+      },
     );
 
     return MetricLog;

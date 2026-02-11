@@ -25,11 +25,11 @@ The `backend-ci` workflow should be triggered on:
 
 - `push` to:
   - `main`
-  - `develop`
+  - `dev`
   - `feature/**`
 - `pull_request` targeting:
   - `main`
-  - `develop`
+  - `dev`
 
 ---
 
@@ -49,7 +49,8 @@ The `backend-ci` workflow should be triggered on:
   4. `npm run lint`
   5. `npm run typecheck`
 
-**Dependencies:**  
+**Dependencies:**
+
 - None (first job in the pipeline).
 
 ---
@@ -75,10 +76,9 @@ The `backend-ci` workflow should be triggered on:
   4. Run DB migrations for test DB (e.g. `npm run db:migrate:test`).
   5. `npm run test:unit`
   6. `npm run test:integration`
-
-Optional:
-
-- Collect Jest coverage reports and upload as artifacts.
+  7. `npm run test:unit:coverage` → rename/move `coverage/jest` to `coverage/jest-unit`.
+  8. `npm run test:integration:coverage` → rename/move `coverage/jest` to `coverage/jest-integration`.
+  9. Upload the `coverage/` directory (containing both coverage folders) as an artifact.
 
 ---
 
@@ -100,15 +100,19 @@ Optional:
   1. Checkout code.
   2. Setup Node (v20) with npm cache.
   3. `npm ci`.
-  4. Run DB migrations for contract DB (can reuse `db:migrate:test`).
-  5. Start backend in background (e.g. `npm run start:test`).
-  6. Wait for server to boot (e.g. `npx wait-on http://localhost:4000/api/v1/health`).
-  7. `npm run test:contract:local`  
+  4. Regenerate the OpenAPI spec (`npm run docs:openapi:generate`) so Schemathesis uses the latest controllers.
+  5. Run DB migrations for contract DB (can reuse `db:migrate:test`).
+  6. Start backend in background (e.g. `npm run start:test`).
+  7. Wait for server to boot (e.g. `npx wait-on http://localhost:4000/api/v1/health`).
+  8. `npm run test:contract:local`
      - This script should:
        - Run Newman with `lakira-local.postman_environment.json`.
        - Execute all relevant contract collections.
        - Produce JUnit + HTML reports under `documents/tests/4-contract-tests/postman-newman/reports/local/**`.
-  8. Upload `reports/local/**` as artifacts.
+  9. Install Schemathesis (`pip install -r documents/tests/4-contract-tests/schemathesis/requirements.txt`), export the deterministic JWT from `tmp/contract-seed.json`, and run `npm run test:contract:schemathesis:local` against the same backend instance.
+  10. Upload artifacts from both suites:
+      - `newman-contract-local` → `documents/tests/4-contract-tests/postman-newman/reports/local/**`
+      - `schemathesis-contract-local` → `documents/tests/4-contract-tests/schemathesis/reports/local/**`
 
 ---
 
@@ -168,13 +172,14 @@ Optional:
 
 - **Migrations:** choose and document one of these approaches:
 
-  1. **On-startup migrations**  
+  1. **On-startup migrations**
+
      - Render’s start command runs a migration script before starting the app, for example:  
        `npm run db:migrate:production && node dist/server.js`.
      - Pros: simple; each new deploy migrates automatically.
      - Cons: if migration fails, the app never starts (health check stays red).
 
-  2. **Separate migration job**  
+  2. **Separate migration job**
      - Use a dedicated Render job or admin script that runs migrations before promoting a new version.
      - Pros: more control; you can validate migrations separately.
      - Cons: more moving parts.
@@ -197,23 +202,28 @@ Optional:
 - **Needs:** `deploy_staging`
 - **Secrets required:**
   - `STAGING_BASE_URL` – base URL for the staging API, e.g. `https://lakira-backend-staging.onrender.com/api/v1`.
-  - (Optional) `STAGING_AUTH_TOKEN` or similar, if staging contract tests require an injected auth token.
+  - Contract-test fixture secrets consumed by Newman: `STAGING_CONTRACT_TOKEN`, `STAGING_CONTRACT_USER_ID`, `STAGING_CONTRACT_SECONDARY_USER_ID`, `STAGING_CATEGORY_REVENUE_ID`, `STAGING_CATEGORY_PRODUCTIVITY_ID`, `STAGING_METRIC_REVENUE_ID`, `STAGING_METRIC_PRODUCTIVITY_ID`, `STAGING_METRIC_SETTINGS_REVENUE_ID`, `STAGING_METRIC_SETTINGS_PRODUCTIVITY_ID`, `STAGING_METRIC_LOG_REVENUE_LATEST_ID`, `STAGING_METRIC_LOG_PRODUCTIVITY_LATEST_ID`.
+  - Schemathesis staging run variables: `SCHEMATHESIS_STAGING_BASE_URL` (usually the same as `STAGING_BASE_URL`) and `SCHEMATHESIS_STAGING_TOKEN`.
 
 **Environment:**
 
 - `STAGING_BASE_URL` is used as the `baseUrl` in the staging Postman environment.
 - Any sensitive auth tokens should be injected via GitHub secrets, not committed JSON.
+- Fixture secrets map 1:1 with the deterministic IDs defined in `documents/tests/4-contract-tests/seed-strategy.md`. When staging is reseeded, refresh each secret so Newman and Schemathesis continue to hit the correct records.
 
 **Steps:**
 
 1. **Checkout repository**
+
    - Use `actions/checkout@v4` to obtain collections, environment files, and scripts.
 
 2. **Setup Node & dependencies**
+
    - Use `actions/setup-node@v4` (Node 20, npm cache).
    - Run `npm ci`.
 
 3. **Run staging contract tests**
+
    - Execute:
 
      ```bash
@@ -227,7 +237,7 @@ Optional:
      - Generate:
        - JUnit XML report,
        - HTML summary report,
-       under `documents/tests/4-contract-tests/postman-newman/reports/staging/**`.
+         under `documents/tests/4-contract-tests/postman-newman/reports/staging/**`.
 
 4. **Upload reports as artifacts**
 
@@ -250,6 +260,7 @@ Optional:
 - For a portfolio project, you may choose to run `contract_staging` only on:
   - `main` branch, and/or
   - Tagged releases (e.g. `v*.*.*`) to control cost.
+- Rotate staging secrets whenever IDs/tokens change (log the rotation date in `metrics-tracker.md`). Prefer regenerating data via the deterministic seed routine so the Postman/Schemathesis collections stay in sync with both staging and local fixtures.
 
 > Special Note for Codex: Never remove the artifact upload or Newman reporting steps when editing this job—recruiters rely on those outputs.
 
@@ -278,6 +289,7 @@ The following scripts should exist and be consistent:
 ## 5. Artifacts & Reporting
 
 - Unit/Integration tests:
+
   - Optionally generate Jest JUnit reports and upload.
 
 - Contract tests:

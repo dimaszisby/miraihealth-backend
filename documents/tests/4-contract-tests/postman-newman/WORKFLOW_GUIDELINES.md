@@ -35,10 +35,12 @@ Update the contract tests whenever any of the following occur in the **core API 
 Use this flow whenever making backend changes that affect APIs.
 
 1. **Design / Discuss the Change**
+
    - Clarify expected behaviour with FE for breaking changes.
    - Decide whether versioning is needed (e.g. new dashboard version).
 
 2. **Update OpenAPI Spec**
+
    - Edit `documents/openapi/lakira-backend-openapi.json`:
      - Paths and methods.
      - Parameters and request body schemas.
@@ -46,6 +48,7 @@ Use this flow whenever making backend changes that affect APIs.
      - Error response shapes.
 
 3. **Update Backend Implementation**
+
    - Implement or update controllers, services, and DTO mappers.
    - Ensure responses match OpenAPI (status + body) exactly.
 
@@ -78,19 +81,29 @@ Use this flow whenever making backend changes that affect APIs.
    ```bash
    npm run test:contract:local
 
-6. **Commit All Related Artifacts**
+   ```
+
+6. **Prepare for staging (if change must reach Render)**
+
+   - Confirm secrets listed in `postman-newman/STAGING_RUNBOOK.md` are up to date (IDs match the deterministic seed output, tokens refreshed).
+   - Ensure `.github/workflows/backend-ci.yml` still runs `deploy_staging` → `contract_staging` after `contract_local`.
+   - When staging tests fail, follow the runbook to reproduce locally with the staging environment variables and attach HTML/JUnit reports to the PR.
+
+7. **Commit All Related Artifacts**
+
    - Backend code changes.
    - OpenAPI spec changes.
    - Updated Postman collections/environments.
    - Any new scripts or doc updates (PLAN/CHECKLIST if needed).
 
-7. **Push & Review**
+8. **Push & Review**
+
    - Open PR with:
      - Short description of API changes.
      - Mention that contract tests were updated and are green locally.
    - Let CI run contract tests; ensure the stage is green.
 
-8. **Handover to FE (if applicable)**
+9. **Handover to FE (if applicable)**
    - Share:
      - Link to passing contract test report (staging).
      - OpenAPI spec version / commit hash.
@@ -103,9 +116,11 @@ Use this flow whenever making backend changes that affect APIs.
 When you introduce a new endpoint:
 
 1. **Add to OpenAPI**
+
    - Define the path, method, parameters, request body, responses, and error schema.
 
 2. **Create Collection Entry**
+
    - Locate appropriate collection (e.g. `lakira-analytics-contract.postman_collection.json`).
    - Add a new folder or reuse an existing folder for that feature.
    - Add one or more requests:
@@ -113,6 +128,7 @@ When you introduce a new endpoint:
      - Error cases (validation, 404, auth, etc.).
 
 3. **Define Tests in Postman**
+
    - In the Postman “Tests” tab, add assertions to:
      - Check expected status code.
      - Validate key fields and types.
@@ -120,6 +136,7 @@ When you introduce a new endpoint:
      - Validate error body structure for negative cases.
 
 4. **Update Environment Variables**
+
    - Add any new variables needed (e.g. `metricId`, `dashboardId`, etc.) to:
      - `lakira-local.postman_environment.json`
      - `lakira-staging.postman_environment.json`
@@ -187,6 +204,14 @@ When making potentially breaking changes:
   - Reuse example payloads for mocks.
 - When FE observes unexpected behaviour:
   - Check if contract tests cover that scenario.
+
+---
+
+## 8. CI Responsibilities
+
+- **Branch protection:** keep the `contract_local` GitHub Actions job required on `main`/`develop` (see `documents/ci-cd/backend/README.md` §7). If you rename jobs or add new required checks, update that doc and PR templates.
+- **Staging readiness:** before merging features that must be validated on Render, confirm the `STAGING_*` and `SCHEMATHESIS_STAGING_*` secrets match the latest deterministic seed values. Use `postman-newman/STAGING_RUNBOOK.md` as the source of truth for deploy hooks, manual reproduction commands, and rotation cadence.
+- **Metrics logging:** after CI runs introduce new runtimes or failures, add entries to `documents/tests/4-contract-tests/metrics-tracker.md` and, when applicable, `incidents.md`.
   - If not, add a test that reproduces the observed mismatch.
 - Any FE-visible change in payloads or error formats should:
   - Be implemented first in BE + OpenAPI.
@@ -200,6 +225,7 @@ When making potentially breaking changes:
 Guidelines for using Codex/LLM in this workflow:
 
 - Good tasks for Codex:
+
   - Generating or updating Postman test scripts based on OpenAPI and BE code.
   - Proposing new contract scenarios when new features are added.
   - Translating failing console output from Newman into actionable fixes.

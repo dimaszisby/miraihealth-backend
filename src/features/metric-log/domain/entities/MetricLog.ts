@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { METRIC_LOG_VALUE_RULE } from "@/shared/constants/metric-constraints.js";
 
 export type MetricLogProps = {
   id: string;
@@ -10,8 +11,8 @@ export type MetricLogProps = {
   updatedAt: Date;
 };
 
-const MIN_VALUE = -1_000_000;
-const MAX_VALUE = 1_000_000;
+const MIN_VALUE = METRIC_LOG_VALUE_RULE.min;
+const MAX_VALUE = METRIC_LOG_VALUE_RULE.max;
 
 export class MetricLog {
   private constructor(private props: MetricLogProps) {}
@@ -21,7 +22,7 @@ export class MetricLog {
   }
 
   static createDraft(
-    props: Omit<MetricLogProps, "id" | "createdAt" | "updatedAt">
+    props: Omit<MetricLogProps, "id" | "createdAt" | "updatedAt">,
   ) {
     const now = new Date();
     return new MetricLog({

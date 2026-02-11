@@ -1,3 +1,3 @@
-import { authRouter, createAuthRouter } from "./infrastructure/http/router";
-export { buildAuthFeature } from "./feature";
+import { authRouter, createAuthRouter } from "./infrastructure/http/router.js";
+export { buildAuthFeature } from "./feature.js";
 export { authRouter, createAuthRouter };

@@ -1,12 +1,7 @@
-import {
-  Model,
-  DataTypes,
-  Sequelize,
-  Optional,
-} from "sequelize";
+import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import bcrypt from "bcrypt";
-import { UserAttributesBase } from "@/types/db/user.types";
-import type { DbModels } from "@/infrastructure/db/types";
+import { UserAttributesBase } from "@/types/db/user.types.js";
+import type { DbModels } from "@/infrastructure/db/types.js";
 
 const isBcryptHash = (value: unknown): value is string =>
   typeof value === "string" && /^\$2[aby]\$\d{2}\$/.test(value);
@@ -18,8 +13,7 @@ export interface UserAttributes extends UserAttributesBase {
   deletedAt?: Date | null;
 }
 
-export interface UserCreationAttributes
-  extends Optional<UserAttributes, "id"> {}
+export type UserCreationAttributes = Optional<UserAttributes, "id">;
 
 export interface UserInstance extends Model<UserAttributes>, UserAttributes {
   validPassword(password: string): Promise<boolean>;
@@ -103,7 +97,7 @@ export class User
             }
           },
         },
-      }
+      },
     );
 
     return User;

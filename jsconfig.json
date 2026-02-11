@@ -23,7 +23,8 @@
     "src/**/*.ts",
     "tests/**/*.ts",
     "__tests__/**/*.ts",
-    "jest.setup.ts"
+    "jest.setup.ts",
+    "jest.setup.unit.ts"
   ],
   "exclude": ["node_modules", "dist", "src/migrations", "seeders"]
 }

@@ -1,10 +1,10 @@
-import AppError from "@/utils/AppError";
+import AppError from "@/utils/AppError.js";
 import type {
   IncludeKey,
   MetricDetailQuery,
   MetricReadRepository,
-} from "../ports/MetricReadRepository";
-import type { MetricDomainExtended } from "@/types/domain/metric.domain";
+} from "../ports/MetricReadRepository.js";
+import type { MetricDomainExtended } from "@/types/domain/metric.domain.js";
 
 type Input = MetricDetailQuery;
 

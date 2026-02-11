@@ -1,15 +1,13 @@
-import { Request, Response, NextFunction } from "express";
-import { buildMetricSettingsFeature } from "../../feature";
-import catchAsync from "@/utils/catch-async";
-import AppError from "@/utils/AppError";
-import { successResponse } from "@/utils/response-formatter";
-import { AuthRequest } from "@/types/request.context";
-import { assertAuthenticated } from "@/utils/auth-guards";
+import { Response } from "express";
+import { buildMetricSettingsFeature } from "../../feature.js";
+import catchAsync from "@/utils/catch-async.js";
+import { successResponse } from "@/utils/response-formatter.js";
+import { AuthRequest } from "@/types/request.context.js";
+import { assertAuthenticated } from "@/utils/auth-guards.js";
 import {
   toDisplayOptionsResponseDTO,
   toMetricSettingsResponseDTO,
-} from "../mappers/MetricSettingsMapper";
-import { DisplayOptionsDTO } from "./dto";
+} from "../mappers/MetricSettingsMapper.js";
 import {
   createMetricSettingsSchema,
   deleteMetricSettingsSchema,
@@ -17,8 +15,8 @@ import {
   listMetricSettingsViaCursorSchema,
   updateMetricSettingsSchema,
   updateDisplayOptionsSchema,
-} from "./schema.zod";
-import { pickValidated } from "@/shared/middleware/validated";
+} from "./schema.zod.js";
+import { pickValidated } from "@/shared/middleware/validated.js";
 
 type Feature = ReturnType<typeof buildMetricSettingsFeature>;
 let feature: Feature = buildMetricSettingsFeature();
@@ -41,9 +39,9 @@ export const createMetricSettings = catchAsync(
       res,
       201,
       toMetricSettingsResponseDTO(created.snapshot()),
-      "Metric settings created successfully"
+      "Metric settings created successfully",
     );
-  }
+  },
 );
 
 export const getAllMetricSettingsViaCursor = catchAsync(
@@ -55,29 +53,29 @@ export const getAllMetricSettingsViaCursor = catchAsync(
       ...query,
     });
 
-    successResponse(res, 200, {
-      ...result,
+    const dto = {
       items: result.items.map((item) =>
-        toMetricSettingsResponseDTO(item.snapshot())
+        toMetricSettingsResponseDTO(item.snapshot()),
       ),
-    });
-  }
+      nextCursor: result.nextCursor ?? null,
+      sort: result.sort,
+      limit: result.limit,
+      ...(result.q ? { q: result.q } : {}),
+      ...(result.filter ? { filter: result.filter } : {}),
+      ...(query.includeTotal ? { totalCount: result.totalCount ?? 0 } : {}),
+    };
+
+    successResponse(res, 200, dto, "Metric settings fetched successfully");
+  },
 );
 
 export const getMetricSettingsById = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
     const { params } = pickValidated(getMetricSettingsSchema)(req);
-    const settings = await feature.getSettings.execute(
-      req.user.id,
-      params.id
-    );
-    successResponse(
-      res,
-      200,
-      toMetricSettingsResponseDTO(settings.snapshot())
-    );
-  }
+    const settings = await feature.getSettings.execute(req.user.id, params.id);
+    successResponse(res, 200, toMetricSettingsResponseDTO(settings.snapshot()));
+  },
 );
 
 export const updateMetricSettings = catchAsync(
@@ -87,15 +85,15 @@ export const updateMetricSettings = catchAsync(
     const updated = await feature.updateSettings.execute(
       req.user.id,
       params.id,
-      body
+      body,
     );
     successResponse(
       res,
       200,
       toMetricSettingsResponseDTO(updated.snapshot()),
-      "Metric settings updated successfully"
+      "Metric settings updated successfully",
     );
-  }
+  },
 );
 
 export const deleteMetricSettings = catchAsync(
@@ -104,7 +102,7 @@ export const deleteMetricSettings = catchAsync(
     const { params } = pickValidated(deleteMetricSettingsSchema)(req);
     await feature.deleteSettings.execute(req.user.id, params.id);
     successResponse(res, 200, null, "Metric settings deleted successfully");
-  }
+  },
 );
 
 export const updateGoalAchievement = catchAsync(
@@ -113,15 +111,15 @@ export const updateGoalAchievement = catchAsync(
     const { params } = pickValidated(getMetricSettingsSchema)(req);
     const updated = await feature.updateGoalAchievement.execute(
       req.user.id,
-      params.id
+      params.id,
     );
     successResponse(
       res,
       200,
       toMetricSettingsResponseDTO(updated.snapshot()),
-      "Goal marked as achieved"
+      "Goal marked as achieved",
     );
-  }
+  },
 );
 
 export const updateDisplayOptions = catchAsync(
@@ -132,13 +130,13 @@ export const updateDisplayOptions = catchAsync(
     const updated = await feature.updateDisplayOptions.execute(
       req.user.id,
       params.id,
-      displayOptions
+      displayOptions,
     );
     successResponse(
       res,
       200,
       toDisplayOptionsResponseDTO(updated.snapshot().displayOptions),
-      "Display options updated"
+      "Display options updated",
     );
-  }
+  },
 );

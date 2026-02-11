@@ -2,23 +2,17 @@
   "extends": "@tsconfig/node18/tsconfig.json",
   "compilerOptions": {
     "target": "esnext",
-    "module": "esnext",
+    "module": "NodeNext",
     "rootDir": ".",
-    "moduleResolution": "node",
-    "baseUrl": "src",
+    "moduleResolution": "NodeNext",
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"],
-      "@utils/*": ["./utils/*"],
-      "@config/*": ["./config/*"],
+      "@/*": ["src/*"],
+      "@utils/*": ["src/utils/*"],
+      "@config/*": ["src/config/*"]
     },
-    "typeRoots": [
-      "./node_modules/@types",
-      "./src/types"
-    ],
-    "types": [
-      "node",
-      "jest"
-    ],
+    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "types": ["node", "jest"],
     "resolveJsonModule": true,
     "allowJs": true,
     "checkJs": true,
@@ -35,6 +29,16 @@
       "module": "NodeNext"
     }
   },
-  "include": ["*.ts", "src/**/*", "tests/**/*", "__tests__/**/*.ts", "jest.setup.ts", "jest.config.mjs", "scripts/**/*.cjs"],
+  "include": [
+    "*.ts",
+    "src/**/*",
+    "tests/**/*",
+    "__tests__/**/*.ts",
+    "jest.setup.ts",
+    "jest.setup.unit.ts",
+    "jest.config.mjs",
+    "scripts/**/*.cjs",
+    "scripts/**/*.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }

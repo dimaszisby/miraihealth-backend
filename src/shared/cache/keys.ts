@@ -1,4 +1,9 @@
-export type CursorCacheSegmentValue = string | number | boolean | null | undefined;
+export type CursorCacheSegmentValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined;
 export type CursorCacheSegment = [string, CursorCacheSegmentValue];
 
 const normalizeSegmentValue = (value: CursorCacheSegmentValue): string => {
@@ -14,7 +19,7 @@ const normalizeSegmentValue = (value: CursorCacheSegmentValue): string => {
 
 export const cursorCacheNamespace = (
   feature: string,
-  version?: number | string
+  version?: number | string,
 ): string => {
   const slug = feature.trim().replace(/\s+/g, "-");
   if (version === undefined || version === null || version === "") {

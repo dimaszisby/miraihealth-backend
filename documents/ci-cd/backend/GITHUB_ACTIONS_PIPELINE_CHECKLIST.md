@@ -24,8 +24,8 @@ Use this checklist when:
 ## 2. Triggers, Branches & Concurrency
 
 - [ ] Workflow triggers on:
-  - [ ] `push` to `main`, `develop`, and `feature/**`.
-  - [ ] `pull_request` targeting `main` and `develop`.
+  - [ ] `push` to `main`, `dev`, and `feature/**`.
+  - [ ] `pull_request` targeting `main` and `dev`.
 - [ ] Branch protections require `backend-ci` to pass before merging into `main`.
 - [ ] Workflow uses `concurrency` to cancel in-progress runs on the same branch:
 
@@ -39,32 +39,41 @@ Use this checklist when:
 ## 3. Job Structure & Timeouts
 
 - [ ] `checks` job exists and runs:
+
   - [ ] `npm ci`
   - [ ] `npm run lint`
   - [ ] `npm run typecheck`
   - [ ] Job has `timeout-minutes` configured.
 
 - [ ] `tests` job exists and:
+
   - [ ] Declares Postgres and Redis service containers.
   - [ ] Runs `npm ci`.
   - [ ] Runs `npm run db:migrate:test` (or equivalent).
   - [ ] Runs `npm run test:unit`.
   - [ ] Runs `npm run test:integration`.
+  - [ ] Runs `npm run test:unit:coverage` and stores the output (e.g., renames `coverage/jest` to `coverage/jest-unit`).
+  - [ ] Runs `npm run test:integration:coverage` and stores the output (e.g., renames `coverage/jest` to `coverage/jest-integration`).
+  - [ ] Uploads the combined coverage folders as a GitHub Actions artifact.
   - [ ] Depends on `checks` (`needs: checks`).
   - [ ] Has `timeout-minutes` configured.
 
 - [ ] `contract_local` job exists and:
+
   - [ ] Declares Postgres and Redis service containers.
   - [ ] Runs `npm ci`.
+  - [ ] Runs `npm run build` before starting the backend so `dist/server.js` exists.
   - [ ] Runs DB migrations for contract DB (can reuse `db:migrate:test`).
-  - [ ] Starts backend with `npm run start:test` in background.
-  - [ ] Waits for health endpoint (e.g. via `wait-on`).
+  - [ ] Starts backend with `npm run start:test` in background via `nohup`, writes the PID to `/tmp/backend.pid`, and captures logs at `/tmp/backend.log`.
+  - [ ] Waits for the TCP port (`tcp:4000`) and the HTTP health endpoint (`/api/v1/health`) using the pinned `wait-on` devDependency, dumping the log tail whenever either probe fails.
   - [ ] Runs `npm run test:contract:local`.
+  - [ ] Tails `/tmp/backend.log` automatically when the job fails (helpful for debugging).
   - [ ] Uploads Newman local reports as artifacts.
   - [ ] Depends on `tests` (`needs: tests`).
   - [ ] Has `timeout-minutes` configured.
 
 - [ ] (Future) `deploy_staging` job:
+
   - [ ] Depends on `contract_local` or `tests`.
   - [ ] Triggers Render staging deploy via deploy hook.
   - [ ] Polls staging health endpoint until healthy or timeout.
@@ -83,6 +92,7 @@ Use this checklist when:
 ## 4. Services & Environment Variables
 
 - [ ] Postgres service configured with:
+
   - [ ] `POSTGRES_USER=postgres`
   - [ ] `POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD_TEST }}`
   - [ ] `POSTGRES_DB=lakira_ci`
@@ -91,12 +101,15 @@ Use this checklist when:
 - [ ] Redis service configured with health checks.
 
 - [ ] Jobs that talk to DB/Redis set:
-  - [ ] `DATABASE_URL` uses the `postgres` service host and `lakira_ci` DB.
-  - [ ] `REDIS_URL` uses the `redis` service host.
+
+  - [ ] `DATABASE_URL` points to the Postgres service exposed on `localhost:5432` (GitHub Actions forwards service ports to the runner host).
+  - [ ] `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` are exported when tools (e.g., `sequelize-cli`) require discrete values. When `DATABASE_URL` is present, the env manager will derive these automatically at runtime.
+  - [ ] `REDIS_URL` uses the Redis service exposed on `localhost:6379`.
   - [ ] `NODE_ENV=test` for tests/contract jobs.
   - [ ] `JWT_SECRET_TEST` from secrets.
 
 - [ ] Staging deploy job reads:
+
   - [ ] `RENDER_STAGING_DEPLOY_HOOK_URL` from secrets.
   - [ ] `STAGING_HEALTH_URL` from secrets.
 
@@ -149,6 +162,7 @@ Backend `package.json` includes:
 - [ ] `test:contract:staging` uses:
   - [ ] `lakira-staging.postman_environment.json`.
 - [ ] Contract runs produce:
+
   - [ ] JUnit XML reports.
   - [ ] HTML reports.
   - [ ] Saved under `documents/tests/4-contract-tests/postman-newman/reports/local/**` and `reports/staging/**`.
@@ -178,7 +192,7 @@ Backend `package.json` includes:
 
 - [ ] Unit/integration tests generate coverage reports.
 - [ ] Coverage thresholds are defined (e.g. `--coverageThreshold` in Jest) and enforced in CI, **or** documented as a future improvement.
-- [ ] A known green run on `develop` or `main` is referenced in:
+- [ ] A known green run on `dev` or `main` is referenced in:
   - [ ] `documents/tests/4-contract-tests/postman-newman/CHECKLIST.md` (as a baseline).
 
 > Special Note for Codex: When referencing coverage or green runs in PRs, link back to this checklist to keep the narrative consistent.
@@ -189,7 +203,7 @@ Backend `package.json` includes:
 
 Before calling the backend pipeline “stable” and “portfolio-ready”:
 
-- [ ] A full run of `backend-ci` on `develop` or `main` is green:
+- [ ] A full run of `backend-ci` on `dev` or `main` is green:
   - [ ] `checks` passes.
   - [ ] `tests` passes.
   - [ ] `contract_local` passes.

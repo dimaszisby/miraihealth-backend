@@ -1,12 +1,12 @@
-import { MetricCategoryRepoSequelize } from "./infrastructure/persistence/repositories/MetricCategoryRepoSequelize";
-import { MetricCategoryCacheRedis } from "./infrastructure/cache/MetricCategoryCacheRedis";
-import { CreateCategory } from "./application/use-cases/CreateCategory";
-import { UpdateCategory } from "./application/use-cases/UpdateCategory";
-import { DeleteCategory } from "./application/use-cases/DeleteCategory";
-import { GenerateDummyCategories } from "./application/use-cases/GenerateDummyCategories";
-import { ListCategories } from "./application/queries/ListCategories";
-import { GetCategory } from "./application/queries/GetCategory";
-import { MetricCategoryFactory } from "./domain/services/MetricCategoryFactory";
+import { MetricCategoryRepoSequelize } from "./infrastructure/persistence/repositories/MetricCategoryRepoSequelize.js";
+import { MetricCategoryCacheRedis } from "./infrastructure/cache/MetricCategoryCacheRedis.js";
+import { CreateCategory } from "./application/use-cases/CreateCategory.js";
+import { UpdateCategory } from "./application/use-cases/UpdateCategory.js";
+import { DeleteCategory } from "./application/use-cases/DeleteCategory.js";
+import { GenerateDummyCategories } from "./application/use-cases/GenerateDummyCategories.js";
+import { ListCategories } from "./application/queries/ListCategories.js";
+import { GetCategory } from "./application/queries/GetCategory.js";
+import { MetricCategoryFactory } from "./domain/services/MetricCategoryFactory.js";
 
 export const buildMetricCategoryFeature = () => {
   const repo = new MetricCategoryRepoSequelize();

@@ -1,11 +1,12 @@
-import { models } from "@/infrastructure/db/models";
-import { AuthUser } from "../../domain/entities/AuthUser";
+import { models } from "@/infrastructure/db/models.js";
+import { AuthUser } from "../../domain/entities/AuthUser.js";
 import {
   CreateUserDTO,
   UserRepository,
-} from "../../domain/repositories/UserRepository";
+} from "../../domain/repositories/UserRepository.js";
+import type { User } from "./models/user.sequelize.js";
 
-const toDomain = (row: any): AuthUser =>
+const toDomain = (row: User): AuthUser =>
   AuthUser.fromPersistence({
     id: row.id,
     email: row.email,
@@ -13,8 +14,8 @@ const toDomain = (row: any): AuthUser =>
     passwordHash: row.password,
     role: row.role ?? "user",
     isPublicProfile: row.isPublicProfile ?? !!row.isPublicProfile,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
+    createdAt: row.createdAt ?? new Date(0),
+    updatedAt: row.updatedAt ?? new Date(0),
     deletedAt: row.deletedAt ?? null,
   });
 
@@ -44,7 +45,7 @@ export class UserRepositorySequelize implements UserRepository {
       email: data.email,
       username: data.username,
       password: data.passwordHash,
-      isPublicProfile: true,
+      isPublicProfile: data.isPublicProfile,
       role: "user",
     });
     await created.reload();

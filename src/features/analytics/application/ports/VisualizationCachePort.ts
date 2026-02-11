@@ -1,9 +1,9 @@
-import type { VizResponse } from "../../domain/types";
+import type { VizResponse } from "../../domain/types.js";
 import type {
   DashboardVizResponse,
   DashboardVisualizationParams,
   VisualizationQueryParams,
-} from "./VisualizationReadRepository";
+} from "./VisualizationReadRepository.js";
 
 export type SingleVizCacheKey = Omit<
   VisualizationQueryParams,
@@ -20,16 +20,18 @@ export type DashboardVizCacheKey = Omit<
 };
 
 export interface VisualizationCachePort {
-  getSingleVisualization(params: SingleVizCacheKey): Promise<VizResponse | null>;
+  getSingleVisualization(
+    params: SingleVizCacheKey,
+  ): Promise<VizResponse | null>;
   setSingleVisualization(
     params: SingleVizCacheKey,
-    payload: VizResponse
+    payload: VizResponse,
   ): Promise<void>;
   getDashboardVisualization(
-    params: DashboardVizCacheKey
+    params: DashboardVizCacheKey,
   ): Promise<DashboardVizResponse | null>;
   setDashboardVisualization(
     params: DashboardVizCacheKey,
-    payload: DashboardVizResponse
+    payload: DashboardVizResponse,
   ): Promise<void>;
 }

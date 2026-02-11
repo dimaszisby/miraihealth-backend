@@ -1,7 +1,19 @@
-// src/validators/zod-rules.ts
-
 import { z } from "zod";
-import { ZodMessages } from "@/constants/zod/zod-messages"; // centralized error messages
+import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
+import { ZodMessages } from "@/constants/zod/zod-messages.js"; // centralized error messages
+import {
+  METRIC_DESCRIPTION_RULE,
+  METRIC_LOG_VALUE_RULE,
+  METRIC_NAME_RULE,
+  METRIC_UNIT_RULE,
+} from "@/shared/constants/metric-constraints.js";
+import {
+  getUnicodeLength,
+  hasInvalidControlChars,
+  hasUnpairedSurrogates,
+} from "@/shared/utils/text-validation.js";
+
+extendZodWithOpenApi(z);
 
 /**
  * Reusable Zod Field Validations
@@ -9,16 +21,27 @@ import { ZodMessages } from "@/constants/zod/zod-messages"; // centralized error
  */
 
 // Reuse base rules
+const UUID_PATTERN =
+  "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$";
+const UUID_REGEX = new RegExp(UUID_PATTERN);
+
 export const zUUID = z
   .string()
-  .uuid({ message: ZodMessages.common.invalidUUID });
+  .uuid({ message: ZodMessages.common.invalidUUID })
+  .regex(UUID_REGEX, { message: ZodMessages.common.invalidUUID })
+  .openapi({ format: "uuid", pattern: UUID_PATTERN });
 export const zDateOptional = z
   .preprocess(
     (val) => (typeof val === "string" && val.trim() === "" ? undefined : val),
-    z.coerce.date().optional()
+    z.coerce.date().optional(),
   )
   .refine((date) => date === undefined || !isNaN(date.getTime()), {
     message: ZodMessages.common.invalidDate,
+  })
+  .openapi({
+    type: "string",
+    format: "date-time",
+    example: "2023-01-01T00:00:00Z",
   });
 export const zISODateTime = z.string().datetime({ offset: true });
 export const zISODate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -39,8 +62,9 @@ export const zPassword = z
 export const zPasswordConfirmation = z
   .string()
   .min(6, { message: ZodMessages.user.passwordConfirmMin });
-export const zPublicProfile = z.boolean().optional().default(true);
-export const zRole = z.enum(["user", "admin"]).optional().default("user");
+export const zPublicProfile = z.boolean().optional();
+export const zRoleEnum = z.enum(["user", "admin"]);
+export const zRole = zRoleEnum.optional().default("user");
 
 /**
  * * Metric Category
@@ -50,39 +74,112 @@ export const zMetricCategoryName = z
   .min(1, { message: ZodMessages.metricCategory.nameRequired });
 export const zMetricCategoryColor = z
   .string()
-  .min(1)
-  .optional()
-  .default("#E897A3");
-export const zMetricCategoryIcon = z.string().min(1).optional().default("📁");
+  .min(1, { message: ZodMessages.metricCategory.colorRequired });
+export const zMetricCategoryIcon = z
+  .string()
+  .min(1, { message: ZodMessages.metricCategory.iconRequired });
 export const zMetricCategoryDeletedAt = zDateOptional.optional().nullable();
 
 /**
  * * Metric
  */
-export const zMetricNameRule = {
-  min: 1,
-};
+const CONTROL_CHARS_PATTERN_SOURCE = "^[^\\u0000-\\u001F\\u007F]*$";
+const CONTROL_CHARS_WITH_NEWLINES_PATTERN_SOURCE =
+  "^[^\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]*$";
 
-export const zMetricUnitRule = {
-  min: 1,
-};
+const exceedsUnicodeLength = (value: string, max: number) =>
+  getUnicodeLength(value) > max;
+const fallsBelowUnicodeLength = (value: string, min: number) =>
+  getUnicodeLength(value) < min;
 export const zMetricName = z
   .string()
-  .min(zMetricNameRule.min, { message: ZodMessages.metric.nameRequired });
+  .superRefine((value, ctx) => {
+    if (hasInvalidControlChars(value) || hasUnpairedSurrogates(value)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: ZodMessages.metric.invalidCharacters,
+      });
+    }
+  })
+  .transform((value) => value.trim())
+  .superRefine((value, ctx) => {
+    if (fallsBelowUnicodeLength(value, METRIC_NAME_RULE.min)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: ZodMessages.metric.nameRequired,
+      });
+    }
+    if (exceedsUnicodeLength(value, METRIC_NAME_RULE.max)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: ZodMessages.metric.nameTooLong,
+      });
+    }
+  })
+  .openapi({
+    pattern: CONTROL_CHARS_PATTERN_SOURCE,
+    minLength: METRIC_NAME_RULE.min,
+    maxLength: METRIC_NAME_RULE.max,
+  });
 export const zMetricCategoryId = z
   .string()
   .uuid({ message: ZodMessages.metric.invalidCategoryId })
+  .regex(UUID_REGEX, { message: ZodMessages.metric.invalidCategoryId })
   .nullable()
   .optional();
 export const zMetricOriginalId = z
   .string()
   .uuid({ message: ZodMessages.metric.invalidOriginalMetricId })
+  .regex(UUID_REGEX, { message: ZodMessages.metric.invalidOriginalMetricId })
   .nullable()
   .optional();
-export const zMetricDescription = z.string();
+export const zMetricDescription = z
+  .string()
+  .refine(
+    (value) => !exceedsUnicodeLength(value, METRIC_DESCRIPTION_RULE.max),
+    { message: ZodMessages.metric.descriptionTooLong },
+  )
+  .refine(
+    (value) =>
+      !hasInvalidControlChars(value, true) && !hasUnpairedSurrogates(value),
+    {
+      message: ZodMessages.metric.invalidCharacters,
+    },
+  )
+  .openapi({
+    pattern: CONTROL_CHARS_WITH_NEWLINES_PATTERN_SOURCE,
+    maxLength: METRIC_DESCRIPTION_RULE.max,
+  });
 export const zMetricDefaultUnit = z
   .string()
-  .min(zMetricUnitRule.min, { message: ZodMessages.metric.unitRequired });
+  .superRefine((value, ctx) => {
+    if (hasInvalidControlChars(value) || hasUnpairedSurrogates(value)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: ZodMessages.metric.invalidCharacters,
+      });
+    }
+  })
+  .transform((value) => value.trim())
+  .superRefine((value, ctx) => {
+    if (fallsBelowUnicodeLength(value, METRIC_UNIT_RULE.min)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: ZodMessages.metric.unitRequired,
+      });
+    }
+    if (exceedsUnicodeLength(value, METRIC_UNIT_RULE.max)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: ZodMessages.metric.unitTooLong,
+      });
+    }
+  })
+  .openapi({
+    pattern: CONTROL_CHARS_PATTERN_SOURCE,
+    minLength: METRIC_UNIT_RULE.min,
+    maxLength: METRIC_UNIT_RULE.max,
+  });
 export const zMetricIsPublic = z.boolean().optional().default(false);
 export const zMetricDeletedAt = z.date().optional();
 
@@ -90,15 +187,15 @@ export const zMetricDeletedAt = z.date().optional();
  * * Metric Settings
  */
 export const zGoalEnabled = z.boolean().optional().default(false);
-export const zGoalType = z
-  .enum(["cumulative", "incremental"])
-  .optional()
-  .nullable();
-export const zGoalValue = z
+const goalTypeEnum = z.enum(["cumulative", "incremental"]);
+const goalTypeNullable = z.union([goalTypeEnum, z.null()]);
+export const zGoalTypeRequired = goalTypeEnum;
+export const zGoalType = goalTypeNullable.optional();
+const goalValueSchema = z
   .number()
-  .positive(ZodMessages.metricSettings.goalValuePositive)
-  .optional()
-  .nullable();
+  .positive(ZodMessages.metricSettings.goalValuePositive);
+export const zGoalValueRequired = goalValueSchema;
+export const zGoalValue = goalValueSchema.optional().nullable();
 export const zTimeFrameEnabled = z.boolean().optional().default(false);
 export const zStartDate = zDateOptional.optional().nullable();
 export const zDeadlineDate = zDateOptional.optional().nullable();
@@ -110,12 +207,29 @@ export const zAlertThresholds = z
   .max(100, { message: ZodMessages.metricSettings.alertThresholdMax })
   .optional()
   .default(80);
+export const zAlertThresholdsOptional = z
+  .number()
+  .int({ message: ZodMessages.metricSettings.invalidAlertThreshold })
+  .min(0, { message: ZodMessages.metricSettings.alertThresholdMin })
+  .max(100, { message: ZodMessages.metricSettings.alertThresholdMax })
+  .optional();
+const zDisplayOptionText = z
+  .string()
+  .superRefine((value, ctx) => {
+    if (hasInvalidControlChars(value) || hasUnpairedSurrogates(value)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: ZodMessages.metricSettings.invalidDisplayOptions,
+      });
+    }
+  })
+  .openapi({ pattern: CONTROL_CHARS_PATTERN_SOURCE });
 export const zDisplayOptions = z
   .object({
     showOnDashboard: z.boolean().optional().default(true),
-    priority: z.number().optional().default(1),
-    chartType: z.string().optional().default("line"),
-    color: z.string().optional().default("#E897A3"),
+    priority: z.number().int().min(1).max(1000).optional().default(1),
+    chartType: zDisplayOptionText.optional().default("line"),
+    color: zDisplayOptionText.optional().default("#E897A3"),
   })
   .optional()
   .default({
@@ -130,7 +244,13 @@ export const zDisplayOptions = z
  */
 export const zPositiveFloat = z
   .number({ required_error: ZodMessages.metricLog.logValueRequired })
-  .positive({ message: ZodMessages.metricLog.logValueNonNegative });
+  .finite({ message: ZodMessages.metricLog.logValueFinite })
+  .min(METRIC_LOG_VALUE_RULE.min, {
+    message: ZodMessages.metricLog.logValueNonNegative,
+  })
+  .max(METRIC_LOG_VALUE_RULE.max, {
+    message: ZodMessages.metricLog.logValueTooLarge,
+  });
 
 export const zLogType = z.enum(["manual", "automatic"], {
   required_error: ZodMessages.metricLog.logTypeInvalid,

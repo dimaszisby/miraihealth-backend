@@ -45,6 +45,12 @@ export interface MetricCategoryResponseDTO {
   readonly icon: string;
 
   /**
+   * @property {string} userId - Owner identifier (needed by contract tests & OpenAPI schema).
+   * @readonly
+   */
+  readonly userId: string;
+
+  /**
    * @property {string} createdAt - The timestamp when the category was created, formatted as an ISO string.
    * @readonly
    */

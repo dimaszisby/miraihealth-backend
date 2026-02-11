@@ -6,12 +6,13 @@ on:
   push:
     branches:
       - main
-      - develop
-      - 'feature/**'
+      - dev
+      - "feature/**"
   pull_request:
     branches:
       - main
-      - develop
+      - dev
+  workflow_dispatch:
 
 concurrency:
   group: backend-ci-${{ github.ref }}
@@ -20,13 +21,10 @@ concurrency:
 env:
   NODE_VERSION: 20
 
-  # If backend is in a subfolder (e.g. ./apps/backend), set this accordingly
-  # and uncomment the defaults.run section below.
-  BACKEND_WORKDIR: .
-
 defaults:
   run:
-    working-directory: ${{ env.BACKEND_WORKDIR }}
+    # Update this path directly if backend code moves into a subfolder.
+    working-directory: .
 
 jobs:
   checks:
@@ -50,8 +48,14 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Format check
+        run: npm run format:check
+
       - name: Typecheck
         run: npm run typecheck
+
+      - name: OpenAPI spec consistency
+        run: npm run docs:openapi:check
 
   tests:
     name: Unit & Integration Tests
@@ -86,9 +90,15 @@ jobs:
 
     env:
       NODE_ENV: test
-      DATABASE_URL: postgres://postgres:${{ secrets.POSTGRES_PASSWORD_TEST }}@postgres:5432/lakira_ci
-      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgres://postgres:${{ secrets.POSTGRES_PASSWORD_TEST }}@localhost:5432/lakira_ci
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: ${{ secrets.POSTGRES_PASSWORD_TEST }}
+      DB_NAME: lakira_ci
+      REDIS_URL: redis://localhost:6379
       JWT_SECRET: ${{ secrets.JWT_SECRET_TEST }}
+      DISABLE_RATE_LIMITING: "true"
 
     steps:
       - name: Checkout
@@ -103,6 +113,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build
+        run: npm run build
+
       - name: Run DB migrations (test)
         run: npm run db:migrate:test
         # If you only have `db:migrate`, use that instead:
@@ -114,6 +127,24 @@ jobs:
       - name: Run integration tests
         run: npm run test:integration
 
+      - name: Run unit tests with coverage
+        run: npm run test:unit:coverage
+
+      - name: Archive unit coverage output
+        run: mv coverage/jest coverage/jest-unit
+
+      - name: Run integration tests with coverage
+        run: npm run test:integration:coverage
+
+      - name: Archive integration coverage output
+        run: mv coverage/jest coverage/jest-integration
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: coverage
+
       # Optional: upload Jest JUnit reports if you configure them
       # - name: Upload Jest test reports
       #   uses: actions/upload-artifact@v4
@@ -122,7 +153,7 @@ jobs:
       #     path: reports/jest
 
   contract_local:
-    name: Contract Tests (Local Backend)
+    name: contract_local
     runs-on: ubuntu-latest
     needs: tests
     timeout-minutes: 30
@@ -154,10 +185,16 @@ jobs:
 
     env:
       NODE_ENV: test
-      DATABASE_URL: postgres://postgres:${{ secrets.POSTGRES_PASSWORD_TEST }}@postgres:5432/lakira_ci
-      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgres://postgres:${{ secrets.POSTGRES_PASSWORD_TEST }}@localhost:5432/lakira_ci
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: ${{ secrets.POSTGRES_PASSWORD_TEST }}
+      DB_NAME: lakira_ci
+      REDIS_URL: redis://localhost:6379
       JWT_SECRET: ${{ secrets.JWT_SECRET_TEST }}
       PORT: 4000
+      DISABLE_RATE_LIMITING: "true"
 
     steps:
       - name: Checkout
@@ -172,6 +209,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build
+        run: npm run build
+
+      - name: Generate OpenAPI spec
+        run: npm run docs:openapi:generate
+
       - name: Run DB migrations (contract)
         run: npm run db:migrate:test
         # Or a dedicated contract DB migration script if you add one
@@ -179,20 +222,74 @@ jobs:
 
       - name: Start backend (test server)
         run: |
-          npm run start:test &
-          echo $! > backend_pid
+          nohup npm run start:test > /tmp/backend.log 2>&1 &
+          echo $! > /tmp/backend.pid
+          sleep 1
+          ps -p "$(cat /tmp/backend.pid)" || true
+          lsof -i :4000 || true
 
       - name: Wait for backend health
-        run: npx wait-on http://localhost:4000/api/v1/health --timeout 120000
+        run: |
+          wait_with_logs() {
+            "$@" || {
+              echo "---- backend.log (tail) ----"
+              tail -n 200 /tmp/backend.log || true
+              echo "--------------------------------"
+              exit 1
+            }
+          }
+          wait_with_logs npx wait-on tcp:4000 --timeout 180000
+          wait_with_logs npx wait-on http://localhost:4000/api/v1/health --timeout 180000
 
       - name: Run contract tests (local)
         run: npm run test:contract:local
 
+      - name: Setup Python for Schemathesis
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Schemathesis CLI
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r documents/tests/4-contract-tests/schemathesis/requirements.txt
+
+      - name: Extract Schemathesis token
+        id: schemathesis-token
+        run: |
+          TOKEN=$(node <<'NODE'
+          const fs = require('fs');
+          const seed = JSON.parse(fs.readFileSync('tmp/contract-seed.json','utf8'));
+          if (!seed?.primaryUser?.token) {
+            process.exit(1);
+          }
+          process.stdout.write(seed.primaryUser.token);
+          NODE
+          )
+          echo "value=${TOKEN}" >> "$GITHUB_OUTPUT"
+
+      - name: Run Schemathesis contract tests (local)
+        env:
+          SCHEMATHESIS_LOCAL_TOKEN: ${{ steps.schemathesis-token.outputs.value }}
+          SCHEMATHESIS_LOCAL_BASE_URL: http://localhost:4000/api/v1
+          SCHEMATHESIS_CLI: schemathesis
+        run: npm run test:contract:schemathesis:local
+
+      - name: Dump backend logs on failure
+        if: always()
+        run: |
+          if [ "${{ job.status }}" != "success" ]; then
+            echo "---- backend.log (tail) ----"
+            tail -n 200 /tmp/backend.log || true
+            echo "--------------------------------"
+          fi
+
       - name: Stop backend server
         if: always()
         run: |
-          if [ -f backend_pid ]; then
-            kill "$(cat backend_pid)" || true
+          if [ -f /tmp/backend.pid ]; then
+            kill "$(cat /tmp/backend.pid)" || true
+            rm -f /tmp/backend.pid
           fi
 
       - name: Upload Newman contract reports (local)
@@ -201,10 +298,17 @@ jobs:
           name: newman-contract-local
           path: documents/tests/4-contract-tests/postman-newman/reports/local
 
+      - name: Upload Schemathesis contract reports (local)
+        uses: actions/upload-artifact@v4
+        with:
+          name: schemathesis-contract-local
+          path: documents/tests/4-contract-tests/schemathesis/reports/local
+
   deploy_staging:
     name: Deploy Backend to Staging
     runs-on: ubuntu-latest
     needs: contract_local
+    if: github.ref == 'refs/heads/staging'
     timeout-minutes: 15
     env:
       RENDER_STAGING_DEPLOY_HOOK_URL: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL }}
@@ -246,6 +350,7 @@ jobs:
     name: Contract Tests (Staging Backend)
     runs-on: ubuntu-latest
     needs: deploy_staging
+    if: github.ref == 'refs/heads/staging'
     timeout-minutes: 20
     env:
       NODE_ENV: test

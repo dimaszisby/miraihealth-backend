@@ -1,5 +1,5 @@
-import type { VisualizationInvalidationPort } from "@/shared/application/ports/VisualizationInvalidationPort";
-import { redisClient } from "@/utils/redis-client";
+import type { VisualizationInvalidationPort } from "@/shared/application/ports/VisualizationInvalidationPort.js";
+import { redisClient } from "@/utils/redis-client.js";
 
 const SCAN_COUNT = 200;
 

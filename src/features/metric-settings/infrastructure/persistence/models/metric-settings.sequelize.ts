@@ -6,9 +6,9 @@ import {
   BelongsToGetAssociationMixin,
   NonAttribute,
 } from "sequelize";
-import { MetricSettingsAttributesBase } from "@/types/db/metric-settings.types";
-import type { Metric } from "@/features/metric/infrastructure/persistence/models/metric.sequelize";
-import type { DbModels } from "@/infrastructure/db/types";
+import { MetricSettingsAttributesBase } from "@/types/db/metric-settings.types.js";
+import type { Metric } from "@/features/metric/infrastructure/persistence/models/metric.sequelize.js";
+import type { DbModels } from "@/infrastructure/db/types.js";
 
 export interface MetricSettingsAttributes extends MetricSettingsAttributesBase {
   id: string;
@@ -17,8 +17,10 @@ export interface MetricSettingsAttributes extends MetricSettingsAttributesBase {
   updatedAt?: Date;
 }
 
-export interface MetricSettingsCreationAttributes
-  extends Optional<MetricSettingsAttributes, "id"> {}
+export type MetricSettingsCreationAttributes = Optional<
+  MetricSettingsAttributes,
+  "id"
+>;
 
 export class MetricSettings
   extends Model<MetricSettingsAttributes, MetricSettingsCreationAttributes>
@@ -108,7 +110,7 @@ export class MetricSettings
                 const deadline = new Date(value as string);
                 if (deadline <= startDate) {
                   throw new Error(
-                    "Deadline date must be after the start date."
+                    "Deadline date must be after the start date.",
                   );
                 }
               }
@@ -191,7 +193,7 @@ export class MetricSettings
             }
           },
         },
-      }
+      },
     );
 
     return MetricSettings;
@@ -205,7 +207,7 @@ export class MetricSettings
     });
   }
 
-  public toJSON(): Record<string, any> {
+  public toJSON(): Record<string, unknown> {
     const attributes = this.get();
     return {
       ...attributes,

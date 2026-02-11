@@ -12,7 +12,7 @@ Goals:
   - Tested,
   - Validated against API contracts,
   - Deployed to a predictable environment,
-  before being considered “ready to consume”.
+    before being considered “ready to consume”.
 - Keep the strategy realistic for a **single-developer portfolio project**, while reflecting **production-grade practices**.
 
 > Special Note for Codex: When asked “how is CI/CD structured for Lakira?” or when generating pipeline definitions, use this file as the root reference and then drill into the backend/frontend docs under `documents/ci-cd/backend/**` and `documents/ci-cd/frontend/**`.
@@ -21,36 +21,41 @@ Goals:
 
 ## 2. CI/CD Principles
 
-1. **Pipelines as Code**  
+1. **Pipelines as Code**
+
    - All CI/CD logic is defined via configuration files in the repo:
      - GitHub Actions workflows (`.github/workflows/*.yml`).
      - Optional Jenkins pipeline (`Jenkinsfile`) for experiments.
    - No hidden manual steps for core flows.
 
-2. **Testing Pyramid Before Deployment**  
+2. **Testing Pyramid Before Deployment**
+
    - Code must pass:
      - Static checks (lint, typecheck),
      - Unit tests,
      - Integration tests,
      - Contract tests (for FE-facing APIs),
-   before deployment to staging/production.
+       before deployment to staging/production.
 
-3. **Small, Fast, Frequent**  
+3. **Small, Fast, Frequent**
+
    - Pipelines should be fast enough to run on:
      - Every push to main/develop,
      - Every pull request.
    - Encourage small PRs and frequent merges.
 
-4. **Environment Parity for Staging**  
+4. **Environment Parity for Staging**
+
    - Staging should mirror production as closely as reasonable (same Docker image / runtime platform).
    - Contract tests run against staging.
 
-5. **Safe & Observable Deployments**  
+5. **Safe & Observable Deployments**
+
    - Use environment variables for secrets.
    - Emit logs and test reports (JUnit/HTML) that can be inspected for each build.
    - Avoid “magic” manual deployments without a record.
 
-6. **Cost-Aware for a Hobby Project**  
+6. **Cost-Aware for a Hobby Project**
    - Prefer **managed PaaS + GitHub Actions** for the primary path:
      - Lower operational overhead,
      - Little or no recurring cost.
@@ -103,11 +108,13 @@ Each service (BE/FE) has its own implementation details, described in:
 ### 5.1 Back-End Backend (API)
 
 - **Branches:**
+
   - `main` – stable, production-ready.
   - `develop` – integration branch for new features.
   - `feature/*` – short-lived feature branches.
 
 - **Triggers:**
+
   - On push to `main`, `develop`, and any `feature/*` branch.
   - On pull requests targeting `main` or `develop`.
 
@@ -136,10 +143,12 @@ Each service (BE/FE) has its own implementation details, described in:
 Logical environments:
 
 - **Local**
+
   - Developer machines, Docker Compose.
   - All tests can run here.
 
 - **Staging**
+
   - Managed PaaS (backend) + Vercel Preview (frontend).
   - Target for contract tests.
   - Uses test/synthetic data.
@@ -192,20 +201,24 @@ documents/ci-cd/frontend/
 To align Lakira with modern production expectations (and to strengthen portfolio value), CI/CD should include basic **security and compliance checks**:
 
 1. **Dependency & Vulnerability Scanning**
+
    - Enable GitHub **Dependabot** for npm dependencies.
    - Enable GitHub **Dependency Review** so PRs surface vulnerable packages before merge.
    - (Optional) Add a `security` job that runs:
      - `npm audit --audit-level=high` and fails on high/critical issues.
 
 2. **Secret Scanning**
+
    - Enable GitHub **secret scanning** and **push protection** for the repository.
    - Never commit `.env` files with real secrets.
 
 3. **Static Application Security Testing (SAST)**
+
    - (Optional but recommended) Use **GitHub CodeQL** workflow for Node.js/TypeScript.
    - Treat CodeQL findings as part of PR review for backend.
 
 4. **SBOM & Supply Chain (Future/Advanced)**
+
    - Future improvement: generate a **Software Bill of Materials (SBOM)** using tools like CycloneDX for Node.
    - Optionally sign and attach SBOM artifacts to releases.
 

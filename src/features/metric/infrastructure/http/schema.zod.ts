@@ -8,30 +8,51 @@ import {
   zMetricDefaultUnit,
   zMetricIsPublic,
   zMetricOriginalId,
-} from "@/constants/zod/zod-rules";
+} from "@/constants/zod/zod-rules.js";
+import { ZodMessages } from "@/constants/zod/zod-messages.js";
 
 extendZodWithOpenApi(z);
 
-const FilterSchema = z.object({
-  ["filter[name]"]: z.preprocess(
-    (v) => (typeof v === "string" ? v.trim() : v),
-    z.string().min(1).optional()
-  ),
-  ["filter[categoryId]"]: z.preprocess(
-    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-    zUUID.optional()
-  ),
-  filter: z
-    .object({
-      name: z.preprocess(
-        (v) => (typeof v === "string" ? v.trim() : v),
-        z.string().min(1).optional()
-      ),
-      categoryId: zUUID.optional(),
-    })
-    .partial()
-    .optional(),
-});
+const normalizedSearchParam = z
+  .union([z.string(), z.undefined(), z.null()])
+  .transform((value) => {
+    if (typeof value !== "string") return undefined;
+    return value.trim();
+  })
+  .refine(
+    (value) => value === undefined || value.length > 0,
+    ZodMessages.common.searchQueryMin,
+  );
+
+const strictBooleanQuery = z
+  .union([z.boolean(), z.string()])
+  .transform((value) => {
+    if (typeof value === "boolean") return value;
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "true") return true;
+    if (normalized === "false") return false;
+    return value;
+  })
+  .pipe(z.boolean());
+
+const filterObject = z
+  .object({
+    name: normalizedSearchParam,
+    categoryId: zUUID.optional(),
+  })
+  .partial()
+  .strict();
+
+const FilterSchema = z
+  .object({
+    ["filter[name]"]: normalizedSearchParam.optional(),
+    ["filter[categoryId]"]: z.preprocess(
+      (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+      zUUID.optional(),
+    ),
+    filter: filterObject.optional(),
+  })
+  .strict();
 
 /** ===== Base pieces ===== */
 export const metricParams = z.object({ id: zUUID });
@@ -45,7 +66,23 @@ export const metricBody = z.object({
   isPublic: zMetricIsPublic,
 });
 
-export const metricBodyPartial = metricBody.partial();
+const metricBodyUpdate = metricBody.extend({
+  isPublic: z.boolean().optional(),
+});
+
+export const metricBodyPartial = metricBodyUpdate
+  .partial()
+  .strict()
+  .superRefine((data, ctx) => {
+    if (Object.keys(data).length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Provide at least one field to update.",
+        path: [],
+      });
+    }
+  })
+  .openapi({ minProperties: 1, additionalProperties: false });
 
 export const listMetricsQuery = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -78,14 +115,16 @@ const listMetricQueryRaw = z
         "-logCount",
       ] as const)
       .default("-createdAt"),
-    q: z.preprocess(
-      (v) => (typeof v === "string" ? v.trim() : v),
-      z.string().min(1).optional()
-    ),
-    after: z.string().optional(),
-    includeTotal: z.coerce.boolean().default(false),
+    q: normalizedSearchParam,
+    after: z.union([z.string(), z.undefined(), z.null()]).transform((value) => {
+      if (typeof value !== "string") return undefined;
+      const trimmed = value.trim();
+      return trimmed.length ? trimmed : undefined;
+    }),
+    includeTotal: strictBooleanQuery.optional().default(false),
   })
-  .merge(FilterSchema);
+  .merge(FilterSchema)
+  .strict();
 
 export const listMetricQueryViaCursor = listMetricQueryRaw.transform((v) => {
   const name = v["filter[name]"] ?? v.filter?.name;
@@ -107,21 +146,39 @@ export const listMetricQueryViaCursor = listMetricQueryRaw.transform((v) => {
 
 export const listMetricQueryDocSchema = listMetricQueryRaw;
 
-const allowedIncludes = ["settings", "category", "logs"] as const;
+const allowedIncludeTokens = new Set(["settings", "category", "logs"]);
+const includeCsvPattern =
+  "^(settings|category|logs)(,(settings|category|logs))*$";
 const csvIncludes = z
   .string()
-  .min(1)
-  .refine(
-    (val) =>
-      val
-        .split(",")
-        .map((s) => s.trim())
-        .every((v) => (allowedIncludes as readonly string[]).includes(v)),
-    {
-      message:
-        "include must be 'flat' | 'full' or a CSV of: settings,category,logs",
+  .superRefine((value, ctx) => {
+    const tokens = value
+      .split(",")
+      .map((token) => token.trim())
+      .filter((token) => token.length > 0);
+
+    if (!tokens.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "include must be 'flat' | 'full' or a CSV of: settings,category,logs",
+      });
+      return;
     }
-  );
+
+    const invalid = tokens.filter((token) => !allowedIncludeTokens.has(token));
+    if (invalid.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "include must be 'flat' | 'full' or a CSV of: settings,category,logs",
+      });
+    }
+  })
+  .openapi({
+    example: "settings,category",
+    pattern: includeCsvPattern,
+  });
 
 export const metricDetailQuery = z.object({
   include: z

@@ -3,6 +3,7 @@
 This plan describes how to evolve the current OpenAPI/Swagger setup into a production‑grade, maintainable, and auditable documentation system for the Lakira backend.
 
 It assumes:
+
 - Express.js backend entry at `src/server.ts`.
 - Zod + `@asteasolutions/zod-to-openapi` integration in `src/lib/openapi`.
 - Existing static OpenAPI JSON at `documents/openapi/lakira-backend-openapi.json`.
@@ -96,6 +97,7 @@ It assumes:
 ### 4.1 Route Coverage Checklist
 
 For each route module:
+
 - `src/features/auth/infrastructure/http/router.ts`
 - `src/routes/metric.routes.ts`
 - `src/routes/metric-settings.routes.ts`
@@ -104,6 +106,7 @@ For each route module:
 - `src/features/analytics/infrastructure/http/visualization.router.ts`
 
 Plan:
+
 - Map each Express route (method + path) to an OpenAPI path object:
   - Confirm that:
     - **Auth paths** (`/auth/register`, `/auth/login`, `/auth/profile`, `/auth/logout`) are documented and aligned with real URLs and HTTP methods.
@@ -192,6 +195,7 @@ Plan:
 ### 7.1 Endpoint‑Level Requirements
 
 Each OpenAPI path MUST include:
+
 - `summary` and short, clear `description` (where non‑obvious).
 - `tags` mapped to the domain/feature.
 - `operationId` (optional but recommended) with stable naming convention:

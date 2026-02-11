@@ -20,5 +20,10 @@ $COMPOSE up -d db redis
 echo "[PROCESS] Waiting for database to be ready..."
 $COMPOSE run --rm db /bin/sh -c 'while ! pg_isready -h db -p 5432 -U lakira_user -d lakira_test_db; do sleep 1; done'
 
-echo "[PROCESS] Running migrations and Jest suite..."
-$COMPOSE run --rm app /bin/sh -c "npx sequelize-cli db:migrate --config src/config/config.cjs && npm run jest -- \"\$@\"" -- "$@"
+echo "[PROCESS] Running migrations and Jest suites..."
+$COMPOSE run --rm app /bin/sh -c "
+  npx sequelize-cli db:migrate --config src/config/config.cjs &&
+  npm run test:unit &&
+  npm run test:integration &&
+  npm run test:integration:coverage
+"

@@ -1,5 +1,5 @@
-import { BucketAlias } from "./buckets";
-import type { RangeDescriptor } from "./fallback-range";
+import { BucketAlias } from "./buckets.js";
+import type { RangeDescriptor } from "./fallback-range.js";
 
 export type FillMode = "none" | "zero" | "nan";
 

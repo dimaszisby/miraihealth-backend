@@ -4,6 +4,7 @@
 > Use this checklist to track granular completion status for every task derived from the in-depth review. Cross-reference the plan for descriptions/acceptance criteria.
 
 ## How to Use
+
 1. Keep this document in sync with the stabilization plan tasks.
 2. Mark `[x]` when a sub-step is complete; add notes/dates/links as needed.
 3. If scope changes, update both the plan and this checklist.
@@ -11,6 +12,7 @@
 ---
 
 ## Global / Cross-Cutting
+
 - [x] **G-01 – Standardize read/query port pattern**
   - [x] Define read/query port interfaces per feature.
   - [x] Implement adapters moving all Sequelize/SQL into infrastructure.
@@ -26,6 +28,7 @@
 ---
 
 ## Analytics
+
 - [x] **AN-01 – Introduce VisualizationReadRepository**
   - [x] Create interface in `application/ports`.
   - [x] Implement adapter in `infrastructure/persistence`.
@@ -45,6 +48,7 @@
 ---
 
 ## Auth
+
 - [x] **AUTH-01 – Move Zod schemas into auth feature**
   - [x] Create local schema file.
   - [x] Update router to use local validators.
@@ -58,6 +62,7 @@
 ---
 
 ## Metric
+
 - [x] **M-01 – Convert ListMetrics to use read port**
   - [x] Define `MetricReadRepository`.
   - [x] Implement adapter with Sequelize logic.
@@ -74,6 +79,7 @@
 ---
 
 ## Metric Category
+
 - [x] **MC-01 – Add GenerateDummyCategories use-case**
   - [x] Implement new use-case using factory + repo + cache.
   - [x] Update controller to call the use-case.
@@ -86,6 +92,7 @@
 ---
 
 ## Metric Log
+
 - [x] **ML-01 – Create MetricLogQueryPort**
   - [x] Define port interface.
   - [x] Implement adapter moving Sequelize logic out of `application`.
@@ -98,6 +105,7 @@
 ---
 
 ## Metric Settings
+
 - [x] **MS-01 – Move DTO/mappers into feature**
   - [x] Create local DTO + mapper files.
   - [x] Update controllers/tests.
@@ -110,6 +118,7 @@
 ---
 
 ## Shared
+
 - [x] **SH-01 – Re-home shared utilities**
   - [x] Inventory consumers and decide on final placement.
   - [x] Move/restructure helpers accordingly.

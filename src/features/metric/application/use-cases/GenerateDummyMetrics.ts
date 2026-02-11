@@ -1,7 +1,7 @@
-import { models } from "@/infrastructure/db/models";
-import { MetricDomain } from "@/types/domain/metric.domain";
-import { toDomainMetric } from "@/utils/mappers/metric.mapper";
-import { CachePort } from "../ports/CachePort";
+import { models } from "@/infrastructure/db/models.js";
+import { MetricDomain } from "@/types/domain/metric.domain.js";
+import { toDomainMetric } from "@/utils/mappers/metric.mapper.js";
+import { CachePort } from "../ports/CachePort.js";
 
 type Input = {
   userId: string;
@@ -20,8 +20,7 @@ export class GenerateDummyMetrics {
       const metric = await models.Metric.create({
         userId,
         name: `Dummy Metric ${Date.now()}-${i}`,
-        description:
-          "This is a dummy metric generated for testing pagination.",
+        description: "This is a dummy metric generated for testing pagination.",
         defaultUnit:
           DEFAULT_UNITS[Math.floor(Math.random() * DEFAULT_UNITS.length)],
         isPublic: Math.random() > 0.5,

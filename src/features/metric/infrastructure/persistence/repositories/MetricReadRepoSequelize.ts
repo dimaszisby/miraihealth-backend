@@ -1,5 +1,8 @@
-import { models } from "@/infrastructure/db/models";
-import { MetricLibraryDomain, MetricDomainExtended } from "@/types/domain/metric.domain";
+import { models } from "@/infrastructure/db/models.js";
+import {
+  MetricLibraryDomain,
+  MetricDomainExtended,
+} from "@/types/domain/metric.domain.js";
 import {
   MetricReadRepository,
   ListMetricsResult,
@@ -8,8 +11,11 @@ import {
   SortParam,
   MetricDetailQuery,
   Dir,
-} from "../../../application/ports/MetricReadRepository";
-import { toDomainMetricLibrary, toExtendedMetricDomain } from "@/utils/mappers/metric.mapper";
+} from "../../../application/ports/MetricReadRepository.js";
+import {
+  toDomainMetricLibrary,
+  toExtendedMetricDomain,
+} from "@/utils/mappers/metric.mapper.js";
 import {
   FindAttributeOptions,
   ProjectionAlias,
@@ -17,7 +23,10 @@ import {
   WhereOptions,
   Op,
   OrderItem,
+  Includeable,
+  FindOptions,
 } from "sequelize";
+import type { Metric as MetricModel } from "../models/metric.sequelize.js";
 
 export class MetricReadRepoSequelize implements MetricReadRepository {
   async listMetrics(opts: ListOpts): Promise<ListMetricsResult> {
@@ -28,12 +37,13 @@ export class MetricReadRepoSequelize implements MetricReadRepository {
 
     const attributes = baseAttributesWithLogCount() as FindAttributeOptions;
     const order = buildOrder(field, dir);
+    const pageSize = Math.min(Math.max(limit || 20, 1), 100);
 
-    const scope: any = {
+    const scope: FindOptions = {
       attributes,
       where,
       order,
-      limit: Math.min(Math.max(limit || 20, 1), 100) + 1,
+      limit: pageSize + 1,
       paranoid: false,
       include: [
         {
@@ -52,23 +62,30 @@ export class MetricReadRepoSequelize implements MetricReadRepository {
     }
 
     const rows = await models.Metric.findAll(scope);
-    const hasMore = rows.length > limit;
-    const slice = hasMore ? rows.slice(0, limit) : rows;
+    const hasMore = rows.length > pageSize;
+    const slice = hasMore ? rows.slice(0, pageSize) : rows;
 
-    const items: MetricLibraryDomain[] = slice.map((row: any) =>
-      toDomainMetricLibrary(row)
+    const items: MetricLibraryDomain[] = slice.map((row: MetricModel) =>
+      toDomainMetricLibrary(row),
     );
 
     let nextCursor: string | undefined;
     if (hasMore && slice.length) {
       const last = slice[slice.length - 1];
+      const logCountValue =
+        typeof (last as { get?: unknown }).get === "function"
+          ? (last as MetricModel & { get: (k: string) => unknown }).get(
+              "logCount",
+            )
+          : (last as MetricModel & { logCount?: unknown }).logCount;
       const payload: CursorPayload = {
         sort,
         id: last.id,
         createdAt: last.createdAt?.toISOString(),
         updatedAt: last.updatedAt?.toISOString(),
         nameLower: last.name?.toLowerCase(),
-        logCount: Number((last as any).logCount ?? 0),
+        // Access literal value when rows are plain objects (unit tests) or Sequelize instances.
+        logCount: Number((logCountValue as number | string | undefined) ?? 0),
       };
       nextCursor = encodeCursor(payload);
     }
@@ -98,13 +115,21 @@ export class MetricReadRepoSequelize implements MetricReadRepository {
     includes = [],
     logsLimit = 20,
   }: MetricDetailQuery): Promise<MetricDomainExtended | null> {
-    const includeArr: any[] = [];
+    const includeArr: Includeable[] = [];
 
     if (includes.includes("category")) {
       includeArr.push({
         model: models.MetricCategory,
         as: "category",
-        attributes: ["id", "name", "color", "icon", "createdAt", "updatedAt"],
+        attributes: [
+          "id",
+          "userId",
+          "name",
+          "color",
+          "icon",
+          "createdAt",
+          "updatedAt",
+        ],
       });
     }
 
@@ -138,6 +163,7 @@ export class MetricReadRepoSequelize implements MetricReadRepository {
         as: "logs",
         attributes: [
           "id",
+          "metricId",
           "logValue",
           "type",
           "loggedAt",
@@ -172,8 +198,8 @@ type CursorPayload = {
 };
 
 const LOG_COUNT_SQL =
-  `(SELECT COUNT(*) FROM "public"."metric_logs" ml ` +
-  `WHERE ml."metric_id" = "Metric"."id")`;
+  '(SELECT COUNT(*) FROM "public"."metric_logs" ml ' +
+  'WHERE ml."metric_id" = "Metric"."id")';
 
 function baseAttributesWithLogCount(): (string | ProjectionAlias)[] {
   const logCount: ProjectionAlias = [
@@ -211,10 +237,10 @@ function normalizeSort(sort: SortParam): {
 function buildWhere(
   userId: string,
   q?: string,
-  filter?: { name?: string; categoryId?: string }
+  filter?: { name?: string; categoryId?: string },
 ): WhereOptions {
   const like = (v: string) => ({ [Op.iLike]: `%${v}%` });
-  const and: any[] = [{ userId }, { deletedAt: null }];
+  const and: Array<Record<string, unknown>> = [{ userId }, { deletedAt: null }];
 
   if (q) and.push({ name: like(q) });
   if (filter?.name) and.push({ name: like(filter.name) });
@@ -226,7 +252,7 @@ function buildWhere(
 function buildCursorPredicate(
   cursor: CursorPayload,
   field: SortField,
-  dir: Dir
+  dir: Dir,
 ): WhereOptions {
   const ltgt = dir === "DESC" ? Op.lt : Op.gt;
   const eq = Op.eq;
@@ -262,23 +288,20 @@ function buildCursorPredicate(
     }
     case "name": {
       const N = cursor.nameLower ?? "";
+      const lowerColumn = Sequelize.fn("LOWER", Sequelize.col("Metric.name"));
       return {
         [Op.or]: [
-          Sequelize.where(
-            Sequelize.fn("lower", Sequelize.col("name")),
-            { [ltgt]: N }
-          ),
+          Sequelize.where(lowerColumn, {
+            [ltgt]: N,
+          }),
           {
             [Op.and]: [
-              Sequelize.where(
-                Sequelize.fn("lower", Sequelize.col("name")),
-                { [eq]: N }
-              ),
+              Sequelize.where(lowerColumn, { [eq]: N }),
               { id: { [ltgt]: cursor.id } },
             ],
           },
         ],
-      } as any;
+      };
     }
     case "logCount": {
       const L = cursor.logCount ?? 0;
@@ -293,7 +316,7 @@ function buildCursorPredicate(
             ],
           },
         ],
-      } as any;
+      };
     }
   }
 }
@@ -302,7 +325,7 @@ function buildOrder(field: SortField, dir: Dir): OrderItem[] {
   switch (field) {
     case "name":
       return [
-        [Sequelize.fn("lower", Sequelize.col("name")), dir],
+        [Sequelize.fn("lower", Sequelize.col("Metric.name")), dir],
         ["id", dir],
       ];
     case "logCount":

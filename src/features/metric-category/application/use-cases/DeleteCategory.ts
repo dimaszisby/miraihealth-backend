@@ -1,12 +1,12 @@
-import AppError from "@/utils/AppError";
-import { MetricCategoryRepository } from "../../domain/repositories/MetricCategoryRepository";
-import { CachePort } from "../ports/CachePort";
-import { METRIC_CATEGORY_CURSOR_NAMESPACE_ALL } from "@/features/metric-category/application/cache.constants";
+import AppError from "@/utils/AppError.js";
+import { MetricCategoryRepository } from "../../domain/repositories/MetricCategoryRepository.js";
+import { CachePort } from "../ports/CachePort.js";
+import { METRIC_CATEGORY_CURSOR_NAMESPACE_ALL } from "@/features/metric-category/application/cache.constants.js";
 
 export class DeleteCategory {
   constructor(
     private repo: MetricCategoryRepository,
-    private cache: CachePort
+    private cache: CachePort,
   ) {}
 
   async execute(userId: string, categoryId: string) {
@@ -19,7 +19,7 @@ export class DeleteCategory {
 
     if (this.cache.isEnabled()) {
       await this.cache.delByPattern(
-        `${METRIC_CATEGORY_CURSOR_NAMESPACE_ALL}:${userId}:*`
+        `${METRIC_CATEGORY_CURSOR_NAMESPACE_ALL}:${userId}:*`,
       );
       await this.cache.delByPattern(`category:${userId}:${categoryId}`);
     }

@@ -1,5 +1,3 @@
-// src/types/db/metric-log.types.ts
-
 /**
  * @interface MetricLogAttributesBase
  * @description Defines the core, non-database-specific attributes for a Metric Log entity.
@@ -18,7 +16,7 @@ export interface MetricLogAttributesBase {
 
   /**
    * @property {number} logValue - The numerical value recorded for the metric at the time of logging.
-   * Must be greater than 0.
+   * Must be non-negative.
    */
   logValue: number;
 

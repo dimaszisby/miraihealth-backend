@@ -1,13 +1,10 @@
-// src/utils/db-validators.ts
-// Not yet migrated to DDD
-
 import AppError from "./AppError.js";
-import { models } from "@/infrastructure/db/models";
+import { models } from "@/infrastructure/db/models.js";
 
-import type { Metric } from "@/features/metric/infrastructure/persistence/models/metric.sequelize";
-import type { MetricCategory } from "@/features/metric-category/infrastructure/persistence/models/metric-category.sequelize";
-import type { MetricSettings } from "@/features/metric-settings/infrastructure/persistence/models/metric-settings.sequelize";
-import type { MetricLog } from "@/features/metric-log/infrastructure/persistence/models/metric-log.sequelize";
+import type { Metric } from "@/features/metric/infrastructure/persistence/models/metric.sequelize.js";
+import type { MetricCategory } from "@/features/metric-category/infrastructure/persistence/models/metric-category.sequelize.js";
+import type { MetricSettings } from "@/features/metric-settings/infrastructure/persistence/models/metric-settings.sequelize.js";
+import type { MetricLog } from "@/features/metric-log/infrastructure/persistence/models/metric-log.sequelize.js";
 
 /**
  * * Utility function to validate if a metric exists and owned by the requesting user
@@ -17,7 +14,7 @@ import type { MetricLog } from "@/features/metric-log/infrastructure/persistence
  */
 export const validateMetricAccess = async (
   userId: string,
-  metricId: string
+  metricId: string,
 ): Promise<Metric> => {
   if (!userId) {
     throw new AppError("User not authenticated", 401);
@@ -47,7 +44,7 @@ export const validateMetricAccess = async (
  */
 export const validateMetricCategoryAccess = async (
   userId: string,
-  categoryId: string
+  categoryId: string,
 ): Promise<MetricCategory> => {
   // 1. Fetch the metric category regardless of the userId.
   const metricCategory = await models.MetricCategory.findOne({
@@ -78,7 +75,7 @@ export const validateMetricCategoryAccess = async (
  */
 export const findOwnedMetric = async (
   userId: string,
-  metricId: string
+  metricId: string,
 ): Promise<Metric> => {
   // Overhaul: Stuck Here
   await validateMetricAccess(userId, metricId);
@@ -100,7 +97,7 @@ export const findOwnedMetric = async (
  */
 export const findOwnedCategory = async (
   userId: string,
-  categoryId: string
+  categoryId: string,
 ): Promise<MetricCategory> => {
   await validateMetricCategoryAccess(userId, categoryId);
 
@@ -122,7 +119,7 @@ export const findOwnedCategory = async (
  */
 export const findOwnedMetricSettings = async (
   userId: string,
-  settingsId: string
+  settingsId: string,
 ): Promise<MetricSettings> => {
   const settings = await models.MetricSettings.findOne({
     where: { id: settingsId },
@@ -155,7 +152,7 @@ export const findOwnedMetricSettings = async (
  */
 export const findOwnedMetricLog = async (
   userId: string,
-  logId: string
+  logId: string,
 ): Promise<MetricLog> => {
   const log = await models.MetricLog.findOne({
     where: { id: logId },

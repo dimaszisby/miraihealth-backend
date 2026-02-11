@@ -1,6 +1,6 @@
-import AppError from "@/utils/AppError";
-import { MetricSettings } from "../../domain/entities/MetricSettings";
-import { MetricSettingsRepository } from "../../domain/repositories/MetricSettingsRepository";
+import AppError from "@/utils/AppError.js";
+import { MetricSettings } from "../../domain/entities/MetricSettings.js";
+import { MetricSettingsRepository } from "../../domain/repositories/MetricSettingsRepository.js";
 
 export class GetMetricSettings {
   constructor(private repo: MetricSettingsRepository) {}

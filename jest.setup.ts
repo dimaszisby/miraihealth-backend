@@ -1,5 +1,6 @@
 //jest.setup.ts
 
+import { jest } from "@jest/globals";
 import type { Server } from "http";
 import { QueryTypes } from "sequelize";
 import { setImmediate } from "timers";
@@ -7,12 +8,16 @@ import app from "./src/server.js";
 import sequelize from "./src/config/db.js";
 import { disconnectRedis } from "./src/utils/redis-client.js";
 import request from "supertest";
-import { env } from "./src/config/zodEnv.js";
+import { env } from "./src/config/envManager.js";
+import logger from "./src/utils/logger.js";
 
 const skipDbLifecycle = process.env.SKIP_DB_LIFECYCLE === "true";
+jest.setTimeout(40000);
 
 if (skipDbLifecycle) {
-  console.log("[PROCESS] SKIP_DB_LIFECYCLE enabled — skipping server/DB bootstrap.");
+  logger.info(
+    "[PROCESS] SKIP_DB_LIFECYCLE enabled — skipping server/DB bootstrap.",
+  );
 }
 
 // Ensure Jest uses the correct test environment
@@ -20,10 +25,10 @@ if (!env.NODE_ENV) {
   throw new Error("[ERROR] NODE_ENV not set. Check your .env.test file.");
 }
 
-console.log(`🛠 Jest running in environment: ${env.NODE_ENV}`);
-console.log(`🔗 Connected to test DB: ${env.TEST_DATABASE_URL}`);
-console.log(`DB_HOST: ${env.DB_HOST}`);
-console.log(`DB_PORT: ${env.DB_PORT}`);
+logger.info(`🛠 Jest running in environment: ${env.NODE_ENV}`);
+logger.info(`🔗 Connected to test DB: ${env.TEST_DATABASE_URL}`);
+logger.info(`DB_HOST: ${env.DB_HOST}`);
+logger.info(`DB_PORT: ${env.DB_PORT}`);
 
 // Ensure immediate functions are available in Jest
 global.setImmediate = setImmediate;
@@ -39,15 +44,15 @@ if (!skipDbLifecycle) {
   beforeAll(async () => {
     try {
       server = app.listen(TEST_SERVER_PORT, () => {
-        console.log(
-          `[PROCESS] Test server running on port ${TEST_SERVER_PORT}`
+        logger.info(
+          `[PROCESS] Test server running on port ${TEST_SERVER_PORT}`,
         );
       });
 
       await sequelize.authenticate();
-      console.log("[PROCESS] Database connection established.");
+      logger.info("[PROCESS] Database connection established.");
     } catch (error) {
-      console.error("[ERROR] during test setup:", error);
+      logger.error("[ERROR] during test setup:", error);
       throw error;
     }
   });
@@ -63,11 +68,11 @@ if (!skipDbLifecycle) {
 if (!skipDbLifecycle) {
   beforeEach(async () => {
     try {
-      console.log("🛑 Starting raw SQL table truncation...");
+      logger.info("🛑 Starting raw SQL table truncation...");
 
       const result = (await sequelize.query(
-        `SELECT tablename FROM pg_tables WHERE schemaname = 'public';`,
-        { type: QueryTypes.SELECT }
+        "SELECT tablename FROM pg_tables WHERE schemaname = 'public';",
+        { type: QueryTypes.SELECT },
       )) as { tablename: string }[] | unknown;
       const tables = Array.isArray(result)
         ? (result as { tablename: string }[])
@@ -79,13 +84,13 @@ if (!skipDbLifecycle) {
           continue;
         }
         await sequelize.query(
-          `TRUNCATE TABLE "${tableName}" RESTART IDENTITY CASCADE;`
+          `TRUNCATE TABLE "${tableName}" RESTART IDENTITY CASCADE;`,
         );
       }
 
-      console.log("[PROCESS] Completed raw SQL table truncation.");
+      logger.info("[PROCESS] Completed raw SQL table truncation.");
     } catch (error) {
-      console.error("[ERROR] during table truncation:", error);
+      logger.error("[ERROR] during table truncation:", error);
       throw error;
     }
   });
@@ -102,15 +107,15 @@ afterAll(async () => {
   try {
     if (server) {
       await new Promise<void>((resolve) => server.close(() => resolve()));
-      console.log("[PROCESS] Test server closed.");
+      logger.info("[PROCESS] Test server closed.");
     }
 
     await sequelize.close();
-    console.log("[PROCESS] Database connection closed.");
+    logger.info("[PROCESS] Database connection closed.");
 
     await disconnectRedis();
   } catch (error) {
-    console.error("[ERROR] closing connections:", error);
+    logger.error("[ERROR] closing connections:", error);
   }
 });
 

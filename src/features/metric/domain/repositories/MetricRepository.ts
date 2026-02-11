@@ -1,5 +1,5 @@
-import { Metric } from "../entities/Metric";
-import { PersistenceTransaction } from "../../application/ports/PersistenceTransaction";
+import { Metric } from "../entities/Metric.js";
+import { PersistenceTransaction } from "../../application/ports/PersistenceTransaction.js";
 
 export type CreateMetricDTO = {
   userId: string;
@@ -14,10 +14,8 @@ export type CreateMetricDTO = {
 export interface MetricRepository {
   existsByName(userId: string, name: string): Promise<boolean>;
   categoryExists(userId: string, categoryId: string): Promise<boolean>;
-  create(
-    data: CreateMetricDTO,
-    tx: PersistenceTransaction
-  ): Promise<Metric>;
+  originalMetricExists(userId: string, metricId: string): Promise<boolean>;
+  create(data: CreateMetricDTO, tx: PersistenceTransaction): Promise<Metric>;
   findOwnedById(userId: string, metricId: string): Promise<Metric>;
   save(metric: Metric): Promise<Metric>;
   delete(metric: Metric): Promise<void>;

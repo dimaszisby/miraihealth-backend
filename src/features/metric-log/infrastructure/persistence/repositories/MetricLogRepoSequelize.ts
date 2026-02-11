@@ -1,14 +1,15 @@
 import { Op } from "sequelize";
-import { models } from "@/infrastructure/db/models";
-import AppError from "@/utils/AppError";
+import { models } from "@/infrastructure/db/models.js";
+import AppError from "@/utils/AppError.js";
 import {
   CreateMetricLogDTO,
   MetricLogRepository,
-} from "../../../domain/repositories/MetricLogRepository";
-import { MetricLog } from "../../../domain/entities/MetricLog";
-import { MetricLogRow, toDomain } from "../mappers/MetricLogMapper";
+} from "../../../domain/repositories/MetricLogRepository.js";
+import { MetricLog } from "../../../domain/entities/MetricLog.js";
+import { MetricLogRow, toDomain } from "../mappers/MetricLogMapper.js";
+import type { MetricLog as MetricLogModel } from "../models/metric-log.sequelize.js";
 
-function toRow(model: any): MetricLogRow {
+function toRow(model: MetricLogModel): MetricLogRow {
   return {
     id: model.id,
     metricId: model.metricId,
@@ -24,9 +25,13 @@ export class MetricLogRepoSequelize implements MetricLogRepository {
   async existsAtTimestamp(
     metricId: string,
     loggedAt: Date,
-    excludeLogId?: string
+    excludeLogId?: string,
   ): Promise<boolean> {
-    const where: any = { metricId, loggedAt };
+    const where: {
+      metricId: string;
+      loggedAt: Date;
+      id?: Record<typeof Op.ne, string>;
+    } = { metricId, loggedAt };
     if (excludeLogId) {
       where.id = { [Op.ne]: excludeLogId };
     }

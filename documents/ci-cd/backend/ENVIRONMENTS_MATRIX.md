@@ -19,12 +19,12 @@ Treat this as the **single source of truth** when wiring CI, Render, and Postman
 
 ### 2.1 Summary Table
 
-| Env        | Purpose                                      | Backend Host / Base URL                     | DB Name        | Redis            | Postman Env File                             |
-|-----------|----------------------------------------------|---------------------------------------------|---------------|------------------|----------------------------------------------|
-| `local`   | Dev machine / Docker Compose                 | `http://localhost:4000`                     | `lakira_local` | `redis://localhost:6379` | `lakira-local.postman_environment.json`   |
-| `ci`      | GitHub Actions test & contract pipelines     | `http://localhost:4000` (service container) | `lakira_ci`    | `redis://redis:6379`    | `lakira-local.postman_environment.json`   |
-| `staging` | Public “portfolio” environment on Render     | `https://api-staging.lakira.yourdomain.com` | `lakira_stage` | Managed Redis (optional) | `lakira-staging.postman_environment.json` |
-| `prod`*   | Optional future production environment       | `https://api.lakira.yourdomain.com`         | `lakira_prod`  | Managed Redis (optional) | (TBD)                                     |
+| Env       | Purpose                                  | Backend Host / Base URL                     | DB Name        | Redis                    | Postman Env File                          |
+| --------- | ---------------------------------------- | ------------------------------------------- | -------------- | ------------------------ | ----------------------------------------- |
+| `local`   | Dev machine / Docker Compose             | `http://localhost:4000`                     | `lakira_local` | `redis://localhost:6379` | `lakira-local.postman_environment.json`   |
+| `ci`      | GitHub Actions test & contract pipelines | `http://localhost:4000` (service container) | `lakira_ci`    | `redis://localhost:6379` | `lakira-local.postman_environment.json`   |
+| `staging` | Public “portfolio” environment on Render | `https://api-staging.lakira.yourdomain.com` | `lakira_stage` | Managed Redis (optional) | `lakira-staging.postman_environment.json` |
+| `prod`\*  | Optional future production environment   | `https://api.lakira.yourdomain.com`         | `lakira_prod`  | Managed Redis (optional) | (TBD)                                     |
 
 \* For a portfolio project, `staging` may effectively act as “production”. Keep `prod` documented as a future option.
 
@@ -73,20 +73,28 @@ Seeding / fixture notes:
   - Runs inside the `contract_local` job using `npm run start:test` on `http://localhost:4000`.
 - **Postgres service (CI):**
   - Image: `postgres:15`
-  - Host (inside job): `postgres`
+  - Host (from runner steps): `localhost` (GitHub Actions maps the service port to 127.0.0.1)
+  - Hostname inside another container job: `postgres`
   - Port: `5432`
   - DB name: `lakira_ci`
   - User: `postgres`
   - Password: `${{ secrets.POSTGRES_PASSWORD_TEST }}`
 - **Redis service (CI):**
   - Image: `redis:7`
-  - Host: `redis`
+  - Host: `localhost` (use `redis` only if the job itself runs inside a container)
   - Port: `6379`
 - **Key env vars in CI jobs:**
-  - `DATABASE_URL=postgres://postgres:${{ secrets.POSTGRES_PASSWORD_TEST }}@postgres:5432/lakira_ci`
-  - `REDIS_URL=redis://redis:6379`
+  - `DATABASE_URL=postgres://postgres:${{ secrets.POSTGRES_PASSWORD_TEST }}@localhost:5432/lakira_ci`
+  - `DB_HOST=localhost`
+  - `DB_PORT=5432`
+  - `DB_USER=postgres`
+  - `DB_PASSWORD=${{ secrets.POSTGRES_PASSWORD_TEST }}`
+  - `DB_NAME=lakira_ci`
+  - `REDIS_URL=redis://localhost:6379`
   - `NODE_ENV=test`
   - `JWT_SECRET_TEST=${{ secrets.JWT_SECRET_TEST }}`
+  - `DISABLE_RATE_LIMITING=true` during `tests` and `contract_local` so Newman/Schemathesis see 2xx/4xx responses instead of global 429 throttles. Leave unset in other environments to keep production limits enforced.
+  - `ALLOW_TEST_HTTP_SERVER=true` is injected by `npm run start:test` so the HTTP server can bind to port `4000` even in `NODE_ENV=test`.
 
 Secrets to define in GitHub:
 
@@ -98,7 +106,7 @@ Postman / Newman in CI:
 - `test:contract:local` uses `lakira-local.postman_environment.json`, but overrides:
   - `baseUrl` → `http://localhost:4000/api/v1`
 
-> Special Note for Codex: When generating workflow YAML, use the service hostnames (`postgres`, `redis`) and `DATABASE_URL` above as the canonical CI configuration.
+> Special Note for Codex: Default GitHub Actions jobs run directly on the Ubuntu host, so reference `localhost` for `DATABASE_URL`/`REDIS_URL` (ports are forwarded from the service containers). Only use the container hostnames (`postgres`, `redis`) when the workflow job itself runs inside another container. Always keep `DATABASE_URL` as the source of truth and export `DB_*` variables only when a tool (e.g., `sequelize-cli`) still expects discrete fields.
 
 ---
 
@@ -114,15 +122,18 @@ Postman / Newman in CI:
   - Render default: `https://lakira-backend-staging.onrender.com`
   - Optional custom: `https://api-staging.lakira.yourdomain.com`
 - **Health endpoint:**
+
   - `GET /api/v1/health` → 200 + `{ "status": "ok" }`
 
 - **Database:**
+
   - Hosted Postgres on Render or managed provider
   - DB name: `lakira_stage`
   - Connection string stored as:
     - `DATABASE_URL` Render env var.
 
 - **Redis (optional):**
+
   - If used, connection string stored as:
     - `REDIS_URL` Render env var.
 

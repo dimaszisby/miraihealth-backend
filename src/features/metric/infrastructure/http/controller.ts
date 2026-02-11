@@ -1,4 +1,4 @@
-import { NextFunction, Response } from "express";
+import { Response } from "express";
 import {
   createMetricSchema,
   deleteMetricSchema,
@@ -6,21 +6,21 @@ import {
   getAllMetricsViaCursorSchema,
   getMetricSchema,
   updateMetricSchema,
-} from "./schema.zod";
-import { buildMetricFeature } from "../../feature";
-import { AuthRequest } from "@/types/request.context";
-import logger from "@/utils/logger";
+} from "./schema.zod.js";
+import { buildMetricFeature } from "../../feature.js";
+import { AuthRequest } from "@/types/request.context.js";
+import logger from "@/utils/logger.js";
 import {
   toMetricLibraryResponseDTO,
   toMetricResponseDTO,
   toUserMetricDetailResponseDTO,
-} from "@/utils/mappers/metric.mapper";
-import AppError from "@/utils/AppError";
-import { successResponse } from "@/utils/response-formatter";
-import catchAsync from "@/utils/catch-async";
-import { assertAuthenticated } from "@/utils/auth-guards";
-import { buildAnalyticsFeature } from "@/features/analytics/feature";
-import { pickValidated } from "@/shared/middleware/validated";
+} from "@/utils/mappers/metric.mapper.js";
+import AppError from "@/utils/AppError.js";
+import { successResponse } from "@/utils/response-formatter.js";
+import catchAsync from "@/utils/catch-async.js";
+import { assertAuthenticated } from "@/utils/auth-guards.js";
+import { buildAnalyticsFeature } from "@/features/analytics/feature.js";
+import { pickValidated } from "@/shared/middleware/validated.js";
 
 type MetricFeature = ReturnType<typeof buildMetricFeature>;
 let metricFeature: MetricFeature = buildMetricFeature();
@@ -33,13 +33,13 @@ type AnalyticsFeature = ReturnType<typeof buildAnalyticsFeature>;
 let analyticsFeature: AnalyticsFeature = buildAnalyticsFeature();
 
 export const overrideMetricTrendFeatureForTest = (
-  feature: AnalyticsFeature
+  feature: AnalyticsFeature,
 ) => {
   analyticsFeature = feature;
 };
 
 export const createMetric = catchAsync(
-  async (req: AuthRequest, res: Response, _next: NextFunction) => {
+  async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
 
     const { body } = pickValidated(createMetricSchema)(req);
@@ -64,11 +64,11 @@ export const createMetric = catchAsync(
 
     const dto = toMetricResponseDTO(metricDomain);
     successResponse(res, 201, dto, "Metric created successfully");
-  }
+  },
 );
 
 export const getUserMetricLibrariesViaCursor = catchAsync(
-  async (req: AuthRequest, res: Response, _next: NextFunction) => {
+  async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
 
     const { query } = pickValidated(getAllMetricsViaCursorSchema)(req);
@@ -86,7 +86,7 @@ export const getUserMetricLibrariesViaCursor = catchAsync(
 
     const dto = {
       items: page.items.map(toMetricLibraryResponseDTO),
-      nextCursor: page.nextCursor,
+      nextCursor: page.nextCursor ?? null,
       sort: page.sort,
       limit: page.limit,
       ...(page.q ? { q: page.q } : {}),
@@ -95,11 +95,11 @@ export const getUserMetricLibrariesViaCursor = catchAsync(
     };
 
     successResponse(res, 200, dto, "Metrics cursor fetched successfully");
-  }
+  },
 );
 
 export const getUserDetailMetricById = catchAsync(
-  async (req: AuthRequest, res: Response, _next: NextFunction) => {
+  async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
 
     const { params, query } = pickValidated(getMetricSchema)(req);
@@ -140,13 +140,13 @@ export const getUserDetailMetricById = catchAsync(
       res,
       200,
       dto,
-      "Metric extended detail retrieved successfully"
+      "Metric extended detail retrieved successfully",
     );
-  }
+  },
 );
 
 export const updateMetric = catchAsync(
-  async (req: AuthRequest, res: Response, _next: NextFunction) => {
+  async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
 
     const { body, params } = pickValidated(updateMetricSchema)(req);
@@ -158,11 +158,11 @@ export const updateMetric = catchAsync(
     const dto = toMetricResponseDTO(updatedMetricDomain);
 
     successResponse(res, 200, dto, "Metric updated successfully");
-  }
+  },
 );
 
 export const deleteMetric = catchAsync(
-  async (req: AuthRequest, res: Response, _next: NextFunction) => {
+  async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
 
     const { params } = pickValidated(deleteMetricSchema)(req);
@@ -173,11 +173,11 @@ export const deleteMetric = catchAsync(
     const dto = toMetricResponseDTO(metricDomain);
 
     successResponse(res, 200, dto, "Metric deleted successfully");
-  }
+  },
 );
 
 export const generateDummyMetrics = catchAsync(
-  async (req: AuthRequest, res: Response, _next: NextFunction) => {
+  async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
     const { body } = pickValidated(generateDummyMetricsSchema)(req);
     const { count } = body;
@@ -192,9 +192,9 @@ export const generateDummyMetrics = catchAsync(
       res,
       201,
       dto,
-      `${count} dummy metrics generated successfully`
+      `${count} dummy metrics generated successfully`,
     );
-  }
+  },
 );
 
 export const handleMetricTrend = catchAsync(
@@ -206,5 +206,5 @@ export const handleMetricTrend = catchAsync(
     });
 
     successResponse(res, 200, data);
-  }
+  },
 );

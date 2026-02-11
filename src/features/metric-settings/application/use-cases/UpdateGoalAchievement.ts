@@ -1,12 +1,12 @@
-import AppError from "@/utils/AppError";
-import { MetricSettingsRepository } from "../../domain/repositories/MetricSettingsRepository";
-import { CacheInvalidationPort } from "../ports/CacheInvalidationPort";
-import { MetricSettings } from "../../domain/entities/MetricSettings";
+import AppError from "@/utils/AppError.js";
+import { MetricSettingsRepository } from "../../domain/repositories/MetricSettingsRepository.js";
+import { CacheInvalidationPort } from "../ports/CacheInvalidationPort.js";
+import { MetricSettings } from "../../domain/entities/MetricSettings.js";
 
 export class UpdateGoalAchievement {
   constructor(
     private repo: MetricSettingsRepository,
-    private cache: CacheInvalidationPort
+    private cache: CacheInvalidationPort,
   ) {}
 
   async execute(userId: string, settingsId: string): Promise<MetricSettings> {

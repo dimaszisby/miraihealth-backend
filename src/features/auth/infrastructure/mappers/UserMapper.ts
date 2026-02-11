@@ -1,6 +1,6 @@
-import { User } from "@/features/auth/infrastructure/persistence/models/user.sequelize";
-import { UserDomain } from "@/types/domain/user.domain";
-import { UserResponseDTO } from "../http/dto";
+import { User } from "@/features/auth/infrastructure/persistence/models/user.sequelize.js";
+import { UserDomain } from "@/types/domain/user.domain.js";
+import { UserResponseDTO } from "../http/dto.js";
 
 export const toDomainUser = (user: User): UserDomain => ({
   id: user.id,

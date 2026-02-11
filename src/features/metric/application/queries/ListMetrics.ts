@@ -2,8 +2,8 @@ import type {
   ListMetricsResult,
   ListOpts,
   MetricReadRepository,
-} from "../ports/MetricReadRepository";
-import AppError from "@/utils/AppError";
+} from "../ports/MetricReadRepository.js";
+import AppError from "@/utils/AppError.js";
 
 export class ListMetrics {
   constructor(private repo: MetricReadRepository) {}

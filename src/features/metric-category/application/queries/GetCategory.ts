@@ -1,5 +1,5 @@
-import AppError from "@/utils/AppError";
-import { MetricCategoryRepository } from "../../domain/repositories/MetricCategoryRepository";
+import AppError from "@/utils/AppError.js";
+import { MetricCategoryRepository } from "../../domain/repositories/MetricCategoryRepository.js";
 
 export class GetCategory {
   constructor(private repo: MetricCategoryRepository) {}

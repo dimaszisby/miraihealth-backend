@@ -1,4 +1,3 @@
-
 services:
   db: # PostgreSQL database service
     image: postgres:17-alpine # Use a stable, actively maintained PostgreSQL version

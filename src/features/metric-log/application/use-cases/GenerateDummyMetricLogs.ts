@@ -1,8 +1,8 @@
-import { models } from "@/infrastructure/db/models";
-import { MetricAccessPort } from "../ports/MetricAccessPort";
-import { CachePort } from "../ports/CachePort";
-import { MetricLogDomain } from "@/types/domain/metric-log.domain";
-import { toDomainMetricLog } from "@/utils/mappers/metric-log.mapper";
+import { models } from "@/infrastructure/db/models.js";
+import { MetricAccessPort } from "../ports/MetricAccessPort.js";
+import { CachePort } from "../ports/CachePort.js";
+import { MetricLogDomain } from "@/types/domain/metric-log.domain.js";
+import { toDomainMetricLog } from "@/utils/mappers/metric-log.mapper.js";
 
 type Input = {
   userId: string;
@@ -15,10 +15,14 @@ const TYPES: Array<"manual" | "automatic"> = ["manual", "automatic"];
 export class GenerateDummyMetricLogs {
   constructor(
     private access: MetricAccessPort,
-    private cache: CachePort
+    private cache: CachePort,
   ) {}
 
-  async execute({ userId, metricId, count }: Input): Promise<MetricLogDomain[]> {
+  async execute({
+    userId,
+    metricId,
+    count,
+  }: Input): Promise<MetricLogDomain[]> {
     await this.access.ensureMetricOwnership(userId, metricId);
 
     const logs: MetricLogDomain[] = [];
@@ -27,7 +31,7 @@ export class GenerateDummyMetricLogs {
         metricId,
         logValue: Number((Math.random() * 100).toFixed(2)),
         loggedAt: new Date(
-          Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000
+          Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000,
         ),
         type: TYPES[Math.floor(Math.random() * TYPES.length)],
       });

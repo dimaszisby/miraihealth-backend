@@ -70,7 +70,7 @@ import { PersistenceTransaction } from "./PersistenceTransaction";
 
 export interface TransactionPort {
   runInTransaction<T>(
-    fn: (tx: PersistenceTransaction) => Promise<T>
+    fn: (tx: PersistenceTransaction) => Promise<T>,
   ): Promise<T>;
 }
 ```
@@ -188,7 +188,6 @@ export class ListMetrics {
 }
 ```
 
-
 ```ts
 // file:src/features/metric/application/use-cases/CreateMetric.ts
 import AppError from "@/utils/AppError";
@@ -208,7 +207,7 @@ export class CreateMetric {
     private repo: MetricRepository,
     private settings: MetricSettingsPort,
     private cache: CachePort,
-    private tx: TransactionPort
+    private tx: TransactionPort,
   ) {}
 
   async execute(input: Input): Promise<Metric> {
@@ -219,7 +218,7 @@ export class CreateMetric {
     if (input.categoryId) {
       const exists = await this.repo.categoryExists(
         input.userId,
-        input.categoryId
+        input.categoryId,
       );
       if (!exists) throw new AppError("Category not found", 404);
     }
@@ -292,8 +291,7 @@ export class GenerateDummyMetrics {
       const metric = await models.Metric.create({
         userId,
         name: `Dummy Metric ${Date.now()}-${i}`,
-        description:
-          "This is a dummy metric generated for testing pagination.",
+        description: "This is a dummy metric generated for testing pagination.",
         defaultUnit:
           DEFAULT_UNITS[Math.floor(Math.random() * DEFAULT_UNITS.length)],
         isPublic: Math.random() > 0.5,
@@ -372,7 +370,9 @@ export class Metric implements MetricDomain {
     return new Metric(props);
   }
 
-  static createDraft(props: Omit<MetricProps, "id" | "createdAt" | "updatedAt">) {
+  static createDraft(
+    props: Omit<MetricProps, "id" | "createdAt" | "updatedAt">,
+  ) {
     const now = new Date();
     return new Metric({
       ...props,
@@ -479,10 +479,7 @@ export type CreateMetricDTO = {
 export interface MetricRepository {
   existsByName(userId: string, name: string): Promise<boolean>;
   categoryExists(userId: string, categoryId: string): Promise<boolean>;
-  create(
-    data: CreateMetricDTO,
-    tx: PersistenceTransaction
-  ): Promise<Metric>;
+  create(data: CreateMetricDTO, tx: PersistenceTransaction): Promise<Metric>;
 }
 ```
 
@@ -517,10 +514,7 @@ export const buildMetricFeature = () => {
 
 ```ts
 // file:src/features/metric/index.ts
-import {
-  metricRouter,
-  createMetricRouter,
-} from "./infrastructure/http/router";
+import { metricRouter, createMetricRouter } from "./infrastructure/http/router";
 export { buildMetricFeature } from "./feature";
 export { metricRouter, createMetricRouter };
 ```
@@ -528,10 +522,7 @@ export { metricRouter, createMetricRouter };
 ```ts
 // file:src/features/metric/infrastructure/cache/MetricCacheRedis.ts
 import logger from "@/utils/logger";
-import {
-  invalidateCacheByPattern,
-  redisClient,
-} from "@/utils/redis-client";
+import { invalidateCacheByPattern, redisClient } from "@/utils/redis-client";
 import { CachePort } from "../../application/ports/CachePort";
 
 export class MetricCacheRedis implements CachePort {
@@ -547,12 +538,12 @@ export class MetricCacheRedis implements CachePort {
         await invalidateCacheByPattern(`metric:${userId}:${metricId}:*`);
       }
       logger.info(
-        `[CACHE] cache invalidated user=${userId}, metric=${metricId ?? "-"}`
+        `[CACHE] cache invalidated user=${userId}, metric=${metricId ?? "-"}`,
       );
     } catch (error: any) {
       logger.error(
         `[CACHE ERROR] Cache invalidation failed: ${error?.message}`,
-        error
+        error,
       );
     }
   }
@@ -609,7 +600,7 @@ export const createMetric = catchAsync(
 
     const dto = toMetricResponseDTO(metricDomain);
     successResponse(res, 201, dto, "Metric created successfully");
-  }
+  },
 );
 
 export const getUserMetricLibrariesViaCursor = catchAsync(
@@ -640,7 +631,7 @@ export const getUserMetricLibrariesViaCursor = catchAsync(
     };
 
     successResponse(res, 200, dto, "Metrics cursor fetched successfully");
-  }
+  },
 );
 
 export const getUserDetailMetricById = catchAsync(
@@ -684,9 +675,9 @@ export const getUserDetailMetricById = catchAsync(
       res,
       200,
       dto,
-      "Metric extended detail retrieved successfully"
+      "Metric extended detail retrieved successfully",
     );
-  }
+  },
 );
 
 export const updateMetric = catchAsync(
@@ -701,7 +692,7 @@ export const updateMetric = catchAsync(
     const dto = toMetricResponseDTO(updatedMetricDomain);
 
     successResponse(res, 200, dto, "Metric updated successfully");
-  }
+  },
 );
 
 export const deleteMetric = catchAsync(
@@ -715,7 +706,7 @@ export const deleteMetric = catchAsync(
     const dto = toMetricResponseDTO(metricDomain);
 
     successResponse(res, 200, dto, "Metric deleted successfully");
-  }
+  },
 );
 
 export const generateDummyMetrics = catchAsync(
@@ -733,9 +724,9 @@ export const generateDummyMetrics = catchAsync(
       res,
       201,
       dto,
-      `${count} dummy metrics generated successfully`
+      `${count} dummy metrics generated successfully`,
     );
-  }
+  },
 );
 ```
 
@@ -848,34 +839,43 @@ export const createMetricRouter = () => {
     "/",
     validate(getAllMetricsViaCursorSchema),
     cacheMiddleware(metricsCursorCacheKey, 60),
-    getUserMetricLibrariesViaCursor
+    getUserMetricLibrariesViaCursor,
   );
 
   router.get(
     "/:id",
     validate(getMetricSchema),
     cacheMiddleware(metricCacheKey, 60),
-    getUserDetailMetricById
+    getUserDetailMetricById,
   );
 
-  router.put("/:id", userRateLimiter, validate(updateMetricSchema), updateMetric);
+  router.put(
+    "/:id",
+    userRateLimiter,
+    validate(updateMetricSchema),
+    updateMetric,
+  );
 
   router.delete(
     "/:id",
     userRateLimiter,
     validate(deleteMetricSchema),
-    deleteMetric
+    deleteMetric,
   );
 
   const trendParams = { params: z.object({ metricId: z.string().uuid() }) };
-  router.get("/:metricId/trends", validate(trendParams as any), handleMetricTrend);
+  router.get(
+    "/:metricId/trends",
+    validate(trendParams as any),
+    handleMetricTrend,
+  );
 
   if (env.ENABLE_DUMMY_ENDPOINTS) {
     router.post(
       "/dummy",
       userRateLimiter,
       validate(generateDummyMetricsSchema),
-      generateDummyMetrics
+      generateDummyMetrics,
     );
   }
 
@@ -894,7 +894,7 @@ import { PersistenceTransaction } from "../../application/ports/PersistenceTrans
 
 export class SequelizeTransactionPort implements TransactionPort {
   async runInTransaction<T>(
-    fn: (tx: PersistenceTransaction) => Promise<T>
+    fn: (tx: PersistenceTransaction) => Promise<T>,
   ): Promise<T> {
     return sequelize.transaction(async (transaction: Transaction) => {
       return fn(transaction);
@@ -1040,7 +1040,7 @@ export class Metric
         paranoid: true,
         underscored: true,
         schema: "public",
-      }
+      },
     );
 
     return Metric;
@@ -1118,10 +1118,7 @@ export class MetricRepoSequelize implements MetricRepository {
     return count > 0;
   }
 
-  async categoryExists(
-    userId: string,
-    categoryId: string
-  ): Promise<boolean> {
+  async categoryExists(userId: string, categoryId: string): Promise<boolean> {
     const count = await models.MetricCategory.count({
       where: { userId, id: categoryId },
     });
@@ -1130,7 +1127,7 @@ export class MetricRepoSequelize implements MetricRepository {
 
   async create(
     data: CreateMetricDTO,
-    tx: PersistenceTransaction
+    tx: PersistenceTransaction,
   ): Promise<Metric> {
     const transaction = tx as Transaction;
     const created = await models.Metric.create(
@@ -1143,7 +1140,7 @@ export class MetricRepoSequelize implements MetricRepository {
         defaultUnit: data.defaultUnit,
         isPublic: data.isPublic,
       },
-      { transaction }
+      { transaction },
     );
 
     await created.reload({ transaction });
@@ -1177,7 +1174,7 @@ import { PersistenceTransaction } from "../../../application/ports/PersistenceTr
 export class MetricSettingsPortSequelize implements MetricSettingsPort {
   async createDefault(
     metricId: string,
-    tx: PersistenceTransaction
+    tx: PersistenceTransaction,
   ): Promise<void> {
     const transaction = tx as Transaction;
     await models.MetricSettings.create(
@@ -1200,7 +1197,7 @@ export class MetricSettingsPortSequelize implements MetricSettingsPort {
           color: "#E897A3",
         },
       },
-      { transaction }
+      { transaction },
     );
   }
 }

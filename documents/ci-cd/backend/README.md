@@ -12,17 +12,21 @@ It describes:
 
 For high-level project-wide strategy, see `documents/ci-cd/CI_CD_STRATEGY.md`.
 
+For migrated non-blocking CI/contract follow-ups, see `documents/ci-cd/backend/FOLLOW_UP_BACKLOG.md`.
+
 ---
 
 ## 2. Goals
 
 - Ensure every backend change is:
+
   - Linted and type-checked,
   - Covered by unit and integration tests,
   - Validated via API contract tests (Postman/Newman),
-  before being considered stable.
+    before being considered stable.
 
 - Provide a **repeatable pipeline definition** suitable for:
+
   - Recruiters and interviewers reviewing the repository.
   - AI agents (Codex) helping maintain or extend the pipeline.
 
@@ -42,20 +46,21 @@ The main backend workflow is triggered on:
 
 - `push` to:
   - `main`
-  - `develop`
+  - `dev`
   - `feature/**`
 - `pull_request` targeting:
   - `main`
-  - `develop`
+  - `dev`
 
 ### 3.2 Stages (Jobs)
 
 A typical pipeline is composed of these jobs:
 
-1. **checks** – Lint & Typecheck  
-2. **tests** – Unit & Integration tests (with Postgres + Redis services)  
-3. **contract_local** – Contract tests against a locally started backend (optional intermediate step)  
-4. **deploy_staging** (future) – Deploy backend to staging PaaS  
+1. **checks** – Lint & Typecheck
+2. **tests** – Unit & Integration tests (with Postgres + Redis services)
+   - Runs both fast test commands and coverage variants (`test:unit:coverage`, `test:integration:coverage`) and uploads `coverage/jest-unit` + `coverage/jest-integration` as artifacts.
+3. **contract_local** – Contract tests against a locally started backend (optional intermediate step)
+4. **deploy_staging** (future) – Deploy backend to staging PaaS
 5. **contract_staging** (future) – Run contract tests against staging backend
 
 Later, you may add:
@@ -96,15 +101,18 @@ Later, you may add:
 
 The backend pipeline uses three logical environments:
 
-1. **Local (developer)**  
+1. **Local (developer)**
+
    - Runs via `npm run` commands directly.
    - Uses local Docker services for Postgres/Redis.
+   - Runtime version: **Node.js 20.x (LTS)** — use `.nvmrc`/`.node-version` to stay aligned with CI.
 
-2. **GitHub Actions (CI)**  
+2. **GitHub Actions (CI)**
+
    - Uses service containers for Postgres/Redis.
    - Uses secrets for DB credentials and JWT keys as needed.
 
-3. **Staging (PaaS)** – planned  
+3. **Staging (PaaS)** – planned
    - Backend deployed on Render (managed platform).
    - Configured via platform environment variables.
    - Contract tests point to this environment using `lakira-staging.postman_environment.json`.
@@ -144,15 +152,31 @@ CI jobs call the same scripts and commands referenced in those documents, ensuri
 
 ---
 
-## 7. Future Extensions
+## 7. Merge Requirements & Branch Protection
+
+- The `contract_local` job is part of the default pipeline and must stay **green** before any PR merges to `main`/`dev`.
+- Enforce this via GitHub branch protection rules:
+  1. Open **Repository Settings → Branches → Branch protection rules**.
+  2. Require status checks to pass before merging and add `contract_local` (job name) to the required checks list.
+  3. Optionally add `checks` + `tests` so lint/unit/integration suites stay enforced.
+- Document exceptions in PR descriptions and re-run the workflow rather than bypassing checks, since contract seeds + Schemathesis rely on deterministic fixtures to catch regressions early.
+- When new jobs are added (e.g., `contract_staging`, nightly Schemathesis), update this section and the branch protection configuration accordingly.
+
+> Special Note for Codex: If you modify job names or add/remove required checks, update this section plus `GITHUB_ACTIONS_PIPELINE_PLAN.md` so future contributors know which jobs gate merges.
+
+---
+
+## 8. Future Extensions
 
 Planned/optional enhancements:
 
 - **deploy_staging job**:
+
   - Build Docker image or use platform buildpacks.
   - Deploy to Render staging environment.
 
 - **contract_staging job**:
+
   - Run Newman against staging using `lakira-staging.postman_environment.json`.
   - Archive reports as artifacts.
 
@@ -162,7 +186,7 @@ Planned/optional enhancements:
 
 ---
 
-## 8. Summary
+## 9. Summary
 
 - The Lakira Backend CI/CD is implemented primarily with **GitHub Actions**, following the strategy in `CI_CD_STRATEGY.md`.
 - Pipelines are designed to:

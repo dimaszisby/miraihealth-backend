@@ -1,13 +1,13 @@
-import { MetricSettingsRepositorySequelize } from "./infrastructure/persistence/MetricSettingsRepositorySequelize";
-import { MetricSettingsCacheInvalidator } from "./infrastructure/providers/MetricSettingsCacheInvalidator";
-import { MetricAccessSequelize } from "./infrastructure/providers/MetricAccessSequelize";
-import { CreateMetricSettings } from "./application/use-cases/CreateMetricSettings";
-import { GetMetricSettings } from "./application/queries/GetMetricSettings";
-import { UpdateMetricSettings } from "./application/use-cases/UpdateMetricSettings";
-import { DeleteMetricSettings } from "./application/use-cases/DeleteMetricSettings";
-import { UpdateGoalAchievement } from "./application/use-cases/UpdateGoalAchievement";
-import { UpdateDisplayOptions } from "./application/use-cases/UpdateDisplayOptions";
-import { ListMetricSettingsViaCursor } from "./application/queries/ListMetricSettingsViaCursor";
+import { MetricSettingsRepositorySequelize } from "./infrastructure/persistence/MetricSettingsRepositorySequelize.js";
+import { MetricSettingsCacheInvalidator } from "./infrastructure/providers/MetricSettingsCacheInvalidator.js";
+import { MetricAccessSequelize } from "./infrastructure/providers/MetricAccessSequelize.js";
+import { CreateMetricSettings } from "./application/use-cases/CreateMetricSettings.js";
+import { GetMetricSettings } from "./application/queries/GetMetricSettings.js";
+import { UpdateMetricSettings } from "./application/use-cases/UpdateMetricSettings.js";
+import { DeleteMetricSettings } from "./application/use-cases/DeleteMetricSettings.js";
+import { UpdateGoalAchievement } from "./application/use-cases/UpdateGoalAchievement.js";
+import { UpdateDisplayOptions } from "./application/use-cases/UpdateDisplayOptions.js";
+import { ListMetricSettingsViaCursor } from "./application/queries/ListMetricSettingsViaCursor.js";
 
 export const buildMetricSettingsFeature = () => {
   const repo = new MetricSettingsRepositorySequelize();

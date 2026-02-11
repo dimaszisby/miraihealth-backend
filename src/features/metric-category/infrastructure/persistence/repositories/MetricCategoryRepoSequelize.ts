@@ -6,21 +6,22 @@ import {
   FindAttributeOptions,
   ProjectionAlias,
 } from "sequelize";
-import { models } from "@/infrastructure/db/models";
-import { MetricCategoryRepository } from "../../../domain/repositories/MetricCategoryRepository";
+import { models } from "@/infrastructure/db/models.js";
+import { MetricCategoryRepository } from "../../../domain/repositories/MetricCategoryRepository.js";
 import {
   ListQuery,
   ListResult,
   SortParam,
   SortField,
-} from "../../../domain/types";
-import { MetricCategory } from "../../../domain/entities/MetricCategory";
+} from "../../../domain/types.js";
+import { MetricCategory } from "../../../domain/entities/MetricCategory.js";
 import {
   MetricCategoryRow,
   toDomain,
-} from "../../mappers/MetricCategoryMapper";
+} from "../../mappers/MetricCategoryMapper.js";
 
-const METRIC_COUNT_SQL = `(SELECT COUNT(*) FROM "metrics" m WHERE m."category_id" = "MetricCategory"."id" AND m."deleted_at" IS NULL)`;
+const METRIC_COUNT_SQL =
+  '(SELECT COUNT(*) FROM "metrics" m WHERE m."category_id" = "MetricCategory"."id" AND m."deleted_at" IS NULL)';
 
 const baseAttrs = (): FindAttributeOptions => {
   const metricCount: ProjectionAlias = [
@@ -51,7 +52,7 @@ export class MetricCategoryRepoSequelize implements MetricCategoryRepository {
 
   async create(
     userId: string,
-    data: { name: string; color?: string; icon?: string }
+    data: { name: string; color?: string; icon?: string },
   ) {
     const created = await models.MetricCategory.create({
       userId,
@@ -74,7 +75,7 @@ export class MetricCategoryRepoSequelize implements MetricCategoryRepository {
   async update(
     userId: string,
     id: string,
-    patch: Partial<{ name: string; color: string; icon: string }>
+    patch: Partial<{ name: string; color: string; icon: string }>,
   ) {
     const row = await models.MetricCategory.findOne({
       where: { id, userId, deletedAt: null },
@@ -181,10 +182,10 @@ function normalizeSort(sort: SortParam): { field: SortField; dir: Dir } {
 function buildWhere(
   userId: string,
   q?: string,
-  filter?: { name?: string }
+  filter?: { name?: string },
 ): WhereOptions {
   const like = (v: string) => ({ [Op.iLike]: `%${v}%` });
-  const and: any[] = [{ userId }, { deletedAt: null }];
+  const and: Array<Record<string, unknown>> = [{ userId }, { deletedAt: null }];
   if (q) and.push({ name: like(q) });
   if (filter?.name) and.push({ name: like(filter.name) });
   return { [Op.and]: and };
@@ -192,7 +193,7 @@ function buildWhere(
 function buildCursorPredicate(
   c: CursorPayload,
   field: SortField,
-  dir: Dir
+  dir: Dir,
 ): WhereOptions {
   const ltgt = dir === "DESC" ? Op.lt : Op.gt,
     eq = Op.eq;

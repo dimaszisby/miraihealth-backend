@@ -1,4 +1,4 @@
-import { Metric } from "../../../domain/entities/Metric";
+import { Metric } from "../../../domain/entities/Metric.js";
 
 export type MetricRow = {
   id: string;

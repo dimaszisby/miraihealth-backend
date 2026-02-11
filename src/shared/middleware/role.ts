@@ -1,6 +1,6 @@
 import { Response, NextFunction } from "express";
-import AppError from "@/utils/AppError";
-import { AuthRequest } from "@/types/request.context";
+import AppError from "@/utils/AppError.js";
+import { AuthRequest } from "@/types/request.context.js";
 
 export const createRoleMiddleware =
   (...roles: string[]) =>

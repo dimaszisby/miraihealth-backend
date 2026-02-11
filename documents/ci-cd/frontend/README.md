@@ -19,12 +19,14 @@ For job-by-job expectations, see `documents/ci-cd/frontend/GITHUB_ACTIONS_PIPELI
 ## 2. Goals
 
 - On every frontend change:
+
   - Run **lint** and **typecheck**,
   - Run **unit/component tests** (Vitest/Jest + RTL),
   - Optionally run **E2E tests** (Playwright) against a staging backend,
   - Build the Next.js app.
 
 - On `main` / `develop` / PRs:
+
   - Produce **Vercel Preview deployments** (via Vercel GitHub integration),
   - Ensure the app points at the **staging backend API**.
 
@@ -49,7 +51,7 @@ on:
     branches:
       - main
       - develop
-      - 'feature/**'
+      - "feature/**"
   pull_request:
     branches:
       - main
@@ -58,10 +60,10 @@ on:
 
 Jobs (planned):
 
-1. `fe_checks` – lint & typecheck  
-2. `fe_tests` – unit/component tests  
-3. `fe_build` – Next.js build  
-4. `fe_e2e` (optional) – Playwright E2E  
+1. `fe_checks` – lint & typecheck
+2. `fe_tests` – unit/component tests
+3. `fe_build` – Next.js build
+4. `fe_e2e` (optional) – Playwright E2E
 5. Deployment handled by **Vercel GitHub integration** (primary path).
 
 ---
@@ -88,6 +90,7 @@ Frontend CI uses the environments defined in `ENVIRONMENTS_MATRIX.md`.
 Key points:
 
 - In **local dev**:
+
   - `NEXT_PUBLIC_API_BASE_URL=http://localhost:4000/api/v1`.
 
 - In **CI and Vercel Preview**:

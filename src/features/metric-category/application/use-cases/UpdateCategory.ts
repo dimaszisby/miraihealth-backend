@@ -1,7 +1,7 @@
-import AppError from "@/utils/AppError";
-import { MetricCategoryRepository } from "../../domain/repositories/MetricCategoryRepository";
-import { CachePort } from "../ports/CachePort";
-import { METRIC_CATEGORY_CURSOR_NAMESPACE_ALL } from "@/features/metric-category/application/cache.constants";
+import AppError from "@/utils/AppError.js";
+import { MetricCategoryRepository } from "../../domain/repositories/MetricCategoryRepository.js";
+import { CachePort } from "../ports/CachePort.js";
+import { METRIC_CATEGORY_CURSOR_NAMESPACE_ALL } from "@/features/metric-category/application/cache.constants.js";
 
 type Input = {
   userId: string;
@@ -14,7 +14,7 @@ type Input = {
 export class UpdateCategory {
   constructor(
     private repo: MetricCategoryRepository,
-    private cache: CachePort
+    private cache: CachePort,
   ) {}
 
   async execute({ userId, categoryId, name, color, icon }: Input) {
@@ -26,7 +26,7 @@ export class UpdateCategory {
     if (name && name !== current.name) {
       const exists = await this.repo.existsByName(userId, name);
       if (exists) {
-        throw new AppError("Metric Category name already exists", 400);
+        throw new AppError("Metric Category name already exists", 409);
       }
     }
 
@@ -38,7 +38,7 @@ export class UpdateCategory {
 
     if (this.cache.isEnabled()) {
       await this.cache.delByPattern(
-        `${METRIC_CATEGORY_CURSOR_NAMESPACE_ALL}:${userId}:*`
+        `${METRIC_CATEGORY_CURSOR_NAMESPACE_ALL}:${userId}:*`,
       );
       await this.cache.delByPattern(`category:${userId}:${categoryId}`);
     }

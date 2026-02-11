@@ -1,12 +1,13 @@
 import { z } from "zod";
-import { ZodMessages } from "@/constants/zod/zod-messages";
+import { ZodMessages } from "@/constants/zod/zod-messages.js";
 import {
   zUsername,
   zEmail,
   zPassword,
   zPasswordConfirmation,
   zPublicProfile,
-} from "@/constants/zod/zod-rules";
+  zRoleEnum,
+} from "@/constants/zod/zod-rules.js";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 
 extendZodWithOpenApi(z);
@@ -29,6 +30,7 @@ export const updateUserBody = z.object({
   email: zEmail.optional(),
   password: zPassword.optional(),
   isPublicProfile: zPublicProfile.optional(),
+  role: zRoleEnum.optional(),
 });
 
 export const loginUserBody = z.object({

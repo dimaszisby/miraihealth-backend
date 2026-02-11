@@ -1,7 +1,7 @@
-import AppError from "@/utils/AppError";
-import { UserRepository } from "../../domain/repositories/UserRepository";
-import { PasswordHasher } from "../ports/PasswordHasher";
-import { AuthUser } from "../../domain/entities/AuthUser";
+import AppError from "@/utils/AppError.js";
+import { UserRepository } from "../../domain/repositories/UserRepository.js";
+import { PasswordHasher } from "../ports/PasswordHasher.js";
+import { AuthUser } from "../../domain/entities/AuthUser.js";
 
 export type UpdateProfileInput = {
   userId: string;
@@ -9,12 +9,13 @@ export type UpdateProfileInput = {
   username?: string;
   password?: string;
   isPublicProfile?: boolean;
+  role?: AuthUser["role"];
 };
 
 export class UpdateProfile {
   constructor(
     private repo: UserRepository,
-    private hasher: PasswordHasher
+    private hasher: PasswordHasher,
   ) {}
 
   async execute(input: UpdateProfileInput): Promise<AuthUser> {
@@ -26,13 +27,13 @@ export class UpdateProfile {
 
     if (input.email && input.email.toLowerCase() !== user.email) {
       if (await this.repo.existsByEmail(input.email.toLowerCase()))
-        throw new AppError("Email already in use", 401);
+        throw new AppError("Email already in use", 409);
       user.changeEmail(input.email);
     }
 
     if (input.username && input.username !== user.username) {
       if (await this.repo.existsByUsername(input.username))
-        throw new AppError("Username already in use", 401);
+        throw new AppError("Username already in use", 409);
       user.changeUsername(input.username);
     }
 
@@ -43,6 +44,10 @@ export class UpdateProfile {
     if (input.password) {
       const passwordHash = await this.hasher.hash(input.password);
       user.setPasswordHash(passwordHash);
+    }
+
+    if (input.role && input.role !== user.role) {
+      user.setRole(input.role);
     }
 
     return this.repo.save(user);
