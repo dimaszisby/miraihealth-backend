@@ -54,6 +54,7 @@ const envSchema = z.object({
     .default("true"),
 
   // Redis
+  REDIS_URL: z.string().optional(),
   REDIS_HOST: z
     .string()
     .default(process.env.NODE_ENV === "test" ? "redis" : "127.0.0.1"),
@@ -219,9 +220,48 @@ const normalizeDatabaseConfig = (parsedEnv: RawEnv): Env => {
   return parsedEnv as Env;
 };
 
+const normalizeRedisConfig = (parsedEnv: RawEnv): RawEnv => {
+  if (!parsedEnv.REDIS_URL) {
+    return parsedEnv;
+  }
+
+  try {
+    const url = new URL(parsedEnv.REDIS_URL);
+    if (url.protocol !== "redis:" && url.protocol !== "rediss:") {
+      throw new Error("REDIS_URL protocol must be redis:// or rediss://");
+    }
+
+    if (url.hostname) {
+      parsedEnv.REDIS_HOST = url.hostname;
+    }
+
+    if (url.port) {
+      const parsedPort = Number(url.port);
+      if (Number.isNaN(parsedPort)) {
+        throw new Error("REDIS_URL port must be a valid number");
+      }
+      parsedEnv.REDIS_PORT = parsedPort;
+    }
+
+    if (url.password) {
+      parsedEnv.REDIS_PASSWORD =
+        parsedEnv.REDIS_PASSWORD ?? decodeURIComponent(url.password);
+    }
+
+    return parsedEnv;
+  } catch (error) {
+    throw new Error(
+      `[ERROR] REDIS_URL (${parsedEnv.REDIS_URL}) is invalid: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+};
+
 const buildEnv = (): Env => {
   const parsedEnv = envSchema.parse(process.env);
-  return normalizeDatabaseConfig(parsedEnv);
+  const withDatabaseConfig = normalizeDatabaseConfig(parsedEnv);
+  return normalizeRedisConfig(withDatabaseConfig) as Env;
 };
 
 /**

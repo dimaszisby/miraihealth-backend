@@ -2,16 +2,23 @@ import { createClient, RedisClientType } from "redis";
 import logger from "./logger.js";
 import { env } from "../config/envManager.js";
 
-// Redis client configuration
-const redisConfig = {
-  socket: {
-    host: env.REDIS_HOST || "127.0.0.1",
-    port: Number(env.REDIS_PORT) || 6379,
-    reconnectStrategy: (retries: number) => Math.min(retries * 50, 2000), // Progressive backoff
-  },
-  // Add password only if available
-  ...(env.REDIS_PASSWORD && { password: env.REDIS_PASSWORD }),
-};
+const reconnectStrategy = (retries: number) => Math.min(retries * 50, 2000);
+
+const redisConfig = env.REDIS_URL
+  ? {
+      url: env.REDIS_URL,
+      socket: {
+        reconnectStrategy,
+      },
+    }
+  : {
+      socket: {
+        host: env.REDIS_HOST || "127.0.0.1",
+        port: Number(env.REDIS_PORT) || 6379,
+        reconnectStrategy,
+      },
+      ...(env.REDIS_PASSWORD && { password: env.REDIS_PASSWORD }),
+    };
 
 // Create Redis Client
 const redisClient: RedisClientType = createClient(redisConfig);
