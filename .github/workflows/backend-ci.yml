@@ -7,11 +7,13 @@ on:
     branches:
       - main
       - dev
+      - staging
       - "feature/**"
   pull_request:
     branches:
       - main
       - dev
+      - staging
   workflow_dispatch:
 
 concurrency:
