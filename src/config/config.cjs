@@ -30,10 +30,10 @@ function loadEnvFromBuild() {
 
 const env = loadEnvFromBuild();
 
-const buildSslOptions = () =>
-  env.DB_SSL_REJECT_UNAUTHORIZED
-    ? { require: true, rejectUnauthorized: env.DB_SSL_REJECT_UNAUTHORIZED }
-    : false;
+const buildSslOptions = () => ({
+  require: true,
+  rejectUnauthorized: env.DB_SSL_REJECT_UNAUTHORIZED,
+});
 
 const config = {
   development: {
