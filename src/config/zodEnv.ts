@@ -50,8 +50,8 @@ const envSchema = z.object({
   DB_LOGGING: z.string().default("false"), // Allows enabling/disabling logging
   DB_SSL_REJECT_UNAUTHORIZED: z
     .string()
-    .transform((val) => val !== "false")
-    .default("true"),
+    .transform((val) => val.toLowerCase() !== "false")
+    .default(process.env.NODE_ENV === "production" ? "true" : "false"),
 
   // Redis
   REDIS_URL: z.string().optional(),
