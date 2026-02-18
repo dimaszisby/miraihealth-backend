@@ -12,7 +12,11 @@ Start here if you are new to the Lakira security audit framework.
 
 - `documents/security/guides/security-scripts-usage-guide.md`
 
-3. Deep references:
+3. Release process:
+
+- `documents/security/guides/security-release-delta-sop.md`
+
+4. Deep references:
 
 - `documents/security/framework/security-audit-framework.md`
 - `documents/security/framework/security-audit-master-checklist.md`

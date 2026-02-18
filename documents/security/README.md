@@ -39,6 +39,7 @@ Out of scope for this v1 framework:
   - Guide index: `documents/security/guides/README.md`
   - Framework basics: `documents/security/guides/security-framework-junior-guide.md`
   - Script usage: `documents/security/guides/security-scripts-usage-guide.md`
+  - Release delta SOP: `documents/security/guides/security-release-delta-sop.md`
 
 ## Ownership and Workflow
 

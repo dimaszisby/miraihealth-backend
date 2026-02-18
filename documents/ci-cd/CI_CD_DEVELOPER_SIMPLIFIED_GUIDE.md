@@ -41,7 +41,27 @@ Jobs run in the order above; a failure in any stage blocks later jobs so issues 
 - Detailed references:
   - `documents/security/guides/README.md`
   - `documents/security/guides/security-scripts-usage-guide.md`
+  - `documents/security/guides/security-release-delta-sop.md`
   - `documents/security/framework/ci-gate-policy.json`
+
+## 1.2 Production Release Security Delta (Mandatory)
+
+Before every production release, run the release SOP:
+
+- `documents/security/guides/security-release-delta-sop.md`
+
+Minimum required local commands:
+
+```bash
+npm run test:unit:security-framework
+npm run security:delta:gate
+```
+
+Release branch protection baseline (GitHub settings):
+
+1. Require status checks: `checks`, `security_delta`, `tests`.
+2. Require Code Owners review.
+3. Require pull request review before merge.
 
 ## 2. Local Pre-Commit / Pre-PR Checklist
 
@@ -58,6 +78,7 @@ Before committing or opening a PR:
 9. Run `npm run test:unit:security-framework` after changing security templates/scripts/policies.
 10. Run `npm run security:delta:gate` for backend/security-impacting changes.
 11. Stage files and let Husky run `npm run lint-staged` (ESLint + Prettier on staged files) before the commit is created.
+12. For production release PRs, follow `documents/security/guides/security-release-delta-sop.md` and update the active security audit run docs.
 
 Document command outputs or screenshots in the PR description for easier reviewer triage.
 
