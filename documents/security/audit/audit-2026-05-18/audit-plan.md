@@ -1,42 +1,54 @@
 # Security Audit Plan - 2026-05-18
 
-- Generated (UTC): 2026-02-18T10:35:37.400Z
+- Generated (UTC): 2026-02-18T11:04:09Z
 - Scope: Backend code, dependencies, CI/CD, runtime hardening
 - Baseline: OWASP ASVS L2, OWASP Top 10, NIST SSDF
 
 ## Objectives
 
-1. Identify exploitable security gaps and control drift.
-2. Validate effectiveness of existing controls.
-3. Produce actionable remediation and clear ownership.
+1. Re-validate that previously remediated critical/high risks remain closed.
+2. Detect new control drift in auth/authz, API hardening, runtime configuration, and supply chain.
+3. Produce an auditable quarterly package with internal detail and sanitized portfolio output.
 
 ## In Scope
 
-- API/auth/authz/input controls
-- Configuration and environment hardening
-- Dependency and supply-chain posture
-- Security CI gate behavior
+- API authentication, authorization, validation, and method/CORS behavior
+- Runtime/environment controls (TLS, secrets, rate limits, dummy endpoint gating)
+- Dependency and supply-chain checks (`npm audit --production`)
+- CI gate configuration and artifact traceability
 
 ## Out of Scope
 
-- Frontend-only flows
-- External compliance-only attestations
+- Frontend-only attack surface
+- Formal external compliance attestation (PCI/HIPAA/GDPR-specific)
+- Live penetration testing (deferred)
 
-## Work Phases
+## Execution Window
 
-1. Prepare and gather evidence
-2. Execute checklist and automated delta checks
-3. Threat/control/finding synthesis
-4. Remediation and gate verification
-5. Portfolio-safe summary publication
+1. Pre-audit preparation (2026-02-18 to 2026-05-17)
+
+- Reconcile historical findings into this run package.
+- Keep checklist/control/threat artifacts synchronized with current code.
+
+2. Quarterly execution (target date: 2026-05-18 UTC)
+
+- Run `npm run security:delta:gate`.
+- Run `npm run test:unit:security-framework`.
+- Re-verify control evidence links and finding statuses.
+
+3. Sign-off and closure (within 3 business days after execution)
+
+- Finalize remediation statuses and exceptions.
+- Publish sanitized `portfolio-summary.md`.
+- Update `documents/security/audit/index.md` status/highlights.
 
 ## Acceptance Criteria
 
-- All required artifacts completed.
-- Findings mapped to framework controls and standards.
-- Critical/high findings resolved or validly exception-approved.
+- Every checklist control has status and evidence.
+- Every finding (if any) maps to controls, threat scenarios, and remediation owner/SLA.
+- No unresolved high/critical findings at close, unless accepted per exception policy with unexpired approval.
 
 ## Definition of Done
 
-- Plan sections fully populated for the current run.
-- Scope and acceptance criteria align with `audit-checklist.md` and `findings-log.md`.
+- Plan aligns with `audit-checklist.md`, `control-matrix.md`, and `findings-log.md`.
+- Execution commands and artifact paths are explicitly documented.
