@@ -100,6 +100,7 @@ Each audit run folder must include:
 - Always map findings to controls and standards references.
 - Always set owner + target date for open findings.
 - Always keep docs and script outputs in sync.
+- Always run `npm run test:unit:security-framework` after changing security templates/scripts/policy.
 
 ## Common Mistakes To Avoid
 

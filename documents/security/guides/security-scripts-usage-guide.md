@@ -20,6 +20,7 @@ Scripts live in `scripts/security/` and are exposed in `package.json`:
 - `npm run security:delta:check`
 - `npm run security:gate:evaluate`
 - `npm run security:delta:gate`
+- `npm run test:unit:security-framework`
 
 ## 1. Initialize A New Audit Run
 
@@ -79,6 +80,20 @@ npm run security:delta:gate
 ```
 
 Use this before creating PRs that touch security-sensitive code.
+
+## 5. Validate Framework Test Cases
+
+Run the reusable framework validation suite (template completeness, schema conformance, and gate-policy simulation):
+
+```bash
+npm run test:unit:security-framework
+```
+
+Use this whenever you change:
+
+- `scripts/security/*`
+- `documents/security/templates/audit-run/*`
+- `documents/security/framework/ci-gate-policy.json`
 
 ## How To Read Results Quickly
 

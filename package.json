@@ -19,6 +19,7 @@
     "test:ci": "bash ./scripts/test-ci.sh",
     "test:e2e": "jest --runInBand --selectProjects e2e",
     "test:unit": "JEST_JUNIT_OUTPUT_NAME=unit.xml NODE_ENV=test SKIP_DB_LIFECYCLE=true jest --runInBand --selectProjects unit",
+    "test:unit:security-framework": "JEST_JUNIT_OUTPUT_NAME=unit-security-framework.xml NODE_ENV=test SKIP_DB_LIFECYCLE=true jest --runInBand --selectProjects unit --runTestsByPath __tests__/unit/security/security-framework.validation.test.ts",
     "test:integration": "JEST_JUNIT_OUTPUT_NAME=integration.xml NODE_ENV=test jest --runInBand --selectProjects integration",
     "test:unit:coverage": "JEST_JUNIT_OUTPUT_NAME=unit.xml NODE_ENV=test SKIP_DB_LIFECYCLE=true jest --runInBand --selectProjects unit --coverage",
     "test:integration:coverage": "JEST_JUNIT_OUTPUT_NAME=integration.xml NODE_ENV=test jest --runInBand --selectProjects integration --coverage",
