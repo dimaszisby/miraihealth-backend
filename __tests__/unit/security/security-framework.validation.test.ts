@@ -120,6 +120,52 @@ const parseFirstTableHeader = (markdown: string): string[] => {
   throw new Error("Markdown table header not found");
 };
 
+type MarkdownTableRow = Record<string, string>;
+
+const parseFirstTableRows = (markdown: string): MarkdownTableRow[] => {
+  const lines = markdown.split(/\r?\n/).map((line) => line.trim());
+
+  for (let i = 0; i < lines.length - 1; i += 1) {
+    const header = lines[i];
+    const separator = lines[i + 1];
+    if (!header.startsWith("|") || !separator.startsWith("|")) continue;
+    if (!separator.includes("---")) continue;
+
+    const headers = header
+      .split("|")
+      .slice(1, -1)
+      .map((token) => token.trim());
+
+    const rows: MarkdownTableRow[] = [];
+    for (let j = i + 2; j < lines.length; j += 1) {
+      const line = lines[j];
+      if (!line.startsWith("|")) break;
+      if (!line.includes("|")) break;
+
+      const cells = line
+        .split("|")
+        .slice(1, -1)
+        .map((token) => token.trim());
+
+      if (cells.length !== headers.length) continue;
+      if (cells.every((cell) => /^:?-{2,}:?$/.test(cell))) continue;
+
+      const row: MarkdownTableRow = {};
+      headers.forEach((headerName, idx) => {
+        row[headerName] = cells[idx];
+      });
+      rows.push(row);
+    }
+
+    return rows;
+  }
+
+  throw new Error("Markdown table rows not found");
+};
+
+const stripMarkdownCode = (value: string): string =>
+  value.replaceAll("`", "").trim();
+
 const expectColumnsPresent = (
   markdownPath: string,
   requiredColumns: string[],
@@ -213,6 +259,97 @@ describe("security framework validation suite", () => {
       path.join(currentAuditDir, "control-matrix.md"),
       CONTROL_REQUIRED_COLUMNS,
     );
+  });
+
+  it("traceability: each finding maps to controls and includes evidence references", () => {
+    const currentAuditDir = path.join(AUDIT_ROOT, "audit-2026-02-18");
+    const findingsRows = parseFirstTableRows(
+      fs.readFileSync(path.join(currentAuditDir, "findings-log.md"), "utf8"),
+    );
+    const controlRows = parseFirstTableRows(
+      fs.readFileSync(path.join(currentAuditDir, "control-matrix.md"), "utf8"),
+    );
+
+    const linkedFindingIds = new Set<string>();
+    for (const row of controlRows) {
+      const links = (row.remediation_link ?? "")
+        .split(",")
+        .map((item) => stripMarkdownCode(item))
+        .filter((item) => item.startsWith("SEC-"));
+      for (const link of links) linkedFindingIds.add(link);
+    }
+
+    const findingRows = findingsRows.filter((row) =>
+      (row.finding_id ?? "").startsWith("SEC-"),
+    );
+    expect(findingRows.length).toBeGreaterThan(0);
+
+    for (const row of findingRows) {
+      const findingId = stripMarkdownCode(row.finding_id ?? "");
+      const evidenceRefs = stripMarkdownCode(row.evidence_refs ?? "");
+
+      expect(evidenceRefs).not.toBe("");
+      expect(evidenceRefs.toLowerCase()).not.toBe("n/a");
+      expect(linkedFindingIds.has(findingId)).toBe(true);
+    }
+  });
+
+  it("recurrence continuity: audit index links valid run folders in chronological order", () => {
+    const indexRows = parseFirstTableRows(
+      fs.readFileSync(path.join(AUDIT_ROOT, "index.md"), "utf8"),
+    );
+    expect(indexRows.length).toBeGreaterThanOrEqual(2);
+
+    let previousDate = "";
+    for (const row of indexRows) {
+      const auditDate = stripMarkdownCode(row["Audit Date"] ?? "");
+      const folderPath = stripMarkdownCode(row.Folder ?? "");
+      const fullFolderPath = path.join(ROOT, folderPath);
+      const folderName = path.basename(folderPath);
+      const hasReadme = fs.existsSync(path.join(fullFolderPath, "README.md"));
+      const hasLegacyCoreArtifact = fs.existsSync(
+        path.join(fullFolderPath, "threat-model.md"),
+      );
+
+      expect(folderName).toBe(`audit-${auditDate}`);
+      expect(fs.existsSync(fullFolderPath)).toBe(true);
+      expect(hasReadme || hasLegacyCoreArtifact).toBe(true);
+      if (previousDate) {
+        expect(auditDate >= previousDate).toBe(true);
+      }
+      previousDate = auditDate;
+    }
+  });
+
+  it("portfolio sanitization: summary excludes sensitive details while preserving mitigation narrative", () => {
+    const portfolioPath = path.join(
+      AUDIT_ROOT,
+      "audit-2026-02-18",
+      "portfolio-summary.md",
+    );
+    const content = fs.readFileSync(portfolioPath, "utf8");
+    const lower = content.toLowerCase();
+
+    const forbiddenPatterns = [
+      /JWT_SECRET/i,
+      /DB_PASSWORD/i,
+      /DATABASE_URL/i,
+      /PRIVATE KEY/i,
+      /tmp\/security/i,
+      /src\//i,
+      /\/api\/v1\//i,
+      /127\.0\.0\.1/i,
+      /postgres:\/\//i,
+    ];
+
+    for (const pattern of forbiddenPatterns) {
+      expect(pattern.test(content)).toBe(false);
+    }
+
+    expect(content).toContain("## Findings Overview");
+    expect(content).toContain("## Remediation Posture");
+    expect(lower).toContain("gate status is now passing");
+    expect(lower).toContain("remediated");
   });
 
   it("gate policy: open critical finding fails", () => {
