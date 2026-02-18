@@ -91,6 +91,28 @@ describe("Auth API", () => {
     expect(res.body.data.user.isPublicProfile).toBe(false);
   });
 
+  it("does not allow role escalation through profile updates", async () => {
+    const { token } = await createTestUser();
+
+    const updateRes = await api
+      .put("/api/v1/auth/profile")
+      .set("Authorization", authHeader(token))
+      .send({
+        username: "still-user",
+        role: "admin",
+      });
+
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body.status).toBe("success");
+    expect(updateRes.body.data.user.role).toBe("user");
+
+    const profileRes = await api
+      .get("/api/v1/auth/profile")
+      .set("Authorization", authHeader(token));
+    expect(profileRes.status).toBe(200);
+    expect(profileRes.body.data.role).toBe("user");
+  });
+
   it("logs out an authenticated user", async () => {
     const { token } = await createTestUser();
     const res = await api

@@ -1,13 +1,13 @@
 # Security Audit Run - 2026-02-18
 
-- Generated (UTC): 2026-02-18T08:36:30Z
+- Generated (UTC): 2026-02-18T09:05:00Z
 - Scope: Backend codebase, dependencies, CI/CD, runtime hardening
 - Baseline: OWASP ASVS L2, OWASP Top 10, NIST SSDF
 
 ## Audit Status
 
-- Current state: Completed with open remediation
-- Gate status: Fail (soft gate blocked by 1 high finding)
+- Current state: Completed with remaining dependency remediation
+- Gate status: Pass (soft gate has 0 unresolved high/critical findings)
 
 ## Summary
 
@@ -15,8 +15,11 @@ This is the first framework-driven audit run under the reusable security documen
 
 Current cycle highlights:
 
-- Findings total: 5 (High: 1, Medium: 3, Low: 1)
-- Blocking findings: 1 (`AUTO-AUTHZ-ROLE-001`)
+- Findings total: 3 (High: 0, Medium: 2, Low: 1)
+- Blocking findings: 0
+- Resolved in-cycle:
+  - `SEC-20260218-001` (profile role mutation risk)
+  - `SEC-20260218-002` (CORS PATCH mismatch)
 - Automated artifacts generated:
   - `tmp/security/security-delta-report.json`
   - `tmp/security/security-gate-result.json`

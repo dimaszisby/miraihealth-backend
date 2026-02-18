@@ -1,13 +1,13 @@
 # Security Audit Portfolio Summary - 2026-02-18
 
 - Audience: External reviewers and portfolio evaluators
-- Generated (UTC): 2026-02-18T08:36:30Z
+- Generated (UTC): 2026-02-18T09:05:00Z
 
 ## Executive Summary
 
 The Lakira backend now uses a reusable security audit framework with standardized artifacts, control mappings, and CI-enforced gating rules.
 
-This cycle completed a full framework-based audit and produced machine-readable security evidence with clear remediation ownership.
+This cycle completed a full framework-based audit, produced machine-readable evidence, and resolved all high-severity blockers in-cycle.
 
 ## Controls and Coverage
 
@@ -17,18 +17,18 @@ This cycle completed a full framework-based audit and produced machine-readable 
 
 ## Findings Overview (Sanitized)
 
-| Severity | Count | Status Summary                                    |
-| -------- | ----- | ------------------------------------------------- |
-| Critical | 0     | No open critical findings                         |
-| High     | 1     | One blocking finding with active remediation plan |
-| Medium   | 3     | Tracked with owners and target dates              |
-| Low      | 1     | Backlog-tracked with target date                  |
+| Severity | Count | Status Summary                       |
+| -------- | ----- | ------------------------------------ |
+| Critical | 0     | No open critical findings            |
+| High     | 0     | No open high findings                |
+| Medium   | 2     | Tracked with owners and target dates |
+| Low      | 1     | Backlog-tracked with target date     |
 
 ## Remediation Posture
 
-- Blocking high finding is scheduled for next patch cycle under defined SLA.
-- Medium/low items are tracked in planned maintenance windows.
-- No temporary security exception was granted for the blocking high finding.
+- High-risk blockers were remediated and gate status is now passing.
+- Remaining work is dependency-focused medium/low remediation with scheduled targets.
+- No temporary security exception is currently active for high/critical issues.
 
 ## Process Maturity Outcome
 
