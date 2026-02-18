@@ -4,10 +4,10 @@ This index tracks all Lakira backend security audit runs and their follow-up sta
 
 ## Audit Runs
 
-| Audit Date | Folder                                      | Type                             | Status                          | Highlights                                                                                                                        |
-| ---------- | ------------------------------------------- | -------------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| 2025-11-21 | `documents/security/audit/audit-2025-11-21` | Baseline + feature deep dive     | Completed (historical)          | Identified and documented major authz, API surface, and config hardening issues; multiple mitigations captured in control matrix. |
-| 2026-02-18 | `documents/security/audit/audit-2026-02-18` | Framework-driven full audit (v1) | Completed with open remediation | Introduced reusable framework/templates/scripts, executed delta checks, and established CI soft-gate enforcement.                 |
+| Audit Date | Folder                                      | Type                             | Status                 | Highlights                                                                                                                        |
+| ---------- | ------------------------------------------- | -------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| 2025-11-21 | `documents/security/audit/audit-2025-11-21` | Baseline + feature deep dive     | Completed (historical) | Identified and documented major authz, API surface, and config hardening issues; multiple mitigations captured in control matrix. |
+| 2026-02-18 | `documents/security/audit/audit-2026-02-18` | Framework-driven full audit (v1) | Completed              | Introduced reusable framework/templates/scripts, executed delta checks, and closed in-cycle findings with passing soft-gate.      |
 
 ## Cadence Policy
 

@@ -1,6 +1,6 @@
 # Control Matrix - 2026-02-18
 
-- Generated (UTC): 2026-02-18T09:05:00Z
+- Generated (UTC): 2026-02-18T10:06:00Z
 - Standards mapping source: `documents/security/framework/control-catalog-asvs-ssdf.md`
 
 | control_id    | control_objective                                 | framework_mapping                    | implementation_status | verification_method                       | evidence_refs                                                                                                                                               | gap_level | remediation_link                                           |
@@ -15,7 +15,7 @@
 | LC-DATA-01    | Enforce safe TLS/secret defaults                  | ASVS V8/V9; Top10 A02/A05; SSDF PW.4 | In Place              | DB config review                          | `src/config/db.ts`, `src/config/config.cjs`, `src/config/zodEnv.ts`                                                                                         | Low       | N/A                                                        |
 | LC-LOG-01     | Prevent sensitive leakage in logs                 | ASVS V10; Top10 A09; SSDF RV.3       | In Place              | Logger + call-site review                 | `src/utils/logger.ts`, feature route logs                                                                                                                   | Low       | N/A                                                        |
 | LC-ABUSE-01   | Resist abuse via throttling and guardrails        | ASVS V7; Top10 A04; SSDF PW.6        | In Place              | Rate limiter review                       | `src/shared/middleware/rate-limiter.ts`                                                                                                                     | Low       | N/A                                                        |
-| LC-SCA-01     | Detect and triage vulnerable dependencies         | ASVS V14.2; Top10 A06; SSDF RV.1     | Partial               | Automated audit scan                      | `tmp/security/npm-audit-production.json`, `documents/security/DEPENDENCY_POLICY.md`                                                                         | Medium    | `SEC-20260218-003`, `SEC-20260218-004`, `SEC-20260218-005` |
+| LC-SCA-01     | Detect and triage vulnerable dependencies         | ASVS V14.2; Top10 A06; SSDF RV.1     | In Place              | Automated audit scan                      | `tmp/security/npm-audit-production.json`, `tmp/security/security-delta-report.json`, `documents/security/DEPENDENCY_POLICY.md`                              | None      | `SEC-20260218-003`, `SEC-20260218-004`, `SEC-20260218-005` |
 | LC-CICD-01    | Enforce security checks in CI                     | ASVS V1.14; Top10 A05; SSDF PO.4     | In Place              | Workflow job review                       | `.github/workflows/backend-ci.yml`, `scripts/security/*.mjs`                                                                                                | None      | N/A                                                        |
 | LC-CICD-02    | Block unresolved high/critical findings           | ASVS V1.14; Top10 A05; SSDF RV.1     | In Place              | Gate execution result                     | `tmp/security/security-gate-result.json`                                                                                                                    | None      | N/A                                                        |
 | LC-RUNTIME-01 | Harden runtime defaults and environment handling  | ASVS V14; Top10 A05; SSDF PW.6       | In Place              | Env schema review                         | `src/config/zodEnv.ts`                                                                                                                                      | Low       | N/A                                                        |
@@ -24,8 +24,8 @@
 ## Gap Summary
 
 - High gap: 0
-- Medium gaps: 1 control (LC-SCA-01)
-- No-gap controls: remaining domains
+- Medium gaps: 0
+- No-gap controls: all mapped domains in this run
 
 ## Definition of Done
 

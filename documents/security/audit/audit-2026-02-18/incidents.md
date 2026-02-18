@@ -15,6 +15,7 @@
 
 - Gate now passes: `tmp/security/security-gate-result.json` -> `passed: true`, `blocking: 0`.
 - Related medium finding `SEC-20260218-002` also resolved in-cycle by adding PATCH to CORS methods.
+- Dependency advisories `SEC-20260218-003`, `SEC-20260218-004`, and `SEC-20260218-005` were remediated and verified with a clean production audit snapshot.
 
 ## Definition of Done
 

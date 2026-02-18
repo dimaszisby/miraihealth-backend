@@ -1,7 +1,7 @@
 # Security Audit Portfolio Summary - 2026-02-18
 
 - Audience: External reviewers and portfolio evaluators
-- Generated (UTC): 2026-02-18T09:05:00Z
+- Generated (UTC): 2026-02-18T10:06:00Z
 
 ## Executive Summary
 
@@ -17,17 +17,17 @@ This cycle completed a full framework-based audit, produced machine-readable evi
 
 ## Findings Overview (Sanitized)
 
-| Severity | Count | Status Summary                       |
-| -------- | ----- | ------------------------------------ |
-| Critical | 0     | No open critical findings            |
-| High     | 0     | No open high findings                |
-| Medium   | 2     | Tracked with owners and target dates |
-| Low      | 1     | Backlog-tracked with target date     |
+| Severity | Count | Status Summary            |
+| -------- | ----- | ------------------------- |
+| Critical | 0     | No open critical findings |
+| High     | 0     | No open high findings     |
+| Medium   | 0     | No open medium findings   |
+| Low      | 0     | No open low findings      |
 
 ## Remediation Posture
 
 - High-risk blockers were remediated and gate status is now passing.
-- Remaining work is dependency-focused medium/low remediation with scheduled targets.
+- Dependency advisories identified in-cycle were remediated and verified in the latest delta run.
 - No temporary security exception is currently active for high/critical issues.
 
 ## Process Maturity Outcome

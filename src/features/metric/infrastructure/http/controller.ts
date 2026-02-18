@@ -200,9 +200,16 @@ export const generateDummyMetrics = catchAsync(
 export const handleMetricTrend = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
+
+    const rawMetricId = req.params.metricId ?? req.params.id;
+    const metricId = Array.isArray(rawMetricId) ? rawMetricId[0] : rawMetricId;
+    if (!metricId) {
+      throw new AppError("Metric id is required", 400);
+    }
+
     const data = await analyticsFeature.getMetricTrend.execute({
       userId: req.user.id,
-      metricId: req.params.metricId ?? req.params.id,
+      metricId,
     });
 
     successResponse(res, 200, data);
