@@ -19,16 +19,31 @@ Treat this as the **single source of truth** when wiring CI, Render, and Postman
 
 ### 2.1 Summary Table
 
-| Env       | Purpose                                  | Backend Host / Base URL                     | DB Name        | Redis                    | Postman Env File                          |
-| --------- | ---------------------------------------- | ------------------------------------------- | -------------- | ------------------------ | ----------------------------------------- |
-| `local`   | Dev machine / Docker Compose             | `http://localhost:4000`                     | `lakira_local` | `redis://localhost:6379` | `lakira-local.postman_environment.json`   |
-| `ci`      | GitHub Actions test & contract pipelines | `http://localhost:4000` (service container) | `lakira_ci`    | `redis://localhost:6379` | `lakira-local.postman_environment.json`   |
-| `staging` | Public “portfolio” environment on Render | `https://api-staging.lakira.yourdomain.com` | `lakira_stage` | Managed Redis (optional) | `lakira-staging.postman_environment.json` |
-| `prod`\*  | Optional future production environment   | `https://api.lakira.yourdomain.com`         | `lakira_prod`  | Managed Redis (optional) | (TBD)                                     |
+| Env       | Purpose                                  | Backend Host / Base URL                       | DB Name        | Redis                    | Postman Env File                          |
+| --------- | ---------------------------------------- | --------------------------------------------- | -------------- | ------------------------ | ----------------------------------------- |
+| `local`   | Dev machine / Docker Compose             | `http://localhost:4000`                       | `lakira_local` | `redis://localhost:6379` | `lakira-local.postman_environment.json`   |
+| `ci`      | GitHub Actions test & contract pipelines | `http://localhost:4000` (service container)   | `lakira_ci`    | `redis://localhost:6379` | `lakira-local.postman_environment.json`   |
+| `staging` | Public “portfolio” environment on Render | `https://lakira-backend-staging.onrender.com` | `lakira_stage` | Managed Redis (optional) | `lakira-staging.postman_environment.json` |
+| `prod`\*  | Optional future production environment   | `TBD` (no production web-service URL yet)     | `lakira_prod`  | Managed Redis (optional) | (TBD)                                     |
 
 \* For a portfolio project, `staging` may effectively act as “production”. Keep `prod` documented as a future option.
 
-> Replace `api-staging.lakira.yourdomain.com` / `api.lakira.yourdomain.com` with your actual Render custom/domain URLs once configured.
+### 2.2 FE-Consumable Backend Contract (Authoritative Values)
+
+FE standard (agreed): `API_URL` and `NEXT_PUBLIC_API_BASE_URL` must be equal for the same environment.
+
+| FE env target         | `API_URL`                                            | `NEXT_PUBLIC_API_BASE_URL`                           | Backend health URL                                          | Notes                                               |
+| --------------------- | ---------------------------------------------------- | ---------------------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------- |
+| `local`               | `http://localhost:4000/api/v1`                       | `http://localhost:4000/api/v1`                       | `http://localhost:4000/api/v1/health`                       | Local FE + local BE                                 |
+| `preview` / `staging` | `https://lakira-backend-staging.onrender.com/api/v1` | `https://lakira-backend-staging.onrender.com/api/v1` | `https://lakira-backend-staging.onrender.com/api/v1/health` | Use this concrete value in FE CI and Vercel Preview |
+| `prod`                | `TBD`                                                | `TBD`                                                | `TBD`                                                       | Production backend service URL not available yet    |
+
+Related secret names:
+
+- Backend CI/CD: `STAGING_BASE_URL`, `STAGING_HEALTH_URL`
+- FE CI/CD (recommended): `STAGING_API_BASE_URL` mapped to both FE runtime vars
+
+`TBD` follow-up question: what is the production backend web-service base URL (including `/api/v1`) once production is provisioned?
 
 ---
 
@@ -60,7 +75,7 @@ Treat this as the **single source of truth** when wiring CI, Render, and Postman
 
 Seeding / fixture notes:
 
-- Local DB can be seeded with `npm run db:seed:local` (or similar).
+- Use `npm run seed:contract-tests` when you need deterministic API fixtures for contract/smoke runs.
 - Use a dedicated test user (e.g. `test@lakira.local`) shared between Postman and automated tests.
 
 ---
@@ -92,7 +107,7 @@ Seeding / fixture notes:
   - `DB_NAME=lakira_ci`
   - `REDIS_URL=redis://localhost:6379`
   - `NODE_ENV=test`
-  - `JWT_SECRET_TEST=${{ secrets.JWT_SECRET_TEST }}`
+  - `JWT_SECRET=${{ secrets.JWT_SECRET_TEST }}`
   - `DISABLE_RATE_LIMITING=true` during `tests` and `contract_local` so Newman/Schemathesis see 2xx/4xx responses instead of global 429 throttles. Leave unset in other environments to keep production limits enforced.
   - `ALLOW_TEST_HTTP_SERVER=true` is injected by `npm run start:test` so the HTTP server can bind to port `4000` even in `NODE_ENV=test`.
 
@@ -119,21 +134,19 @@ Postman / Newman in CI:
   - Service name: `lakira-backend-staging`
   - Region: `singapore` (example; pick closest to Jakarta)
 - **Backend URL:**
-  - Render default: `https://lakira-backend-staging.onrender.com`
-  - Optional custom: `https://api-staging.lakira.yourdomain.com`
+  - Active web service: `https://lakira-backend-staging.onrender.com`
+  - Active API base URL: `https://lakira-backend-staging.onrender.com/api/v1`
+  - Custom domain: `TBD` (not configured in docs yet)
 - **Health endpoint:**
-
   - `GET /api/v1/health` → 200 + `{ "status": "ok" }`
 
 - **Database:**
-
   - Hosted Postgres on Render or managed provider
   - DB name: `lakira_stage`
   - Connection string stored as:
     - `DATABASE_URL` Render env var.
 
 - **Redis (optional):**
-
   - If used, connection string stored as:
     - `REDIS_URL` Render env var.
 
@@ -143,6 +156,26 @@ Postman / Newman in CI:
   - `REDIS_URL=redis://...` (if used)
   - `JWT_SECRET_STAGING=...`
   - `PORT=10000` (Render default) → app should bind to `0.0.0.0:${PORT}`
+
+### 5.1 CORS Expectations for FE (Guidance Only, No Code Change)
+
+Current backend behavior in `src/server.ts`:
+
+- `origin`: single `CORS_ORIGIN` value (or `http://localhost:3000` default).
+- `credentials: true`.
+- `methods`: `GET`, `POST`, `PUT`, `DELETE` (note: no `PATCH` listed).
+
+Recommended FE alignment guidance:
+
+| FE surface          | Expected CORS origin to allow         | Notes                                                                                                                           |
+| ------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Local FE dev        | `http://localhost:3000`               | Matches backend default today                                                                                                   |
+| FE preview (Vercel) | Preview domain(s) for active branches | Current backend supports a single origin string; use a shared preview origin strategy until multi-origin support is implemented |
+| FE production       | Final FE production domain            | `TBD` until FE production domain is finalized                                                                                   |
+
+Known risk:
+
+- Backend exposes `PATCH` endpoints (e.g., metric-settings) while current CORS method allow-list omits `PATCH`.
 
 GitHub secrets for staging deploy:
 
@@ -170,7 +203,7 @@ Seed / fixture policy:
 
 If you later separate prod from staging:
 
-- **Backend URL:** `https://api.lakira.yourdomain.com`
+- **Backend URL:** `TBD` (production service URL not available yet)
 - **Database:** `lakira_prod` with stricter access controls.
 - **Secrets:** `JWT_SECRET_PROD`, `DATABASE_URL_PROD`, `REDIS_URL_PROD`, `RENDER_PROD_DEPLOY_HOOK_URL`, `PROD_HEALTH_URL`, etc.
 - **Contract tests:** You may run **read-only** contract tests against prod, but **avoid destructive requests** (no DELETE / PUT that modify data) unless using a dedicated prod test tenant.

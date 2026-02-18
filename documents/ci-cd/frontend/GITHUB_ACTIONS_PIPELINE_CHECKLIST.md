@@ -12,6 +12,7 @@ Use this checklist when creating or modifying `.github/workflows/frontend-ci.yml
   - [ ] `documents/ci-cd/frontend/README.md`
   - [ ] `documents/ci-cd/frontend/GITHUB_ACTIONS_PIPELINE_PLAN.md`
   - [ ] `documents/ci-cd/frontend/ENVIRONMENTS_MATRIX.md`
+  - [ ] `documents/ci-cd/frontend/BACKEND_HANDOFF_FOR_FE_CICD.md` (when FE/BE dependency details change)
 
 > Special Note for Codex: If you add/remove jobs, update the plan & README in the same PR.
 
@@ -39,6 +40,7 @@ Use this checklist when creating or modifying `.github/workflows/frontend-ci.yml
 
 ## 4. Environment Variables & Secrets
 
+- [ ] `API_URL` comes from `secrets.STAGING_API_BASE_URL`.
 - [ ] `NEXT_PUBLIC_API_BASE_URL` comes from `secrets.STAGING_API_BASE_URL`.
 - [ ] If using Vercel CLI: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` exist.
 - [ ] No secrets are hard-coded in workflow YAML.

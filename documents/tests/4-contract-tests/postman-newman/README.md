@@ -95,11 +95,14 @@ Collections + environment files are version-controlled; secrets (tokens, passwor
    - Use Docker Compose or `npm run start:test`.
    - Keep Postgres/Redis aligned with `.env.test`.
 2. **Run the automated script**
+
    ```bash
    npm run test:contract:local
    # internally calls node documents/tests/4-contract-tests/postman-newman/scripts/run-contract-local.js
    ```
+
    - The script runs `npm run seed:contract-tests` (unless `SKIP_CONTRACT_SEED=true`), then executes every collection with the local environment file.
+
 3. **Inspect reports**
    - CLI output appears in the terminal.
    - HTML + JUnit saved to `documents/tests/4-contract-tests/postman-newman/reports/local/<timestamp>/`.

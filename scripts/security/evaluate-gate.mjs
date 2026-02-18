@@ -37,12 +37,16 @@ const readJson = async (filePath) => {
   return JSON.parse(raw);
 };
 
-const normalize = (v) => String(v ?? "").trim().toLowerCase();
+const normalize = (v) =>
+  String(v ?? "")
+    .trim()
+    .toLowerCase();
 
 const isAcceptedExceptionValid = (finding, policy, now) => {
   const acceptedPolicy = policy.acceptedRisk ?? {};
 
-  if (!acceptedPolicy.requireException) return { ok: true, reason: "no exception required" };
+  if (!acceptedPolicy.requireException)
+    return { ok: true, reason: "no exception required" };
 
   const exception = finding.exception;
   if (!exception || typeof exception !== "object") {
@@ -52,7 +56,10 @@ const isAcceptedExceptionValid = (finding, policy, now) => {
   const severity = normalize(finding.severity);
   const allowed = (acceptedPolicy.allowedSeverities ?? []).map(normalize);
   if (allowed.length > 0 && !allowed.includes(severity)) {
-    return { ok: false, reason: `severity ${severity} not allowed for accepted risk` };
+    return {
+      ok: false,
+      reason: `severity ${severity} not allowed for accepted risk`,
+    };
   }
 
   const expiresRaw = exception.expiresAtUtc;
@@ -70,7 +77,10 @@ const isAcceptedExceptionValid = (finding, policy, now) => {
       const max = new Date(now);
       max.setUTCDate(max.getUTCDate() + maxDays);
       if (expiresAt > max) {
-        return { ok: false, reason: `exception expiry exceeds max ${maxDays} days` };
+        return {
+          ok: false,
+          reason: `exception expiry exceeds max ${maxDays} days`,
+        };
       }
     }
   }
@@ -79,13 +89,19 @@ const isAcceptedExceptionValid = (finding, policy, now) => {
 };
 
 const evaluate = (deltaReport, policy) => {
-  const findings = Array.isArray(deltaReport.findings) ? deltaReport.findings : [];
+  const findings = Array.isArray(deltaReport.findings)
+    ? deltaReport.findings
+    : [];
   const failOn = new Set((policy.failOnSeverities ?? []).map(normalize));
   const openStatuses = new Set((policy.openStatuses ?? []).map(normalize));
-  const resolvedStatuses = new Set((policy.resolvedStatuses ?? []).map(normalize));
+  const resolvedStatuses = new Set(
+    (policy.resolvedStatuses ?? []).map(normalize),
+  );
   const acceptedStatus = normalize(policy.acceptedStatus ?? "accepted");
-  const mediumLowRequiredFields =
-    policy.mediumLowBacklog?.requiredFields ?? ["targetFixVersion", "slaDueDate"];
+  const mediumLowRequiredFields = policy.mediumLowBacklog?.requiredFields ?? [
+    "targetFixVersion",
+    "slaDueDate",
+  ];
 
   const now = new Date();
   const blockingFindings = [];

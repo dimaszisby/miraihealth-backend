@@ -24,11 +24,11 @@ Use this checklist when:
 ## 2. Triggers, Branches & Concurrency
 
 - [ ] Workflow triggers on:
-  - [ ] `push` to `main`, `dev`, and `feature/**`.
-  - [ ] `pull_request` targeting `main` and `dev`.
+  - [ ] `push` to `main`, `dev`, `staging`, and `feature/**`.
+  - [ ] `pull_request` targeting `main`, `dev`, and `staging`.
+  - [ ] `workflow_dispatch` exists for manual runs.
 - [ ] Branch protections require `backend-ci` to pass before merging into `main`.
 - [ ] Workflow uses `concurrency` to cancel in-progress runs on the same branch:
-
   - [ ] `concurrency.group` includes the branch/ref.
   - [ ] `concurrency.cancel-in-progress` is set to `true`.
 
@@ -39,16 +39,17 @@ Use this checklist when:
 ## 3. Job Structure & Timeouts
 
 - [ ] `checks` job exists and runs:
-
   - [ ] `npm ci`
   - [ ] `npm run lint`
+  - [ ] `npm run format:check`
   - [ ] `npm run typecheck`
+  - [ ] `npm run docs:openapi:check`
   - [ ] Job has `timeout-minutes` configured.
 
 - [ ] `tests` job exists and:
-
   - [ ] Declares Postgres and Redis service containers.
   - [ ] Runs `npm ci`.
+  - [ ] Runs `npm run build`.
   - [ ] Runs `npm run db:migrate:test` (or equivalent).
   - [ ] Runs `npm run test:unit`.
   - [ ] Runs `npm run test:integration`.
@@ -59,7 +60,6 @@ Use this checklist when:
   - [ ] Has `timeout-minutes` configured.
 
 - [ ] `contract_local` job exists and:
-
   - [ ] Declares Postgres and Redis service containers.
   - [ ] Runs `npm ci`.
   - [ ] Runs `npm run build` before starting the backend so `dist/server.js` exists.
@@ -72,15 +72,16 @@ Use this checklist when:
   - [ ] Depends on `tests` (`needs: tests`).
   - [ ] Has `timeout-minutes` configured.
 
-- [ ] (Future) `deploy_staging` job:
-
-  - [ ] Depends on `contract_local` or `tests`.
+- [ ] `deploy_staging` job exists and:
+  - [ ] Depends on `contract_local`.
+  - [ ] Runs only on `refs/heads/staging`.
   - [ ] Triggers Render staging deploy via deploy hook.
   - [ ] Polls staging health endpoint until healthy or timeout.
   - [ ] Fails pipeline if staging does not become healthy.
 
-- [ ] (Future) `contract_staging` job:
+- [ ] `contract_staging` job exists and:
   - [ ] Depends on `deploy_staging`.
+  - [ ] Runs only on `refs/heads/staging`.
   - [ ] Runs `npm run test:contract:staging`.
   - [ ] Uploads Newman staging reports as artifacts.
   - [ ] Has `timeout-minutes` configured.
@@ -92,7 +93,6 @@ Use this checklist when:
 ## 4. Services & Environment Variables
 
 - [ ] Postgres service configured with:
-
   - [ ] `POSTGRES_USER=postgres`
   - [ ] `POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD_TEST }}`
   - [ ] `POSTGRES_DB=lakira_ci`
@@ -101,15 +101,18 @@ Use this checklist when:
 - [ ] Redis service configured with health checks.
 
 - [ ] Jobs that talk to DB/Redis set:
-
   - [ ] `DATABASE_URL` points to the Postgres service exposed on `localhost:5432` (GitHub Actions forwards service ports to the runner host).
   - [ ] `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` are exported when tools (e.g., `sequelize-cli`) require discrete values. When `DATABASE_URL` is present, the env manager will derive these automatically at runtime.
   - [ ] `REDIS_URL` uses the Redis service exposed on `localhost:6379`.
   - [ ] `NODE_ENV=test` for tests/contract jobs.
-  - [ ] `JWT_SECRET_TEST` from secrets.
+  - [ ] `JWT_SECRET` is populated from `secrets.JWT_SECRET_TEST`.
+
+- [ ] FE-facing backend env contract is documented and consistent with `ENVIRONMENTS_MATRIX.md`:
+  - [ ] FE `API_URL` and `NEXT_PUBLIC_API_BASE_URL` are equal per environment.
+  - [ ] Staging value is `https://lakira-backend-staging.onrender.com/api/v1`.
+  - [ ] Production value remains `TBD` until a production backend URL exists.
 
 - [ ] Staging deploy job reads:
-
   - [ ] `RENDER_STAGING_DEPLOY_HOOK_URL` from secrets.
   - [ ] `STAGING_HEALTH_URL` from secrets.
 
@@ -129,9 +132,11 @@ Backend `package.json` includes:
 - [ ] `"test:unit": "…"`.
 - [ ] `"test:integration": "…"`.
 - [ ] `"test:contract:local": "node documents/tests/4-contract-tests/postman-newman/scripts/run-contract-local.js"` (or equivalent).
-- [ ] `"test:contract:staging": "node documents/tests/4-contract-tests/postman-newman/scripts/run-contract-staging.js"` (future).
+- [ ] `"test:contract:staging": "node documents/tests/4-contract-tests/postman-newman/scripts/run-contract-staging.js"`.
 - [ ] `"db:migrate:test": "…"`.
 - [ ] `"start:test": "…"`.
+- [ ] `"format:check": "…"`.
+- [ ] `"docs:openapi:check": "…"`.
 - [ ] `"build": "tsc -p tsconfig.build.json"` (or equivalent).
 
 > Special Note for Codex: Confirm these scripts exist before wiring them into workflows; if any are missing, update `package.json` and this doc together.
@@ -162,7 +167,6 @@ Backend `package.json` includes:
 - [ ] `test:contract:staging` uses:
   - [ ] `lakira-staging.postman_environment.json`.
 - [ ] Contract runs produce:
-
   - [ ] JUnit XML reports.
   - [ ] HTML reports.
   - [ ] Saved under `documents/tests/4-contract-tests/postman-newman/reports/local/**` and `reports/staging/**`.
@@ -207,7 +211,9 @@ Before calling the backend pipeline “stable” and “portfolio-ready”:
   - [ ] `checks` passes.
   - [ ] `tests` passes.
   - [ ] `contract_local` passes.
-  - [ ] (Future) `deploy_staging` + `contract_staging` pass.
+- [ ] A full run of `backend-ci` on `staging` is green for release readiness:
+  - [ ] `deploy_staging` passes.
+  - [ ] `contract_staging` passes.
 - [ ] This checklist, the pipeline plan, and CI/CD strategy documents are updated to reflect the final state.
 
 > Special Note for Codex: Do not mark the pipeline “ready” in commits/PRs unless every applicable box above is satisfied or updated.

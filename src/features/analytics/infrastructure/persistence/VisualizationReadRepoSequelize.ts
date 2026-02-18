@@ -66,9 +66,7 @@ type DashboardMetricRow = {
   category_updated_at: string | null;
 };
 
-export class VisualizationReadRepoSequelize
-  implements VisualizationReadRepository
-{
+export class VisualizationReadRepoSequelize implements VisualizationReadRepository {
   constructor(private cache: VisualizationCachePort) {}
 
   async fetchVisualization({

@@ -65,7 +65,6 @@ Analytics still mixes legacy service patterns (raw SQL + Redis cache helpers) wi
 ### Findings
 
 - **AN-01 – Queries import Sequelize and raw SQL directly**
-
   - Severity: High
   - Description: `getDashboardVisualization` imports `sequelize`, `QueryTypes`, and SQL builders from `infrastructure/sql` inside the application layer.
   - Impact: The query cannot be tested or reused without booting the DB layer, and it violates the “application depends on ports only” rule from the standard.
@@ -73,7 +72,6 @@ Analytics still mixes legacy service patterns (raw SQL + Redis cache helpers) wi
   - Evidence: `src/features/analytics/application/queries/GetDashboardVisualization.ts:1-21`
 
 - **AN-02 – Cache access bypasses a CachePort**
-
   - Severity: Medium
   - Description: The same query calls `vizDashKey`, `getCachedViz`, and `setCachedViz` from `infrastructure/cache/vizCache` directly instead of going through a cache port.
   - Impact: Couples the application layer to Redis-specific semantics (key formats, TTL) and prevents swapping cache providers or faking cache access in tests.
@@ -103,7 +101,6 @@ Auth is close to the target slice: domain entities, ports (PasswordHasher/TokenP
 ### Findings
 
 - **AUTH-01 – Zod schemas live in global `/types` instead of the feature**
-
   - Severity: Medium
   - Description: The router pulls validators from `@/features/auth/infrastructure/http/schema.zod` rather than a feature-local schema module, unlike other slices.
   - Impact: Changes to auth validation now require editing a global types directory, increases coupling, and makes it harder to reason about feature ownership.
@@ -133,7 +130,6 @@ Metric has partial verticalization (feature builder, cache/transaction ports) bu
 ### Findings
 
 - **M-01 – `ListMetrics` query depends on global models and mappers**
-
   - Severity: High
   - Description: The query imports `models` from `@/infrastructure/db/models`, `Sequelize` internals, and DTO mappers from `@/utils`.
   - Impact: Violates the application-layer boundary, making it impossible to stub persistence and forcing CQRS logic to live alongside ORM specifics.
@@ -141,7 +137,6 @@ Metric has partial verticalization (feature builder, cache/transaction ports) bu
   - Evidence: `src/features/metric/application/queries/ListMetrics.ts:1-24`
 
 - **M-02 – `GetMetricDetail` bypasses ports and performs ORM logic inline**
-
   - Severity: High
   - Description: This class constructs Sequelize includes and invokes `models.Metric.findOne` directly, even though the feature already defines repositories.
   - Impact: Couples the use-case to Sequelize, leaks include shapes into the application layer, and duplicates mapping logic (`toExtendedMetricDomain`) from shared utils.
@@ -171,7 +166,6 @@ Metric-category is mostly aligned (rich domain model, cache port, persistence re
 ### Findings
 
 - **MC-01 – Dummy endpoint bypasses the application layer**
-
   - Severity: Medium
   - Description: `generateDummyCategories` instantiates `MetricCategoryFactory`, writes directly through `models.MetricCategory`, and invalidates Redis via `MetricCategoryCacheRedis` inside the controller.
   - Impact: Breaks layering (HTTP -> infrastructure) and duplicates persistence logic, so changes to repositories/cache invalidation won’t apply to this route.
@@ -201,7 +195,6 @@ Metric-log owns its mutation flows (create/update/delete/stats) but cursor listi
 ### Findings
 
 - **ML-01 – Cursor query ties directly to shared DTOs and ORM models**
-
   - Severity: High
   - Description: `ListMetricLogs.ts` imports `models`, DTOs, mappers, and Sequelize operators inside the application folder instead of delegating to an adapter.
   - Impact: Forces consumers to pull in Sequelize + global DTOs for any read, and makes pagination logic impossible to reuse across persistence strategies.
@@ -231,7 +224,6 @@ Metric-settings has a solid domain + repository setup, yet its HTTP layer still 
 ### Findings
 
 - **MS-01 – Controllers use shared DTOs/mappers**
-
   - Severity: Medium
   - Description: `controller.ts` imports `toMetricSettingsResponseDTO`/`toDisplayOptionsResponseDTO` and DTO types from `@/utils` and `@/types/dtos`.
   - Impact: Couples the feature to shared folders, so modifying response shapes requires edits outside the slice and risks breaking other consumers of the shared mapper.

@@ -28,9 +28,8 @@ jest.unstable_mockModule("@/utils/auth-guards", () => ({
 }));
 
 const loadController = async () => {
-  const controller = await import(
-    "@/features/auth/infrastructure/http/controller.js"
-  );
+  const controller =
+    await import("@/features/auth/infrastructure/http/controller.js");
   register = controller.register;
   login = controller.login;
   getProfile = controller.getProfile;

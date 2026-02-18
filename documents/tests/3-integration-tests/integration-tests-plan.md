@@ -12,13 +12,11 @@
 ## Phases & Milestones
 
 1. **Phase 0 – Baseline Audit (complete – 2026-01-09)**
-
    - Inventory suite layout, helper modules, and DB lifecycle behavior; summarize in `README.md`. ✅
    - Confirm commands/scripts (`test:integration`, `test:integration:coverage`, `test:ci`, Docker compose stack) and ensure they match CI documentation. ✅
    - Capture outstanding infra blockers (Redis disabled in tests, need for deterministic fixtures, no metrics tracker) and move them into this plan/checklist. ✅
 
 2. **Phase 1 – Environment Hardening & Tooling (in progress)**
-
    - Provide explicit instructions for `.env.test`, Docker Compose bootstrapping, and migration sequencing in README + checklist. ✅ (README updated with commands and cautions.)
    - Add automation around DB seeding/reset (`scripts/test-ci.sh`, future Make/NPX shortcuts) so contributors can run the same flow locally as CI. ✅ (2026-01-12 – `npm run integration:local` chains migrations + tests.)
    - Introduce a documented way to opt into Redis during integration tests (e.g., `ENABLE_REDIS_INTEGRATION=true`) without breaking current workflows; ensure `jest.setup.ts` and helpers respect the toggle. ✅ (2026-01-12 – `ENABLE_REDIS_INTEGRATION` flag parsed via `zodEnv`, documented in `.env.test.example`, and wired into `redis-client.ts`.)
@@ -26,7 +24,6 @@
    - Track runtime/coverage metrics after the next Compose-backed run so the metrics tracker stays grounded.
 
 3. **Phase 2 – Coverage Depth & User Journeys (complete – 2026-01-13)**
-
    - ✅ (2026-01-13) Added `__tests__/integration/api/journeys/onboarding.integration.test.ts` to cover the full onboarding journey (register → configure metric/settings → log → analytics).
    - ✅ (2026-01-13) Extended API coverage for duplicate metric-log timestamps: create + update flows now enforce HTTP 409 and are asserted in `api/metric-log.test.ts`.
    - ✅ (2026-01-13) Introduced Redis-backed integration suites (`features/analytics/VisualizationCacheRedis.integration.test.ts` + Redis block in `api/analytics.test.ts`) gated by `ENABLE_REDIS_INTEGRATION` to prove cache hydration/invalidations.
@@ -34,7 +31,6 @@
    - ✅ (2026-01-13) Updated `documents/tests/overhaul/phase2-integration-coverage.md` and the metrics tracker with the new targets/helpers so contributors can trace scope.
 
 4. **Phase 3 – Observability & Enforcement (complete – 2026-01-13)**
-
    - ✅ (2026-01-13) Added project-specific coverage thresholds so the integration suite now enforces ≥70 % statements / 45 % branches / 70 % functions / 70 % lines (unit thresholds remain at 60/40/55/60).
    - ✅ (2026-01-13) Configured `jest-junit` reporters per project so CI publishes `coverage/junit/unit.xml` and `coverage/junit/integration.xml`.
    - ✅ (2026-01-13) Logged a flake-handling playbook in `incidents.md` and scheduled quarterly KPI reviews (first work week of Mar/Jun/Sep/Dec) with action items captured in the metrics tracker.

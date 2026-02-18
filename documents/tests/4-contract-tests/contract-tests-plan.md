@@ -21,13 +21,11 @@
 ## Phases & Milestones
 
 1. **Phase 0 – Audit & Doc Kit (complete – 2026-01-14)**
-
    - Inventory existing docs, confirm scope with integration plan + CI/CD strategy.
    - Create the contract-test documentation kit (README, plan, checklist, ticket, decisions, incidents, metrics).
    - Define owner expectations and link supporting Postman + Schemathesis folders.
 
 2. **Phase 1 – Postman/Newman Foundation (in progress)**
-
    - Finalize deterministic contract-test seeds (users, categories, metrics, metric settings, logs) via `npm run seed:contract-tests` and record variables in environment JSON files.
    - ✅ (2026-01-14) Base Postman collections for analytics, metrics, metric logs, metric settings, and auth now cover happy-path requests + key assertions driven by the seeded data.
    - ✅ (2026-01-14) Created Newman runner scripts (`run-contract-local.js`, `run-contract-staging.js`) wired to `npm run test:contract:<env>`; local script seeds automatically, staging script pulls secrets from `STAGING_*` env vars, and both store reports under `postman-newman/reports/<env>/<timestamp>/`.
@@ -35,7 +33,6 @@
    - Deliverable: local command green, artifacts stored under `postman-newman/reports/local`, and checklist Phase 1 complete.
 
 3. **Phase 2 – Negative Coverage, Headers, & Schemathesis Kickoff**
-
    - Expand Postman suites with validation errors, auth failures, cache/ETag checks, and not-found scenarios per checklist.  
      ✅ (2026-01-14) Collections now include 400/401/404 flows plus conditional requests for analytics dashboard/visualizations.
    - Implement JSON Schema snippets or Postman test scripts mirroring OpenAPI definitions for analytics dashboard payloads.  
@@ -48,7 +45,6 @@
    - Deliverable: nightly (manual) local fuzzing run documented with sample report + metrics entry.
 
 4. **Phase 3 – CI/CD Integration & Enforcement**
-
    - Implement GitHub Actions jobs `contract_local`, `deploy_staging`, and `contract_staging` exactly as described in `documents/ci-cd/backend/GITHUB_ACTIONS_PIPELINE_PLAN.md`.  
      ✅ (2026-01-14) `contract_local` now regenerates the OpenAPI spec, reuses the deterministic seed output, runs Newman + Schemathesis sequentially, and uploads artifacts, giving PRs an automated contract gate while staging jobs await secrets.
    - Add caching + artifact upload logic for both Newman and Schemathesis runs.  

@@ -36,13 +36,11 @@ Read/query flows now live behind `VisualizationReadRepository`, caching is abstr
 ### Findings Status
 
 - **AN-01 – Queries import Sequelize and raw SQL directly**
-
   - Status: **Resolved**
   - Evidence: `src/features/analytics/application/queries/GetDashboardVisualization.ts:8-46` depends only on `VisualizationReadRepository`; all SQL remains inside `src/features/analytics/infrastructure/persistence/VisualizationReadRepoSequelize.ts:60-220`.
   - Notes: Unit coverage via `__tests__/features/analytics/application/GetDashboardVisualization.test.ts:1` stubs the port, confirming DI works.
 
 - **AN-02 – Cache access bypasses a CachePort**
-
   - Status: **Resolved**
   - Evidence: `src/features/analytics/application/ports/VisualizationCachePort.ts:1-36` defines cache operations; `VisualizationReadRepoSequelize` receives a `VisualizationCacheRedis` adapter (`src/features/analytics/infrastructure/cache/VisualizationCacheRedis.ts`) and no longer references legacy helpers.
   - Notes: Adapter tests in `__tests__/features/analytics/infrastructure/persistence/VisualizationReadRepoSequelize.test.ts:1` verify cache hits/misses.
@@ -63,7 +61,6 @@ Auth owns its DTOs, Zod schemas, and response mappers under `infrastructure/http
 ### Findings Status
 
 - **AUTH-01 – Zod schemas live in global `/types` instead of the feature**
-
   - Status: **Resolved**
   - Evidence: `src/features/auth/infrastructure/http/schema.zod.ts:1-35` defines register/login/update schemas, and `router.ts:1-27` imports them for each route.
   - Notes: Shared `/types` references were removed; validations now align with the canonical layout.
@@ -84,13 +81,11 @@ All read flows are mediated through `MetricReadRepository`, the infrastructure a
 ### Findings Status
 
 - **M-01 – `ListMetrics` query depends on global models and mappers**
-
   - Status: **Resolved**
   - Evidence: `src/features/metric/application/queries/ListMetrics.ts:1-17` accepts only `MetricReadRepository`; raw SQL lives in `src/features/metric/infrastructure/persistence/repositories/MetricReadRepoSequelize.ts:1-320`.
   - Notes: Unit tests in `__tests__/features/metric/application/ListMetrics.test.ts:1-44` stub the port, while adapter tests (`__tests__/features/metric/infrastructure/persistence/MetricReadRepoSequelize.test.ts:1-95`) exercise pagination.
 
 - **M-02 – `GetMetricDetail` bypasses ports and performs ORM logic inline**
-
   - Status: **Resolved**
   - Evidence: `src/features/metric/application/queries/GetMetricDetail.ts:1-34` now calls `repo.findDetailedMetric`, and the adapter handles includes/mapping (`MetricReadRepoSequelize.ts:200-320`).
   - Notes: Guard logic (isPublic check) remains in the query; behavior covered by `__tests__/features/metric/application/GetMetricDetail.test.ts:1-72`.
@@ -111,7 +106,6 @@ Metric-category now exposes both read and write flows via use-cases/queries, and
 ### Findings Status
 
 - **MC-01 – Dummy endpoint bypasses the application layer**
-
   - Status: **Resolved**
   - Evidence: `src/features/metric-category/application/use-cases/GenerateDummyCategories.ts:1-39` orchestrates factory + repo + cache, and the controller delegates to this use-case (`src/features/metric-category/infrastructure/http/controller.ts:56-112`).
   - Notes: Regression tests in `__tests__/features/metric-category/application/GenerateDummyCategories.test.ts:1-82` assert cache invalidation behavior.
@@ -132,7 +126,6 @@ Metric-log’s cursor listing depends on the `MetricLogQueryPort`, with the Sequ
 ### Findings Status
 
 - **ML-01 – Cursor query ties directly to shared DTOs and ORM models**
-
   - Status: **Resolved**
   - Evidence: `src/features/metric-log/application/queries/ListMetricLogs.ts:1-23` only interacts with `MetricLogQueryPort`; the adapter `src/features/metric-log/infrastructure/persistence/repositories/MetricLogQueryRepoSequelize.ts:1-169` encapsulates Sequelize logic.
   - Notes: Unit tests in `__tests__/features/metric-log/application/ListMetricLogs.test.ts:1-38` stub the port to verify CQRS boundaries.
@@ -153,7 +146,6 @@ Metric-settings localizes DTOs/mappers and Zod schemas, controllers parse payloa
 ### Findings Status
 
 - **MS-01 – Controllers use shared DTOs/mappers**
-
   - Status: **Resolved**
   - Evidence: `src/features/metric-settings/infrastructure/mappers/MetricSettingsMapper.ts` (and DTOs under `infrastructure/http/dto.ts`) are referenced by `controller.ts:1-70`, eliminating shared mapper imports.
   - Notes: Response DTOs derive from domain snapshots, keeping logic inside the feature.

@@ -12,19 +12,16 @@
 ## Phases & Milestones
 
 1. **Phase 0 - Baseline Inventory (complete)**
-
    - Confirm scripts (`npm run test:unit`, `npm run test:unit:coverage`) and env guarantees (`SKIP_DB_LIFECYCLE=true`, `withTestEnv`). [done]
    - Record runtime (~24 s) and coverage snapshot (44.7 % statements) in `metrics-tracker.md`. [done]
    - Inventory existing suites vs. feature map; highlight uncovered areas (metric settings, routers, cache adapters). [done]
 
 2. **Phase 1 - Documentation & Workflow Alignment (in progress)**
-
    - Publish README, workflow guidelines, plan, checklist, ticket, ADRs, incident log, and metrics tracker. [done] (this change)
    - Define per-PR workflow mirroring contract-test thoroughness (`WORKFLOW_GUIDELINES.md`). [done]
    - Capture decisions about Jest setup, builders, and coverage expectations in `decisions.md`. [in-progress] (ongoing as new conventions emerge; shared factories now live under `__tests__/unit/factories/**`.)
 
 3. **Phase 2 - Coverage Expansion (in progress)**
-
    - Prioritize suites for zero-coverage areas:
      - Metric settings use cases/repos (create/update/delete/goal management). [done for use cases, controller, repository, cache invalidator, and HTTP router as of 2025-12-30.]
      - Cache adapters (metric, metric log, analytics invalidators).
