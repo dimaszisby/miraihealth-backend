@@ -63,6 +63,17 @@ jobs:
     name: Security Delta Checks
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/lakira_ci
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: lakira_ci
+      JWT_SECRET: security-delta-ci-placeholder
+      REDIS_REQUIRED: "false"
+      DISABLE_RATE_LIMITING: "true"
 
     steps:
       - name: Checkout
