@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "mode": "soft",
+  "description": "Fail only on unresolved high/critical findings from security delta checks.",
+  "severityOrder": ["critical", "high", "medium", "low", "info"],
+  "failOnSeverities": ["critical", "high"],
+  "openStatuses": ["open", "in_progress", "mitigating"],
+  "resolvedStatuses": ["verified", "closed"],
+  "acceptedStatus": "accepted",
+  "acceptedRisk": {
+    "requireException": true,
+    "requireFutureExpiry": true,
+    "maxExpiryDays": 90,
+    "allowedSeverities": ["high", "medium", "low"]
+  },
+  "mediumLowBacklog": {
+    "requiredFields": ["targetFixVersion", "slaDueDate"],
+    "nonBlocking": true
+  }
+}

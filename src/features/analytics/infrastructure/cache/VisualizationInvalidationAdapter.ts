@@ -3,9 +3,7 @@ import { redisClient } from "@/utils/redis-client.js";
 
 const SCAN_COUNT = 200;
 
-export class AnalyticsVisualizationInvalidationAdapter
-  implements VisualizationInvalidationPort
-{
+export class AnalyticsVisualizationInvalidationAdapter implements VisualizationInvalidationPort {
   async invalidateByMetric(userId: string, metricId: string): Promise<void> {
     if (!redisClient.isOpen) return;
 

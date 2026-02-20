@@ -9,7 +9,9 @@ import {
 } from "@/features/metric-category/infrastructure/mappers/MetricCategoryMapper.js";
 import {
   createMetricCategorySchema,
+  deleteMetricCategorySchema,
   getAllMetricCategoriesSchema,
+  getMetricCategorySchema,
   updateMetricCategorySchema,
 } from "./schema.zod.js";
 import { buildMetricCategoryFeature } from "../../feature.js";
@@ -78,10 +80,8 @@ export const listCategories = catchAsync(
 export const getCategory = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
-    const category = await feature.getCategory.execute(
-      req.user.id,
-      req.params.id,
-    );
+    const { params } = pickValidated(getMetricCategorySchema)(req);
+    const category = await feature.getCategory.execute(req.user.id, params.id);
     successResponse(
       res,
       200,
@@ -115,7 +115,8 @@ export const updateCategory = catchAsync(
 export const deleteCategory = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
-    await feature.deleteCategory.execute(req.user.id, req.params.id);
+    const { params } = pickValidated(deleteMetricCategorySchema)(req);
+    await feature.deleteCategory.execute(req.user.id, params.id);
     successResponse(res, 200, null, "Category deleted successfully");
   },
 );

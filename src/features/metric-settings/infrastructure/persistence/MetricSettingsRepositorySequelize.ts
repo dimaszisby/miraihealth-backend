@@ -59,9 +59,7 @@ const toEntity = (row: MetricSettingsRow): MetricSettings =>
     updatedAt: row.updatedAt ?? new Date(0),
   });
 
-export class MetricSettingsRepositorySequelize
-  implements MetricSettingsRepository
-{
+export class MetricSettingsRepositorySequelize implements MetricSettingsRepository {
   async create(data: CreateMetricSettingsDTO): Promise<MetricSettings> {
     try {
       const created = await models.MetricSettings.create({

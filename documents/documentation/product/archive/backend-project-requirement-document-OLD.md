@@ -162,7 +162,6 @@ Lakira is a **versatile tracking app** designed to help users **monitor, visuali
        - Log history
        - Metric settings
 2. **Improvement Plan**
-
    1. **Date Range Filter**
 
       Allow users to choose `7-day`, `30-day`, or custom ranges.

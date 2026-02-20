@@ -27,7 +27,6 @@
 ### Tasks
 
 - [x] **G-01 – Standardize read/query port pattern**
-
   - From findings: G-01, AN-01, M-01, M-02, ML-01
   - Description: Introduce feature-local read/query ports so application-layer queries never import `sequelize` or raw SQL directly.
   - Affected Areas: `src/features/analytics/application/queries`, `src/features/metric/application/queries`, `src/features/metric-log/application/queries`, associated `infrastructure/persistence` adapters, `infrastructure/db`.
@@ -68,7 +67,6 @@
 ### Tasks
 
 - [x] **AN-01 – Introduce VisualizationReadRepository** (addresses finding AN-01 & G-01)
-
   - Description: Move dashboard visualization SQL/Sequelize access into a repository adapter while the application query consumes a port.
   - Affected Files: `src/features/analytics/application/queries/GetDashboardVisualization.ts`, new `application/ports/VisualizationReadRepository.ts`, `infrastructure/sql/*`, `infrastructure/persistence/*`.
   - Steps:
@@ -82,7 +80,6 @@
     - Tests cover both adapter (integration) and query (unit via stub).
 
 - [x] **AN-02 – Wrap cache access behind CachePort** (addresses finding AN-02)
-
   - Description: Create a feature-specific `CachePort` and Redis adapter so queries never import `vizCache` helpers directly.
   - Affected Files: `src/features/analytics/application/queries/GetDashboardVisualization.ts`, new `application/ports/CachePort.ts`, `infrastructure/cache/vizCache.ts`.
   - Steps:
@@ -118,7 +115,6 @@
 ### Tasks
 
 - [x] **AUTH-01 – Move Zod schemas into auth feature** (addresses finding AUTH-01 & G-02)
-
   - Description: Create `schema.zod.ts` (or similar) under `infrastructure/http` containing register/login/update payload validators and replace imports from `@/types/api`.
   - Affected Files: `src/features/auth/infrastructure/http/router.ts`, new schema file, `src/features/auth/infrastructure/http/schema.zod.ts`.
   - Steps:
@@ -153,7 +149,6 @@
 ### Tasks
 
 - [x] **M-01 – Convert ListMetrics to use read port** (addresses finding M-01 & G-01)
-
   - Description: Refactor `ListMetrics` so it depends on a `MetricReadRepository` interface implemented under infrastructure, eliminating direct Sequelize usage.
   - Affected Files: `src/features/metric/application/queries/ListMetrics.ts`, new read port + adapter files, router/services referencing the query.
   - Steps:
@@ -165,7 +160,6 @@
     - Query is unit-testable with a mock port.
 
 - [x] **M-02 – Move GetMetricDetail data access behind repository** (addresses finding M-02 & G-01)
-
   - Description: Extend the domain repository (or add read port) with a `findDetailedById` method implemented in infrastructure.
   - Affected Files: `src/features/metric/application/queries/GetMetricDetail.ts`, `domain/repositories/MetricRepository.ts`, infrastructure adapters.
   - Steps:
@@ -199,7 +193,6 @@
 ### Tasks
 
 - [x] **MC-01 – Add GenerateDummyCategories use-case** (addresses finding MC-01)
-
   - Description: Create a use-case that wraps factory + repository + cache invalidation so the HTTP layer no longer manipulates models/cache directly.
   - Affected Files: `src/features/metric-category/infrastructure/http/controller.ts`, new `application/use-cases/GenerateDummyCategories.ts`, `feature.ts`.
   - Steps:
@@ -233,7 +226,6 @@
 ### Tasks
 
 - [x] **ML-01 – Create MetricLogQueryPort** (addresses finding ML-01 & G-01)
-
   - Description: Define a read port for cursor pagination and move Sequelize logic/mappers into an adapter.
   - Affected Files: `src/features/metric-log/application/queries/ListMetricLogs.ts`, new `application/ports/MetricLogQueryPort.ts`, infrastructure adapter.
   - Steps:
@@ -267,7 +259,6 @@
 ### Tasks
 
 - [x] **MS-01 – Move MetricSettings DTO/mappers into feature** (addresses finding MS-01 & G-02)
-
   - Description: Create local DTO + mapper files and update controllers to consume them instead of shared helpers.
   - Affected Files: `src/features/metric-settings/infrastructure/http/controller.ts`, new `dto.ts`/`mappers.ts`, `src/utils/mappers/metric-settings.mapper.ts`.
   - Steps:

@@ -89,7 +89,7 @@ app.use(disallowTraceMethod);
 app.use(
   cors({
     origin: env.CORS_ORIGIN || "http://localhost:3000",
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true, // Allow cookies and auth headers
   }),
 );

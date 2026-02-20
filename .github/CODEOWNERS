@@ -1,0 +1,5 @@
+# Security framework and governance ownership
+scripts/security/* @dimaspramudya
+documents/security/** @dimaspramudya
+.github/workflows/backend-ci.yml @dimaspramudya
+.github/CODEOWNERS @dimaspramudya

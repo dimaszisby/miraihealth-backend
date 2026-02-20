@@ -1294,8 +1294,10 @@ export interface MetricCategoryAttributes extends MetricCategoryAttributesBase {
 }
 
 // Define optional fields for Sequelize
-export interface MetricCategoryCreationAttributes
-  extends Optional<MetricCategoryAttributes, "id"> {}
+export interface MetricCategoryCreationAttributes extends Optional<
+  MetricCategoryAttributes,
+  "id"
+> {}
 
 export class MetricCategory
   extends Model<MetricCategoryAttributes, MetricCategoryCreationAttributes>

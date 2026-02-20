@@ -10,9 +10,9 @@ let getUserDetailMetricById: ControllerModule["getUserDetailMetricById"];
 let deleteMetric: ControllerModule["deleteMetric"];
 let overrideMetricFeatureForTest: ControllerModule["overrideMetricFeatureForTest"];
 
-const pickValidatedMock = jest.fn();
+const mockPickValidated = jest.fn();
 jest.mock("@/shared/middleware/validated.js", () => ({
-  pickValidated: (schema: unknown) => pickValidatedMock(schema),
+  pickValidated: (schema: unknown) => mockPickValidated(schema),
 }));
 
 type MetricFeature = ReturnType<typeof buildMetricFeature>;
@@ -36,9 +36,8 @@ const buildFeatureMocks = (): MetricFeature =>
   }) as unknown as MetricFeature;
 
 const loadController = async () => {
-  const controller = await import(
-    "@/features/metric/infrastructure/http/controller.js"
-  );
+  const controller =
+    await import("@/features/metric/infrastructure/http/controller.js");
   createMetric = controller.createMetric;
   getUserDetailMetricById = controller.getUserDetailMetricById;
   deleteMetric = controller.deleteMetric;
@@ -52,6 +51,10 @@ const res = () =>
   }) as unknown as Response;
 
 const next: NextFunction = jest.fn();
+const flushAsync = () =>
+  new Promise<void>((resolve) => {
+    setImmediate(resolve);
+  });
 
 beforeAll(async () => {
   await loadController();
@@ -61,7 +64,7 @@ beforeAll(async () => {
 describe("Metric HTTP controller", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    pickValidatedMock.mockImplementation(() => (req: any) => ({
+    mockPickValidated.mockImplementation(() => (req: any) => ({
       body: req.body ?? {},
       params: req.params ?? {},
       query: req.query ?? {},
@@ -95,6 +98,7 @@ describe("Metric HTTP controller", () => {
 
     const response = res();
     await createMetric(req, response, next);
+    await flushAsync();
 
     expect(createMetricExecute).toHaveBeenCalledWith({
       userId,
@@ -136,6 +140,7 @@ describe("Metric HTTP controller", () => {
 
     const response = res();
     await getUserDetailMetricById(req, response, next);
+    await flushAsync();
 
     expect(getMetricDetailExecute).toHaveBeenCalledWith({
       userId,
@@ -174,6 +179,7 @@ describe("Metric HTTP controller", () => {
 
     const response = res();
     await deleteMetric(req, response, next);
+    await flushAsync();
 
     expect(deleteMetricExecute).toHaveBeenCalledWith({
       userId,

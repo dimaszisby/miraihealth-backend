@@ -59,10 +59,61 @@ jobs:
       - name: OpenAPI spec consistency
         run: npm run docs:openapi:check
 
+  security_delta:
+    name: Security Delta Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/lakira_ci
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: lakira_ci
+      JWT_SECRET: security-delta-ci-placeholder
+      REDIS_REQUIRED: "false"
+      DISABLE_RATE_LIMITING: "true"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run security framework validation tests
+        run: npm run test:unit:security-framework
+
+      - name: Run security delta checks
+        run: npm run security:delta:check -- --output tmp/security/security-delta-report.json --audit-raw tmp/security/npm-audit-production.json
+
+      - name: Evaluate soft gate policy
+        id: security_gate
+        continue-on-error: true
+        run: npm run security:gate:evaluate -- --input tmp/security/security-delta-report.json --policy documents/security/framework/ci-gate-policy.json --output tmp/security/security-gate-result.json
+
+      - name: Upload security artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-security-delta
+          path: tmp/security
+
+      - name: Enforce security gate result
+        if: steps.security_gate.outcome == 'failure'
+        run: exit 1
+
   tests:
     name: Unit & Integration Tests
     runs-on: ubuntu-latest
-    needs: checks
+    needs: [checks, security_delta]
     timeout-minutes: 20
 
     services:

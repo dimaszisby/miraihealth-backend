@@ -15,19 +15,16 @@ This log tracks repository/application targets that need true DB-backed integrat
 ## Execution Guidance
 
 1. **Fixtures & helpers**
-
    - Extend `__tests__/integration/helpers/test-utils.ts` or create `__tests__/integration/helpers/db-fixtures.ts` with factory methods for users, metrics, categories, etc.
    - Keep helpers deterministic and idempotent; prefer factory functions returning inserted rows + cleanup handles.
    - `truncateAllTables()` in `db-fixtures.ts` now targets the actual snake_case table names, so repo suites can safely reset state even when `SKIP_DB_LIFECYCLE` toggles the global cleaner.
    - Use `seedDashboardWithMetrics` whenever analytics suites need a repeatable dashboard with multiple metrics/logs/settings without hand-written inserts.
 
 2. **Test structure**
-
    - Prefer colocating new integration suites under `__tests__/integration/features/<feature>/` to mirror the feature slice.
    - Use descriptive `.integration.test.ts` suffixes to distinguish from the API suites already under `integration/api/`.
 
 3. **Documentation updates**
-
    - After each suite lands, update this tracker, `documents/tests/test-classification-2025-12-22.md`, and Phase 2 entries in `test-structure-checklist.md`.
    - Note any new helpers or prerequisites in `documents/tests/3-integration-tests/README.md`.
 

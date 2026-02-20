@@ -410,12 +410,10 @@ This is optional for now; the minimum is to classify them correctly.
 > Codex: please answer/perform as many of these as possible, based on the actual codebase.
 
 1. **Validation of test type definitions**
-
    - Do the definitions in Section 3 align with how tests are currently written?
    - Are there any tests that violate these assumptions (e.g. a domain test unexpectedly hitting DB)?
 
 2. **Per-file classification**
-
    - For each test file under `__tests__/`, classify as **unit** or **integration**, based on real dependencies.
    - Output this as:
      - A markdown table in a new doc, or
@@ -423,13 +421,11 @@ This is optional for now; the minimum is to classify them correctly.
      - Updated comments at the top of each test file (e.g. `// Test Type: UNIT`).
 
 3. **Folder move plan**
-
    - Given the classification, propose a **concrete move plan**:
      - From → To paths for each test file (e.g., `__tests__/features/auth/domain/AuthUser.test.ts` → `__tests__/unit/features/auth/domain/AuthUser.test.ts`).
    - If any move is risky (e.g. due to relative imports), call that out and propose fixes.
 
 4. **Tooling & config**
-
    - Inspect `package.json`, Jest/Vitest config, and current CI workflows.
    - Propose exact script values and config changes to support:
      - `npm run test:unit` (unit only).
@@ -437,14 +433,12 @@ This is optional for now; the minimum is to classify them correctly.
      - `npm run test:contract:*` (existing Newman scripts).
 
 5. **Coverage & reports**
-
    - Check if coverage is currently collected.
    - If not, propose:
      - `collectCoverageFrom`, `coverageDirectory`, and `coverageThreshold` values.
      - Minimal CI changes to archive coverage reports as artifacts.
 
 6. **Test helper layout**
-
    - Evaluate `__tests__/integration/helpers/test-utils.ts`.
    - Suggest whether we should:
      - Keep it there,

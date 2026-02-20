@@ -19,14 +19,12 @@ For migrated non-blocking CI/contract follow-ups, see `documents/ci-cd/backend/F
 ## 2. Goals
 
 - Ensure every backend change is:
-
   - Linted and type-checked,
   - Covered by unit and integration tests,
   - Validated via API contract tests (Postman/Newman),
     before being considered stable.
 
 - Provide a **repeatable pipeline definition** suitable for:
-
   - Recruiters and interviewers reviewing the repository.
   - AI agents (Codex) helping maintain or extend the pipeline.
 
@@ -47,21 +45,24 @@ The main backend workflow is triggered on:
 - `push` to:
   - `main`
   - `dev`
+  - `staging`
   - `feature/**`
 - `pull_request` targeting:
   - `main`
   - `dev`
+  - `staging`
+- manual trigger via `workflow_dispatch`
 
 ### 3.2 Stages (Jobs)
 
 A typical pipeline is composed of these jobs:
 
-1. **checks** – Lint & Typecheck
+1. **checks** – Lint, format check, OpenAPI consistency check, and typecheck
 2. **tests** – Unit & Integration tests (with Postgres + Redis services)
    - Runs both fast test commands and coverage variants (`test:unit:coverage`, `test:integration:coverage`) and uploads `coverage/jest-unit` + `coverage/jest-integration` as artifacts.
-3. **contract_local** – Contract tests against a locally started backend (optional intermediate step)
-4. **deploy_staging** (future) – Deploy backend to staging PaaS
-5. **contract_staging** (future) – Run contract tests against staging backend
+3. **contract_local** – Contract tests against a locally started backend
+4. **deploy_staging** – Deploy backend to Render staging (runs on `staging` branch)
+5. **contract_staging** – Run contract tests against staging backend (runs on `staging` branch)
 
 Later, you may add:
 
@@ -73,16 +74,13 @@ Later, you may add:
 ## 4. Key Workflows & Files
 
 - **Workflow YAML (example):**
-
   - `.github/workflows/backend-ci.yml`
 
 - **Supporting scripts (recommended):**
-
   - `documents/tests/4-contract-tests/postman-newman/scripts/run-contract-local.js`
   - `documents/tests/4-contract-tests/postman-newman/scripts/run-contract-staging.js`
 
 - **Backend configuration for CI:**
-
   - `package.json` scripts:
     - `lint`
     - `typecheck`
@@ -90,6 +88,8 @@ Later, you may add:
     - `test:integration`
     - `test:contract:local`
     - `test:contract:staging`
+    - `format:check`
+    - `docs:openapi:check`
     - `build`
     - `start:test`
 
@@ -102,20 +102,19 @@ Later, you may add:
 The backend pipeline uses three logical environments:
 
 1. **Local (developer)**
-
    - Runs via `npm run` commands directly.
    - Uses local Docker services for Postgres/Redis.
    - Runtime version: **Node.js 20.x (LTS)** — use `.nvmrc`/`.node-version` to stay aligned with CI.
 
 2. **GitHub Actions (CI)**
-
    - Uses service containers for Postgres/Redis.
    - Uses secrets for DB credentials and JWT keys as needed.
 
-3. **Staging (PaaS)** – planned
+3. **Staging (PaaS)**
    - Backend deployed on Render (managed platform).
    - Configured via platform environment variables.
    - Contract tests point to this environment using `lakira-staging.postman_environment.json`.
+   - Current staging API base URL: `https://lakira-backend-staging.onrender.com/api/v1`.
 
 Detailed mapping (URLs, env vars, secrets) is maintained in:
 
@@ -123,14 +122,24 @@ Detailed mapping (URLs, env vars, secrets) is maintained in:
 
 ### 5.1 Database Migrations in CI
 
-- `npm run db:migrate:test` is expected to:
-  - Drop/recreate the test database (idempotent),
-  - Apply the latest migrations,
-  - Seed required fixture data (service accounts, test users).
+- `npm run db:migrate:test` currently runs test migrations (`sequelize-cli db:migrate`) after ensuring build artifacts exist.
+- Seeding for deterministic contract fixtures is handled separately by `npm run seed:contract-tests` (invoked by `test:contract:local` unless skipped).
 - `npm run start:test` should assume those migrations have already run.
 - If migrations require extra flags (e.g. skipping data seeds), document them in `package.json` scripts before updating workflows.
 
 > Special Note for Codex: Do not modify migration commands inside workflows without updating this subsection and the corresponding scripts.
+
+### 5.2 FE-Consumable Backend Contract (Current)
+
+FE convention: `API_URL` and `NEXT_PUBLIC_API_BASE_URL` must resolve to the same backend base URL per environment.
+
+| FE target         | Backend API base URL to use                          | Status                                     |
+| ----------------- | ---------------------------------------------------- | ------------------------------------------ |
+| Local             | `http://localhost:4000/api/v1`                       | Active                                     |
+| Preview / Staging | `https://lakira-backend-staging.onrender.com/api/v1` | Active                                     |
+| Production        | `TBD`                                                | Production backend URL not provisioned yet |
+
+See `documents/ci-cd/backend/ENVIRONMENTS_MATRIX.md` for the full secret/env mapping.
 
 ---
 
@@ -154,11 +163,11 @@ CI jobs call the same scripts and commands referenced in those documents, ensuri
 
 ## 7. Merge Requirements & Branch Protection
 
-- The `contract_local` job is part of the default pipeline and must stay **green** before any PR merges to `main`/`dev`.
+- The `contract_local` job is part of the default pipeline and must stay **green** before PR merges to `main`/`dev`/`staging`.
 - Enforce this via GitHub branch protection rules:
   1. Open **Repository Settings → Branches → Branch protection rules**.
   2. Require status checks to pass before merging and add `contract_local` (job name) to the required checks list.
-  3. Optionally add `checks` + `tests` so lint/unit/integration suites stay enforced.
+  3. Optionally add `checks` + `tests` so lint/unit/integration suites stay enforced; require `contract_staging` for `staging` if you gate releases there.
 - Document exceptions in PR descriptions and re-run the workflow rather than bypassing checks, since contract seeds + Schemathesis rely on deterministic fixtures to catch regressions early.
 - When new jobs are added (e.g., `contract_staging`, nightly Schemathesis), update this section and the branch protection configuration accordingly.
 
@@ -170,19 +179,17 @@ CI jobs call the same scripts and commands referenced in those documents, ensuri
 
 Planned/optional enhancements:
 
-- **deploy_staging job**:
-
-  - Build Docker image or use platform buildpacks.
-  - Deploy to Render staging environment.
-
-- **contract_staging job**:
-
-  - Run Newman against staging using `lakira-staging.postman_environment.json`.
-  - Archive reports as artifacts.
-
 - **Jenkins experimental pipeline**:
   - Short-lived Jenkins setup documented in `JENKINS_NOTES.md`.
   - Mirrors the GitHub Actions pipeline stages for learning.
+
+- **Staging hardening**:
+  - Add Schemathesis staging execution to `contract_staging`.
+  - Add stronger release gates for `staging` promotion flow.
+
+- **Production rollout**:
+  - Define production backend URL/domain (currently `TBD`).
+  - Add production deploy + health + smoke verification jobs once production exists.
 
 ---
 
@@ -192,5 +199,5 @@ Planned/optional enhancements:
 - Pipelines are designed to:
   - Run on every push/PR,
   - Enforce lint, typecheck, unit, integration, and contract tests,
-  - Eventually deploy to and validate against staging.
+  - Deploy to and validate against staging on the `staging` branch.
 - The documentation in this `backend/` folder ensures that anyone (including AI agents) can understand and safely modify the pipeline without guesswork.
