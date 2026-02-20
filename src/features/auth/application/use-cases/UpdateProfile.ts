@@ -9,7 +9,6 @@ export type UpdateProfileInput = {
   username?: string;
   password?: string;
   isPublicProfile?: boolean;
-  role?: AuthUser["role"];
 };
 
 export class UpdateProfile {
@@ -44,10 +43,6 @@ export class UpdateProfile {
     if (input.password) {
       const passwordHash = await this.hasher.hash(input.password);
       user.setPasswordHash(passwordHash);
-    }
-
-    if (input.role && input.role !== user.role) {
-      user.setRole(input.role);
     }
 
     return this.repo.save(user);

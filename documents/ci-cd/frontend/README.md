@@ -11,6 +11,7 @@ This document describes the **CI/CD pipeline** for the Lakira Frontend (Next.js)
 For project-wide strategy, see `documents/ci-cd/CI_CD_STRATEGY.md`.  
 For environment details, see `documents/ci-cd/frontend/ENVIRONMENTS_MATRIX.md`.  
 For job-by-job expectations, see `documents/ci-cd/frontend/GITHUB_ACTIONS_PIPELINE_PLAN.md` and `GITHUB_ACTIONS_PIPELINE_CHECKLIST.md`.
+For BE-to-FE contract/deploy dependencies, see `documents/ci-cd/frontend/BACKEND_HANDOFF_FOR_FE_CICD.md`.
 
 > Special Note for Codex: When generating or editing `.github/workflows/frontend-ci.yml`, follow this document and the environment matrix.
 
@@ -19,14 +20,12 @@ For job-by-job expectations, see `documents/ci-cd/frontend/GITHUB_ACTIONS_PIPELI
 ## 2. Goals
 
 - On every frontend change:
-
   - Run **lint** and **typecheck**,
   - Run **unit/component tests** (Vitest/Jest + RTL),
   - Optionally run **E2E tests** (Playwright) against a staging backend,
   - Build the Next.js app.
 
 - On `main` / `develop` / PRs:
-
   - Produce **Vercel Preview deployments** (via Vercel GitHub integration),
   - Ensure the app points at the **staging backend API**.
 
@@ -90,23 +89,24 @@ Frontend CI uses the environments defined in `ENVIRONMENTS_MATRIX.md`.
 Key points:
 
 - In **local dev**:
-
-  - `NEXT_PUBLIC_API_BASE_URL=http://localhost:4000/api/v1`.
+  - `API_URL=http://localhost:4000/api/v1`
+  - `NEXT_PUBLIC_API_BASE_URL=http://localhost:4000/api/v1`
 
 - In **CI and Vercel Preview**:
-  - `NEXT_PUBLIC_API_BASE_URL` should point to the **staging backend**:
-    - e.g. `https://api-staging.lakira.yourdomain.com/api/v1`.
+  - `API_URL` and `NEXT_PUBLIC_API_BASE_URL` should both point to the staging backend:
+    - `https://lakira-backend-staging.onrender.com/api/v1`.
 
 ### 5.1 GitHub Secrets for Frontend CI
 
 Define in GitHub:
 
-- `STAGING_API_BASE_URL` – e.g. `https://api-staging.lakira.yourdomain.com/api/v1`.
+- `STAGING_API_BASE_URL` – `https://lakira-backend-staging.onrender.com/api/v1`.
 
 In `frontend-ci.yml`, map:
 
 ```yaml
 env:
+  API_URL: ${{ secrets.STAGING_API_BASE_URL }}
   NEXT_PUBLIC_API_BASE_URL: ${{ secrets.STAGING_API_BASE_URL }}
 ```
 
@@ -123,9 +123,11 @@ Optional (if you use Vercel CLI deployment from Actions):
 In the Vercel project settings:
 
 - **Preview environment vars**:
-  - `NEXT_PUBLIC_API_BASE_URL=https://api-staging.lakira.yourdomain.com/api/v1`
+  - `API_URL=https://lakira-backend-staging.onrender.com/api/v1`
+  - `NEXT_PUBLIC_API_BASE_URL=https://lakira-backend-staging.onrender.com/api/v1`
 - **Production environment vars**:
-  - `NEXT_PUBLIC_API_BASE_URL=https://api.lakira.yourdomain.com/api/v1` (or staging if you share).
+  - `API_URL=TBD`
+  - `NEXT_PUBLIC_API_BASE_URL=TBD`
 
 ---
 
@@ -170,7 +172,9 @@ fe_tests:
         cache: npm
     - run: npm ci
     - name: Set API base URL
-      run: echo "NEXT_PUBLIC_API_BASE_URL=${{ secrets.STAGING_API_BASE_URL }}" >> $GITHUB_ENV
+      run: |
+        echo "API_URL=${{ secrets.STAGING_API_BASE_URL }}" >> $GITHUB_ENV
+        echo "NEXT_PUBLIC_API_BASE_URL=${{ secrets.STAGING_API_BASE_URL }}" >> $GITHUB_ENV
     - run: npm run test
 ```
 
@@ -193,7 +197,9 @@ fe_build:
         cache: npm
     - run: npm ci
     - name: Set API base URL
-      run: echo "NEXT_PUBLIC_API_BASE_URL=${{ secrets.STAGING_API_BASE_URL }}" >> $GITHUB_ENV
+      run: |
+        echo "API_URL=${{ secrets.STAGING_API_BASE_URL }}" >> $GITHUB_ENV
+        echo "NEXT_PUBLIC_API_BASE_URL=${{ secrets.STAGING_API_BASE_URL }}" >> $GITHUB_ENV
     - run: npm run build
 ```
 
@@ -226,7 +232,9 @@ fe_e2e:
         cache: npm
     - run: npm ci
     - name: Set API base URL
-      run: echo "NEXT_PUBLIC_API_BASE_URL=${{ secrets.STAGING_API_BASE_URL }}" >> $GITHUB_ENV
+      run: |
+        echo "API_URL=${{ secrets.STAGING_API_BASE_URL }}" >> $GITHUB_ENV
+        echo "NEXT_PUBLIC_API_BASE_URL=${{ secrets.STAGING_API_BASE_URL }}" >> $GITHUB_ENV
     - name: Start Next.js
       run: npm run start &
     - name: Wait for frontend
@@ -239,7 +247,7 @@ fe_e2e:
 
 - Install Playwright browsers via `npx playwright install --with-deps` in local dev and CI before enabling `fe_e2e`.
 - Ensure CI job has access to necessary apt packages (use `microsoft/playwright-github-action` or manual install).
-- Reuse `NEXT_PUBLIC_API_BASE_URL` pointing at staging to keep flows realistic.
+- Reuse `API_URL` + `NEXT_PUBLIC_API_BASE_URL` pointing at staging to keep flows realistic.
 
 > Special Note for Codex: When enabling this job, include the browser-install step explicitly and reference this subsection in PR descriptions.
 
@@ -258,7 +266,7 @@ Primary deployment path for Lakira FE:
 CI responsibilities:
 
 - Ensure tests and builds are green before merging to `main`.
-- Ensure the app is configured with `NEXT_PUBLIC_API_BASE_URL` for staging/production in Vercel settings.
+- Ensure the app is configured with `API_URL` + `NEXT_PUBLIC_API_BASE_URL` for staging/production in Vercel settings.
 
 Optional: If you want to drive deploys from Actions instead of automatic integration, you can add a `fe_deploy_preview` job using the Vercel CLI:
 
@@ -284,11 +292,12 @@ fe_deploy_preview:
 ## 8. Relationship to Backend
 
 - Frontend tests assume the **backend staging environment** is healthy and contract-tested.
-- `NEXT_PUBLIC_API_BASE_URL` in CI and Preview should match `STAGING_BASE_URL` or the equivalent defined in backend CI/CD.
+- `API_URL` and `NEXT_PUBLIC_API_BASE_URL` in CI/Preview should both match backend staging (`STAGING_API_BASE_URL` in FE secrets, equivalent to backend `STAGING_BASE_URL`).
 - When backend contracts change:
   - Update OpenAPI and backend contract tests,
   - Adjust frontend calls and tests,
   - Validate via combined FE + BE CI.
+- Use `documents/ci-cd/frontend/BACKEND_HANDOFF_FOR_FE_CICD.md` as the shared release/dependency checklist between FE and BE.
 
 ---
 

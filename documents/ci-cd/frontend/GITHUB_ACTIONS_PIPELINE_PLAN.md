@@ -40,7 +40,9 @@ Workflow should run on:
 **Goal:** Run unit/component tests.
 
 - Needs: `fe_checks`
-- Set `NEXT_PUBLIC_API_BASE_URL=${{ secrets.STAGING_API_BASE_URL }}`
+- Set:
+  - `API_URL=${{ secrets.STAGING_API_BASE_URL }}`
+  - `NEXT_PUBLIC_API_BASE_URL=${{ secrets.STAGING_API_BASE_URL }}`
 - Steps:
   1. Checkout
   2. Setup Node 20
@@ -52,7 +54,7 @@ Workflow should run on:
 **Goal:** Ensure Next.js build succeeds.
 
 - Needs: `fe_tests`
-- Set same API base URL env var
+- Set same API env vars (`API_URL`, `NEXT_PUBLIC_API_BASE_URL`)
 - Steps:
   1. Checkout
   2. Setup Node 20
@@ -68,7 +70,7 @@ Workflow should run on:
   1. Checkout
   2. Setup Node 20
   3. `npm ci`
-  4. Export `NEXT_PUBLIC_API_BASE_URL`
+  4. Export `API_URL` + `NEXT_PUBLIC_API_BASE_URL`
   5. `npm run start &`
   6. Wait for `http://localhost:3000`
   7. `npm run test:e2e`

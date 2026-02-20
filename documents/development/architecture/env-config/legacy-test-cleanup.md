@@ -13,17 +13,14 @@ Modernize the remaining Jest suites under `__tests__/` so they comply with the n
 ## Plan of Record
 
 1. **Enable guardrails (done)**
-
    - Jest globals registered via ESLint override.
    - `no-restricted-properties` now blocks direct `process.env` access inside `__tests__` (enforced 2026-01-05).
 
 2. **Track outstanding suites**
-
    - Run `npm run lint:tests` and capture offenders (command now fails fast if a suite touches `process.env`).
    - Break the list into sub-tickets by feature area (Analytics, Auth, Metrics, Helpers).
 
 3. **Refactor per feature**
-
    - Apply Prettier fixes to each folder (safe to use `npx prettier --write __tests__/features/auth` after staging).
    - Replace direct env mutations with `withTestEnv` or `getEnv`.
    - Remove duplicated env mocking helpers (fold into `withTestEnv`).

@@ -32,35 +32,29 @@ Update or add unit suites whenever:
 ## 3. Per-PR Developer Workflow
 
 1. **Identify scope**
-
    - Classify the change (domain, application, HTTP adapter, cache, schema, etc.).
    - Review existing suites under `__tests__/unit/**` for the same feature; note gaps to fill.
 
 2. **Design test cases**
-
    - Happy-path assertions (expected DTO, caches invalidated, events emitted).
    - Guard rails (authorization, validation, invariants).
    - Edge cases (empty collections, optional fields, toggles).
 
 3. **Implement or update suites**
-
    - Place tests in the mirrored folder (e.g., `src/features/metric/application/CreateMetric.ts` -> `__tests__/unit/features/metric/application/CreateMetric.test.ts`).
    - Use Jest mocks/fakes instead of real Sequelize/Redis/Express instances.
    - Wrap environment overrides with `withTestEnv` only when the code under test reads from `process.env`.
 
 4. **Run commands locally**
-
    - `npm run test:unit`
    - `npm run test:unit:coverage` if the feature is part of a critical path (auth, metrics, analytics aggregates) or when updating coverage-sensitive files.
 
 5. **Document deltas**
-
    - Update `unit-tests-plan.md` or the checklist when new work lands (e.g., mark a gap as addressed).
    - Capture notable decisions (new helper, factory, or mocking pattern) in `decisions.md`.
    - Record KPI changes (runtime/coverage) in `metrics-tracker.md`.
 
 6. **Push & review**
-
    - Include test output in PR description when touching risk areas.
    - Ensure CI upload (`coverage/jest-unit`) contains new files; attach summary metrics if needed.
 

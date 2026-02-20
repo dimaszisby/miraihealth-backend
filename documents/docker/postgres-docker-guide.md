@@ -217,7 +217,6 @@ When running Docker containers, it's important to stay up-to-date with the lates
 If `docker scout quickview postgres:17-alpine` indicates that a newer version (e.g., 1.17.0) is available, follow these steps to investigate:
 
 1.  **Verify the Reported Version:**
-
     - First, confirm the currently running PostgreSQL version inside the container:
 
     ```bash
@@ -227,7 +226,6 @@ If `docker scout quickview postgres:17-alpine` indicates that a newer version (e
     - Compare this version with the version reported by `docker scout quickview`.
 
 2.  **Identify the Source of the Update Recommendation:**
-
     - `docker scout quickview` might be recommending an update due to:
       - **Base Image Updates:** The `postgres:17-alpine` base image itself has been updated with a newer PostgreSQL version.
       - **Package Updates:** The Alpine Linux packages within the image have been updated.
@@ -241,13 +239,11 @@ If `docker scout quickview postgres:17-alpine` indicates that a newer version (e
 Before upgrading, consider the potential impact on your application and data. Always follow a safe upgrade strategy:
 
 1.  **Testing:**
-
     - Create a staging environment that mirrors your production environment.
     - Upgrade the PostgreSQL container in the staging environment.
     - Run thorough tests to ensure your application is compatible with the new version and that there are no performance regressions.
 
 2.  **Backup:**
-
     - Before upgrading the production environment, create a full backup of your PostgreSQL database. This will allow you to rollback if necessary.
 
     ```bash
@@ -255,7 +251,6 @@ Before upgrading, consider the potential impact on your application and data. Al
     ```
 
 3.  **Upgrade Procedure:**
-
     - Stop the existing PostgreSQL container:
 
     ```bash
@@ -289,7 +284,6 @@ Before upgrading, consider the potential impact on your application and data. Al
     ```
 
 4.  **Verification:**
-
     - After the upgrade, verify that the PostgreSQL version has been updated:
 
     ```bash
@@ -321,19 +315,16 @@ If you encounter issues after the upgrade, you can rollback to the previous vers
 After changing the PostgreSQL version, it's crucial to verify that the data migration was successful and that the application is functioning correctly.
 
 1.  **Data Migration Verification:**
-
     - **Check Data Integrity:** Run queries to verify that the data is intact and consistent. Compare the data in the new version with a backup of the old version.
     - **Check Data Types:** Ensure that the data types are compatible with the new version. Some data types might have changed in PostgreSQL 17.
     - **Check Constraints:** Verify that all constraints are still valid and that there are no constraint violations.
 
 2.  **Application Functionality Verification:**
-
     - **Run Application Tests:** Run all application tests to ensure that the application is functioning correctly with the new PostgreSQL version.
     - **Check Application Logs:** Check the application logs for any errors or warnings.
     - **Monitor Application Performance:** Monitor the application performance to ensure that there are no performance regressions.
 
 3.  **Compatibility with Homebrew PostgreSQL 17:**
-
     - If you have existing implementations that rely on a local PostgreSQL version 17 instance managed via Homebrew, ensure that the application can connect to both the Docker container and the local Homebrew instance.
     - Verify that the connection parameters (host, port, password, database name) are configured correctly for both environments.
 

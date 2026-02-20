@@ -6,7 +6,6 @@ import {
   zPassword,
   zPasswordConfirmation,
   zPublicProfile,
-  zRoleEnum,
 } from "@/constants/zod/zod-rules.js";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 
@@ -30,7 +29,6 @@ export const updateUserBody = z.object({
   email: zEmail.optional(),
   password: zPassword.optional(),
   isPublicProfile: zPublicProfile.optional(),
-  role: zRoleEnum.optional(),
 });
 
 export const loginUserBody = z.object({

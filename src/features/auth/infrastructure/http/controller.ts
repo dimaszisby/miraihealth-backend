@@ -63,7 +63,7 @@ export const updateProfile = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
     const {
-      body: { email, username, password, isPublicProfile, role },
+      body: { email, username, password, isPublicProfile },
     } = pickUpdateUser(req);
     const updated = await feature.updateProfile.execute({
       userId: req.user.id,
@@ -71,7 +71,6 @@ export const updateProfile = catchAsync(
       username,
       password,
       isPublicProfile,
-      role,
     });
     successResponse(
       res,

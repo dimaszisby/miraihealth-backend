@@ -10,16 +10,58 @@ This guide explains how Lakira Backend’s automation works and what a junior de
    - `npm run format:check`
    - `npm run typecheck`
    - `npm run docs:openapi:check`
-2. **Unit Tests**
+2. **Security Delta Gate (job: `security_delta`)**
+   - `npm run test:unit:security-framework`
+   - `npm run security:delta:check`
+   - `npm run security:gate:evaluate`
+   - Uploads artifacts from `tmp/security/*` as CI artifact `backend-security-delta`.
+   - Soft gate rule: CI fails on unresolved **High/Critical** findings only.
+3. **Unit Tests**
    - `npm run test:unit` (enforces ≥ 60 % statements / ≥ 40 % branches / ≥ 55 % functions / ≥ 60 % lines via `jest.config.mjs`)
    - `npm run test:unit:coverage` (coverage artifacts moved to `coverage/jest-unit` and `coverage/junit/unit.xml`, both uploaded)
-3. **Integration Tests**
+4. **Integration Tests**
    - `npm run test:integration` (runs sequentially with `NODE_ENV=test`)
-4. **Contract / E2E (optional per PR)**
+5. **Contract / E2E (optional per PR)**
    - `npm run test:contract:local` or staging variant when requested by QA.
    - `npm run test:contract:schemathesis:local` once the OpenAPI spec is regenerated to fuzz every documented path.
 
 Jobs run in the order above; a failure in any stage blocks later jobs so issues are caught early.
+
+## 1.1 Security Gate Quick Reference
+
+- Run locally before PRs that touch backend behavior or security-sensitive code:
+  - `npm run test:unit:security-framework`
+  - `npm run security:delta:gate`
+- Main generated files:
+  - `tmp/security/security-delta-report.json`
+  - `tmp/security/security-gate-result.json`
+  - `tmp/security/npm-audit-production.json`
+- CI artifact name:
+  - `backend-security-delta`
+- Detailed references:
+  - `documents/security/guides/README.md`
+  - `documents/security/guides/security-scripts-usage-guide.md`
+  - `documents/security/guides/security-release-delta-sop.md`
+  - `documents/security/framework/ci-gate-policy.json`
+
+## 1.2 Production Release Security Delta (Mandatory)
+
+Before every production release, run the release SOP:
+
+- `documents/security/guides/security-release-delta-sop.md`
+
+Minimum required local commands:
+
+```bash
+npm run test:unit:security-framework
+npm run security:delta:gate
+```
+
+Release branch protection baseline (GitHub settings):
+
+1. Require status checks: `checks`, `security_delta`, `tests`.
+2. Require Code Owners review.
+3. Require pull request review before merge.
 
 ## 2. Local Pre-Commit / Pre-PR Checklist
 
@@ -33,7 +75,10 @@ Before committing or opening a PR:
 6. `npm run test:unit` (always; fails fast if coverage slips below thresholds) and `npm run test:unit:coverage` if touching high-risk paths.
 7. `npm run test:integration` when persistence, HTTP wiring, or migrations are touched.
 8. For API/schema updates: `npm run docs:openapi:check` and commit spec changes if needed.
-9. Stage files and let Husky run `npm run lint-staged` (ESLint + Prettier on staged files) before the commit is created.
+9. Run `npm run test:unit:security-framework` after changing security templates/scripts/policies.
+10. Run `npm run security:delta:gate` for backend/security-impacting changes.
+11. Stage files and let Husky run `npm run lint-staged` (ESLint + Prettier on staged files) before the commit is created.
+12. For production release PRs, follow `documents/security/guides/security-release-delta-sop.md` and update the active security audit run docs.
 
 Document command outputs or screenshots in the PR description for easier reviewer triage.
 
@@ -50,6 +95,7 @@ Document command outputs or screenshots in the PR description for easier reviewe
 | Stage             | Typical Failure Causes                                  | What To Do                                                                                                                                          |
 | ----------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Static checks     | Lint/type errors, formatting drift, OpenAPI diffs       | Re-run same command locally, fix, re-run `npm run lint` & `npm run lint:tests`.                                                                     |
+| Security gate     | Unresolved High/Critical findings from delta checks     | Run `npm run security:delta:gate`, inspect `tmp/security/security-gate-result.json`, remediate blockers, then re-run.                               |
 | Unit tests        | Missing coverage, flaky mocks, updated business logic   | Add/update suites under `__tests__/unit/**`, ensure `withTestEnv` usage.                                                                            |
 | Integration tests | DB migrations, Sequelize schema drift, HTTP regressions | Re-run `npm run test:integration`, check migrations and seed data.                                                                                  |
 | Contract/E2E      | API schema mismatch, environment drift                  | Rerun `npm run docs:openapi:generate`, refresh contract seeds, export a Schemathesis token (see §8), and ensure `DISABLE_RATE_LIMITING=true` in CI. |
@@ -65,20 +111,24 @@ Always push fixes to the same branch; reruns are automatic once CI detects new c
 
 ## 6. Useful Scripts Reference
 
-| Script                       | Purpose                                                   |
-| ---------------------------- | --------------------------------------------------------- |
-| `npm run lint`               | ESLint full repo                                          |
-| `npm run lint:fix`           | ESLint auto-fix                                           |
-| `npm run lint:tests`         | ESLint scoped to `__tests__/**` guardrail                 |
-| `npm run format:write`       | Prettier auto-format                                      |
-| `npm run typecheck`          | TypeScript `--noEmit`                                     |
-| `npm run test:unit`          | Jest unit project                                         |
-| `npm run test:unit:coverage` | Jest unit coverage                                        |
-| `npm run test:integration`   | Jest integration project                                  |
-| `npm run docs:openapi:check` | Regenerate and diff OpenAPI spec                          |
-| `npm run lint-staged`        | Pre-commit automation (eslint + prettier on staged files) |
+| Script                                 | Purpose                                                             |
+| -------------------------------------- | ------------------------------------------------------------------- |
+| `npm run lint`                         | ESLint full repo                                                    |
+| `npm run lint:fix`                     | ESLint auto-fix                                                     |
+| `npm run lint:tests`                   | ESLint scoped to `__tests__/**` guardrail                           |
+| `npm run format:write`                 | Prettier auto-format                                                |
+| `npm run typecheck`                    | TypeScript `--noEmit`                                               |
+| `npm run test:unit`                    | Jest unit project                                                   |
+| `npm run test:unit:security-framework` | Security framework validation tests (templates/schemas/gate policy) |
+| `npm run test:unit:coverage`           | Jest unit coverage                                                  |
+| `npm run test:integration`             | Jest integration project                                            |
+| `npm run docs:openapi:check`           | Regenerate and diff OpenAPI spec                                    |
+| `npm run security:delta:check`         | Generate security delta report + npm audit artifact                 |
+| `npm run security:gate:evaluate`       | Evaluate findings against soft gate policy                          |
+| `npm run security:delta:gate`          | Run delta check + gate evaluation in one command                    |
+| `npm run lint-staged`                  | Pre-commit automation (eslint + prettier on staged files)           |
 
-## 8. Contract Tests + Schemathesis Quickstart
+## 7. Contract Tests + Schemathesis Quickstart
 
 0. **Install the Schemathesis CLI (one-time)**
 
@@ -117,7 +167,7 @@ Always push fixes to the same branch; reruns are automatic once CI detects new c
 - Metric settings enforce conditional fields. When you turn on `goalEnabled`, also set `goalType` + `goalValue`; when you flip `timeFrameEnabled`, include both `startDate` and `deadlineDate`. The OpenAPI spec mirrors this via `oneOf`.
 - Cursor list endpoints (`/metrics`, `/metric-settings`, `/metric-logs`, `/metric-categories`) reject blank `q` values and unexpected `filter[...]` keys. Schemathesis reports of “valid data rejected” for those parameters are usually expected 400s.
 
-## 7. Escalation & Support
+## 8. Escalation & Support
 
 - **Docs**: `documents/tests/**`, `documents/ci-cd/backend/**`, `documents/development/architecture/**`.
 - **Owner**: Backend Platform (@dimaspramudya). Reach out for CI failures or infrastructure issues.

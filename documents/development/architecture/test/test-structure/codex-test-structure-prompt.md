@@ -88,7 +88,6 @@ You can paste the text below directly into Codex.
 > 2. In that doc, create sections:
 >
 >    **3.1 Unit tests – moves**
->
 >    - List all files that should end up under `__tests__/unit/**`, in a table:
 >
 >      ```markdown
@@ -100,7 +99,6 @@ You can paste the text below directly into Codex.
 >      ```
 >
 >    **3.2 Integration tests – moves**
->
 >    - Same idea, but for `__tests__/integration/**`, including:
 >      - features/\*/application
 >      - features/\*/infrastructure/\*\*
@@ -122,10 +120,8 @@ You can paste the text below directly into Codex.
 > 2. Create another doc:
 >    - `documents/tests/test-tooling-recommendations-2025-12-22.md`
 > 3. In that doc:
->
 >    - Show the **current** testing/coverage related scripts and config (brief summary).
 >    - Propose concrete updated snippets for:
->
 >      - `package.json`:
 >        - `test`
 >        - `test:unit`
@@ -136,7 +132,6 @@ You can paste the text below directly into Codex.
 >        - How to run **only unit** tests (using `__tests__/unit/**` or suffixes).
 >        - How to run **only integration** tests (using `__tests__/integration/**`).
 >        - `collectCoverageFrom`, `coverageDirectory`, and reasonable `coverageThreshold` defaults.
->
 >    - Show these as **ready-to-paste code blocks**, but do not modify files directly.
 >
 > ---

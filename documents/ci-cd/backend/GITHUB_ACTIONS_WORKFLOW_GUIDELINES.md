@@ -16,22 +16,18 @@ These guidelines define **how to design, write, and maintain** GitHub Actions wo
 ## 2. General Principles
 
 1. **Pipelines as Code**
-
    - All CI/CD logic lives in `.github/workflows/*.yml`.
    - Avoid manual, undocumented release steps for anything critical.
 
 2. **Fail Fast, Then Go Deep**
-
    - Run lint and typecheck first.
    - Only run unit/integration/contract tests after basic checks pass.
 
 3. **Deterministic & Idempotent**
-
    - Tests must not depend on wall-clock time or random data unless explicitly controlled.
    - DB migrations and seeds should be safe to re-run without corrupting data.
 
 4. **Security by Default**
-
    - Secrets always come from `secrets.*`.
    - No credentials or tokens may be hard-coded in workflows.
 
@@ -56,11 +52,14 @@ on:
     branches:
       - main
       - dev
+      - staging
       - "feature/**"
   pull_request:
     branches:
       - main
       - dev
+      - staging
+  workflow_dispatch:
 ```
 
 > Working directory tip: set `defaults.run.working-directory` to the literal backend path (e.g., `.` or `./apps/backend`). GitHub Actions forbids `${{ env.* }}` expressions in this field, so edit the string directly when relocating the backend code.
@@ -72,8 +71,8 @@ Standard jobs:
 - `checks` – lint & typecheck
 - `tests` – unit + integration tests
 - `contract_local` – contract tests against locally started backend
-- (Future) `deploy_staging` – deploy to Render staging
-- (Future) `contract_staging` – contract tests against staging
+- `deploy_staging` – deploy to Render staging (staging branch gate)
+- `contract_staging` – contract tests against staging (staging branch gate)
 
 Use `needs` to enforce ordering:
 
@@ -270,12 +269,12 @@ Example for Newman (local):
 - name: Upload Newman reports (local)
   uses: actions/upload-artifact@v4
   with:
-    name: newman-local
+    name: newman-contract-local
     path: documents/tests/4-contract-tests/postman-newman/reports/local
     retention-days: 14
 ```
 
-You can mirror this pattern for staging contract tests (`newman-staging`).
+You can mirror this pattern for staging contract tests (`newman-contract-staging`).
 
 ### 7.2 Failure Triage Flow
 
@@ -314,11 +313,14 @@ on:
     branches:
       - main
       - dev
+      - staging
       - "feature/**"
   pull_request:
     branches:
       - main
       - dev
+      - staging
+  workflow_dispatch:
 
 concurrency:
   group: backend-ci-${{ github.ref }}
@@ -336,7 +338,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
+      - run: npm run format:check
       - run: npm run typecheck
+      - run: npm run docs:openapi:check
 
   tests:
     needs: checks
@@ -382,6 +386,7 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - run: npm run build
       - run: npm run db:migrate:test
       - run: npm run test:unit
       - run: npm run test:integration
@@ -431,6 +436,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      - run: npm run docs:openapi:generate
       - run: npm run db:migrate:test
       - name: Start backend
         run: |
@@ -468,7 +474,7 @@ jobs:
       - name: Upload Newman reports (local)
         uses: actions/upload-artifact@v4
         with:
-          name: newman-local
+          name: newman-contract-local
           path: documents/tests/4-contract-tests/postman-newman/reports/local
           retention-days: 14
 ```

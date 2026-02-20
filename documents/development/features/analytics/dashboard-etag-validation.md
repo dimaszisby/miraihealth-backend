@@ -27,7 +27,6 @@ Ensure the `/analytics/dashboard` endpoint invalidates cached payloads whenever 
    - Expect `HTTP/1.1 304 Not Modified` and no body.
 
 3. **Metadata change invalidation**
-
    - Update a metric name or category (via API or DB) so that `metrics.updated_at` or `metric_categories.updated_at` changes.
    - Repeat step 1; expect:
      - Redis miss due to new `vizDashKey` version cursor.

@@ -22,7 +22,6 @@ Out of scope:
 ## 3. Approach
 
 1. **Spec Preparation**
-
    - Regenerate OpenAPI via `npm run docs:openapi:generate` before each run.
    - Use the generated JSON file directly; avoid remote schemas to keep runs hermetic.
 
@@ -63,12 +62,10 @@ Out of scope:
    - Wrap these commands in npm scripts (`test:contract:schemathesis:local|staging`) and Node helpers under `schemathesis/scripts/`.
 
 3. **State & Auth**
-
    - Use seeded users + tokens documented in Postman env files.
    - For endpoints requiring path IDs, rely on stateful phase runs and add custom hooks to pull IDs via setup calls (e.g., `GET /metrics` before fuzzing `GET /metrics/{id}`).
 
 4. **Reporting**
-
    - Store JUnit XML + HAR JSON files under `schemathesis/reports/<env>/` and summarize notable runs in `schemathesis/findings.md`.
    - Link report paths from README + metrics tracker.
 
@@ -79,19 +76,16 @@ Out of scope:
 ## 4. Phases
 
 1. **Phase A – Bootstrap (aligned with Contract Plan Phase 2)**
-
    - Install Schemathesis dev dependency.
    - Create CLI wrappers + base configs.
    - Limit to analytics + metrics tags to validate runtime (~5 min target).
 
 2. **Phase B – Full Path Coverage**
-
    - Expand tags to include metric-logs, metric-settings, auth.
    - Add custom checks for analytics caching headers using Schemathesis hooks.
    - Document allowlists for known deviations (e.g., 202 accepted responses).
 
 3. **Phase C – CI/Nightly Integration**
-
    - Run Schemathesis in GitHub Actions nightly (cron) hitting staging.
    - Upload JSON + junit reports as artifacts.
    - Triage failures via incidents log + metrics tracker updates.
