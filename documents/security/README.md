@@ -40,6 +40,7 @@ Out of scope for this v1 framework:
   - Framework basics: `documents/security/guides/security-framework-junior-guide.md`
   - Script usage: `documents/security/guides/security-scripts-usage-guide.md`
   - Release delta SOP: `documents/security/guides/security-release-delta-sop.md`
+  - Branch model workflow: `documents/security/guides/security-audit-workflow-branch-model.md`
 
 ## Ownership and Workflow
 
