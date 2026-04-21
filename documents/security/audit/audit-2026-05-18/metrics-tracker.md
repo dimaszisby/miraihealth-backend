@@ -1,6 +1,6 @@
 # Security Audit Metrics Tracker - 2026-05-18
 
-| Metric                           | Target                                              | Baseline (2026-02-18 run) | Current (2026-02-18 precheck) | Owner            | Next Action                                         |
+| Metric                           | Target                                              | Baseline (2026-02-18 run) | Current (2026-02-23 precheck) | Owner            | Next Action                                         |
 | -------------------------------- | --------------------------------------------------- | ------------------------- | ----------------------------- | ---------------- | --------------------------------------------------- |
 | Critical findings open           | 0                                                   | 0                         | 0                             | backend-security | Preserve zero during 2026-05-18 execution           |
 | High findings open               | 0                                                   | 0                         | 0                             | backend-security | Preserve zero during 2026-05-18 execution           |
