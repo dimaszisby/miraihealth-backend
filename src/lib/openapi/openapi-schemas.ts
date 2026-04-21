@@ -10,7 +10,10 @@ import {
   settingsBody,
   settingsBodyPartial,
 } from "@/features/metric-settings/infrastructure/http/schema.zod.js";
-import { metricLogBody } from "@/features/metric-log/infrastructure/http/schema.zod.js";
+import {
+  metricLogBody,
+  generateDummyMetricLogsBody,
+} from "@/features/metric-log/infrastructure/http/schema.zod.js";
 
 // Common Schemas
 const EMAIL_PATTERN = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
@@ -717,6 +720,27 @@ export const MetricLogCursorResponseSchema = registerSchema(
   z.object({
     items: z.array(MetricLogSchema),
     ...CursorMetaSchema,
+  }),
+);
+
+export const GenerateDummyMetricLogsRequestSchema = registerSchema(
+  "GenerateDummyMetricLogsRequest",
+  generateDummyMetricLogsBody.openapi({
+    example: {
+      metricId: "55555555-eeee-4eee-8eee-000000000005",
+      count: 50,
+    },
+  }),
+);
+
+export const GenerateDummyMetricLogsResponseSchema = registerSchema(
+  "GenerateDummyMetricLogsResponse",
+  z.object({
+    jobId: z.string().uuid().openapi({
+      example: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+      description:
+        "UUID identifying the async job. Poll for completion or observe worker logs.",
+    }),
   }),
 );
 
