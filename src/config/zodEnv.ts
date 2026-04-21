@@ -148,6 +148,47 @@ const envSchema = z.object({
     .transform((val) => val === "true")
     .default("false"),
 
+  // RabbitMQ
+  RABBITMQ_URL: z.string().optional(),
+  RABBITMQ_ENABLED: z
+    .string()
+    .transform((val) => val === "true")
+    .default("false"),
+  RABBITMQ_HOST: z.string().default("127.0.0.1"),
+  RABBITMQ_PORT: z
+    .string()
+    .transform((val) => {
+      const parsed = parseInt(val, 10);
+      if (isNaN(parsed)) {
+        throw new Error("RABBITMQ_PORT must be a valid number");
+      }
+      return parsed;
+    })
+    .default("5672"),
+  RABBITMQ_USER: z.string().default("guest"),
+  RABBITMQ_PASSWORD: z.string().default("guest"),
+  RABBITMQ_VHOST: z.string().default("/"),
+  RABBITMQ_PREFETCH: z
+    .string()
+    .transform((val) => {
+      const parsed = parseInt(val, 10);
+      if (isNaN(parsed) || parsed <= 0) {
+        throw new Error("RABBITMQ_PREFETCH must be a positive number");
+      }
+      return parsed;
+    })
+    .default("10"),
+  RABBITMQ_MAX_RETRIES: z
+    .string()
+    .transform((val) => {
+      const parsed = parseInt(val, 10);
+      if (isNaN(parsed) || parsed < 0) {
+        throw new Error("RABBITMQ_MAX_RETRIES must be a non-negative number");
+      }
+      return parsed;
+    })
+    .default("5"),
+
   // HTTP
   REQUEST_BODY_LIMIT: z.string().default("1mb"),
   SWAGGER_REQUIRE_AUTH: z
@@ -258,10 +299,45 @@ const normalizeRedisConfig = (parsedEnv: RawEnv): RawEnv => {
   }
 };
 
+const normalizeRabbitMQConfig = (parsedEnv: RawEnv): RawEnv => {
+  if (!parsedEnv.RABBITMQ_URL) {
+    return parsedEnv;
+  }
+
+  try {
+    const url = new URL(parsedEnv.RABBITMQ_URL);
+    if (url.protocol !== "amqp:" && url.protocol !== "amqps:") {
+      throw new Error("RABBITMQ_URL protocol must be amqp:// or amqps://");
+    }
+
+    if (url.hostname) parsedEnv.RABBITMQ_HOST = url.hostname;
+    if (url.port) {
+      const parsedPort = Number(url.port);
+      if (!Number.isNaN(parsedPort)) parsedEnv.RABBITMQ_PORT = parsedPort;
+    }
+    if (url.username)
+      parsedEnv.RABBITMQ_USER = decodeURIComponent(url.username);
+    if (url.password)
+      parsedEnv.RABBITMQ_PASSWORD =
+        parsedEnv.RABBITMQ_PASSWORD ?? decodeURIComponent(url.password);
+    const vhost = url.pathname.replace(/^\//, "");
+    if (vhost) parsedEnv.RABBITMQ_VHOST = decodeURIComponent(vhost);
+
+    return parsedEnv;
+  } catch (error) {
+    throw new Error(
+      `[ERROR] RABBITMQ_URL (${parsedEnv.RABBITMQ_URL}) is invalid: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+};
+
 const buildEnv = (): Env => {
   const parsedEnv = envSchema.parse(process.env);
   const withDatabaseConfig = normalizeDatabaseConfig(parsedEnv);
-  return normalizeRedisConfig(withDatabaseConfig) as Env;
+  const withRedisConfig = normalizeRedisConfig(withDatabaseConfig) as RawEnv;
+  return normalizeRabbitMQConfig(withRedisConfig) as Env;
 };
 
 /**
