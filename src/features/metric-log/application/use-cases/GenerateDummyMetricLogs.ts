@@ -1,13 +1,21 @@
+import { randomUUID } from "crypto";
 import { models } from "@/infrastructure/db/models.js";
 import { MetricAccessPort } from "../ports/MetricAccessPort.js";
 import { CachePort } from "../ports/CachePort.js";
-import { MetricLogDomain } from "@/types/domain/metric-log.domain.js";
-import { toDomainMetricLog } from "@/utils/mappers/metric-log.mapper.js";
+import type { MessageQueuePort } from "@/shared/application/ports/MessageQueuePort.js";
+import {
+  EXCHANGES,
+  ROUTING_KEYS,
+} from "@/shared/infrastructure/queue/topology.js";
 
 type Input = {
   userId: string;
   metricId: string;
   count: number;
+};
+
+type Output = {
+  jobId: string;
 };
 
 const TYPES: Array<"manual" | "automatic"> = ["manual", "automatic"];
@@ -16,18 +24,29 @@ export class GenerateDummyMetricLogs {
   constructor(
     private access: MetricAccessPort,
     private cache: CachePort,
+    private queue: MessageQueuePort,
   ) {}
 
-  async execute({
-    userId,
-    metricId,
-    count,
-  }: Input): Promise<MetricLogDomain[]> {
+  async execute({ userId, metricId, count }: Input): Promise<Output> {
     await this.access.ensureMetricOwnership(userId, metricId);
 
-    const logs: MetricLogDomain[] = [];
+    const jobId = randomUUID();
+
+    if (this.queue.isEnabled()) {
+      await this.queue.publish(
+        EXCHANGES.JOBS,
+        { jobId, userId, metricId, count },
+        {
+          routingKey: ROUTING_KEYS.METRIC_LOG_GENERATE_DUMMY,
+          messageId: jobId,
+        },
+      );
+      return { jobId };
+    }
+
+    // Sync fallback when queue is disabled (development / tests)
     for (let i = 0; i < count; i++) {
-      const created = await models.MetricLog.create({
+      await models.MetricLog.create({
         metricId,
         logValue: Number((Math.random() * 100).toFixed(2)),
         loggedAt: new Date(
@@ -35,13 +54,12 @@ export class GenerateDummyMetricLogs {
         ),
         type: TYPES[Math.floor(Math.random() * TYPES.length)],
       });
-      logs.push(toDomainMetricLog(created));
     }
 
     if (this.cache.isEnabled()) {
       await this.cache.invalidate(userId, metricId);
     }
 
-    return logs;
+    return { jobId };
   }
 }

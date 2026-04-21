@@ -170,7 +170,8 @@ describe("Metric log controller", () => {
   });
 
   it("generates dummy logs via feature", async () => {
-    generateDummyExecute.mockResolvedValue([] as any);
+    const jobId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+    generateDummyExecute.mockResolvedValue({ jobId } as any);
     const req: any = {
       user: { id: userId },
       body: { metricId, count: 5 },
@@ -184,6 +185,6 @@ describe("Metric log controller", () => {
       metricId,
       count: 5,
     });
-    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.status).toHaveBeenCalledWith(202);
   });
 });
