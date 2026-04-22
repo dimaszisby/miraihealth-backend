@@ -33,8 +33,8 @@
 - [x] Consumer registered in `src/worker.ts`
 - [x] Controller unit test updated (201 → 202, mock return `{ jobId }`)
 - [x] `npm run typecheck` + `npm run lint` clean; 57 unit suites pass
-- [ ] Integration test: publish → consume → DB commit round-trip (follow-up)
-- [ ] Update OpenAPI spec (follow-up)
+- [x] Integration test: sync path covered (`POST /:metricId/dummy` → 202 + jobId, 403, 401, 400); broker round-trip (Testcontainers) is a follow-up ticket
+- [x] Update OpenAPI spec — `POST /metric-logs/{metricId}/dummy` → 202 + `{ jobId }`, regenerated `documents/openapi/lakira-backend-openapi.json`
 
 ## Phase 3 — Staging Validation
 

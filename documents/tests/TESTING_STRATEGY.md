@@ -1,42 +1,60 @@
-# Contract Test Pipeline Overview – Lakira Backend
+# Lakira Backend Testing Strategy
 
-## 1. Purpose
+**Status:** Active
+**Last updated:** 2026-04-13
 
-This document describes **how** Postman/Newman contract tests fit into the Lakira **CI/CD pipeline**, which environments they run against, and how they act as a **gate** for backend changes that impact client-facing APIs.
+This document defines the execution order, responsibility, and gate intent of the Lakira backend test stack.
 
----
+## 1. Testing Pyramid
 
-## 2. Pipeline Position
+Execution order (left-to-right):
 
-A typical Lakira pipeline (high-level):
+`Static checks -> Unit tests -> Integration tests -> Contract tests`
 
-```text
-commit / PR
-  ↓
-Build & Lint
-  ↓
-Unit Tests
-  ↓
-Integration Tests
-  ↓
-Deploy Test/Staging Environment
-  ↓
-Contract Tests (Postman/Newman)
-  ↓
-End-to-End Tests (optional)
-  ↓
-Deploy to Production (manual or automated)
-```
+- Static checks fail fastest and prevent low-signal runtime failures.
+- Unit tests validate domain/use-case/controller logic in memory.
+- Integration tests validate real app wiring with database dependencies.
+- Contract tests validate externally visible API behavior against OpenAPI/consumer expectations.
 
-## 3. Contract-specific guardrails
+## 2. Layer Commands
 
-- **JSON bodies must be objects.** Every POST/PUT/PATCH endpoint now runs a guard that rejects scalar payloads with a `400` before Zod parsing. When fuzzing with Schemathesis, send `{}` if you want to probe “empty body” behaviour.
-- **Metric settings invariants.** When `goalEnabled=true`, both `goalType` and `goalValue` are mandatory; turning on `timeFrameEnabled` simultaneously requires `startDate` and `deadlineDate`. The OpenAPI contract documents this via `oneOf`, so tests should mirror those pairings.
-- **Metric log creation requires `type`.** The server no longer defaults to `"manual"`, so the contract harness must include the field explicitly.
-- **UUID contract fields use assertion-level validation.** Shared Zod/OpenAPI UUID schemas include a strict UUID `pattern` in addition to `format`, preventing false positives from OpenAPI 3.1 `format`-only interpretation.
-- **Cursor queries are strict.** `/metrics`, `/metric-logs`, `/metric-settings`, and `/metric-categories` trim `q`, forbid blank queries, and reject unknown `filter[...]` keys. Schemathesis will therefore see deterministic 400s for malformed parameters; treat them as expected rather than regressions.
-- **Seeded IDs.** Happy-path requests should reuse IDs emitted by `npm run seed:contract-tests` (see `tmp/contract-seed.json`). Random UUIDs will continue to 404 because ownership checks are enforced.
-- **Deletable ID pools.** Contract seeds also include `deletable` IDs for destructive endpoints. The Schemathesis hook rotates through these IDs for `DELETE` calls and skips tests once the pool is empty to avoid cascading 404s.
-- **Positive-only hook mutation.** The Schemathesis hook only normalizes/injects payloads for positive generated cases; negative cases are left untouched so invalid-input checks remain reliable.
-- **Metric settings/trends contract alignment.** `GET /metric-settings/{id}` no longer requires `metricId` query input, and `/metrics/{metricId}/trends` contract currently covers the path parameter only.
-- **Profile-based depth.** Use `quick` (`mode=positive`, `examples`), `gate` (`mode=positive`, `examples,coverage,fuzzing`), and `full` (`mode=positive`, `examples,coverage,fuzzing,stateful`) as deterministic loops; keep `quick/gate` workers fixed at `2` for stable local runs. Use `exploratory` (`mode=all`) only for non-blocking deep negative-case fuzzing.
+- Static checks:
+  - `npm run lint`
+  - `npm run typecheck`
+  - `npm run format:check`
+  - `npm run docs:openapi:check`
+- Unit tests:
+  - `npm run test:unit`
+  - `npm run test:unit:coverage`
+- Integration tests:
+  - `npm run test:integration`
+  - `npm run test:integration:coverage`
+  - `npm run integration:local`
+- Contract tests:
+  - `npm run test:contract:local`
+  - `npm run test:contract:staging`
+  - `npm run test:contract:schemathesis:local`
+  - `npm run test:contract:schemathesis:staging`
+
+## 3. CI Gate Expectations
+
+- PR gate baseline:
+  1. static checks green
+  2. unit tests green
+  3. integration tests green
+  4. `contract_local` green
+- Staging contract runs depend on deploy readiness + secrets.
+- Coverage artifacts are retained for unit/integration and contract reports.
+
+## 4. Ownership and Drift Control
+
+- Backend platform owns test scripts/docs and keeps this strategy synchronized with CI.
+- Any change to commands, thresholds, or required checks must update this file and the affected layer README in the same PR.
+- Historical migration docs remain for traceability, but canonical operational guidance lives in layer READMEs.
+
+## 5. Canonical Layer Docs
+
+- `documents/tests/1-static-checks/README.md`
+- `documents/tests/2-unit-tests/README.md`
+- `documents/tests/3-integration-tests/README.md`
+- `documents/tests/4-contract-tests/README.md`
