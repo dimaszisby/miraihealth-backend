@@ -174,7 +174,8 @@ describe("Metric log controller", () => {
     generateDummyExecute.mockResolvedValue({ jobId } as any);
     const req: any = {
       user: { id: userId },
-      body: { metricId, count: 5 },
+      params: { metricId },
+      body: { count: 5 },
     };
 
     const res = makeRes();
