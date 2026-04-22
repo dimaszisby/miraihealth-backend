@@ -1,5 +1,6 @@
 import { OpenApiGeneratorV31 } from "@asteasolutions/zod-to-openapi";
 import type { ComponentsObject } from "openapi3-ts/oas31";
+import { z } from "zod";
 import { openApiDocument, registry } from "./openapi-config.js";
 import {
   LoginRequestSchema,
@@ -26,6 +27,8 @@ import {
   MetricLogStatsResponseSchema,
   MetricLogCursorResponseSchema,
   MetricLogCursorQueryParamsSchema,
+  GenerateDummyMetricLogsRequestSchema,
+  GenerateDummyMetricLogsResponseSchema,
   MetricDisplayOptionsSchema,
   MetricSettingsSchema,
   CreateMetricSettingsRequestSchema,
@@ -812,6 +815,56 @@ registry.registerPath({
     },
     409: {
       $ref: "#/components/responses/ConflictError",
+    },
+    500: {
+      $ref: "#/components/responses/InternalServerError",
+    },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/metric-logs/{metricId}/dummy",
+  tags: ["Metric Logs"],
+  summary: "Enqueue dummy metric log generation",
+  description:
+    "Accepts a generation job and returns immediately with a `jobId`. " +
+    "When `RABBITMQ_ENABLED=true` the inserts are processed asynchronously by the worker; " +
+    "otherwise the logs are inserted synchronously before the response is returned. " +
+    "Only available when `ENABLE_DUMMY_ENDPOINTS=true`.",
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: z.object({
+      metricId: z.string().uuid().openapi({
+        description: "ID of the metric to generate logs for",
+        example: "55555555-eeee-4eee-8eee-000000000005",
+      }),
+    }),
+    body: {
+      content: {
+        "application/json": {
+          schema: GenerateDummyMetricLogsRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    202: {
+      description: "Job accepted — logs will be inserted by the worker",
+      content: {
+        "application/json": {
+          schema: successEnvelope(GenerateDummyMetricLogsResponseSchema),
+        },
+      },
+    },
+    400: {
+      $ref: "#/components/responses/BadRequestError",
+    },
+    401: {
+      $ref: "#/components/responses/UnauthorizedError",
+    },
+    403: {
+      $ref: "#/components/responses/ForbiddenError",
     },
     500: {
       $ref: "#/components/responses/InternalServerError",

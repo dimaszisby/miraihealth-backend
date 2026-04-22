@@ -152,8 +152,9 @@ export const generateDummyMetricLogs = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
 
-    const { body } = pickValidated(generateDummyMetricLogsSchema)(req);
-    const { metricId, count } = body;
+    const { body, params } = pickValidated(generateDummyMetricLogsSchema)(req);
+    const { metricId } = params;
+    const { count } = body;
 
     logger.info("Generating dummy logs", {
       metricId,
@@ -161,7 +162,7 @@ export const generateDummyMetricLogs = catchAsync(
       userId: req.user.id,
     });
 
-    const dummyLogs = await metricLogFeature.generateDummyLogs.execute({
+    const result = await metricLogFeature.generateDummyLogs.execute({
       userId: req.user.id,
       metricId,
       count,
@@ -169,9 +170,9 @@ export const generateDummyMetricLogs = catchAsync(
 
     successResponse(
       res,
-      201,
-      toMetricLogListResponseDTO(dummyLogs),
-      `${count} dummy metric logs generated successfully`,
+      202,
+      { jobId: result.jobId },
+      `${count} dummy metric log generation accepted`,
     );
   },
 );
