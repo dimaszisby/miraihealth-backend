@@ -1,99 +1,71 @@
-# Lakira Backend Product Requirements Document Outline
+# Lakira Backend PRD Outline
 
-Use this outline when creating or revising the backend PRD. Keep it as-built first, then explicitly separate non-implemented gaps.
+Use this outline when revising `lakira-backend-prd.md`. Keep it as-built first; capture non-implemented themes as explicit gaps.
 
-## 1. Purpose
+## 1. Metadata
 
-### 1.1 Document Purpose
+- Status
+- Last updated
+- Scope
+- Review cadence
 
-### 1.2 Audience
+## 2. Purpose
 
-### 1.3 Service Scope
+- Document intent
+- Audience
 
-### 1.4 Review Cadence
+## 3. Product Intent
 
-## 2. Product Intent
+- Core backend capabilities
+- Service stack summary
 
-### 2.1 Backend Mission
+## 4. Source of Truth and Precedence
 
-### 2.2 Core Capabilities
-
-## 3. Source of Truth
-
-### 3.1 Normative Artifacts (routers, schemas, models, migrations, OpenAPI, tests)
-
-### 3.2 Conflict Resolution Rule (runtime code over stale docs)
-
-## 4. Users and Jobs
-
-### 4.1 Actors
-
-### 4.2 Primary Jobs To Be Done
+- Normative artifacts (routes, schemas, models/migrations, OpenAPI, tests)
+- Conflict rule (runtime code wins)
 
 ## 5. Scope Boundaries
 
-### 5.1 In Scope
-
-### 5.2 Out of Scope
+- In scope
+- Out of scope
 
 ## 6. Functional Requirements (As-Built)
 
-### 6.1 Common API Rules
-
-### 6.2 Auth Domain (`/api/v1/auth`)
-
-### 6.3 Metric Category Domain (`/api/v1/metric-categories`)
-
-### 6.4 Metric Domain (`/api/v1/metrics`)
-
-### 6.5 Metric Settings Domain (`/api/v1/metric-settings`)
-
-### 6.6 Metric Log Domain (`/api/v1/metric-logs`)
-
-### 6.7 Analytics Domain (`/api/v1/analytics`)
-
-### 6.8 Platform Utility Endpoints (`/health`, `/docs`, `/docs/openapi.json`)
+- Common API rules
+- Domain requirements by route group
+  - Auth
+  - Metric Categories
+  - Metrics
+  - Metric Settings
+  - Metric Logs
+  - Analytics
+  - Platform surfaces
 
 ## 7. Data Model Requirements
 
-### 7.1 Core Tables and Enums
+- Core tables/enums
+- Relational rules
+- Constraint/index expectations
 
-### 7.2 Ownership and Relationship Rules
+## 8. Non-Functional Requirements
 
-### 7.3 Constraints and Indexing Expectations
-
-## 8. Non-Functional Requirements (As-Built)
-
-### 8.1 Security Baseline
-
-### 8.2 Reliability and Error Handling
-
-### 8.3 Performance and Caching
-
-### 8.4 Configuration and Environment Controls
+- Security baseline
+- Reliability/error handling
+- Performance/caching
+- Configuration controls
 
 ## 9. Operational Readiness
 
-### 9.1 CI/CD and Release Gates
+- CI/release gates
+- API contract governance
 
-### 9.2 API Contract Governance
+## 10. Known Gaps
 
-## 10. Acceptance Criteria for Documentation Baseline
+- Product capability gaps
+- Engineering hardening gaps
 
-## 11. Production-Hardening Gaps and Backlog Mapping
+## 11. Change Management
 
-### 11.1 Product Capability Gaps
-
-### 11.2 Engineering Hardening Gaps
-
-### 11.3 Backlog Direction (No implementation details)
-
-## 12. Success Metrics for PRD Quality
-
-## 13. Change Management
-
-### 13.1 Update Triggers
-
-### 13.2 Sync Rule with Outline and OpenAPI
-
-### 13.3 Review Cadence Workflow
+- Update triggers
+- Sync rules with OpenAPI/tests
+- Drift-sweep cadence
