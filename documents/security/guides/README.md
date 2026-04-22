@@ -1,36 +1,24 @@
 # Security Guides Index
 
-Start here if you are new to the Lakira security audit framework.
+**Status:** Active
+**Last updated:** 2026-04-13
 
-## Recommended Reading Order
+Use these guides in this order:
 
-1. Framework basics:
+1. `security-framework-junior-guide.md`
+2. `security-scripts-usage-guide.md`
+3. `security-release-delta-sop.md`
+4. `security-audit-workflow-branch-model.md`
 
-- `documents/security/guides/security-framework-junior-guide.md`
-
-2. Command playbook:
-
-- `documents/security/guides/security-scripts-usage-guide.md`
-
-3. Release process:
-
-- `documents/security/guides/security-release-delta-sop.md`
-
-4. Branch-based execution workflow:
-
-- `documents/security/guides/security-audit-workflow-branch-model.md`
-
-5. Deep references:
+Deep references:
 
 - `documents/security/framework/security-audit-framework.md`
 - `documents/security/framework/security-audit-master-checklist.md`
 - `documents/security/framework/risk-scoring-model.md`
 
-## Quick Start
+Quick commands:
 
 ```bash
 npm run security:audit:init -- --date YYYY-MM-DD
 npm run security:delta:gate
 ```
-
-Then update the current audit run docs under `documents/security/audit/audit-YYYY-MM-DD/`.

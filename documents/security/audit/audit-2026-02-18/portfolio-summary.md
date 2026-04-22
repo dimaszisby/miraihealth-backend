@@ -1,47 +1,29 @@
-# Security Audit Portfolio Summary - 2026-02-18
+# Portfolio Summary - 2026-02-18
 
-- Audience: External reviewers and portfolio evaluators
-- Generated (UTC): 2026-02-18T10:06:00Z
+**Audience:** External or cross-team governance readers
+**Status:** Completed run summary (sanitized)
 
-## Executive Summary
+## Summary
 
-The Lakira backend now uses a reusable security audit framework with standardized artifacts, control mappings, and CI-enforced gating rules.
+- Framework-based backend audit run completed.
+- No unresolved high/critical findings at close.
+- Historical critical/high findings were reconciled and validated as closed.
 
-This cycle completed a full framework-based audit, produced machine-readable evidence, and resolved all high-severity blockers in-cycle.
+## Coverage
 
-## Controls and Coverage
+- Auth/authz and API hardening
+- Runtime/configuration controls
+- Dependency and CI gate posture
 
-- Standards baseline: OWASP ASVS L2, OWASP Top 10, NIST SSDF
-- Coverage domains: architecture, auth/authz, API hardening, data protection, abuse resistance, supply chain, CI/CD gates
-- Automation: dependency audit + static guardrail checks + policy gate evaluation
+## Sanitized Finding Snapshot
 
-## Findings Overview (Sanitized)
+- Open Critical: 0
+- Open High: 0
+- Open Medium: 0
+- Open Low: 0
 
-| Severity | Count | Status Summary            |
-| -------- | ----- | ------------------------- |
-| Critical | 0     | No open critical findings |
-| High     | 0     | No open high findings     |
-| Medium   | 0     | No open medium findings   |
-| Low      | 0     | No open low findings      |
+## Canonical Internal References
 
-## Remediation Posture
-
-- High-risk blockers were remediated and gate status is now passing.
-- Dependency advisories identified in-cycle were remediated and verified in the latest delta run.
-- No temporary security exception is currently active for high/critical issues.
-
-## Process Maturity Outcome
-
-- Reusable templates established for every audit cycle.
-- CI security gate integrated with artifact generation.
-- Historical-to-current findings reconciliation completed for continuity.
-
-## Notes on Redaction
-
-This summary omits sensitive implementation details, exploit payloads, and secret/config values while preserving evidence of governance rigor and remediation discipline.
-
-## References
-
-- Internal full report: `documents/security/audit/audit-2026-02-18/README.md`
-- Framework docs: `documents/security/framework/`
-- Audit index: `documents/security/audit/index.md`
+- `documents/security/audit/audit-2026-02-18/README.md`
+- `documents/security/audit/index.md`
+- `documents/security/framework/security-audit-framework.md`
