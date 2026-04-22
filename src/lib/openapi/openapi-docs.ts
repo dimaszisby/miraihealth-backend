@@ -835,10 +835,10 @@ registry.registerPath({
   security: [{ BearerAuth: [] }],
   request: {
     params: z.object({
-      metricId: z
-        .string()
-        .uuid()
-        .openapi({ description: "ID of the metric to generate logs for" }),
+      metricId: z.string().uuid().openapi({
+        description: "ID of the metric to generate logs for",
+        example: "55555555-eeee-4eee-8eee-000000000005",
+      }),
     }),
     body: {
       content: {

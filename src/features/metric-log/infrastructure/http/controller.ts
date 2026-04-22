@@ -152,8 +152,9 @@ export const generateDummyMetricLogs = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
 
-    const { body } = pickValidated(generateDummyMetricLogsSchema)(req);
-    const { metricId, count } = body;
+    const { body, params } = pickValidated(generateDummyMetricLogsSchema)(req);
+    const { metricId } = params;
+    const { count } = body;
 
     logger.info("Generating dummy logs", {
       metricId,

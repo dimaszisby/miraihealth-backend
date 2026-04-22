@@ -1222,11 +1222,6 @@
       "GenerateDummyMetricLogsRequest": {
         "type": "object",
         "properties": {
-          "metricId": {
-            "type": "string",
-            "format": "uuid",
-            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
-          },
           "count": {
             "type": "integer",
             "minimum": 1,
@@ -1234,9 +1229,7 @@
             "default": 50
           }
         },
-        "required": ["metricId"],
         "example": {
-          "metricId": "55555555-eeee-4eee-8eee-000000000005",
           "count": 50
         }
       },
@@ -3603,7 +3596,8 @@
             "schema": {
               "type": "string",
               "format": "uuid",
-              "description": "ID of the metric to generate logs for"
+              "description": "ID of the metric to generate logs for",
+              "example": "55555555-eeee-4eee-8eee-000000000005"
             },
             "required": true,
             "name": "metricId",
