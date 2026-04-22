@@ -74,6 +74,7 @@ jobs:
       JWT_SECRET: security-delta-ci-placeholder
       REDIS_REQUIRED: "false"
       DISABLE_RATE_LIMITING: "true"
+      ENABLE_DUMMY_ENDPOINTS: "true"
 
     steps:
       - name: Checkout
