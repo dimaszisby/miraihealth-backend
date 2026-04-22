@@ -125,7 +125,11 @@ const envSchema = z.object({
   ENABLE_DUMMY_ENDPOINTS: z
     .string()
     .transform((val) => val === "true")
-    .default(process.env.NODE_ENV === "development" ? "true" : "false"),
+    .default(
+      ["development", "test"].includes(process.env.NODE_ENV ?? "")
+        ? "true"
+        : "false",
+    ),
 
   RATE_LIMIT_ANALYTICS_MAX: z
     .string()
