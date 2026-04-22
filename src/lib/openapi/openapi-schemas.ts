@@ -727,7 +727,6 @@ export const GenerateDummyMetricLogsRequestSchema = registerSchema(
   "GenerateDummyMetricLogsRequest",
   generateDummyMetricLogsBody.openapi({
     example: {
-      metricId: "55555555-eeee-4eee-8eee-000000000005",
       count: 50,
     },
   }),
