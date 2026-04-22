@@ -12,11 +12,13 @@ Audience:
 
 If you are new, read these first:
 
-1. `documents/documentation/product/lakira-backend-prd.md`
-2. `documents/documentation/architecture/lakira-backend-routes.md`
-3. `documents/documentation/architecture/lakira-backend-db-schema.md`
-4. `documents/tests/TESTING_STRATEGY.md`
-5. `documents/ci-cd/CI_CD_STRATEGY.md`
+1. `documents/LLM_CONTEXT.md` (for LLM/agent context control)
+2. `documents/documentation/product/README.md`
+3. `documents/documentation/product/lakira-backend-prd.md`
+4. `documents/documentation/architecture/lakira-backend-routes.md`
+5. `documents/documentation/architecture/lakira-backend-db-schema.md`
+6. `documents/tests/TESTING_STRATEGY.md`
+7. `documents/ci-cd/CI_CD_STRATEGY.md`
 
 ## Top-Level Directory Map
 
@@ -35,9 +37,10 @@ If you are new, read these first:
 
 ## Root Files
 
-| Path                    | Purpose                                                                                 |
-| ----------------------- | --------------------------------------------------------------------------------------- |
-| `documents/__init__.py` | Marker file for Python tooling that imports from `documents/tests` hooks and utilities. |
+| Path                       | Purpose                                                                                 |
+| -------------------------- | --------------------------------------------------------------------------------------- |
+| `documents/LLM_CONTEXT.md` | Canonical include/exclude context contract for LLM/agent runs to keep token usage low.  |
+| `documents/__init__.py`    | Marker file for Python tooling that imports from `documents/tests` hooks and utilities. |
 
 ## Update Rules (For Devs and Agents)
 
@@ -63,7 +66,16 @@ If you are new, read these first:
 
 ## Notes for LLM/Agents
 
+- Read `documents/LLM_CONTEXT.md` first for include/exclude rules.
 - Start from normative docs before plans/checklists.
 - Prefer backend docs over frontend docs in this repository unless task explicitly targets frontend.
 - Do not infer production behavior from TODO/plan docs without checking architecture/product docs.
 - When creating new docs, add clear ownership and timestamps when appropriate.
+- Default context pack for API/product tasks:
+  - `documents/documentation/product/lakira-backend-prd.md`
+  - `documents/documentation/architecture/lakira-backend-routes.md`
+  - `documents/documentation/architecture/lakira-backend-db-schema.md`
+  - `documents/openapi/lakira-backend-openapi.json`
+- Exclude high-volume reference dumps by default unless explicitly requested:
+  - `documents/documentation/code-for-export-reference/**`
+  - `documents/development/architecture/feature-vertical-slice-migration/logs/**`
