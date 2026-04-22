@@ -39,6 +39,12 @@ Updated after any correction per `.claude/rules/workflow.md`.
 5. Open a PR from `conflict/<name>` → `<base-branch>` and close the original conflicted PR
    **Why**: Protected branches block direct pushes and merge commits. A squash commit on a temp branch is the only path that satisfies both constraints.
 
+## [2026-04-22] Never compact or reformat security audit docs — they are schema-validated
+
+**Mistake**: Security audit documents (`findings-log.md`, `portfolio-summary.md`, `index.md`, etc.) were manually condensed to reduce token count. This stripped required table columns (`finding_id`, `title`, `domain`, `severity`, etc.) and section headers, breaking the `security-framework.validation.test.ts` CI gate.
+**Rule**: Never reformat, condense, or restructure files under `documents/security/audit/`. Their column names, section headers, and table structure are enforced by automated tests.
+**Why**: `security-framework.validation.test.ts` validates the schema of live audit docs — required columns, traceability links, portfolio section headers, and index folder references. Any structural change that doesn't match the framework schema fails CI.
+
 ## [2026-04-22] Always add an example to OpenAPI path params that use zUUID
 
 **Mistake**: The `{metricId}` path parameter on the dummy endpoint was registered with only `format: uuid`, no example. Schemathesis generated UUIDs that pass `.uuid()` but fail the strict RFC 4122 variant-1 regex in `zUUID` (`[89abAB]` required in group 4), causing 400s in contract tests.
