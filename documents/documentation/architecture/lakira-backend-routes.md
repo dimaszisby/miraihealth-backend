@@ -9,7 +9,7 @@
 This document is aimed at the Lakira frontend (Next.js) project as a practical reference for calling the backend.
 
 > For detailed field-level validation rules and DTOs, see  
-> `documents/documentation/lakira-backend-types-documentation.md`.
+> `documents/documentation/architecture/lakira-backend-types.md`.
 
 ---
 
