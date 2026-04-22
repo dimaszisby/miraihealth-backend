@@ -23,6 +23,7 @@ Detailed rules are in `.claude/rules/`:
 - `environment.md` — Env var handling
 - `commands.md` — All development, test, build, and migration commands
 - `workflow.md` — Plan mode, task management, core principles
+- `documentation.md` — Doc kit rules: when to create docs, folder placement, kit sizing, todos convention
 
 ## Architecture
 
@@ -30,6 +31,11 @@ Feature-Slice DDD with manual dependency injection. Entry point: `src/server.ts`
 
 ## Documentation
 
+- `documents/development/features/` — Per-feature doc kits (auth, metric, metric-log, etc.)
+- `documents/development/architecture/` — Infrastructure & architectural topic kits (jwt, rabbitmq, indexing, etc.)
+- `documents/development/dev-log/` — Dev notes, retros, one-off logs
+- `documents/todos/` — Ephemeral session TODOs (`YYYY-MM-DD-todo-<title>.md`); user-controlled, may be deleted
+- `documents/documentation/dev-documentation-guidelines.md` — Doc kit templates and sizing rules
 - `documents/documentation/architecture/` — Routes, DB schema
 - `documents/tests/TESTING_STRATEGY.md` — Testing approach
 - `documents/ci-cd/CI_CD_STRATEGY.md` — CI/CD pipeline details

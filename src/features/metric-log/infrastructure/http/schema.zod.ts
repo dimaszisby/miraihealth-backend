@@ -173,10 +173,10 @@ export const getAggregatedStatsSchema = z.object({
 });
 
 export const generateDummyMetricLogsBody = z.object({
-  metricId: zUUID,
   count: z.coerce.number().int().min(1).max(1000).default(50),
 });
 
 export const generateDummyMetricLogsSchema = z.object({
+  params: z.object({ metricId: zUUID }),
   body: generateDummyMetricLogsBody,
 });
