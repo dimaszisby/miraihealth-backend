@@ -2,8 +2,8 @@ import type { Channel, ConsumeMessage } from "amqplib";
 import type { ChannelWrapper } from "amqp-connection-manager";
 import { connectRabbitMQ } from "./RabbitMQConnection.js";
 import { assertTopology } from "./topology.js";
-import { env } from "@config/envManager.js";
-import logger from "@utils/logger.js";
+import { env } from "@/config/envManager.js";
+import logger from "@/utils/logger.js";
 
 export type MessageHandler = (msg: ConsumeMessage) => Promise<void>;
 

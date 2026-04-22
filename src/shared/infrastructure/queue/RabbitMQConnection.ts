@@ -1,6 +1,6 @@
 import amqp, { type AmqpConnectionManager } from "amqp-connection-manager";
-import { env } from "@config/envManager.js";
-import logger from "@utils/logger.js";
+import { env } from "@/config/envManager.js";
+import logger from "@/utils/logger.js";
 
 let connection: AmqpConnectionManager | null = null;
 

@@ -3,8 +3,8 @@ import type { ConfirmChannel } from "amqplib";
 import type { ChannelWrapper } from "amqp-connection-manager";
 import { connectRabbitMQ } from "./RabbitMQConnection.js";
 import { assertTopology } from "./topology.js";
-import { env } from "@config/envManager.js";
-import logger from "@utils/logger.js";
+import { env } from "@/config/envManager.js";
+import logger from "@/utils/logger.js";
 import type {
   MessagePayload,
   MessageQueuePort,
