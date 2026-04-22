@@ -161,7 +161,7 @@ export const generateDummyMetricLogs = catchAsync(
       userId: req.user.id,
     });
 
-    const dummyLogs = await metricLogFeature.generateDummyLogs.execute({
+    const result = await metricLogFeature.generateDummyLogs.execute({
       userId: req.user.id,
       metricId,
       count,
@@ -169,9 +169,9 @@ export const generateDummyMetricLogs = catchAsync(
 
     successResponse(
       res,
-      201,
-      toMetricLogListResponseDTO(dummyLogs),
-      `${count} dummy metric logs generated successfully`,
+      202,
+      { jobId: result.jobId },
+      `${count} dummy metric log generation accepted`,
     );
   },
 );

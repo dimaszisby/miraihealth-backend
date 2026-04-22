@@ -176,4 +176,48 @@ describe("Metric Log API", () => {
       true,
     );
   });
+
+  describe("POST /api/v1/metric-logs/:metricId/dummy", () => {
+    it("returns 202 with a jobId and inserts logs synchronously (queue disabled)", async () => {
+      const res = await api
+        .post(`/api/v1/metric-logs/${metricId}/dummy`)
+        .set("Authorization", authHeader(token))
+        .send({ metricId, count: 5 });
+
+      expect(res.status).toBe(202);
+      expect(res.body.status).toBe("success");
+      expect(res.body.data).toHaveProperty("jobId");
+      expect(typeof res.body.data.jobId).toBe("string");
+      expect(res.body.data.jobId.length).toBeGreaterThan(0);
+    });
+
+    it("rejects generation for a metric the user does not own", async () => {
+      const other = await createTestUser();
+      const { metric: otherMetric } = await createMetric(other.token);
+
+      const res = await api
+        .post(`/api/v1/metric-logs/${otherMetric.id}/dummy`)
+        .set("Authorization", authHeader(token))
+        .send({ metricId: otherMetric.id, count: 3 });
+
+      expect(res.status).toBe(403);
+    });
+
+    it("rejects unauthenticated requests", async () => {
+      const res = await api
+        .post(`/api/v1/metric-logs/${metricId}/dummy`)
+        .send({ metricId, count: 3 });
+
+      expect(res.status).toBe(401);
+    });
+
+    it("validates count is a positive integer", async () => {
+      const res = await api
+        .post(`/api/v1/metric-logs/${metricId}/dummy`)
+        .set("Authorization", authHeader(token))
+        .send({ metricId, count: -1 });
+
+      expect(res.status).toBe(400);
+    });
+  });
 });

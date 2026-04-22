@@ -11,9 +11,12 @@ import { MetricLogQueryRepoSequelize } from "./infrastructure/persistence/reposi
 import { ListMetricLogs } from "./application/queries/ListMetricLogs.js";
 import type { VisualizationInvalidationPort } from "@/shared/application/ports/VisualizationInvalidationPort.js";
 import { NoopVisualizationInvalidation } from "@/shared/application/ports/VisualizationInvalidationPort.js";
+import type { MessageQueuePort } from "@/shared/application/ports/MessageQueuePort.js";
+import { NoopMessageQueue } from "@/shared/infrastructure/queue/NoopMessageQueue.js";
 
 type MetricLogFeatureDeps = {
   visualizationInvalidator?: VisualizationInvalidationPort;
+  messageQueue?: MessageQueuePort;
 };
 
 export const buildMetricLogFeature = (deps: MetricLogFeatureDeps = {}) => {
@@ -22,6 +25,7 @@ export const buildMetricLogFeature = (deps: MetricLogFeatureDeps = {}) => {
     deps.visualizationInvalidator ?? new NoopVisualizationInvalidation();
   const cache = new MetricLogCacheRedis(visualizationInvalidator);
   const access = new MetricAccessSequelize();
+  const queue = deps.messageQueue ?? new NoopMessageQueue();
   const queryRepo = new MetricLogQueryRepoSequelize();
 
   return {
@@ -30,7 +34,7 @@ export const buildMetricLogFeature = (deps: MetricLogFeatureDeps = {}) => {
     updateLog: new UpdateMetricLog(repo, cache),
     deleteLog: new DeleteMetricLog(repo, cache),
     getStats: new GetMetricLogStats(access),
-    generateDummyLogs: new GenerateDummyMetricLogs(access, cache),
+    generateDummyLogs: new GenerateDummyMetricLogs(access, cache, queue),
     listLogs: new ListMetricLogs(queryRepo),
   };
 };

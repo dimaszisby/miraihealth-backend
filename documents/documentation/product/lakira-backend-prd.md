@@ -1,448 +1,378 @@
-# Lakira Product Requirements Document
+# Lakira Backend Product Requirements Document (PRD)
 
-## 1. Introduction
+**Status:** Active
+**Last updated:** 2026-03-12
+**Review cadence:** Event-based (contract changes) + every 4 weeks (drift sweep)
+**Scope:** Lakira backend API (`/api/v1`) only
 
-### 1.1. Purpose of the Document
+## 1. Purpose
 
-This document outlines the requirements for the Lakira application, a goal-tracking web application. It serves as a guide for the development team and stakeholders, ensuring a shared understanding of the project's goals, features, and functionality.
+This PRD defines the current, implemented product requirements for the Lakira backend service and separates known production-hardening gaps. It replaces the legacy blueprint-based PRD and uses the running codebase as the source of truth.
 
-### 1.2. Scope of the Project
+This document is intended for:
 
-This project encompasses the development of a backend API using Node.js, Express.js, PostgreSQL, and D3.js. It includes user authentication, metric tracking, data visualization, and API endpoints for managing users, metrics, categories, and logs.
+- Backend engineers
+- Frontend engineers integrating with Lakira API
+- QA and contract-test maintainers
+- CI/CD and release maintainers
 
-### 1.3. Target Audience
+## 2. Product Intent
 
-The target audience for Lakira includes individuals who want to track and improve their progress in various areas of life, such as fitness, wellness, productivity, learning, or personal habits.
+Lakira backend provides authenticated APIs for:
 
-## 2. Goals and Objectives
+- User identity and profile management
+- Metric category management
+- Metric library management
+- Metric settings and goal state management
+- Metric logging and statistics
+- Analytics visualizations for dashboards and per-metric charts
 
-### 2.1. Business Goals:
+The backend is a Node.js + Express + TypeScript service with PostgreSQL persistence, Redis-backed caching/rate-limiter stores (when enabled), Zod validation, and OpenAPI documentation.
 
-- Increase user engagement and retention by 20% within the first quarter of launch.
-- Provide a valuable tool for personal growth and self-improvement, as measured by a 4.5-star average user rating.
-- Establish Lakira as a leading goal-tracking application, achieving a top 3 ranking in relevant app store categories within the first year.
+## 3. Source of Truth and Normative Artifacts
 
-### 2.2. User Goals:
+Requirements in this PRD are derived from, and must stay aligned with:
 
-- Easily track progress towards personal goals with an intuitive and user-friendly interface.
-- Visualize data to identify trends and patterns, enabling data-driven decision-making.
-- Stay motivated and accountable through reminders and progress summaries, leading to increased goal achievement rates.
-- Customize the application to fit individual needs and preferences, ensuring a personalized and engaging experience.
+- Route contracts in `src/features/*/infrastructure/http/router.ts` and `src/server.ts`
+- Request validation in `src/features/*/infrastructure/http/schema.zod.ts` and analytics validators
+- Domain and persistence behavior in `src/features/**`, Sequelize models, and migrations
+- OpenAPI artifact at `documents/openapi/lakira-backend-openapi.json`
+- Integration and contract tests in `__tests__/integration/**` and `documents/tests/**`
 
-### 2.3. Technical Goals:
+If this PRD conflicts with runtime behavior, runtime behavior wins and this PRD must be updated.
 
-- Develop a scalable and reliable backend API capable of handling 10,000 concurrent users with sub-second response times.
-- Ensure data security and privacy, complying with industry best practices and relevant regulations.
-- Implement a responsive and user-friendly interface that is accessible across a range of devices and screen sizes.
-- Maintain a clean and well-documented codebase, adhering to coding standards and best practices.
+## 4. Users and Primary Jobs
 
-## 3. Background and Strategy
+### 4.1 Actors
 
-### 3.1. Problem Statement:
+- Authenticated end-user: manages personal metrics, goals, logs, and visualizations.
+- Frontend client application: consumes backend APIs with JWT authentication.
+- Internal maintainer: operates docs, tests, CI/CD, and deployment.
 
-Many individuals struggle to consistently track their progress towards personal goals, leading to decreased motivation and a lack of accountability. Existing goal-tracking solutions may be too complex, lack customization options, or fail to provide meaningful insights.
+### 4.2 Core Jobs To Be Done
 
-### 3.2. Proposed Solution:
+- Register/login and manage own profile.
+- Organize metrics with categories.
+- Track metrics over time through logs.
+- Configure metric goals and dashboard display options.
+- View trend and dashboard visualizations.
 
-Lakira provides a simple and intuitive platform for users to track their progress towards any type of goal. By offering customizable metrics, data visualization, and smart reminders, Lakira empowers users to stay motivated, accountable, and informed.
+## 5. Scope Boundaries
 
-### 3.3. Competitive Analysis: (To be completed based on market research. Competitors include apps like Strides, Habitica, and Coach.me. Lakira will differentiate itself through its minimalist design inspired by Japanese and Javanese aesthetics, its focus on data visualization, and its customizable metric system.)
+### 5.1 In Scope (Current Backend Product)
 
-## 4. Product Description
+- REST API under `/api/v1`
+- JWT auth and protected route access
+- Cursor-based list APIs with filters/sorting
+- Metric settings lifecycle and goal-achievement updates
+- Metric log CRUD, duplicate timestamp prevention, and stats
+- Analytics dashboard/per-metric visualization endpoints
+- OpenAPI/Swagger docs endpoint and raw OpenAPI JSON endpoint
+- Health endpoint
 
-### 4.1. Product Overview:
+### 5.2 Out of Scope (This Backend PRD)
 
-Lakira is a versatile tracking app designed to help users monitor, visualize, and improve their progress in fitness, wellness, productivity, learning, or personal habits. It allows users to track custom metrics, visualize trends with interactive charts, set goal-oriented milestones, and receive smart reminders. The application is designed with a minimalist aesthetic inspired by Japanese and Javanese design principles.
+- Frontend UX/UI requirements
+- Mobile app requirements
+- Pricing/billing/legal product policy implementation
+- Social graph/community features not currently exposed by backend routes
 
-### 4.2. Key Features:
+## 6. Functional Requirements (As-Built)
 
-- Custom Metrics: Track anything, from gym workouts and study hours to sleep quality and mindfulness sessions.
-- Visual Analytics: Interactive charts & insights for tracking trends.
-- Goal-Oriented Tracking: Set milestones, measure improvements.
-- Minimalist Design: Inspired by Japanese precision and structured simplicity and Javanese calming and elegant.
-- Smart Reminders: Stay accountable with nudges and progress summaries.
+### 6.1 Common API Contract Rules
 
-## 5. Features
+- Base path: `/api/v1`
+- Content type for body endpoints: JSON object payloads only
+- Protected routes require `Authorization: Bearer <jwt>`
+- Success envelope (typical): `status=success`, `message`, `data`
+- Validation failures: `status=fail` with structured `errors[]`
+- Unsupported methods on known routes: `405 Method Not Allowed`
 
-### 5.1. User Authentication
+### 6.2 Auth Domain (`/api/v1/auth`)
 
-#### 5.1.1. Description:
+Implemented endpoints:
 
-The application will provide secure user authentication using email and password. Users will be able to register a new account, log in to an existing account, and manage their profile information. Password hashing with bcrypt will be used to protect user credentials. JWT-based authentication will be used for protected routes.
+- `POST /register`
+- `POST /login`
+- `GET /profile`
+- `PUT /profile`
+- `POST /logout`
 
-#### 5.1.2. User Stories:
+Requirements:
+
+- Register requires `username`, `email`, `password`, `passwordConfirmation` and enforces password confirmation match.
+- Login requires `email` and `password`.
+- Passwords are bcrypt-hashed before persistence.
+- JWT tokens are issued on register/login and currently expire in 7 days.
+- Profile update allows `username`, `email`, `password`, `isPublicProfile` updates.
+- Role escalation through profile update is not permitted by API validation/behavior.
+- Logout is logical/API-level acknowledgement; token revocation list is not implemented.
+
+### 6.3 Metric Category Domain (`/api/v1/metric-categories`)
+
+Implemented endpoints:
+
+- `POST /`
+- `GET /`
+- `GET /:id`
+- `PUT /:id`
+- `DELETE /:id`
+- `POST /dummy` (only when `ENABLE_DUMMY_ENDPOINTS=true`)
+
+Requirements:
+
+- Categories are user-owned resources.
+- Fields: `name`, `color`, `icon`.
+- Cursor list supports `limit`, `sort`, `q`, `after`, `includeTotal`, and name filter variants.
+- Duplicate category names are blocked per user (case-insensitive uniqueness via index strategy).
+
+### 6.4 Metric Domain (`/api/v1/metrics`)
+
+Implemented endpoints:
+
+- `POST /`
+- `GET /`
+- `GET /:id`
+- `PUT /:id`
+- `DELETE /:id`
+- `GET /:metricId/trends`
+- `POST /dummy` (only when `ENABLE_DUMMY_ENDPOINTS=true`)
 
-- As a new user, I want to be able to register an account with my email and password so that I can access the application.
-- As an existing user, I want to be able to log in to my account with my email and password so that I can track my goals.
-- As a logged-in user, I want to be able to update my profile information so that I can keep my account up-to-date.
-- As a logged-in user, I want to be able to log out of my account so that I can protect my privacy.
+Requirements:
+
+- Metrics are user-owned resources with fields:
+  `categoryId`, `originalMetricId`, `name`, `description`, `defaultUnit`, `isPublic`.
+- On metric creation, default metric settings are auto-created transactionally.
+- Name uniqueness is enforced per user (case-insensitive).
+- `categoryId` must reference an owned category when provided.
+- `originalMetricId` must reference an owned metric when provided.
+- Cursor list supports `limit`, `sort`, `q`, `after`, `includeTotal`, and filter object/query-key variants.
+- Detail endpoint supports include modes:
+  `flat`, `full`, or CSV subset (`settings,category,logs`) with `logsLimit`.
+- Trend endpoint currently returns recent trend points from metric logs (default last 30 days behavior in query service).
 
-#### 5.1.3. Acceptance Criteria:
+### 6.5 Metric Settings Domain (`/api/v1/metric-settings`)
 
-- Users can register with a valid email address and a password that meets complexity requirements (e.g., minimum 8 characters, including one uppercase letter, one lowercase letter, and one number).
-- Users can log in with their registered email and password within 2 seconds.
-- Users can update their profile information, including email and password, with changes reflected immediately.
-- The system securely stores user passwords using bcrypt hashing with a salt factor of 10.
-- Protected routes require a valid JWT for access, with a token expiration time of 1 hour.
+Implemented endpoints:
 
-### 5.2. Dashboard
+- `GET /`
+- `GET /:id`
+- `POST /`
+- `PUT /:id`
+- `DELETE /:id`
+- `PATCH /:id/achieve`
+- `PATCH /:id/display`
 
-#### 5.2.1. Description:
+Requirements:
+
+- One settings record per metric (unique by `metric_id`).
+- Goal invariants:
+  - if `goalEnabled=true`, `goalType` and `goalValue` are required.
+- Time-frame invariants:
+  - if `timeFrameEnabled=true`, `startDate` and `deadlineDate` are required.
+  - `deadlineDate` must be after `startDate`.
+- Display options support updates for `showOnDashboard`, `priority`, `chartType`, `color`.
+- Cursor list supports `limit`, `sort`, `after`, `includeTotal`, and filter by `metricId`/`isActive`.
 
-The dashboard will provide users with an overview of their key metrics and progress towards their goals. It will display metrics where `showOnDashboard === true`. Charts will show trends over time using D3.js for each Metric.
+### 6.6 Metric Log Domain (`/api/v1/metric-logs`)
+
+Implemented endpoints:
 
-#### 5.2.2. User Stories:
+- `GET /`
+- `GET /stats`
+- `GET /:id`
+- `POST /`
+- `PUT /:id`
+- `DELETE /:id`
+- `POST /:metricId/dummy` (only when `ENABLE_DUMMY_ENDPOINTS=true`)
 
-- As a logged-in user, I want to see a summary of my most important metrics on the dashboard so that I can quickly assess my progress.
-- As a logged-in user, I want to be able to customize which metrics are displayed on the dashboard so that I can focus on what's most important to me.
-- As a logged-in user, I want to see charts visualizing my progress over time so that I can identify trends and patterns.
+Requirements:
 
-#### 5.2.3. Acceptance Criteria:
+- Log create requires explicit `type` (`manual` or `automatic`), `metricId`, `logValue`.
+- Duplicate logs for the same `metric_id` + `logged_at` are prevented.
+- Cursor list supports `limit`, `sort`, `q`, `after`, `includeTotal`, and filter by `metricId`/`logValue`.
+- `GET /:id` additionally requires `metricId` query input for ownership/context validation.
+- `GET /stats` returns average/min/max and supports optional metric scope.
 
-- The dashboard displays a summary of the user's key metrics, with a maximum of 10 metrics displayed at a time.
-- Users can customize which metrics are displayed on the dashboard through a drag-and-drop interface.
-- Charts are displayed for each metric, visualizing progress over time with a selectable time range (e.g., 7 days, 30 days, 90 days).
-- The dashboard is responsive and adapts to different screen sizes, ensuring optimal viewing on desktop, tablet, and mobile devices.
+### 6.7 Analytics Domain (`/api/v1/analytics`)
 
-### 5.3. Libraries of Metric and Metric Category
+Implemented endpoints:
 
-#### 5.3.1. Description:
+- `GET /dashboard`
+- `GET /metrics/:metricId`
 
-The application will allow users to create and manage libraries of metrics and metric categories. Users will be able to create new metrics and categories, view existing metrics and categories, update metrics and categories, and delete metrics and categories.
+Requirements:
 
-#### 5.3.2. User Stories:
+- Auth is required; analytics-specific rate limiter is applied.
+- Supported query concepts:
+  - `bucket`: `1h`, `1d`, `1w`, `1m`, `1y`
+  - `tz`: IANA timezone (default from env, typically `Asia/Jakarta`)
+  - `fill`: `none`, `zero`, `nan`
+  - Range via either `last=<Nh|d|w|m|y>` or `start`+`end`
+- If range is omitted, validator resolves to a default relative window (`last=30d`).
+- Range size is guarded against excessive bucket counts.
+- Dashboard only includes active settings where `displayOptions.showOnDashboard=true`.
+- ETag and cache-control semantics are used for visualization responses.
+- Analytics cache invalidates when metric logs mutate.
 
-- As a logged-in user, I want to be able to create new metric categories so that I can organize my metrics.
-- As a logged-in user, I want to be able to create new metrics so that I can track my progress towards specific goals.
-- As a logged-in user, I want to be able to view a list of all my metrics and categories so that I can easily find what I'm looking for.
-- As a logged-in user, I want to be able to update my metrics and categories so that I can keep them up-to-date.
-- As a logged-in user, I want to be able to delete metrics and categories that I no longer need so that I can keep my account organized.
+### 6.8 Platform Utility Surfaces
 
-#### 5.3.3. Acceptance Criteria:
+Implemented endpoints:
 
-- Users can create new metric categories with a name (maximum 50 characters), color (using a color picker), and icon (using an emoji selector).
-- Users can create new metrics with a name (maximum 50 characters), description (maximum 200 characters), and default unit (e.g., steps, hours, minutes).
-- Users can view a list of all their metrics and categories, with pagination to handle large libraries.
-- Users can update the name, description, color, and icon of their metric categories.
-- Users can update the name, description, and default unit of their metrics.
-- Users can delete metric categories and metrics, with a confirmation prompt to prevent accidental deletion.
+- `GET /api/v1/health`
+- `GET /api/v1/docs`
+- `GET /api/v1/docs/openapi.json`
 
-### 5.4. Logging Metrics
+Requirements:
 
-#### 5.4.1. Description:
+- Health endpoint returns service status metadata.
+- Swagger and raw OpenAPI JSON routes are available.
+- Docs routes can be auth-protected depending on `SWAGGER_REQUIRE_AUTH`.
 
-The application will allow users to log metrics. Users will be able to log metrics manually through forms. Input validation and error handling will be implemented to ensure data quality.
+## 7. Data Model Requirements
 
-#### 5.4.2. User Stories:
+### 7.1 Tables and Enums
 
-- As a logged-in user, I want to be able to log my metrics manually so that I can track my progress.
-- As a logged-in user, I want the application to validate my input when logging metrics so that I can ensure data quality.
-- As a logged-in user, I want to receive helpful error messages if I enter invalid data so that I can correct my mistakes.
+Core tables:
 
-#### 5.4.3. Acceptance Criteria:
+- `users`
+- `metric_categories`
+- `metrics`
+- `metric_settings`
+- `metric_logs`
 
-- Users can log metrics manually through forms, with appropriate input fields for different data types (e.g., number, text, date).
-- The application validates user input to ensure data quality, including range checks, format validation, and required fields.
-- Helpful error messages are displayed if the user enters invalid data, providing clear instructions on how to correct the mistakes.
-- The application supports logging different types of data (e.g., numbers, text, dates), with appropriate data validation and storage for each type.
+Core enums:
 
-### 5.5. Metric Settings
+- `enum_users_role`: `user`, `admin`
+- `enum_metric_settings_goal_type`: `cumulative`, `incremental`
+- `enum_metric_log_type`: `manual`, `automatic`
 
-#### 5.5.1. Description:
+### 7.2 Key Relational Rules
 
-The application will allow users to set, update, and delete personal goals through MetricSettings. Users can access historical goals.
+- User owns many metrics and categories.
+- Category belongs to user; metric may reference category (`SET NULL` on delete).
+- Metric may reference original metric (`SET NULL` on delete).
+- Metric has one settings record.
+- Metric has many logs.
+- Soft delete is used for several entities (`deleted_at` patterns).
 
-#### 5.5.2. User Stories:
+### 7.3 Key Constraints and Indexing Expectations
 
-- As a logged-in user, I want to be able to set a goal for a metric so that I can track my progress towards a specific target.
-- As a logged-in user, I want to be able to update the goal for a metric so that I can adjust my target as needed.
-- As a logged-in user, I want to be able to delete a goal for a metric so that I can remove it if it's no longer relevant.
-- As a logged-in user, I want to be able to view my historical goals so that I can see how my targets have changed over time.
+- Unique user email and username.
+- Unique metric name per user (case-insensitive active scope).
+- Unique category name per user (case-insensitive active scope).
+- Unique metric settings per metric.
+- Unique metric-log timestamp per metric (`metric_id`, `logged_at`).
+- Performance indexes exist for cursor/sort/filter-heavy query paths.
+- `metrics.description` has been migrated to `TEXT`.
 
-#### 5.5.3. Acceptance Criteria:
+## 8. Non-Functional Requirements (As-Built)
 
-- Users can set a goal for a metric, including the goal type (cumulative or incremental), goal value (with appropriate unit), time frame (start date and deadline date), and alert thresholds (as a percentage of the goal value).
-- Users can update the goal for a metric, including the goal type, goal value, time frame, and alert thresholds.
-- Users can delete a goal for a metric, with a confirmation prompt to prevent accidental deletion.
-- Users can view their historical goals for a metric, with the ability to filter by date range.
+### 8.1 Security Baseline
 
-### 5.6. Public Profile
+- JWT auth on protected routes.
+- Bcrypt password hashing.
+- Middleware hardening: `helmet`, `xss-clean`, `hpp`.
+- TRACE is explicitly disallowed (method guard).
+- Request body JSON parse errors return deterministic 400 payloads.
+- Validation via Zod across params/query/body.
 
-#### 5.6.1. Description:
+### 8.2 Reliability and Error Handling
 
-The application will allow users to control the visibility of their profile to other users. The `isPublicProfile` field in the User model determines whether a user's profile is visible to other users.
+- Central error middleware normalizes operational errors.
+- App-level errors use typed `AppError` with status semantics (`fail` vs `error`).
+- Graceful shutdown path closes HTTP server, DB, and Redis connections.
 
-#### 5.6.2. User Stories:
+### 8.3 Performance and Caching
 
-- As a logged-in user, I want to be able to make my profile public so that other users can see my progress and achievements.
-- As a logged-in user, I want to be able to make my profile private so that my data is not visible to other users.
+- Redis-backed cache middleware is used on selected GET routes.
+- Redis-backed rate-limit store is used when available.
+- Fallback to in-memory rate-limit store when Redis is optional and unavailable.
+- Analytics and cursor endpoints use bounded query parameters.
 
-#### 5.6.3. Acceptance Criteria:
+### 8.4 Configurability and Environment
 
-- Users can set their profile to public or private through a toggle switch in their profile settings.
-- When a user's profile is public, other users can view their profile information, including their username, metrics, and progress.
-- When a user's profile is private, other users cannot view their profile information.
+- Typed env validation via Zod.
+- Multi-environment DB URL/credential normalization.
+- Feature toggles include:
+  - `ENABLE_DUMMY_ENDPOINTS`
+  - `SWAGGER_REQUIRE_AUTH`
+  - `DISABLE_RATE_LIMITING`
+  - `ENABLE_REDIS_INTEGRATION`
 
-### 5.7. Metric Adoption
+## 9. Operational Readiness
 
-#### 5.7.1. Description:
+### 9.1 CI/CD and Release Gate Expectations
 
-The application will allow users to copy and customize metrics created by other users, creating a library of reusable metrics. The `originalMetricId` field in the Metric model references the original metric if the metric was adopted from another user.
+Primary CI expectations:
 
-#### 5.7.2. User Stories:
+- lint
+- typecheck
+- unit tests
+- integration tests
+- OpenAPI consistency check (`docs:openapi:check`)
+- local/staging contract test stages
 
-- As a logged-in user, I want to be able to browse a library of metrics created by other users so that I can find metrics that are relevant to my goals.
-- As a logged-in user, I want to be able to copy and customize a metric created by another user so that I can adapt it to my specific needs.
+Staging pipeline includes deployment + contract validation and is documented under `documents/ci-cd/backend/`.
 
-#### 5.7.3. Acceptance Criteria:
+### 9.2 API Contract Governance
 
-- Users can browse a library of metrics created by other users, with the ability to filter by category and search by keyword.
-- Users can copy a metric created by another user and customize it, including changing the name, description, unit, and goal settings.
-- The system tracks the origin of adopted metrics using the `originalMetricId` field, providing attribution to the original creator.
+- OpenAPI spec must stay synchronized with route + schema code.
+- Contract-test suites (Postman/Newman and Schemathesis) validate externally visible behavior.
+- Any API behavior change requires coordinated updates to code, tests, OpenAPI artifact, and PRD.
 
-## 6. UI/UX Design
+## 10. Acceptance Criteria for This Backend Product Baseline
 
-### 6.1. Overall Design Principles (Minimalist, Japanese and Javanese aesthetics):
-
-The UI/UX design will incorporate both Japanese and Javanese elements, with a focus on creating a harmonious and balanced design. This will involve using a combination of traditional patterns, colors, and typography from both cultures. The UI should use a light color palette with subtle accents, clean typography, and ample whitespace to create a sense of calm and clarity. Javanese elements could be incorporated through subtle patterns or textures. The UI should prioritize functionality and ease of use, with a focus on clear data visualization and intuitive navigation. Japanese elements could be incorporated through the use of grid-based layouts and minimalist icons.
-
-### 6.2. User Interface Mockups (if available): (To be completed with UI/UX designer. Mockups will include wireframes and visual designs for key screens, such as the dashboard, metric library, and logging form.)
-
-### 6.3. User Flows: (To be completed with UI/UX designer. User flows will outline the steps users take to complete key tasks, such as registering an account, logging a metric, and setting a goal.)
-
-### 6.4. Accessibility Considerations:
-
-The application will be designed to be accessible to users with disabilities, following WCAG guidelines. This includes providing alternative text for images, ensuring sufficient color contrast (a contrast ratio of at least 4.5:1 for normal text and 3:1 for large text), and providing keyboard navigation.
-
-## 7. Technical Architecture
-
-### 7.1. System Diagram: (To be completed with a system architect. The system diagram will illustrate the key components of the application, including the backend API, database, and frontend client.)
-
-### 7.2. Technology Stack:
-
-- Backend: Node.js, Express.js
-- Database: PostgreSQL
-- Data Visualization: D3.js
-- Authentication: JWT (JSON Web Tokens)
-- ORM: Sequelize
-
-### 7.3. API Endpoints: (See legacy PRD for detailed API specifications)
-
-- Authentication Endpoints:
-- `POST /api/v1/auth/register`: Register a new user
-- `POST /api/v1/auth/login`: Login user and return JWT
-- `GET /api/v1/auth/profile`: Get authenticated user's profile
-- `PUT /api/v1/auth/profile`: Update authenticated user's profile
-- `POST /api/v1/auth/logout`: Logout user
-- Metrics Endpoints:
-- `GET /api/v1/metrics`: Get all metrics for authenticated user (with pagination, filtering)
-- `GET /api/v1/metrics/:id`: Get a specific metric
-- `POST /api/v1/metrics`: Add a new metric
-- `PUT /api/v1/metrics/:id`: Update a metric
-- `DELETE /api/v1/metrics/:id`: Delete a metric
-- MetricSettings Endpoints:
-- `GET /api/v1/metrics/:metricId/settings`: Get all settings for a specific metric
-- `POST /api/v1/metrics/:metricId/settings`: Add new settings to a metric
-- `PATCH /api/v1/metrics/:metricId/settings/:id`: Update a metric setting
-- `DELETE /api/v1/metrics/:metricId/settings/:id`: Delete a metric setting
-- MetricCategory Endpoints:
-- `GET /api/v1/categories`: Get all metric categories for authenticated user
-- `GET /api/v1/categories/:id`: Get a specific category
-- `POST /api/v1/categories`: Add a new metric category
-- `PUT /api/v1/categories/:id`: Update a metric category
-- `DELETE /api/v1/categories/:id`: Delete a metric category
-- MetricLog Endpoints:
-- `GET /api/v1/metrics/:metricId/logs`: Get all logs for a specific metric
-- `GET /api/v1/metrics/:metricId/logs/:id`: Get a specific log entry
-- `POST /api/v1/metrics/:metricId/logs`: Add a new metric log
-- `PUT /api/v1/metrics/:metricId/logs/:id`: Update a metric log
-- `DELETE /api/v1/metrics/:metricId/logs/:id`: Delete a metric log
-- Trends Endpoints:
-- `GET /api/v1/metrics/:metricId/trends`: Get trend data for a specific metric
+A release-quality backend documentation baseline is considered met when:
 
-### 7.4. Database Schema: (See legacy PRD for detailed database schema)
+- Each documented endpoint exists in active routers.
+- Documented request/query constraints align with active Zod schemas.
+- Documented table/constraint behavior aligns with Sequelize models + migrations.
+- Non-functional behavior reflects active middleware and env configuration.
+- Features not implemented as first-class backend capabilities are explicitly documented as gaps, not implied as shipped.
 
-- User:
-- `id`: UUID, required, unique
-- `username`: String, required, unique
-- `email`: String, required, unique, validate: { isEmail: true }
-- `password`: String, required
-- `role`: ENUM("user", "admin") default "user"
-- `isPublicProfile`: Bool, required, default ‘true’
-- `createdAt`: Date
-- `updatedAt`: Date
-- `deletedAt`: Date
-- Metric:
-- `id`: UUID
-- `userId`: UUID, references User (cascade, can’t exist without User)
-- `categoryId`: UUID, reference MetricCategory (nullify, do exists without MetricCategory)
-- `originalMetricId`: UUID, reference Metric (adopted from other user, nullify do exist if adopted Metric is deleted)
-- `name`: String (e.g., 'steps', 'hydration')
-- `description`: String
-- `defaultUnit`: String
-- `isPublic`: Boolean (default ‘true’)
-- `createdAt`: Date
-- `updatedAt`: Date
-- `deletedAt`: Date
-- MetricSettings:
-- `id`: UUID
-- `metricId`: UUID, references Metric (cascade, can’t exists without Metric)
-- `goalEnabled`: Boolean (default ‘false’)
-- `goalType`: ENUM("cumulative", "incremental")
-- `goalValue`: Number
-- `timeFrameEnabled`: Boolean (default ‘false’)
-- `startDate`: Date
-- `deadlineDate`: Date
-- `alertEnabled`: Boolean (default ‘false’)
-- `alertThresholds`: Number (default 80)
-- `isAchieved`: Boolean (default ‘false’)
-- `isActive`: Boolean (default ‘true’)
-- `displayOptions`: JSONB (default { showOnDashboard: true, priority: 1, chartType: "line", color: "#E897A3" })
-- `createdAt`: Date
-- `updatedAt`: Date
-- MetricLog:
-- `id`: UUID
-- `metricId`: UUID, references Metric (cascade, can’t exists without Metric)
-- `type`: ENUM("manual", "automatic") default "manual"
-- `logValue`: Number
-- `loggedAt`: Date
-- `createdAt`: Date
-- `updatedAt`: Date
-- MetricCategory:
-- `id`: UUID
-- `userId`: UUID, references User (cascade, can’t exists without User)
-- `name`: String, required
-- `color`: String (hex, default to ‘E897A3’)
-- `icon`: String (emoji, default to '📁')
-- `deletedAt`: Date
-- `createdAt`: Date
-- `updatedAt`: Date
+## 11. Production-Hardening Gaps and Backlog Mapping
 
-## 8. Performance Requirements
+The following legacy PRD themes are not currently productized as backend capabilities and are tracked as gaps:
 
-### 8.1. Response Times:
+### 11.1 Product Capability Gaps
 
-API endpoints should respond within 200ms on average, with a 95th percentile response time of under 500ms.
+- Smart reminders/notifications: no reminder scheduler or notification delivery subsystem.
+- Public profile discovery/social sharing: profile visibility field exists, but public profile browsing and social APIs are not exposed.
+- Metric adoption marketplace/library UX flow: `originalMetricId` exists, but no dedicated cross-user adoption discovery API surface is shipped.
+- Formal legal/compliance execution (GDPR workflows, consent/audit APIs): policy/process docs may exist, but backend APIs for full compliance operations are not yet defined as product requirements.
 
-### 8.2. Scalability:
+### 11.2 Engineering Hardening Gaps
 
-The system should be able to handle a large number of concurrent users and metrics without performance degradation, supporting at least 10,000 concurrent users and 1 million metrics.
+- Explicit SLO/SLI instrumentation and alerting thresholds are not formalized in this repo as enforceable runtime gates.
+- Token revocation/session invalidation mechanism is not implemented (logout is logical acknowledgement).
+- Error envelope uniformity is partially mixed (`success` envelope helper vs direct middleware responses) and can be standardized further.
 
-### 8.3. Resource Utilization:
+### 11.3 Backlog Direction (Non-Implementation)
 
-The system should be optimized to minimize resource utilization (CPU, memory, disk I/O), with CPU utilization under 70% and memory utilization under 80% during peak load.
+Recommended backlog epics:
 
-## 9. Security Considerations
+- EPIC-BE-REMINDERS: reminder scheduling and delivery APIs
+- EPIC-BE-PUBLIC-PROFILES: public profile read model and privacy-safe queries
+- EPIC-BE-METRIC-ADOPTION: curated discover/adopt APIs using `originalMetricId`
+- EPIC-BE-COMPLIANCE: DSAR/delete/export/auditability APIs
+- EPIC-BE-OBS-SLO: service-level objectives and runtime observability gates
 
-### 9.1. Authentication and Authorization
+## 12. Success Metrics for Documentation Quality
 
-- Implement JWT-based authentication to protect API endpoints.
-- Use bcrypt for password hashing with a salt factor of 10.
-- Implement role-based access control (RBAC) to restrict access to sensitive data and functionality.
+This PRD refresh is successful when:
 
-### 9.2. Data Security
+- No placeholder/TBD sections remain in backend PRD/outline.
+- Backend and QA teams can map every major API behavior from PRD to a concrete code path.
+- Frontend integration confusion from legacy endpoint blueprints is removed.
+- Future feature planning can start from explicit "as-built vs gap" separation.
 
-- Encrypt sensitive data at rest and in transit using industry-standard encryption algorithms (e.g., AES-256).
-- Implement regular security audits and penetration testing to identify and address vulnerabilities.
-- Protect against common web vulnerabilities, such as SQL injection, cross-site scripting (XSS), and cross-site request forgery (CSRF).
+## 13. Change Management
 
-### 9.3. Vulnerability Management
-
-- Establish a vulnerability management process to identify, assess, and remediate vulnerabilities in a timely manner.
-- Use a vulnerability scanner to regularly scan the application for known vulnerabilities.
-- Subscribe to security mailing lists and monitor security advisories to stay informed about new vulnerabilities.
-
-## 10. Legal and Compliance Considerations
-
-### 10.1. GDPR Compliance
-
-- Implement mechanisms to obtain user consent for data collection and processing.
-- Provide users with the ability to access, rectify, and erase their personal data.
-- Implement data anonymization and pseudonymization techniques to protect user privacy.
-
-### 10.2. Data Privacy
-
-- Develop a comprehensive data privacy policy that outlines how user data is collected, used, and protected.
-- Obtain user consent for data sharing with third parties.
-- Implement data retention policies to ensure that user data is not stored for longer than necessary.
-
-### 10.3. Terms of Service
-
-- Develop clear and concise terms of service that outline the rights and responsibilities of users and the application provider.
-- Obtain user agreement to the terms of service before allowing them to use the application.
-- Regularly review and update the terms of service to ensure that they are compliant with applicable laws and regulations.
-
-## 11. Deployment Strategy
-
-### 11.1. Environment Setup (Private self-hosted VPS)
-
-- Provision a virtual private server (VPS) with sufficient resources (CPU, memory, disk space) to support the application.
-- Install and configure the necessary software, including Node.js, PostgreSQL, and Nginx.
-- Configure a firewall to restrict access to the VPS.
-
-### 11.2. Deployment Process
-
-- Use a continuous integration and continuous deployment (CI/CD) pipeline to automate the deployment process.
-- Deploy the application to the VPS using a tool such as Docker or Ansible.
-- Monitor the application after deployment to ensure that it is running correctly.
-
-### 11.3. Monitoring and Maintenance
-
-- Implement a monitoring system to track the application's performance and identify potential issues.
-- Implement a backup and recovery plan to protect against data loss.
-- Regularly update the application and its dependencies to address security vulnerabilities and improve performance.
-
-## 12. Testing and Quality Assurance
-
-### 12.1. Testing Strategy
-
-- Implement a comprehensive testing strategy that includes unit tests, integration tests, and end-to-end tests.
-- Use a test-driven development (TDD) approach to ensure that tests are written before code.
-- Automate the testing process to ensure that tests are run regularly.
-
-### 12.2. Test Cases
-
-- Develop detailed test cases for each feature of the application, covering both positive and negative scenarios.
-- Use a test case management tool to track the status of test cases.
-- Ensure that test cases are reviewed and approved by stakeholders.
-
-### 12.3. Bug Reporting and Tracking
-
-- Implement a bug reporting and tracking system to manage bug reports.
-- Use a bug tracking tool to track the status of bug reports.
-- Ensure that bug reports are prioritized and resolved in a timely manner.
-
-## 13. Success Metrics
-
-### 13.1. Key Performance Indicators (KPIs)
-
-- User engagement: Daily active users (DAU), monthly active users (MAU), session duration, feature usage.
-- User retention: Churn rate, retention rate, customer lifetime value (CLTV).
-- Performance: API response time, error rate, resource utilization.
-- Goal achievement: Percentage of users achieving their goals, average time to goal achievement.
-
-### 13.2. Data Collection and Analysis
-
-- Use a data analytics platform to collect and analyze user data.
-- Track key performance indicators (KPIs) to measure the success of the application.
-- Use data insights to identify areas for improvement and inform product development decisions.
-
-## 14. Future Roadmap
-
-### 14.1. Planned Enhancements
-
-- Implement support for automatic metric logging through integrations with third-party apps and devices.
-- Add support for social sharing of progress and achievements.
-- Develop a mobile app for iOS and Android.
-
-### 14.2. Potential New Features
-
-- Implement gamification elements to further incentivize user engagement.
-- Add support for team-based goal tracking and collaboration.
-- Develop a personalized coaching feature to provide users with tailored guidance and support.
-
-### 14.3. Scalability Plans
-
-- Migrate the database to a cloud-based service to improve scalability and reliability.
-- Implement a caching layer to reduce database load and improve response times.
-- Use a content delivery network (CDN) to distribute static assets and improve performance for users around the world.
+- Update this PRD in the same change set as significant API/domain contract changes.
+- Keep `lakira-backend-prd-outline.md` synchronized as the template for future revisions.
+- Do not duplicate frontend-specific requirements in this backend PRD.
+- Review cadence workflow:
+  - Event-based (required): review and update this PRD when changing backend contract files (routes, request schemas, models/migrations, auth behavior, OpenAPI sources/artifacts).
+  - Time-based (required): run a 15-30 minute documentation drift sweep at least every 4 weeks, even with no feature releases.
+  - Completion rule: if content changes, update `Last updated`; if no content changes, keep the content and optionally record a `Reviewed on YYYY-MM-DD (no changes)` note in PR/commit context.

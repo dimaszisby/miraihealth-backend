@@ -1,163 +1,99 @@
-# Lakira Product Requirements Document Outline
+# Lakira Backend Product Requirements Document Outline
 
-## 1. Introduction
+Use this outline when creating or revising the backend PRD. Keep it as-built first, then explicitly separate non-implemented gaps.
 
-### 1.1. Purpose of the Document
+## 1. Purpose
 
-### 1.2. Scope of the Project
+### 1.1 Document Purpose
 
-### 1.3. Target Audience
+### 1.2 Audience
 
-## 2. Goals and Objectives
+### 1.3 Service Scope
 
-### 2.1. Business Goals
+### 1.4 Review Cadence
 
-### 2.2. User Goals
+## 2. Product Intent
 
-### 2.3. Technical Goals
+### 2.1 Backend Mission
 
-## 3. Background and Strategy
+### 2.2 Core Capabilities
 
-### 3.1. Problem Statement
+## 3. Source of Truth
 
-### 3.2. Proposed Solution
+### 3.1 Normative Artifacts (routers, schemas, models, migrations, OpenAPI, tests)
 
-### 3.3. Competitive Analysis (if applicable)
+### 3.2 Conflict Resolution Rule (runtime code over stale docs)
 
-## 4. Product Description
+## 4. Users and Jobs
 
-### 4.1. Product Overview
+### 4.1 Actors
 
-### 4.2. Key Features
+### 4.2 Primary Jobs To Be Done
 
-## 5. Features
+## 5. Scope Boundaries
 
-### 5.1. User Authentication
+### 5.1 In Scope
 
-#### 5.1.1. Description
+### 5.2 Out of Scope
 
-#### 5.1.2. User Stories
+## 6. Functional Requirements (As-Built)
 
-#### 5.1.3. Acceptance Criteria
+### 6.1 Common API Rules
 
-### 5.2. Dashboard
+### 6.2 Auth Domain (`/api/v1/auth`)
 
-#### 5.2.1. Description
+### 6.3 Metric Category Domain (`/api/v1/metric-categories`)
 
-#### 5.2.2. User Stories
+### 6.4 Metric Domain (`/api/v1/metrics`)
 
-#### 5.2.3. Acceptance Criteria
+### 6.5 Metric Settings Domain (`/api/v1/metric-settings`)
 
-### 5.3. Libraries of Metric and Metric Category
+### 6.6 Metric Log Domain (`/api/v1/metric-logs`)
 
-#### 5.3.1. Description
+### 6.7 Analytics Domain (`/api/v1/analytics`)
 
-#### 5.3.2. User Stories
+### 6.8 Platform Utility Endpoints (`/health`, `/docs`, `/docs/openapi.json`)
 
-#### 5.3.3. Acceptance Criteria
+## 7. Data Model Requirements
 
-### 5.4. Logging Metrics
+### 7.1 Core Tables and Enums
 
-#### 5.4.1. Description
+### 7.2 Ownership and Relationship Rules
 
-#### 5.4.2. User Stories
+### 7.3 Constraints and Indexing Expectations
 
-#### 5.4.3. Acceptance Criteria
+## 8. Non-Functional Requirements (As-Built)
 
-### 5.5. Metric Settings
+### 8.1 Security Baseline
 
-#### 5.5.1. Description
+### 8.2 Reliability and Error Handling
 
-#### 5.5.2. User Stories
+### 8.3 Performance and Caching
 
-#### 5.5.3. Acceptance Criteria
+### 8.4 Configuration and Environment Controls
 
-### 5.6. Public Profile
+## 9. Operational Readiness
 
-#### 5.6.1. Description
+### 9.1 CI/CD and Release Gates
 
-#### 5.6.2. User Stories
+### 9.2 API Contract Governance
 
-#### 5.6.3. Acceptance Criteria
+## 10. Acceptance Criteria for Documentation Baseline
 
-### 5.7. Metric Adoption
+## 11. Production-Hardening Gaps and Backlog Mapping
 
-#### 5.7.1. Description
+### 11.1 Product Capability Gaps
 
-#### 5.7.2. User Stories
+### 11.2 Engineering Hardening Gaps
 
-#### 5.7.3. Acceptance Criteria
+### 11.3 Backlog Direction (No implementation details)
 
-## 6. UI/UX Design
+## 12. Success Metrics for PRD Quality
 
-### 6.1. Overall Design Principles (Minimalist, Japanese and Javanese aesthetics)
+## 13. Change Management
 
-### 6.2. User Interface Mockups (if available)
+### 13.1 Update Triggers
 
-### 6.3. User Flows
+### 13.2 Sync Rule with Outline and OpenAPI
 
-### 6.4. Accessibility Considerations
-
-## 7. Technical Architecture
-
-### 7.1. System Diagram
-
-### 7.2. Technology Stack (Node.js, Express.js, PostgreSQL, D3.js, JWT, Sequelize)
-
-### 7.3. API Endpoints
-
-### 7.4. Database Schema
-
-## 8. Performance Requirements
-
-### 8.1. Response Times
-
-### 8.2. Scalability
-
-### 8.3. Resource Utilization
-
-## 9. Security Considerations
-
-### 9.1. Authentication and Authorization
-
-### 9.2. Data Security
-
-### 9.3. Vulnerability Management
-
-## 10. Legal and Compliance Considerations
-
-### 10.1. GDPR Compliance
-
-### 10.2. Data Privacy
-
-### 10.3. Terms of Service
-
-## 11. Deployment Strategy
-
-### 11.1. Environment Setup (Private self-hosted VPS)
-
-### 11.2. Deployment Process
-
-### 11.3. Monitoring and Maintenance
-
-## 12. Testing and Quality Assurance
-
-### 12.1. Testing Strategy
-
-### 12.2. Test Cases
-
-### 12.3. Bug Reporting and Tracking
-
-## 13. Success Metrics
-
-### 13.1. Key Performance Indicators (KPIs)
-
-### 13.2. Data Collection and Analysis
-
-## 14. Future Roadmap
-
-### 14.1. Planned Enhancements
-
-### 14.2. Potential New Features
-
-### 14.3. Scalability Plans
+### 13.3 Review Cadence Workflow
