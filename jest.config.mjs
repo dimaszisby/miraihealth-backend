@@ -7,6 +7,10 @@ const projectBase = {
     "^(\\.{1,2}/.*)\\.js$": "$1",
     "^@/(.*)\\.js$": "<rootDir>/src/$1.ts",
     "^@/(.*)$": "<rootDir>/src/$1",
+    "^@config/(.*)\\.js$": "<rootDir>/src/config/$1.ts",
+    "^@config/(.*)$": "<rootDir>/src/config/$1",
+    "^@utils/(.*)\\.js$": "<rootDir>/src/utils/$1.ts",
+    "^@utils/(.*)$": "<rootDir>/src/utils/$1",
   },
   transform: {
     "^.+\\.ts$": [

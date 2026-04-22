@@ -49,6 +49,34 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  rabbitmq: # RabbitMQ message broker
+    image: rabbitmq:3.13-management-alpine
+    container_name: rabbitmq_queue
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/}
+
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    ports:
+      - "5672:5672" # AMQP
+      - "15672:15672" # Management UI
+      - "15692:15692" # Prometheus metrics
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   app: # Node.js backend application service
     build: # Define build context and Dockerfile
       context: .
@@ -64,6 +92,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_started # Redis doesn't have a built-in healthcheck like postgres
+      rabbitmq:
+        condition: service_healthy
     ports: # Expose the application port
       - "8001:8001" # Map host port 8001 to container port 8001
     networks: # Connect to the backend network
@@ -83,3 +113,5 @@ volumes: # Define named volumes for data persistence
     name: db_data_volume # Name the volume
   redis_data:
     name: redis_data_volume # Name the volume
+  rabbitmq_data:
+    name: rabbitmq_data_volume

@@ -3,6 +3,9 @@ dist/
 build/
 .git/
 .vscode/
+.venv-schemathesis/
+.claude/
+documents/
 npm-debug.log
 yarn-debug.log
 yarn-error.log

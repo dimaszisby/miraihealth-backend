@@ -1,6 +1,6 @@
 # Security Audit Checklist - 2026-05-18
 
-- Generated (UTC): 2026-02-23T06:08:51Z
+- Generated (UTC): 2026-02-18T11:04:09Z
 - Canonical control set: `documents/security/framework/security-audit-master-checklist.md`
 
 | Status   | Control ID    | Control                                                | Evidence Ref                                                                                                                                            | Notes                                                                        |
@@ -18,9 +18,9 @@
 | PRECHECK | LC-LOG-01     | Logging redaction and monitoring controls validated    | `src/utils/logger.ts`, `src/shared/middleware/error.ts`                                                                                                 | Structured logger in place and prod errors suppress stack traces.            |
 | PRECHECK | LC-ABUSE-01   | Rate-limit and abuse controls validated                | `src/shared/middleware/rate-limiter.ts`, `src/features/analytics/infrastructure/http/router.ts`                                                         | Global, user, and analytics limiters present.                                |
 | PRECHECK | LC-ABUSE-02   | Test/dummy endpoints are gated                         | `src/features/metric/infrastructure/http/router.ts`, `src/features/metric-log/infrastructure/http/router.ts`, `src/config/zodEnv.ts`                    | Dummy routes only register when `ENABLE_DUMMY_ENDPOINTS=true`.               |
-| PRECHECK | LC-SCA-01     | Dependency and supply-chain checks complete            | `tmp/security/npm-audit-production.json`, `tmp/security/security-delta-report.json`, `documents/security/DEPENDENCY_POLICY.md`                          | Latest precheck snapshot (2026-02-23) shows 0 production vulnerabilities.    |
+| PRECHECK | LC-SCA-01     | Dependency and supply-chain checks complete            | `tmp/security/npm-audit-production.json`, `tmp/security/security-delta-report.json`, `documents/security/DEPENDENCY_POLICY.md`                          | Latest precheck snapshot shows 0 production vulnerabilities.                 |
 | PRECHECK | LC-CICD-01    | CI security gate checks complete                       | `.github/workflows/backend-ci.yml`, `scripts/security/security-delta-check.mjs`, `scripts/security/evaluate-gate.mjs`                                   | Dedicated `security_delta` job and artifact upload configured.               |
-| PRECHECK | LC-CICD-02    | Soft gate blocks unresolved high/critical              | `documents/security/framework/ci-gate-policy.json`, `tmp/security/security-gate-result.json`                                                            | Policy evaluation passes with `blocking=0` in 2026-02-23 precheck.           |
+| PRECHECK | LC-CICD-02    | Soft gate blocks unresolved high/critical              | `documents/security/framework/ci-gate-policy.json`, `tmp/security/security-gate-result.json`                                                            | Policy evaluation passes with `blocking=0` in current precheck.              |
 | PRECHECK | LC-RUNTIME-01 | Runtime config hardening validated                     | `src/config/zodEnv.ts`, `src/utils/redis-client.ts`                                                                                                     | Safe defaults retained; redis requirement and fallback behavior documented.  |
 | PRECHECK | LC-IR-01      | Incident/exception readiness validated                 | `documents/security/audit/audit-2026-05-18/incidents.md`, `documents/security/audit/audit-2026-05-18/decisions.md`, `documents/security/audit/index.md` | No active exception; continuity records maintained.                          |
 

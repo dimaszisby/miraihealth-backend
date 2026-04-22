@@ -24,6 +24,11 @@ import { AnalyticsVisualizationInvalidationAdapter } from "./features/analytics/
 import { globalRateLimiter } from "@/shared/middleware/rate-limiter.js";
 import { errorHandler } from "@/shared/middleware/error.js";
 import { disconnectRedis } from "./utils/redis-client.js";
+import {
+  connectRabbitMQ,
+  disconnectRabbitMQ,
+} from "./shared/infrastructure/queue/RabbitMQConnection.js";
+import { RabbitMQPublisher } from "./shared/infrastructure/queue/RabbitMQPublisher.js";
 import sequelize from "./config/db.js";
 import { loadModels } from "./infrastructure/db/models.js";
 import { authMiddleware } from "./features/auth/infrastructure/http/authMiddleware.js";
@@ -34,6 +39,7 @@ const visualizationInvalidationAdapter =
 overrideMetricLogFeatureForTest(
   buildMetricLogFeature({
     visualizationInvalidator: visualizationInvalidationAdapter,
+    messageQueue: env.RABBITMQ_ENABLED ? new RabbitMQPublisher() : undefined,
   }),
 );
 
@@ -151,6 +157,11 @@ const startServer = async () => {
     await sequelize.authenticate();
     logger.info("[SERVER] Database connection established successfully.");
 
+    if (env.RABBITMQ_ENABLED) {
+      connectRabbitMQ();
+      logger.info("[SERVER] RabbitMQ connection initiated.");
+    }
+
     // Start HTTP Server
     const PORT = env.PORT || 5000;
     server = app.listen(PORT, () => {
@@ -185,6 +196,12 @@ const shutdown = async (signal: string) => {
     // Close Redis connection
     logger.info("[SERVER] Closing Redis connection...");
     await disconnectRedis();
+
+    // Close RabbitMQ connection
+    if (env.RABBITMQ_ENABLED) {
+      logger.info("[SERVER] Closing RabbitMQ connection...");
+      await disconnectRabbitMQ();
+    }
 
     logger.info("[SERVER] Cleanup completed. Exiting.");
     process.exit(0);

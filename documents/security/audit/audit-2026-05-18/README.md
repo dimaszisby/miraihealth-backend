@@ -1,19 +1,19 @@
 # Security Audit Run - 2026-05-18
 
-- Generated (UTC): 2026-02-23T06:08:51Z
+- Generated (UTC): 2026-02-18T11:04:09Z
 - Scope: Backend codebase, dependencies, CI/CD, runtime hardening
 - Baseline: OWASP ASVS L2, OWASP Top 10, NIST SSDF
 
 ## Audit Status
 
-- Current state: Planned (quarterly run scheduled for 2026-05-18; package pre-filled on 2026-02-18 and refreshed on 2026-02-23)
-- Gate status: Precheck Pass (2026-02-23 snapshot has 0 unresolved high/critical)
+- Current state: Planned (quarterly run scheduled for 2026-05-18; package pre-filled on 2026-02-18)
+- Gate status: Precheck Pass (2026-02-18 snapshot has 0 unresolved high/critical)
 
 ## Summary
 
 This folder is the Q2 2026 quarterly audit package.
 
-Current progress as of 2026-02-23:
+Current progress as of 2026-02-18:
 
 - Historical findings from 2025-11-21 and 2026-02-18 reconciled into normalized schema.
 - Current automated precheck executed:

@@ -1,0 +1,106 @@
+name: Backend PRD Drift Warning
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+      - staging
+  push:
+    branches:
+      - main
+      - dev
+      - staging
+      - "feature/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prd_drift_warning:
+    name: PRD Drift Guard (Warning Only)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve diff range
+        id: range
+        run: |
+          set -euo pipefail
+
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          else
+            BASE_SHA="${{ github.event.before }}"
+            HEAD_SHA="${{ github.sha }}"
+          fi
+
+          if [[ -z "$BASE_SHA" || "$BASE_SHA" == "0000000000000000000000000000000000000000" ]]; then
+            BASE_SHA="$(git rev-parse HEAD~1)"
+          fi
+
+          echo "base_sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Detect PRD drift risk
+        id: drift
+        run: |
+          set -euo pipefail
+
+          BASE_SHA="${{ steps.range.outputs.base_sha }}"
+          HEAD_SHA="${{ steps.range.outputs.head_sha }}"
+
+          git diff --name-only "$BASE_SHA" "$HEAD_SHA" > changed_files.txt
+
+          echo "Changed files between $BASE_SHA and $HEAD_SHA:"
+          cat changed_files.txt || true
+
+          CONTRACT_CHANGED=false
+          PRD_CHANGED=false
+
+          while IFS= read -r file; do
+            [[ -z "$file" ]] && continue
+
+            if [[ "$file" == "documents/documentation/product/lakira-backend-prd.md" ]]; then
+              PRD_CHANGED=true
+            fi
+
+            if [[ "$file" == "src/server.ts" ]] ||
+               [[ "$file" == "documents/openapi/lakira-backend-openapi.json" ]] ||
+               [[ "$file" == src/migrations/* ]] ||
+               [[ "$file" == src/lib/openapi/* ]]; then
+              CONTRACT_CHANGED=true
+            fi
+
+            if [[ "$file" =~ ^src/features/.*/infrastructure/http/(router|schema\.zod|controller)\.ts$ ]]; then
+              CONTRACT_CHANGED=true
+            fi
+
+            if [[ "$file" =~ ^src/features/.*/infrastructure/persistence/models/.*\.ts$ ]]; then
+              CONTRACT_CHANGED=true
+            fi
+          done < changed_files.txt
+
+          echo "contract_changed=$CONTRACT_CHANGED" >> "$GITHUB_OUTPUT"
+          echo "prd_changed=$PRD_CHANGED" >> "$GITHUB_OUTPUT"
+
+      - name: Emit warning annotation
+        if: steps.drift.outputs.contract_changed == 'true' && steps.drift.outputs.prd_changed != 'true'
+        run: |
+          echo "::warning title=Backend PRD Drift Guard::Contract-related backend files changed without updating documents/documentation/product/lakira-backend-prd.md. Review cadence expects a PRD check."
+
+      - name: Job summary
+        run: |
+          {
+            echo "## Backend PRD Drift Guard"
+            echo ""
+            echo "- Contract-related files changed: \`${{ steps.drift.outputs.contract_changed }}\`"
+            echo "- Backend PRD changed: \`${{ steps.drift.outputs.prd_changed }}\`"
+            echo "- Mode: warning only (non-blocking)"
+          } >> "$GITHUB_STEP_SUMMARY"
