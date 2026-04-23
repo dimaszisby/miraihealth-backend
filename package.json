@@ -45,6 +45,7 @@
     "migrate:development": "NODE_ENV=development dotenv -e .env.development -- npx sequelize-cli db:migrate --config src/config/config.cjs",
     "migrate:test": "NODE_ENV=test dotenv -e .env.test -- npx sequelize-cli db:migrate --config src/config/config.cjs",
     "migrate:staging": "NODE_ENV=staging dotenv -e .env.staging -- npx sequelize-cli db:migrate --config src/config/config.cjs",
+    "migrate:staging:ci": "NODE_ENV=staging npx sequelize-cli db:migrate --config src/config/config.cjs",
     "migrate:production": "NODE_ENV=production dotenv -e .env.production -- npx sequelize-cli db:migrate --config src/config/config.cjs",
     "migrate:undo": "npx dotenv -e .env.development -- sequelize-cli db:migrate:undo --config src/config/config.cjs",
     "migrate:development:undo": "NODE_ENV=development dotenv -e .env.development -- npx sequelize-cli db:migrate:undo --config src/config/config.cjs",
