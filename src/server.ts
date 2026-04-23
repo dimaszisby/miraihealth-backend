@@ -100,7 +100,16 @@ app.use(
   }),
 );
 
-// Global Rate Limiter (Uncomment when needed)
+// Health check — registered before rate limiter so probes are never throttled
+app.get("/api/v1/health", (_req, res) => {
+  res.json({
+    status: "ok",
+    environment: env.NODE_ENV,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Global Rate Limiter
 app.use(globalRateLimiter);
 
 // * Routes
@@ -111,14 +120,6 @@ app.use("/api/v1/metric-settings", metricSettingsRouter);
 app.use("/api/v1/metric-logs", metricLogRouter);
 // DDD based routes
 app.use("/api/v1/analytics", visualizationRouter);
-
-app.get("/api/v1/health", (_req, res) => {
-  res.json({
-    status: "ok",
-    environment: env.NODE_ENV,
-    timestamp: new Date().toISOString(),
-  });
-});
 
 // Serve OpenAPI documentation
 // TODO: Developer Note -> Learn more about OpenAPI and Swagger integration
