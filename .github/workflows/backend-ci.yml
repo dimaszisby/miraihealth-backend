@@ -368,6 +368,7 @@ jobs:
       RENDER_STAGING_DEPLOY_HOOK_URL: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL }}
       STAGING_HEALTH_URL: ${{ secrets.STAGING_HEALTH_URL }}
       STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET_TEST }} # or a dedicated staging secret
 
     steps:
       - name: Checkout
