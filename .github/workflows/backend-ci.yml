@@ -367,38 +367,34 @@ jobs:
     env:
       RENDER_STAGING_DEPLOY_HOOK_URL: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL }}
       STAGING_HEALTH_URL: ${{ secrets.STAGING_HEALTH_URL }}
+      STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run DB migrations (staging)
+        run: npm run migrate:staging:ci
+
       - name: Trigger staging deploy
         run: |
           if [ -z "$RENDER_STAGING_DEPLOY_HOOK_URL" ]; then
-            echo "RENDER_STAGING_DEPLOY_HOOK_URL secret is not configured."
+            echo "RENDER_STAGING_DEPLOY_HOOK_URL secret is not configured."                                                                
             exit 1
-          fi
+          fi                                                                                                                               
           curl -X POST "$RENDER_STAGING_DEPLOY_HOOK_URL"
-
-      - name: Wait for staging to become healthy
-        run: |
-          if [ -z "$STAGING_HEALTH_URL" ]; then
-            echo "STAGING_HEALTH_URL secret is not configured."
-            exit 1
-          fi
-          for i in {1..30}; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$STAGING_HEALTH_URL" || echo "000")
-            if [ "$STATUS" -eq 200 ]; then
-              echo "Staging is healthy."
-              exit 0
-            fi
-
-            echo "Waiting for staging to become healthy (status: $STATUS)..."
-            sleep 10
-          done
-
-          echo "Staging did not become healthy in time."
-          exit 1
 
   contract_staging:
     name: Contract Tests (Staging Backend)
