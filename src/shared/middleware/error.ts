@@ -5,7 +5,7 @@ import { env } from "@/config/envManager.js";
 import { AuthRequest } from "@/types/request.context.js";
 import { ZodError } from "zod";
 import { formatZodIssues } from "@/shared/utils/zod-error-formatter.js";
-import { UniqueConstraintError } from "sequelize";
+import { UniqueConstraintError, DatabaseError } from "sequelize";
 
 const isBodyParseError = (
   error: unknown,
@@ -48,7 +48,13 @@ export const createErrorHandler =
       return;
     }
 
-    logger.error(`Error Occurred: ${err.message}`, err);
+    if (err instanceof DatabaseError) {
+      const dbMessage = err.original?.message ?? err.message;
+      logger.error(`Database error: ${dbMessage}`, err);
+    } else {
+      logger.error(`Error Occurred: ${err.message}`, err);
+    }
+
     const appError =
       err instanceof AppError
         ? err
