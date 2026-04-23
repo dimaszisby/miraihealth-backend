@@ -5,18 +5,14 @@
  */
 import { spawn } from "child_process";
 import path from "path";
-import fs from "fs";
 import dotenv from "dotenv";
 import logger from "./logger.js";
 
 const cwd = process.cwd();
 const envPath = path.resolve(cwd, ".env.test");
-const envManagerPath = path.resolve(cwd, "dist", "config", "envManager.js");
+const npxCmd = process.platform === "win32" ? "npx.cmd" : "npx";
 
 dotenv.config({ path: envPath, override: false });
-
-const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
-const npxCmd = process.platform === "win32" ? "npx.cmd" : "npx";
 
 const runCommand = (command, args, envOverrides = {}) =>
   new Promise((resolve, reject) => {
@@ -38,25 +34,7 @@ const runCommand = (command, args, envOverrides = {}) =>
     });
   });
 
-const ensureBuildArtifacts = async () => {
-  if (fs.existsSync(envManagerPath)) {
-    return;
-  }
-
-  logger.info(
-    "[db-migrate-test] dist/config/envManager.js missing; running npm run build before migrations.",
-  );
-  await runCommand(npmCmd, ["run", "build"]);
-
-  if (!fs.existsSync(envManagerPath)) {
-    throw new Error(
-      "dist/config/envManager.js still missing after build. Check tsconfig.build.json include paths.",
-    );
-  }
-};
-
 const run = async () => {
-  await ensureBuildArtifacts();
   await runCommand(
     npxCmd,
     ["sequelize-cli", "db:migrate", "--config", "src/config/config.cjs"],
