@@ -1,4 +1,5 @@
 import type { User } from "@/features/auth/infrastructure/persistence/models/user.sequelize.js";
+import type { PasswordResetToken } from "@/features/auth/infrastructure/persistence/models/password-reset-token.sequelize.js";
 import type { MetricCategory } from "@/features/metric-category/infrastructure/persistence/models/metric-category.sequelize.js";
 import type { Metric } from "@/features/metric/infrastructure/persistence/models/metric.sequelize.js";
 import type { MetricSettings } from "@/features/metric-settings/infrastructure/persistence/models/metric-settings.sequelize.js";
@@ -6,6 +7,7 @@ import type { MetricLog } from "@/features/metric-log/infrastructure/persistence
 
 export type DbModels = {
   User: typeof User;
+  PasswordResetToken: typeof PasswordResetToken;
   MetricCategory: typeof MetricCategory;
   Metric: typeof Metric;
   MetricSettings: typeof MetricSettings;

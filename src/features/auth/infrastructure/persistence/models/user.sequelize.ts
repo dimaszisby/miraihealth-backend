@@ -2,6 +2,11 @@ import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import bcrypt from "bcrypt";
 import { UserAttributesBase } from "@/types/db/user.types.js";
 import type { DbModels } from "@/infrastructure/db/types.js";
+import {
+  initPasswordResetToken,
+  associatePasswordResetToken,
+  PasswordResetToken,
+} from "./password-reset-token.sequelize.js";
 
 const isBcryptHash = (value: unknown): value is string =>
   typeof value === "string" && /^\$2[aby]\$\d{2}\$/.test(value);
@@ -115,6 +120,12 @@ export class User
       foreignKey: { name: "userId", field: "user_id", allowNull: false },
       onDelete: "CASCADE",
     });
+
+    User.hasMany(models.PasswordResetToken, {
+      as: "passwordResetTokens",
+      foreignKey: { name: "userId", field: "user_id", allowNull: false },
+      onDelete: "CASCADE",
+    });
   }
 
   async validPassword(password: string): Promise<boolean> {
@@ -131,9 +142,11 @@ export function associateUser(models: DbModels) {
 
 export const registerAuthModels = (sequelize: Sequelize) => {
   initUser(sequelize);
-  return { User };
+  initPasswordResetToken(sequelize);
+  return { User, PasswordResetToken };
 };
 
 export const associateAuthModels = (models: DbModels) => {
   associateUser(models);
+  associatePasswordResetToken(models);
 };
