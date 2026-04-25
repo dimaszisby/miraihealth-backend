@@ -199,6 +199,48 @@ const envSchema = z.object({
     .string()
     .transform((val) => val !== "false")
     .default("true"),
+
+  // Email / Password Reset
+  EMAIL_PROVIDER: z
+    .preprocess(
+      (val) => (typeof val === "string" ? val.toLowerCase() : val),
+      z.enum(["console", "resend"]),
+    )
+    .default(
+      ["development", "test"].includes(process.env.NODE_ENV ?? "")
+        ? "console"
+        : "resend",
+    ),
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().default("onboarding@resend.dev"),
+  FRONTEND_RESET_URL: z
+    .string()
+    .url()
+    .default("http://localhost:3000/reset-password"),
+  RATE_LIMIT_PASSWORD_RESET_EMAIL_MAX: z
+    .string()
+    .transform((val) => {
+      const parsed = parseInt(val, 10);
+      if (isNaN(parsed) || parsed <= 0) {
+        throw new Error(
+          "RATE_LIMIT_PASSWORD_RESET_EMAIL_MAX must be a positive number",
+        );
+      }
+      return parsed;
+    })
+    .default("3"),
+  RATE_LIMIT_PASSWORD_RESET_IP_MAX: z
+    .string()
+    .transform((val) => {
+      const parsed = parseInt(val, 10);
+      if (isNaN(parsed) || parsed <= 0) {
+        throw new Error(
+          "RATE_LIMIT_PASSWORD_RESET_IP_MAX must be a positive number",
+        );
+      }
+      return parsed;
+    })
+    .default("10"),
 });
 
 /**

@@ -96,6 +96,7 @@
     "pg-hstore": "^2.3.4",
     "rate-limit-redis": "^4.2.0",
     "redis": "^4.7.0",
+    "resend": "^6.12.2",
     "sequelize": "^6.37.5",
     "swagger-ui-express": "^5.0.1",
     "winston": "^3.17.0",

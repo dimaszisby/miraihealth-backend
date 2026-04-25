@@ -495,6 +495,32 @@ export const UpdateUserRequestSchema = registerSchema(
   }),
 );
 
+export const ForgotPasswordRequestSchema = registerSchema(
+  "ForgotPasswordRequest",
+  z.object({
+    email: emailSchema("user@example.com"),
+  }),
+);
+
+export const ResetPasswordRequestSchema = registerSchema(
+  "ResetPasswordRequest",
+  z
+    .object({
+      token: z.string().min(1).openapi({
+        example: "AbCdEf0123456789AbCdEf0123456789AbCdEf01",
+      }),
+      password: z.string().min(6).openapi({ example: "BrandNewPass123!" }),
+      passwordConfirmation: z
+        .string()
+        .min(6)
+        .openapi({ example: "BrandNewPass123!" }),
+    })
+    .refine((data) => data.password === data.passwordConfirmation, {
+      message: "Passwords do not match",
+      path: ["passwordConfirmation"],
+    }),
+);
+
 // Metric Category Schemas
 export const MetricCategorySchema = registerSchema(
   "MetricCategory",

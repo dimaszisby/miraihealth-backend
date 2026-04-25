@@ -127,9 +127,21 @@ describe("MetricLog repositories (integration)", () => {
   it("accepts numeric q filters and logValue ordering", async () => {
     const owner = await createUserRow();
     const metric = await createMetricRow({ userId: owner.id });
-    await createMetricLogRow({ metricId: metric.id, logValue: 5 });
-    await createMetricLogRow({ metricId: metric.id, logValue: 15 });
-    await createMetricLogRow({ metricId: metric.id, logValue: 25 });
+    await createMetricLogRow({
+      metricId: metric.id,
+      logValue: 5,
+      loggedAt: new Date("2025-04-01T00:00:00Z"),
+    });
+    await createMetricLogRow({
+      metricId: metric.id,
+      logValue: 15,
+      loggedAt: new Date("2025-04-02T00:00:00Z"),
+    });
+    await createMetricLogRow({
+      metricId: metric.id,
+      logValue: 25,
+      loggedAt: new Date("2025-04-03T00:00:00Z"),
+    });
 
     const byValue = await queryRepo.listLogs({
       userId: owner.id,
