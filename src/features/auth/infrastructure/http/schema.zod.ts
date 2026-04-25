@@ -36,6 +36,23 @@ export const loginUserBody = z.object({
   password: zPassword,
 });
 
+export const forgotPasswordBody = z.object({
+  email: zEmail,
+});
+
+export const resetPasswordBody = z
+  .object({
+    token: z.string().min(1, { message: "Reset token is required" }),
+    password: zPassword,
+    passwordConfirmation: zPasswordConfirmation,
+  })
+  .refine((data) => data.password === data.passwordConfirmation, {
+    message: ZodMessages.user.passwordMismatch,
+    path: ["passwordConfirmation"],
+  });
+
 export const createUserSchema = { body: createUserBody };
 export const updateUserSchema = { body: updateUserBody };
 export const loginUserSchema = { body: loginUserBody };
+export const forgotPasswordSchema = { body: forgotPasswordBody };
+export const resetPasswordSchema = { body: resetPasswordBody };

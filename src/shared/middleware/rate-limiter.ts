@@ -123,3 +123,77 @@ export const createAnalyticsRateLimiter = () =>
       });
 
 export const analyticsRateLimiter = createAnalyticsRateLimiter();
+
+const normalizeEmailKey = (email: unknown): string | null => {
+  if (typeof email !== "string") return null;
+  const trimmed = email.trim().toLowerCase();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+export const createPasswordResetEmailRateLimiter = () =>
+  env.DISABLE_RATE_LIMITING
+    ? (maybeLogDisableNotice(), noopRateLimiter)
+    : rateLimit({
+        keyGenerator: (req: AuthRequest): string => {
+          const email = normalizeEmailKey(
+            (req.body as { email?: unknown } | undefined)?.email,
+          );
+          return email
+            ? `password-reset:email:${email}`
+            : `password-reset:ip:${req.ip || "anonymous"}`;
+        },
+        store: maybeCreateStore(),
+        windowMs: 60 * 60 * 1000,
+        max: env.RATE_LIMIT_PASSWORD_RESET_EMAIL_MAX,
+        standardHeaders: true,
+        legacyHeaders: false,
+        message: {
+          status: 429,
+          message: "Too many password reset requests, please try again later.",
+        },
+        handler: (
+          req: AuthRequest,
+          res: Response,
+          next: NextFunction,
+          options,
+        ) => {
+          const email = normalizeEmailKey(
+            (req.body as { email?: unknown } | undefined)?.email,
+          );
+          logger.warn(
+            `Password reset email rate limit hit for ${email ?? req.ip}`,
+          );
+          res.status(options.statusCode).json(options.message);
+        },
+      });
+
+export const passwordResetEmailRateLimiter =
+  createPasswordResetEmailRateLimiter();
+
+export const createPasswordResetIpRateLimiter = () =>
+  env.DISABLE_RATE_LIMITING
+    ? (maybeLogDisableNotice(), noopRateLimiter)
+    : rateLimit({
+        keyGenerator: (req: AuthRequest): string =>
+          `password-reset-ip:${req.ip || "anonymous"}`,
+        store: maybeCreateStore(),
+        windowMs: 60 * 60 * 1000,
+        max: env.RATE_LIMIT_PASSWORD_RESET_IP_MAX,
+        standardHeaders: true,
+        legacyHeaders: false,
+        message: {
+          status: 429,
+          message: "Too many password reset requests, please try again later.",
+        },
+        handler: (
+          req: AuthRequest,
+          res: Response,
+          next: NextFunction,
+          options,
+        ) => {
+          logger.warn(`Password reset IP rate limit hit for ${req.ip}`);
+          res.status(options.statusCode).json(options.message);
+        },
+      });
+
+export const passwordResetIpRateLimiter = createPasswordResetIpRateLimiter();

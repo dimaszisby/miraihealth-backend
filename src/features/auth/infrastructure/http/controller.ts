@@ -6,7 +6,13 @@ import { buildAuthFeature } from "../../feature.js";
 import { AuthRequest } from "@/types/request.context.js";
 import { assertAuthenticated } from "@/utils/auth-guards.js";
 import { pickValidated } from "@/shared/middleware/validated.js";
-import { createUserBody, loginUserBody, updateUserBody } from "./schema.zod.js";
+import {
+  createUserBody,
+  forgotPasswordBody,
+  loginUserBody,
+  resetPasswordBody,
+  updateUserBody,
+} from "./schema.zod.js";
 import { z } from "zod";
 
 type AuthFeature = ReturnType<typeof buildAuthFeature>;
@@ -19,6 +25,13 @@ export const overrideAuthFeatureForTest = (custom: AuthFeature) => {
 const pickCreateUser = pickValidated(z.object({ body: createUserBody }));
 const pickLoginUser = pickValidated(z.object({ body: loginUserBody }));
 const pickUpdateUser = pickValidated(z.object({ body: updateUserBody }));
+const pickForgotPassword = pickValidated(
+  z.object({ body: forgotPasswordBody }),
+);
+const pickResetPassword = pickValidated(z.object({ body: resetPasswordBody }));
+
+const FORGOT_PASSWORD_RESPONSE =
+  "If an account exists for that email, we've sent reset instructions.";
 
 export const register = catchAsync(async (req: Request, res: Response) => {
   const {
@@ -84,3 +97,25 @@ export const updateProfile = catchAsync(
 export const logout = (req: Request, res: Response): void => {
   successResponse(res, 200, null, "Logged out successfully");
 };
+
+export const forgotPassword = catchAsync(
+  async (req: Request, res: Response) => {
+    const {
+      body: { email },
+    } = pickForgotPassword(req);
+    await feature.requestPasswordReset.execute({ email });
+    successResponse(res, 200, null, FORGOT_PASSWORD_RESPONSE);
+  },
+);
+
+export const resetPassword = catchAsync(async (req: Request, res: Response) => {
+  const {
+    body: { token, password, passwordConfirmation },
+  } = pickResetPassword(req);
+  await feature.resetPassword.execute({
+    token,
+    password,
+    passwordConfirmation,
+  });
+  successResponse(res, 200, null, "Password has been reset. Please log in.");
+});
