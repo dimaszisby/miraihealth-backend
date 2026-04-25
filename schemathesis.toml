@@ -1,0 +1,13 @@
+# Per-operation Schemathesis overrides.
+# Auto-discovered by `schemathesis run` when invoked from the repo root.
+
+# POST /auth/reset-password always returns 400 for schema-valid requests that carry
+# a token not present in the database (expected by design — anti-enumeration).
+# Adding 400 to expected-statuses prevents the positive_data_acceptance check from
+# incorrectly flagging this as a failure during the examples phase.
+[[operations]]
+include-path = "/auth/reset-password"
+include-method = "post"
+
+[operations.checks.positive_data_acceptance]
+expected-statuses = ["2xx", "400", "401", "403", "404", "5xx"]

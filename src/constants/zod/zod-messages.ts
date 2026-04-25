@@ -60,4 +60,7 @@ export const ZodMessages = {
     logTypeInvalid: "Invalid log type",
     logDateInvalid: "Invalid date format",
   },
+  passwordReset: {
+    tokenRequired: "Reset token is required",
+  },
 };
