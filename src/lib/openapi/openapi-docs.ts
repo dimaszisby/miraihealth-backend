@@ -9,6 +9,8 @@ import {
   UserResponseSchema,
   UpdateUserResponseSchema,
   UpdateUserRequestSchema,
+  ForgotPasswordRequestSchema,
+  ResetPasswordRequestSchema,
   MetricCategorySchema,
   CreateMetricCategoryRequestSchema,
   UpdateMetricCategoryRequestSchema,
@@ -214,6 +216,96 @@ registry.registerPath({
     },
     401: {
       $ref: "#/components/responses/UnauthorizedError",
+    },
+    500: {
+      $ref: "#/components/responses/InternalServerError",
+    },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/auth/forgot-password",
+  tags: ["Auth"],
+  summary: "Request a password reset email",
+  description:
+    "Always responds 200 with a generic message to prevent email enumeration. " +
+    "When the email matches a registered account, a single-use reset link is sent. " +
+    "Tokens are valid for 15 minutes; subsequent requests invalidate any prior unused tokens.",
+  request: {
+    body: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: ForgotPasswordRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Generic acknowledgement",
+      content: {
+        "application/json": {
+          schema: SuccessResponseSchema,
+        },
+      },
+    },
+    400: {
+      $ref: "#/components/responses/BadRequestError",
+    },
+    429: {
+      description: "Rate limit exceeded for password reset requests",
+      content: {
+        "application/json": {
+          schema: SuccessResponseSchema,
+        },
+      },
+    },
+    500: {
+      $ref: "#/components/responses/InternalServerError",
+    },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/auth/reset-password",
+  tags: ["Auth"],
+  summary: "Confirm password reset with a token",
+  description:
+    "Consumes a reset token sent via email and sets a new password. Returns a generic " +
+    "400 for unknown, used, expired, or otherwise invalid tokens to avoid information leak. " +
+    "Caller must log in via /auth/login afterwards.",
+  request: {
+    body: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: ResetPasswordRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Password reset succeeded",
+      content: {
+        "application/json": {
+          schema: SuccessResponseSchema,
+        },
+      },
+    },
+    400: {
+      $ref: "#/components/responses/BadRequestError",
+    },
+    429: {
+      description: "Rate limit exceeded for password reset requests",
+      content: {
+        "application/json": {
+          schema: SuccessResponseSchema,
+        },
+      },
     },
     500: {
       $ref: "#/components/responses/InternalServerError",
