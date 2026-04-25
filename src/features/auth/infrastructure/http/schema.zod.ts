@@ -42,7 +42,9 @@ export const forgotPasswordBody = z.object({
 
 export const resetPasswordBody = z
   .object({
-    token: z.string().min(1, { message: "Reset token is required" }),
+    token: z
+      .string()
+      .min(1, { message: ZodMessages.passwordReset.tokenRequired }),
     password: zPassword,
     passwordConfirmation: zPasswordConfirmation,
   })

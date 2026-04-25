@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import AppError from "@/utils/AppError.js";
 import logger from "@/utils/logger.js";
 import {
   EmailMessage,
@@ -30,7 +31,7 @@ export class ResendEmailSender implements EmailSender {
         subject: message.subject,
         error: error.message,
       });
-      throw new Error(`Resend email send failed: ${error.message}`);
+      throw new AppError(`Resend email send failed: ${error.message}`, 500);
     }
   }
 }
