@@ -1,8 +1,3 @@
-import { validateMetricAccess } from "@/utils/db-helper.js";
-import { MetricAccessPort } from "../../application/ports/MetricAccessPort.js";
-
-export class MetricAccessSequelize implements MetricAccessPort {
-  async ensureMetricOwnership(userId: string, metricId: string): Promise<void> {
-    await validateMetricAccess(userId, metricId);
-  }
-}
+// Compatibility shim — keeps relative imports in src/worker.ts (locked) resolving
+// after metric-log was moved to src/features/public/metric-log/.
+export * from "@/features/public/metric-log/infrastructure/access/MetricAccessSequelize.js";

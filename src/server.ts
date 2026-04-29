@@ -10,15 +10,15 @@ import { getOpenApiDocumentation } from "./lib/openapi/openapi-docs.js";
 import logger from "@/utils/logger.js";
 
 // Routes
-import { authRouter } from "./features/auth/index.js";
-import { metricRouter } from "./features/metric/index.js";
-import { metricLogRouter } from "./features/metric-log/index.js";
-import { metricSettingsRouter } from "./features/metric-settings/index.js";
-import { metricCategoryRouter } from "./features/metric-category/index.js";
+import { authRouter } from "./features/shared/auth/index.js";
+import { metricRouter } from "./features/public/metric/index.js";
+import { metricLogRouter } from "./features/public/metric-log/index.js";
+import { metricSettingsRouter } from "./features/public/metric-settings/index.js";
+import { metricCategoryRouter } from "./features/public/metric-category/index.js";
 import { visualizationRouter } from "@/features/analytics/infrastructure/http/router.js";
-import { buildMetricLogFeature } from "./features/metric-log/feature.js";
-import { overrideMetricLogFeatureForTest } from "./features/metric-log/infrastructure/http/controller.js";
-import { AnalyticsVisualizationInvalidationAdapter } from "./features/analytics/infrastructure/cache/VisualizationInvalidationAdapter.js";
+import { buildMetricLogFeature } from "./features/public/metric-log/feature.js";
+import { overrideMetricLogFeatureForTest } from "./features/public/metric-log/infrastructure/http/controller.js";
+import { AnalyticsVisualizationInvalidationAdapter } from "./features/public/analytics/infrastructure/cache/VisualizationInvalidationAdapter.js";
 
 // Other Setup
 import { globalRateLimiter } from "@/shared/middleware/rate-limiter.js";
@@ -31,7 +31,8 @@ import {
 import { RabbitMQPublisher } from "./shared/infrastructure/queue/RabbitMQPublisher.js";
 import sequelize from "./config/db.js";
 import { loadModels } from "./infrastructure/db/models.js";
-import { authMiddleware } from "./features/auth/infrastructure/http/authMiddleware.js";
+import { authMiddleware } from "./features/shared/auth/infrastructure/http/authMiddleware.js";
+import { requireAdmin } from "./features/shared/auth/infrastructure/http/requireAdmin.js";
 import { disallowTraceMethod } from "@/shared/middleware/method-guard.js";
 
 const visualizationInvalidationAdapter =
@@ -120,6 +121,14 @@ app.use("/api/v1/metric-settings", metricSettingsRouter);
 app.use("/api/v1/metric-logs", metricLogRouter);
 // DDD based routes
 app.use("/api/v1/analytics", visualizationRouter);
+
+// * Admin routes — guarded by authMiddleware + requireAdmin
+const adminRouter = express.Router();
+adminRouter.use(authMiddleware, requireAdmin);
+adminRouter.get("/_ping", (_req, res) =>
+  res.json({ status: "ok", scope: "admin" }),
+);
+app.use("/api/v1/admin", adminRouter);
 
 // Serve OpenAPI documentation
 // TODO: Developer Note -> Learn more about OpenAPI and Swagger integration
