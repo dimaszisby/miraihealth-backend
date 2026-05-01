@@ -5,6 +5,27 @@ const projectBase = {
   testEnvironment: "node",
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1",
+    // audience-scoped feature aliases (must precede the generic @/ catch-all)
+    "^@/features/auth/(.*)\\.js$": "<rootDir>/src/features/shared/auth/$1.ts",
+    "^@/features/auth/(.*)$": "<rootDir>/src/features/shared/auth/$1",
+    "^@/features/analytics/(.*)\\.js$":
+      "<rootDir>/src/features/public/analytics/$1.ts",
+    "^@/features/analytics/(.*)$": "<rootDir>/src/features/public/analytics/$1",
+    "^@/features/metric-log/(.*)\\.js$":
+      "<rootDir>/src/features/public/metric-log/$1.ts",
+    "^@/features/metric-log/(.*)$":
+      "<rootDir>/src/features/public/metric-log/$1",
+    "^@/features/metric-settings/(.*)\\.js$":
+      "<rootDir>/src/features/public/metric-settings/$1.ts",
+    "^@/features/metric-settings/(.*)$":
+      "<rootDir>/src/features/public/metric-settings/$1",
+    "^@/features/metric-category/(.*)\\.js$":
+      "<rootDir>/src/features/public/metric-category/$1.ts",
+    "^@/features/metric-category/(.*)$":
+      "<rootDir>/src/features/public/metric-category/$1",
+    "^@/features/metric/(.*)\\.js$":
+      "<rootDir>/src/features/public/metric/$1.ts",
+    "^@/features/metric/(.*)$": "<rootDir>/src/features/public/metric/$1",
     "^@/(.*)\\.js$": "<rootDir>/src/$1.ts",
     "^@/(.*)$": "<rootDir>/src/$1",
     "^@config/(.*)\\.js$": "<rootDir>/src/config/$1.ts",

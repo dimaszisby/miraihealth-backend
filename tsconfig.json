@@ -9,7 +9,23 @@
     "paths": {
       "@/*": ["src/*"],
       "@utils/*": ["src/utils/*"],
-      "@config/*": ["src/config/*"]
+      "@config/*": ["src/config/*"],
+      "@/features/auth": ["src/features/shared/auth/index"],
+      "@/features/auth/*": ["src/features/shared/auth/*"],
+      "@/features/metric": ["src/features/public/metric/index"],
+      "@/features/metric/*": ["src/features/public/metric/*"],
+      "@/features/metric-category": [
+        "src/features/public/metric-category/index"
+      ],
+      "@/features/metric-category/*": ["src/features/public/metric-category/*"],
+      "@/features/metric-settings": [
+        "src/features/public/metric-settings/index"
+      ],
+      "@/features/metric-settings/*": ["src/features/public/metric-settings/*"],
+      "@/features/metric-log": ["src/features/public/metric-log/index"],
+      "@/features/metric-log/*": ["src/features/public/metric-log/*"],
+      "@/features/analytics": ["src/features/public/analytics/index"],
+      "@/features/analytics/*": ["src/features/public/analytics/*"]
     },
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "types": ["node", "jest"],

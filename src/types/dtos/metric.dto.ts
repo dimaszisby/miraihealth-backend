@@ -8,7 +8,7 @@ import {
 } from "@/features/metric/infrastructure/http/schema.zod.js";
 
 // Internal DTOs for associations
-import { MetricCategoryResponseDTO } from "../../features/metric-category/infrastructure/http/dto.js";
+import { MetricCategoryResponseDTO } from "@/features/metric-category/infrastructure/http/dto.js";
 import { MetricSettingsResponseDTO } from "@/features/metric-settings/infrastructure/http/dto.js";
 import { MetricLogResponseDTO } from "@/features/metric-log/infrastructure/http/dto.js";
 

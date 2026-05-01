@@ -285,7 +285,7 @@ const runStaticChecks = async (nowIso) => {
       await fs.readFile(
         path.join(
           ROOT,
-          "src/features/metric-settings/infrastructure/http/router.ts",
+          "src/features/public/metric-settings/infrastructure/http/router.ts",
         ),
         "utf8",
       ),
@@ -309,7 +309,7 @@ const runStaticChecks = async (nowIso) => {
           "Browser clients may bypass intended route behavior and create security/control inconsistencies.",
         evidenceRefs: [
           "src/server.ts",
-          "src/features/metric-settings/infrastructure/http/router.ts",
+          "src/features/public/metric-settings/infrastructure/http/router.ts",
         ],
         owaspAsvsRef: "V14",
         owaspTop10Ref: "A05",
@@ -320,10 +320,10 @@ const runStaticChecks = async (nowIso) => {
   }
 
   const authSchema = await readText(
-    "src/features/auth/infrastructure/http/schema.zod.ts",
+    "src/features/shared/auth/infrastructure/http/schema.zod.ts",
   );
   const updateUseCase = await readText(
-    "src/features/auth/application/use-cases/UpdateProfile.ts",
+    "src/features/shared/auth/application/use-cases/UpdateProfile.ts",
   );
 
   const rulePrivilegedRoleInput = {
@@ -342,8 +342,8 @@ const runStaticChecks = async (nowIso) => {
         description:
           "Role should be excluded from user-controlled profile update DTOs to prevent future escalation regressions.",
         evidenceRefs: [
-          "src/features/auth/infrastructure/http/schema.zod.ts",
-          "src/features/auth/application/use-cases/UpdateProfile.ts",
+          "src/features/shared/auth/infrastructure/http/schema.zod.ts",
+          "src/features/shared/auth/application/use-cases/UpdateProfile.ts",
         ],
         owaspAsvsRef: "V4",
         owaspTop10Ref: "A01",
