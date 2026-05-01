@@ -12,6 +12,19 @@ const DIST_ROOT = path.resolve(process.cwd(), "dist");
 const JS_EXTENSIONS = new Set([".js", ".mjs", ".cjs"]);
 const ALIAS_PREFIX = "@/";
 
+// Per-feature audience aliases.  Each entry maps an old "@/features/<name>/"
+// prefix to the new dist-relative path after the audience-scoped move.
+// Entries are checked before the generic "@/" fallback, so they take priority.
+const FEATURE_ALIASES = new Map([
+  // populated phase-by-phase during the audience restructure
+  ["@/features/auth/", "features/shared/auth/"],
+  ["@/features/metric/", "features/public/metric/"],
+  ["@/features/metric-category/", "features/public/metric-category/"],
+  ["@/features/metric-settings/", "features/public/metric-settings/"],
+  ["@/features/metric-log/", "features/public/metric-log/"],
+  ["@/features/analytics/", "features/public/analytics/"],
+]);
+
 const patterns = [
   {
     regex: /((?:import|export)[\s\S]*?\sfrom\s+)(['"])(@\/[^'"]+)(['"])/g,
@@ -72,6 +85,29 @@ async function collectJsFiles(dir) {
 }
 
 function resolveAlias(specifier, fromFile) {
+  // Check audience-scoped feature aliases before the generic @/ fallback.
+  for (const [prefix, distRelTarget] of FEATURE_ALIASES) {
+    if (specifier.startsWith(prefix)) {
+      const relPath = distRelTarget + specifier.slice(prefix.length);
+      const candidates = [
+        path.resolve(DIST_ROOT, relPath),
+        path.resolve(DIST_ROOT, `${relPath}.js`),
+        path.resolve(DIST_ROOT, relPath, "index.js"),
+      ];
+      const targetPath = candidates.find((c) => existsSync(c));
+      if (!targetPath) {
+        throw new Error(
+          `[alias-resolver] Unable to resolve "${specifier}" from ${fromFile}`,
+        );
+      }
+      const relative = path.relative(path.dirname(fromFile), targetPath);
+      return (relative.startsWith(".") ? relative : `./${relative}`).replace(
+        /\\/g,
+        "/",
+      );
+    }
+  }
+
   if (!specifier.startsWith(ALIAS_PREFIX)) {
     return specifier;
   }

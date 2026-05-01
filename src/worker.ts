@@ -8,10 +8,10 @@ import { RabbitMQConsumer } from "./shared/infrastructure/queue/RabbitMQConsumer
 import { QUEUES } from "./shared/infrastructure/queue/topology.js";
 import { loadModels } from "./infrastructure/db/models.js";
 import sequelize from "./config/db.js";
-import { MetricAccessSequelize } from "./features/metric-log/infrastructure/access/MetricAccessSequelize.js";
-import { MetricLogCacheRedis } from "./features/metric-log/infrastructure/cache/MetricLogCacheRedis.js";
+import { MetricAccessSequelize } from "@/features/metric-log/infrastructure/access/MetricAccessSequelize.js";
+import { MetricLogCacheRedis } from "@/features/metric-log/infrastructure/cache/MetricLogCacheRedis.js";
 import { NoopVisualizationInvalidation } from "./shared/application/ports/VisualizationInvalidationPort.js";
-import { GenerateDummyMetricLogsHandler } from "./features/metric-log/application/use-cases/GenerateDummyMetricLogsHandler.js";
+import { GenerateDummyMetricLogsHandler } from "@/features/metric-log/application/use-cases/GenerateDummyMetricLogsHandler.js";
 
 if (!env.RABBITMQ_ENABLED) {
   logger.error(
