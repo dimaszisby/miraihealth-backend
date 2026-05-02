@@ -74,3 +74,59 @@ The Lakira backend protects every authenticated endpoint with JSON Web Tokens (J
 - ✅ Token lifetime and claims align with documented policy.
 - ✅ Rotation can occur without downtime, verified via staging exercise.
 - ✅ Auth-related alerts and dashboards exist for failed verifications and unusual activity.
+
+---
+
+## 7. Phase D — Refresh tokens + verify-port (added 2026-05-02 from SaaS-readiness audit)
+
+This phase closes audit gaps **P0-1.1** (no refresh-token flow) and **P1-10.3** (auth middleware re-implements `jwt.verify` outside the port). It rides on top of Phases A–C above, but does not require them to be complete first — the verify-port refactor and the refresh-token addition are self-contained.
+
+Detailed decisions for this phase live in [`./decisions.md`](./decisions.md) ADR-001 (refresh-token storage) and ADR-002 (verify-port refactor).
+
+### Phase D.1 — TokenProvider.verify() extension
+
+1. Extend the port `src/features/shared/auth/application/ports/TokenProvider.ts` with `verify(token: string): Promise<TokenClaims>`. Define `TokenClaims = { userId, email, iat, exp, kid? }` in a sibling type file.
+2. Implement in `src/features/shared/auth/infrastructure/providers/JwtTokenProvider.ts`. Throw a new `InvalidTokenError extends AppError` (401) on any failure (`TokenExpiredError`, `JsonWebTokenError`, malformed claims).
+3. Convert `authMiddleware` to a factory: `makeAuthMiddleware(tokenProvider, userRepository)`. Wire from `buildAuthFeature()` in `src/features/shared/auth/feature.ts`. Remove the `import jwt from "jsonwebtoken"` line from `authMiddleware.ts`.
+4. Update unit tests under `__tests__/unit/features/auth/` to mock the port. Add a direct `JwtTokenProvider.verify` test covering: valid token, expired token, malformed token, wrong secret.
+
+### Phase D.2 — Refresh-token entity + persistence
+
+1. Migration `src/migrations/YYYYMMDDHHMMSS-create-refresh-tokens.cjs` with the schema in ADR-001 (id, user_id FK, family_id, token_hash UNIQUE, issued_at, expires_at, revoked_at, replaced_by_id, user_agent, ip). Indexes on `(user_id, revoked_at)` and `family_id`. Working `down`.
+2. Domain entity at `src/features/shared/auth/domain/entities/RefreshToken.ts` with private constructor, static `issue(userId, familyId?, ttlSec)`, instance methods `markRevoked()`, `replaceWith(newId)`. No JWT logic in this layer.
+3. Repository interface `src/features/shared/auth/domain/repositories/RefreshTokenRepository.ts` with: `save(rt)`, `findByTokenHash(hash)`, `revokeFamily(familyId)`, `findActiveByUser(userId)`.
+4. Sequelize implementation + mapper following the `PasswordResetToken` reference pattern (`src/features/shared/auth/infrastructure/persistence/`).
+
+### Phase D.3 — Use cases + HTTP route
+
+1. New use cases: `IssueRefreshToken(userId)`, `RotateRefreshToken(rawToken)`, `RevokeRefreshTokenFamily(rawToken)`.
+2. `LoginUser` use case grows to also call `IssueRefreshToken` and return the raw refresh token to the controller.
+3. Controller writes the refresh token as an HttpOnly Secure SameSite=Lax cookie `lakira_refresh` (Path `/api/v1/auth/refresh`). Reduces the access-token TTL to 15 minutes via a new env `ACCESS_TOKEN_TTL_SEC` defaulting to 900.
+4. New route `POST /api/v1/auth/refresh` — reads the cookie (or `Authorization: Bearer <refresh>` fallback), calls `RotateRefreshToken`, sets the new cookie, returns the new access token.
+5. `POST /api/v1/auth/logout` switches from a no-op 200 to calling `RevokeRefreshTokenFamily` (closing P0-1.1's "logout doesn't revoke" sub-issue).
+6. Add `cookie-parser` dep + middleware in `src/server.ts` before the routes.
+
+### Phase D.4 — Reuse detection + observability
+
+1. `RotateRefreshToken` checks `revoked_at` on the looked-up token. If set, revoke the entire `family_id` and emit a structured log `auth.refresh.reuse_detected` at WARN with `{ userId, familyId, ip, userAgent }`. Respond 401.
+2. Counter increment for `auth.refresh.success`, `auth.refresh.reuse_detected`, `auth.refresh.invalid` (uses the existing logger; Prometheus integration deferred to P2-5.4).
+
+### Phase D.5 — OpenAPI + integration tests
+
+1. `npm run docs:openapi:generate` after the new routes land. Verify the `/auth/refresh` route appears with the cookie auth scheme and the 30-day refresh-cookie shape.
+2. Integration tests `__tests__/integration/api/auth-refresh.test.ts`: login → refresh succeeds → re-using the original refresh fails 401 + family revoked → logout revokes outstanding refresh → expired access token rejected with 401.
+3. Add an explicit test that `grep -n "from \"jsonwebtoken\"" src/features/shared/auth/infrastructure/http/authMiddleware.ts` returns nothing (architecture test in `__tests__/unit/architecture.test.ts` once Phase 5 lands; until then, manual verification).
+
+### Phase D — Risks & rollback
+
+- **Rollback for refresh tokens:** all changes are additive at the schema level. To roll back: deploy a build that ignores the cookie + restores the previous 7-day access-token TTL. Refresh tokens stay in the table but unused.
+- **Cookie-domain pitfalls:** if the API and frontend are on different subdomains, set `domain` correctly. Document in `decisions.md` once the production URL is known.
+- **Access-token-TTL drop:** going from 7d to 15m exposes any client that previously cached the JWT for hours. Coordinate the FE refresh flow before turning down the TTL; ship the refresh route first, observe one week, then drop the TTL.
+
+### Phase D — Success metrics
+
+- ✅ `POST /auth/refresh` works end-to-end in integration tests with rotation + reuse detection.
+- ✅ `authMiddleware` no longer imports `jsonwebtoken` directly.
+- ✅ Logout actually revokes (verified by integration test).
+- ✅ Access-token TTL is 15 minutes in production env.
+- ✅ Audit re-run marks P0-1.1 and P1-10.3 as ✅.
