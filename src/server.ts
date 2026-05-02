@@ -75,6 +75,7 @@ export const serverReady = serverBootstrapPromise;
 // * Environment Variables
 
 const app: Application = express();
+app.set("trust proxy", 1);
 
 // * Middlewares
 app.use(
