@@ -66,8 +66,8 @@ src/
 │   │   ├── metric/           # Metric CRUD
 │   │   ├── metric-log/       # Metric log entries
 │   │   ├── metric-settings/  # Per-metric configuration
-│   │   └── metric-category/  # Metric categories
-│   └── analytics/            # Visualization & aggregation queries
+│   │   ├── metric-category/  # Metric categories
+│   │   └── analytics/        # Visualization & aggregation queries
 ├── shared/
 │   ├── middleware/           # Rate limiting, error handling, method guard
 │   └── infrastructure/       # Queue adapters (RabbitMQ)
