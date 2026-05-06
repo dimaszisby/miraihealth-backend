@@ -1,6 +1,7 @@
 import { env } from "@/config/envManager.js";
 import { UserRepositorySequelize } from "./infrastructure/persistence/UserRepositorySequelize.js";
 import { PasswordResetTokenRepositorySequelize } from "./infrastructure/persistence/PasswordResetTokenRepositorySequelize.js";
+import { RefreshTokenRepositorySequelize } from "./infrastructure/persistence/RefreshTokenRepositorySequelize.js";
 import { BcryptPasswordHasher } from "./infrastructure/providers/BcryptPasswordHasher.js";
 import { JwtTokenProvider } from "./infrastructure/providers/JwtTokenProvider.js";
 import { ConsoleEmailSender } from "./infrastructure/providers/ConsoleEmailSender.js";
@@ -12,6 +13,10 @@ import { GetProfile } from "./application/queries/GetProfile.js";
 import { UpdateProfile } from "./application/use-cases/UpdateProfile.js";
 import { RequestPasswordReset } from "./application/use-cases/RequestPasswordReset.js";
 import { ResetPassword } from "./application/use-cases/ResetPassword.js";
+import { IssueRefreshToken } from "./application/use-cases/IssueRefreshToken.js";
+import { RotateRefreshToken } from "./application/use-cases/RotateRefreshToken.js";
+import { RevokeRefreshTokenFamily } from "./application/use-cases/RevokeRefreshTokenFamily.js";
+import { RefreshTokenCrypto } from "./infrastructure/providers/RefreshTokenCrypto.js";
 
 const buildEmailSender = (): EmailSender => {
   if (env.EMAIL_PROVIDER === "resend") {
@@ -32,13 +37,33 @@ export type AuthFeatureOverrides = {
 export const buildAuthFeature = (overrides: AuthFeatureOverrides = {}) => {
   const repo = new UserRepositorySequelize();
   const resetTokenRepo = new PasswordResetTokenRepositorySequelize();
+  const refreshTokenRepo = new RefreshTokenRepositorySequelize();
   const hasher = new BcryptPasswordHasher();
   const token = new JwtTokenProvider();
   const emailSender = overrides.emailSender ?? buildEmailSender();
 
+  const tokenHasher = new RefreshTokenCrypto();
+  const issueRefreshToken = new IssueRefreshToken(
+    refreshTokenRepo,
+    tokenHasher,
+    env.REFRESH_TOKEN_TTL_DAYS,
+  );
+  const rotateRefreshToken = new RotateRefreshToken(
+    refreshTokenRepo,
+    repo,
+    token,
+    tokenHasher,
+    issueRefreshToken,
+    refreshTokenRepo,
+  );
+  const revokeRefreshTokenFamily = new RevokeRefreshTokenFamily(
+    refreshTokenRepo,
+    tokenHasher,
+  );
+
   return {
     registerUser: new RegisterUser(repo, hasher, token),
-    loginUser: new LoginUser(repo, hasher, token),
+    loginUser: new LoginUser(repo, hasher, token, issueRefreshToken),
     getProfile: new GetProfile(repo),
     updateProfile: new UpdateProfile(repo, hasher),
     requestPasswordReset: new RequestPasswordReset(
@@ -48,5 +73,7 @@ export const buildAuthFeature = (overrides: AuthFeatureOverrides = {}) => {
       { frontendResetUrl: env.FRONTEND_RESET_URL },
     ),
     resetPassword: new ResetPassword(repo, resetTokenRepo, hasher),
+    rotateRefreshToken,
+    revokeRefreshTokenFamily,
   };
 };

@@ -582,6 +582,28 @@
           }
         ]
       },
+      "RefreshResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SuccessResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  }
+                },
+                "required": ["token"]
+              }
+            }
+          }
+        ]
+      },
       "RegisterRequest": {
         "type": "object",
         "properties": {
@@ -2393,11 +2415,7 @@
       "post": {
         "tags": ["Auth"],
         "summary": "Log out the current user",
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
+        "description": "Revokes the refresh token family associated with the presented cookie or bearer token.",
         "responses": {
           "200": {
             "description": "User logged out successfully",
@@ -2405,6 +2423,40 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Rotate refresh token and get a new access token",
+        "description": "Reads the `lakira_refresh` HttpOnly cookie. Rotates the refresh token (revokes old, issues new) and returns a fresh access token. If the presented token was already revoked, the entire token family is invalidated (reuse detection).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Opaque refresh token set by login",
+              "example": "dGVzdC1yZWZyZXNoLXRva2Vu"
+            },
+            "required": true,
+            "name": "lakira_refresh",
+            "in": "cookie"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "New access token issued; new refresh cookie set",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshResponse"
                 }
               }
             }

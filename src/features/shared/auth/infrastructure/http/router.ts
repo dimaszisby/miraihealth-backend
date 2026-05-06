@@ -5,6 +5,7 @@ import {
   getProfile,
   updateProfile,
   logout,
+  refresh,
   forgotPassword,
   resetPassword,
 } from "./controller.js";
@@ -51,7 +52,8 @@ export const createAuthRouter = () => {
     validate(updateUserSchema),
     updateProfile,
   );
-  router.post("/logout", authMiddleware, logout);
+  router.post("/logout", userRateLimiter, logout);
+  router.post("/refresh", userRateLimiter, refresh);
 
   router.post(
     "/forgot-password",
@@ -73,6 +75,7 @@ export const createAuthRouter = () => {
   router.all("/login", methodNotAllowed(["POST"]));
   router.all("/profile", methodNotAllowed(["GET", "PUT"]));
   router.all("/logout", methodNotAllowed(["POST"]));
+  router.all("/refresh", methodNotAllowed(["POST"]));
   router.all("/forgot-password", methodNotAllowed(["POST"]));
   router.all("/reset-password", methodNotAllowed(["POST"]));
 
