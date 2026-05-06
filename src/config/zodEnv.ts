@@ -28,6 +28,26 @@ const envSchema = z.object({
 
   // Security
   JWT_SECRET: z.string().min(1, { message: "JWT_SECRET is required" }),
+  ACCESS_TOKEN_TTL_SEC: z
+    .string()
+    .transform((val) => {
+      const parsed = parseInt(val, 10);
+      if (isNaN(parsed) || parsed <= 0) {
+        throw new Error("ACCESS_TOKEN_TTL_SEC must be a positive number");
+      }
+      return parsed;
+    })
+    .default("900"),
+  REFRESH_TOKEN_TTL_DAYS: z
+    .string()
+    .transform((val) => {
+      const parsed = parseInt(val, 10);
+      if (isNaN(parsed) || parsed <= 0) {
+        throw new Error("REFRESH_TOKEN_TTL_DAYS must be a positive number");
+      }
+      return parsed;
+    })
+    .default("30"),
 
   // CORS
   CORS_ORIGIN: z.string().optional(),

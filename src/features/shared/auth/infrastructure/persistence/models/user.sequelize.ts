@@ -7,6 +7,11 @@ import {
   associatePasswordResetToken,
   PasswordResetToken,
 } from "./password-reset-token.sequelize.js";
+import {
+  initRefreshToken,
+  associateRefreshToken,
+  RefreshToken,
+} from "./refresh-token.sequelize.js";
 
 const isBcryptHash = (value: unknown): value is string =>
   typeof value === "string" && /^\$2[aby]\$\d{2}\$/.test(value);
@@ -126,6 +131,12 @@ export class User
       foreignKey: { name: "userId", field: "user_id", allowNull: false },
       onDelete: "CASCADE",
     });
+
+    User.hasMany(models.RefreshToken, {
+      as: "refreshTokens",
+      foreignKey: { name: "userId", field: "user_id", allowNull: false },
+      onDelete: "CASCADE",
+    });
   }
 
   async validPassword(password: string): Promise<boolean> {
@@ -143,10 +154,12 @@ export function associateUser(models: DbModels) {
 export const registerAuthModels = (sequelize: Sequelize) => {
   initUser(sequelize);
   initPasswordResetToken(sequelize);
-  return { User, PasswordResetToken };
+  initRefreshToken(sequelize);
+  return { User, PasswordResetToken, RefreshToken };
 };
 
 export const associateAuthModels = (models: DbModels) => {
   associateUser(models);
   associatePasswordResetToken(models);
+  associateRefreshToken(models);
 };

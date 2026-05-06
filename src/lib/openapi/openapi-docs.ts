@@ -46,6 +46,7 @@ import {
   VisualizationQueryParamsSchema,
   DashboardVisualizationQueryParamsSchema,
   SuccessResponseSchema,
+  RefreshResponseSchema,
   successEnvelope,
 } from "./openapi-schemas.js";
 import {
@@ -204,13 +205,46 @@ registry.registerPath({
   path: "/auth/logout",
   tags: ["Auth"],
   summary: "Log out the current user",
-  security: [{ BearerAuth: [] }],
+  description:
+    "Revokes the refresh token family associated with the presented cookie or bearer token.",
   responses: {
     200: {
       description: "User logged out successfully",
       content: {
         "application/json": {
           schema: SuccessResponseSchema,
+        },
+      },
+    },
+    500: {
+      $ref: "#/components/responses/InternalServerError",
+    },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/auth/refresh",
+  tags: ["Auth"],
+  summary: "Rotate refresh token and get a new access token",
+  description:
+    "Reads the `lakira_refresh` HttpOnly cookie. " +
+    "Rotates the refresh token (revokes old, issues new) and returns a fresh access token. " +
+    "If the presented token was already revoked, the entire token family is invalidated (reuse detection).",
+  request: {
+    cookies: z.object({
+      lakira_refresh: z.string().openapi({
+        description: "Opaque refresh token set by login",
+        example: "dGVzdC1yZWZyZXNoLXRva2Vu",
+      }),
+    }),
+  },
+  responses: {
+    200: {
+      description: "New access token issued; new refresh cookie set",
+      content: {
+        "application/json": {
+          schema: RefreshResponseSchema,
         },
       },
     },

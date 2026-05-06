@@ -19,6 +19,8 @@ const registerExecute: AsyncMock = jest.fn();
 const loginExecute: AsyncMock = jest.fn();
 const getProfileExecute: AsyncMock = jest.fn();
 const updateProfileExecute: AsyncMock = jest.fn();
+const rotateRefreshTokenExecute: AsyncMock = jest.fn();
+const revokeRefreshTokenFamilyExecute: AsyncMock = jest.fn();
 
 const assertAuthenticatedMock = jest.fn();
 
@@ -44,12 +46,16 @@ const buildFeatureMocks = (): AuthFeature =>
     loginUser: { execute: loginExecute },
     getProfile: { execute: getProfileExecute },
     updateProfile: { execute: updateProfileExecute },
+    rotateRefreshToken: { execute: rotateRefreshTokenExecute },
+    revokeRefreshTokenFamily: { execute: revokeRefreshTokenFamilyExecute },
   }) as unknown as AuthFeature;
 
 const res = () =>
   ({
     status: jest.fn().mockReturnThis(),
     json: jest.fn(),
+    cookie: jest.fn(),
+    clearCookie: jest.fn(),
   }) as unknown as Response;
 
 const next: NextFunction = jest.fn();
@@ -125,19 +131,24 @@ describe("Auth HTTP controller", () => {
     loginExecute.mockResolvedValue({
       token: "jwt",
       user,
+      rawRefreshToken: "refresh-raw",
     });
 
     const req = {
       body: { email: "user@example.com", password: "Password123!" },
+      headers: { "user-agent": "test" },
+      ip: "127.0.0.1",
     } as unknown as AuthRequest;
 
     const response = res();
     await login(req, response, next);
 
-    expect(loginExecute).toHaveBeenCalledWith(
-      "user@example.com",
-      "Password123!",
-    );
+    expect(loginExecute).toHaveBeenCalledWith({
+      email: "user@example.com",
+      password: "Password123!",
+      userAgent: "test",
+      ip: "127.0.0.1",
+    });
     expect(response.status).toHaveBeenCalledWith(200);
     expect(response.json).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -239,11 +250,11 @@ describe("Auth HTTP controller", () => {
     expect(errorNext).toHaveBeenCalledWith(expect.any(Error));
   });
 
-  it("logs out by returning success message", () => {
+  it("logs out and clears refresh cookie", async () => {
     const response = res();
-    const req = {} as AuthRequest;
+    const req = { cookies: {}, headers: {} } as unknown as AuthRequest;
 
-    logout(req, response);
+    await logout(req, response, next);
 
     expect(response.status).toHaveBeenCalledWith(200);
     expect(response.json).toHaveBeenCalledWith(
