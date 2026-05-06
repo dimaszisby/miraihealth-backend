@@ -18,7 +18,7 @@ ADR-style entries scoped to the JWT kit. Cross-kit decisions live in `documents/
 6. **Logout:** `POST /auth/logout` revokes the family of the presented refresh token (or the refresh token resolvable from the cookie).
 7. **Access-token TTL** drops from 7 days to 15 minutes once refresh tokens land.
 
-**Status:** Proposed. To be Accepted after a quick review of the cookie-vs-header trade-off and the chosen 30-day refresh TTL.
+**Status:** Accepted (implemented 2026-05-05).
 
 **Options considered:**
 
@@ -59,7 +59,7 @@ ADR-style entries scoped to the JWT kit. Cross-kit decisions live in `documents/
 4. Wire `tokenProvider` from `buildAuthFeature()` in `src/features/shared/auth/feature.ts`. Remove the `import jwt from "jsonwebtoken"` from `authMiddleware.ts`.
 5. Unit-test `JwtTokenProvider.verify` directly. Update existing `authMiddleware` tests to mock the port instead of `jsonwebtoken`.
 
-**Status:** Proposed. Pairs with ADR-001 — both target the same surface area and ship in the same PR.
+**Status:** Accepted (implemented 2026-05-05). Pairs with ADR-001 — both ship in the same PR.
 
 **Options considered:**
 

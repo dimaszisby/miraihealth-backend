@@ -27,37 +27,37 @@
 
 ### D.1 — TokenProvider.verify() extension
 
-- [ ] Extend `TokenProvider` port with `verify(token): Promise<TokenClaims>` and `TokenClaims` type.
-- [ ] Implement `JwtTokenProvider.verify`; throw new `InvalidTokenError extends AppError` (401) on failure.
-- [ ] Convert `authMiddleware` to factory `makeAuthMiddleware(tokenProvider, userRepository)`; wire from `buildAuthFeature`.
-- [ ] Remove `import jwt from "jsonwebtoken"` from `authMiddleware.ts`.
-- [ ] Update unit tests to mock the port; add direct `JwtTokenProvider.verify` test (valid / expired / malformed / wrong secret).
+- [x] Extend `TokenProvider` port with `verify(token): Promise<TokenClaims>` and `TokenClaims` type.
+- [x] Implement `JwtTokenProvider.verify`; throw new `InvalidTokenError extends AppError` (401) on failure.
+- [x] Convert `authMiddleware` to factory `makeAuthMiddleware(tokenProvider, userRepository)`; wire from `buildAuthFeature`.
+- [x] Remove `import jwt from "jsonwebtoken"` from `authMiddleware.ts`.
+- [x] Update unit tests to mock the port; add direct `JwtTokenProvider.verify` test (valid / expired / malformed / wrong secret).
 
 ### D.2 — Refresh-token entity + persistence
 
-- [ ] Migration `YYYYMMDDHHMMSS-create-refresh-tokens.cjs` with schema per `decisions.md` ADR-001 (id, user_id FK, family_id, token_hash UNIQUE, issued_at, expires_at, revoked_at, replaced_by_id, user_agent, ip + indexes). Working `down`.
-- [ ] Domain entity `RefreshToken.ts` with private constructor, static `issue()`, methods `markRevoked()`, `replaceWith()`.
-- [ ] Repository interface `RefreshTokenRepository`; methods `save`, `findByTokenHash`, `revokeFamily`, `findActiveByUser`.
-- [ ] `RefreshTokenRepositorySequelize` + `RefreshTokenMapper` mirroring the `PasswordResetToken` pattern.
+- [x] Migration `20260503000000-create-refresh-tokens.cjs` with schema per `decisions.md` ADR-001 (id, user_id FK, family_id, token_hash UNIQUE, issued_at, expires_at, revoked_at, replaced_by_id, user_agent, ip + indexes). Working `down`.
+- [x] Domain entity `RefreshToken.ts` with private constructor, static `issue()`, methods `markRevoked()`, `replaceWith()`.
+- [x] Repository interface `RefreshTokenRepository`; methods `save`, `findByTokenHash`, `revokeFamily`, `findActiveByUser`.
+- [x] `RefreshTokenRepositorySequelize` + `RefreshTokenMapper` mirroring the `PasswordResetToken` pattern.
 
 ### D.3 — Use cases + HTTP route
 
-- [ ] Use cases `IssueRefreshToken`, `RotateRefreshToken`, `RevokeRefreshTokenFamily` + unit tests.
-- [ ] Update `LoginUser` to call `IssueRefreshToken`; return the raw refresh token to controller.
-- [ ] Add `ACCESS_TOKEN_TTL_SEC` (default 900) and `REFRESH_TOKEN_TTL_DAYS` (default 30) to `zodEnv.ts`.
-- [ ] Install `cookie-parser`; wire `cookieParser()` middleware in `src/server.ts` before routes.
-- [ ] Login controller writes `lakira_refresh` cookie (HttpOnly, Secure, SameSite=Lax, Path `/api/v1/auth/refresh`).
-- [ ] New route `POST /api/v1/auth/refresh` reading cookie (with `Authorization: Bearer <refresh>` fallback).
-- [ ] `POST /api/v1/auth/logout` calls `RevokeRefreshTokenFamily`.
+- [x] Use cases `IssueRefreshToken`, `RotateRefreshToken`, `RevokeRefreshTokenFamily` + unit tests.
+- [x] Update `LoginUser` to call `IssueRefreshToken`; return the raw refresh token to controller.
+- [x] Add `ACCESS_TOKEN_TTL_SEC` (default 900) and `REFRESH_TOKEN_TTL_DAYS` (default 30) to `zodEnv.ts`.
+- [x] Install `cookie-parser`; wire `cookieParser()` middleware in `src/server.ts` before routes.
+- [x] Login controller writes `lakira_refresh` cookie (HttpOnly, Secure, SameSite=Lax, Path `/api/v1/auth/refresh`).
+- [x] New route `POST /api/v1/auth/refresh` reading cookie (with `Authorization: Bearer <refresh>` fallback).
+- [x] `POST /api/v1/auth/logout` calls `RevokeRefreshTokenFamily`.
 
 ### D.4 — Reuse detection + observability
 
-- [ ] `RotateRefreshToken` checks `revoked_at`; if set, revoke entire family + emit `auth.refresh.reuse_detected` WARN log + return 401.
-- [ ] Counter increments for `auth.refresh.success`, `auth.refresh.reuse_detected`, `auth.refresh.invalid` via Winston meta (Prometheus deferred).
+- [x] `RotateRefreshToken` checks `revoked_at`; if set, revoke entire family + emit `auth.refresh.reuse_detected` WARN log + return 401.
+- [x] Counter increments for `auth.refresh.success`, `auth.refresh.reuse_detected`, `auth.refresh.invalid` via Winston meta (Prometheus deferred).
 
 ### D.5 — OpenAPI + integration tests
 
-- [ ] `npm run docs:openapi:generate`; verify `/auth/refresh` appears with cookie auth scheme.
-- [ ] Integration test `__tests__/integration/api/auth-refresh.test.ts`: login → refresh succeeds → re-use original refresh fails 401 + family revoked → logout revokes outstanding refresh → expired access token rejected.
-- [ ] Manual verification: `grep "from \"jsonwebtoken\"" src/features/shared/auth/infrastructure/http/authMiddleware.ts` returns nothing.
+- [x] `npm run docs:openapi:generate`; verify `/auth/refresh` appears with cookie auth scheme.
+- [x] Integration test `__tests__/integration/api/auth-refresh.test.ts`: login → refresh succeeds → re-use original refresh fails 401 + family revoked → logout revokes outstanding refresh → expired access token rejected.
+- [x] Manual verification: `grep "from \"jsonwebtoken\"" src/features/shared/auth/infrastructure/http/authMiddleware.ts` returns nothing.
 - [ ] Audit re-run shows P0-1.1 and P1-10.3 marked ✅.

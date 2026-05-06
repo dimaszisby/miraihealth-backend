@@ -34,6 +34,7 @@ const build = () => {
   };
   const token: jest.Mocked<TokenProvider> = {
     sign: jest.fn(),
+    verify: jest.fn(),
   };
   const sut = new RegisterUser(repo, hasher, token);
   return { sut, repo, hasher, token };

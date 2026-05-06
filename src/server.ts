@@ -4,6 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 import xssClean from "xss-clean";
 import hpp from "hpp";
+import cookieParser from "cookie-parser";
 import http from "http";
 import swaggerUi from "swagger-ui-express";
 import { getOpenApiDocumentation } from "./lib/openapi/openapi-docs.js";
@@ -84,6 +85,9 @@ app.use(
     strict: false, // allow primitives + guard downstream to emit cleaner 400s
   }),
 );
+
+// Cookie parser — before routes so req.cookies is populated
+app.use(cookieParser());
 
 // Security Enhancements
 app.use(helmet()); // Secure HTTP headers

@@ -461,6 +461,17 @@ export const LoginResponseSchema = registerSchema(
   successEnvelope(AuthTokenPayloadSchema),
 );
 
+const RefreshTokenPayloadSchema = z.object({
+  token: z.string().openapi({
+    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  }),
+});
+
+export const RefreshResponseSchema = registerSchema(
+  "RefreshResponse",
+  successEnvelope(RefreshTokenPayloadSchema),
+);
+
 export const RegisterRequestSchema = registerSchema(
   "RegisterRequest",
   z

@@ -3,10 +3,19 @@ import { UserRepository } from "../../domain/repositories/UserRepository.js";
 import { PasswordHasher } from "../ports/PasswordHasher.js";
 import { TokenProvider } from "../ports/TokenProvider.js";
 import { AuthUser } from "../../domain/entities/AuthUser.js";
+import { IssueRefreshToken } from "./IssueRefreshToken.js";
+
+export type LoginInput = {
+  email: string;
+  password: string;
+  userAgent?: string | null;
+  ip?: string | null;
+};
 
 export type LoginResult = {
   user: AuthUser;
   token: string;
+  rawRefreshToken: string;
 };
 
 export class LoginUser {
@@ -14,14 +23,15 @@ export class LoginUser {
     private repo: UserRepository,
     private hasher: PasswordHasher,
     private tokenProvider: TokenProvider,
+    private issueRefreshToken: IssueRefreshToken,
   ) {}
 
-  async execute(email: string, password: string): Promise<LoginResult> {
-    const normalized = email.trim().toLowerCase();
+  async execute(input: LoginInput): Promise<LoginResult> {
+    const normalized = input.email.trim().toLowerCase();
     const user = await this.repo.findByEmail(normalized);
     if (!user) throw new AppError("Invalid email or password", 401);
 
-    const valid = await this.hasher.compare(password, user.passwordHash);
+    const valid = await this.hasher.compare(input.password, user.passwordHash);
     if (!valid) throw new AppError("Invalid email or password", 401);
 
     const token = this.tokenProvider.sign({
@@ -30,6 +40,12 @@ export class LoginUser {
       username: user.username,
     });
 
-    return { user, token };
+    const { rawToken } = await this.issueRefreshToken.execute({
+      userId: user.id,
+      userAgent: input.userAgent,
+      ip: input.ip,
+    });
+
+    return { user, token, rawRefreshToken: rawToken };
   }
 }
