@@ -1,5 +1,5 @@
 import { createLogger, format, transports, Logger } from "winston";
-import { SENSITIVE_KEY_PATTERN } from "@config/sensitive-keys.js";
+import { SENSITIVE_KEY_PATTERN } from "../config/sensitive-keys.js";
 import { requestIdStorage } from "@/shared/middleware/request-id.js";
 
 const { combine, timestamp, printf, errors, colorize, json, splat } = format;
