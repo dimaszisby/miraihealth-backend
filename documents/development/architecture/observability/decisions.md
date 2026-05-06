@@ -4,7 +4,7 @@ ADR-style entries scoped to the observability kit. Cross-kit decisions live in `
 
 ---
 
-## ADR-001 — AsyncLocalStorage for request correlation, not cls-rtracer (Proposed 2026-05-02)
+## ADR-001 — AsyncLocalStorage for request correlation, not cls-rtracer (Implemented 2026-05-06)
 
 **Context:** Audit gap [P0-5.1] requires per-request log correlation. Two common options: a third-party library like `cls-rtracer` that wraps `cls-hooked`, or Node's native `AsyncLocalStorage` (stable since Node 16). The repo runs on Node 20.
 
@@ -42,7 +42,7 @@ ADR-style entries scoped to the observability kit. Cross-kit decisions live in `
 5. Capture only in `errorHandler` for 5xx responses. 4xx, `ZodError`, and `AppError` with status < 500 are user-driven and would drown signal.
 6. Tag every captured event with `{ requestId, environment, route }`.
 
-**Status:** Proposed. Pin the actual `@sentry/node` major version when installing.
+**Status:** Implemented. Installed `@sentry/node@10.51.0`. Sentry v10 drops the Express request-handler middleware in favour of calling `captureException` directly in `errorHandler`, which aligns with the ADR's "capture only 5xx" requirement.
 
 **Options considered:**
 
@@ -63,7 +63,7 @@ ADR-style entries scoped to the observability kit. Cross-kit decisions live in `
 
 ---
 
-## ADR-003 — Move SENSITIVE_KEY_PATTERN out of envManager.ts (Proposed 2026-05-02)
+## ADR-003 — Move SENSITIVE_KEY_PATTERN out of envManager.ts (Implemented 2026-05-06)
 
 **Context:** The regex `/(password|secret|token|key|certificate|url)$/i` lives in `src/config/envManager.ts:6` today and is referenced by `maskedEnvSnapshot()` only. The Winston redactor needs the same regex, and `envManager.ts` is not the right home for a cross-cutting utility.
 

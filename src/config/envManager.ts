@@ -1,9 +1,9 @@
 import { ZodError, type ZodIssue } from "zod";
 import type { Env } from "./zodEnv.js";
 import { buildEnv } from "./zodEnv.js";
-let cachedEnv: Env | null = null;
+import { SENSITIVE_KEY_PATTERN } from "./sensitive-keys.js";
 
-const SENSITIVE_KEY_PATTERN = /(password|secret|token|key|certificate|url)$/i;
+let cachedEnv: Env | null = null;
 const LOG_SNAPSHOT_KEYS = [
   "NODE_ENV",
   "DB_HOST",
