@@ -213,6 +213,16 @@ const envSchema = z.object({
     })
     .default("5"),
 
+  // Observability
+  SENTRY_DSN: z.string().optional(),
+  SENTRY_TRACES_SAMPLE_RATE: z
+    .string()
+    .transform((val) => {
+      const parsed = parseFloat(val);
+      return isNaN(parsed) ? 0 : parsed;
+    })
+    .default("0"),
+
   // HTTP
   REQUEST_BODY_LIMIT: z.string().default("1mb"),
   SWAGGER_REQUIRE_AUTH: z

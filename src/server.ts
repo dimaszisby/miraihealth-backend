@@ -24,7 +24,7 @@ import { AnalyticsVisualizationInvalidationAdapter } from "./features/public/ana
 // Other Setup
 import { globalRateLimiter } from "@/shared/middleware/rate-limiter.js";
 import { errorHandler } from "@/shared/middleware/error.js";
-import { disconnectRedis } from "./utils/redis-client.js";
+import { disconnectRedis, redisClient } from "./utils/redis-client.js";
 import {
   connectRabbitMQ,
   disconnectRabbitMQ,
@@ -35,6 +35,8 @@ import { loadModels } from "./infrastructure/db/models.js";
 import { authMiddleware } from "./features/shared/auth/infrastructure/http/authMiddleware.js";
 import { requireAdmin } from "./features/shared/auth/infrastructure/http/requireAdmin.js";
 import { disallowTraceMethod } from "@/shared/middleware/method-guard.js";
+import { requestIdMiddleware } from "@/shared/middleware/request-id.js";
+import * as Sentry from "@sentry/node";
 
 const visualizationInvalidationAdapter =
   new AnalyticsVisualizationInvalidationAdapter();
@@ -44,6 +46,14 @@ overrideMetricLogFeatureForTest(
     messageQueue: env.RABBITMQ_ENABLED ? new RabbitMQPublisher() : undefined,
   }),
 );
+
+if (env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: env.SENTRY_DSN,
+    tracesSampleRate: env.SENTRY_TRACES_SAMPLE_RATE,
+    environment: env.NODE_ENV,
+  });
+}
 
 /**
  * * App Entry
@@ -89,6 +99,9 @@ app.use(
 // Cookie parser — before routes so req.cookies is populated
 app.use(cookieParser());
 
+// Request-ID — propagate x-request-id through AsyncLocalStorage so every log line is correlated
+app.use(requestIdMiddleware);
+
 // Security Enhancements
 app.use(helmet()); // Secure HTTP headers
 app.use(xssClean()); // Prevent XSS attacks
@@ -113,6 +126,35 @@ app.get("/api/v1/health", (_req, res) => {
     environment: env.NODE_ENV,
     timestamp: new Date().toISOString(),
   });
+});
+
+// Readiness probe — checks both DB and Redis with a 2 s budget
+app.get("/api/v1/ready", (_req, res) => {
+  const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> =>
+    Promise.race([
+      promise,
+      new Promise<T>((_, reject) =>
+        setTimeout(() => reject(new Error("timeout")), ms),
+      ),
+    ]);
+
+  void Promise.allSettled([
+    withTimeout(sequelize.authenticate(), 2000),
+    withTimeout(redisClient.ping(), 2000),
+  ])
+    .then(([dbResult, redisResult]) => {
+      const dbStatus = dbResult.status === "fulfilled" ? "ok" : "fail";
+      const redisStatus = redisResult.status === "fulfilled" ? "ok" : "fail";
+      const allOk = dbStatus === "ok" && redisStatus === "ok";
+
+      res.status(allOk ? 200 : 503).json({
+        status: allOk ? "ok" : "degraded",
+        checks: { db: dbStatus, redis: redisStatus },
+      });
+    })
+    .catch(() => {
+      res.status(500).json({ status: "error" });
+    });
 });
 
 // Global Rate Limiter
