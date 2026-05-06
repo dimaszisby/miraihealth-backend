@@ -134,11 +134,7 @@ describe("RotateRefreshToken use case", () => {
       statusCode: 401,
     });
 
-    expect(refreshTokenRepo.revokeFamily).toHaveBeenCalledWith(
-      "fam-1",
-      undefined,
-      "fake-tx",
-    );
+    expect(refreshTokenRepo.revokeFamily).toHaveBeenCalledWith("fam-1");
   });
 
   it("revokes family and throws 401 when token is expired", async () => {
@@ -152,11 +148,7 @@ describe("RotateRefreshToken use case", () => {
       statusCode: 401,
     });
 
-    expect(refreshTokenRepo.revokeFamily).toHaveBeenCalledWith(
-      "fam-1",
-      undefined,
-      "fake-tx",
-    );
+    expect(refreshTokenRepo.revokeFamily).toHaveBeenCalledWith("fam-1");
   });
 
   it("throws 401 when user not found", async () => {

@@ -20,6 +20,15 @@ export type RotateRefreshTokenResult = {
   rawRefreshToken: string;
 };
 
+type RevokeAndReject = {
+  kind: "revoke";
+  familyId: string;
+  reason: string;
+  ip?: string | null;
+  userAgent?: string | null;
+  userId?: string;
+};
+
 export class RotateRefreshToken {
   constructor(
     private refreshTokenRepo: RefreshTokenRepository,
@@ -35,7 +44,9 @@ export class RotateRefreshToken {
   ): Promise<RotateRefreshTokenResult> {
     const tokenHash = this.tokenHasher.hash(input.rawToken);
 
-    return this.tx.runInTransaction(async (transaction) => {
+    const result = await this.tx.runInTransaction<
+      RotateRefreshTokenResult | RevokeAndReject
+    >(async (transaction) => {
       const existing = await this.refreshTokenRepo.findByTokenHashForUpdate(
         tokenHash,
         transaction,
@@ -46,27 +57,22 @@ export class RotateRefreshToken {
       }
 
       if (existing.isRevoked()) {
-        logger.warn("auth.refresh.reuse_detected", {
-          userId: existing.userId,
+        return {
+          kind: "revoke",
           familyId: existing.familyId,
+          reason: "reuse",
           ip: input.ip,
           userAgent: input.userAgent,
-        });
-        await this.refreshTokenRepo.revokeFamily(
-          existing.familyId,
-          undefined,
-          transaction,
-        );
-        throw new AppError("Unauthorized: Invalid refresh token", 401);
+          userId: existing.userId,
+        } as RevokeAndReject;
       }
 
       if (existing.isExpired()) {
-        await this.refreshTokenRepo.revokeFamily(
-          existing.familyId,
-          undefined,
-          transaction,
-        );
-        throw new AppError("Unauthorized: Invalid refresh token", 401);
+        return {
+          kind: "revoke",
+          familyId: existing.familyId,
+          reason: "expired",
+        } as RevokeAndReject;
       }
 
       const user = await this.userRepo.findById(existing.userId);
@@ -102,5 +108,20 @@ export class RotateRefreshToken {
 
       return { accessToken, rawRefreshToken: newRawToken };
     });
+
+    if ("kind" in result && result.kind === "revoke") {
+      if (result.reason === "reuse") {
+        logger.warn("auth.refresh.reuse_detected", {
+          userId: result.userId,
+          familyId: result.familyId,
+          ip: result.ip,
+          userAgent: result.userAgent,
+        });
+      }
+      await this.refreshTokenRepo.revokeFamily(result.familyId);
+      throw new AppError("Unauthorized: Invalid refresh token", 401);
+    }
+
+    return result as RotateRefreshTokenResult;
   }
 }
