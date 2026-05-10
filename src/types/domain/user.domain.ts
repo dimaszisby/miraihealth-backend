@@ -58,4 +58,10 @@ export interface UserDomain {
    * @readonly
    */
   readonly deletedAt?: Date | null;
+
+  /**
+   * @property {Date | null} emailVerifiedAt - Timestamp when the user's email was verified. Null if unverified.
+   * @readonly
+   */
+  readonly emailVerifiedAt: Date | null;
 }

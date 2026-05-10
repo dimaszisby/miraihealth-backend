@@ -15,6 +15,7 @@ import {
   loginUserBody,
   resetPasswordBody,
   updateUserBody,
+  verifyEmailBody,
 } from "./schema.zod.js";
 import { z } from "zod";
 
@@ -54,9 +55,12 @@ const pickForgotPassword = pickValidated(
   z.object({ body: forgotPasswordBody }),
 );
 const pickResetPassword = pickValidated(z.object({ body: resetPasswordBody }));
+const pickVerifyEmail = pickValidated(z.object({ body: verifyEmailBody }));
 
 const FORGOT_PASSWORD_RESPONSE =
   "If an account exists for that email, we've sent reset instructions.";
+const RESEND_VERIFICATION_RESPONSE =
+  "If your email is unverified, we sent a fresh verification link.";
 
 export const register = catchAsync(async (req: Request, res: Response) => {
   const {
@@ -69,6 +73,15 @@ export const register = catchAsync(async (req: Request, res: Response) => {
     passwordConfirmation,
     isPublicProfile,
   });
+
+  feature.requestEmailVerification
+    .execute({ userId: result.user.id, email: result.user.email })
+    .catch((err) =>
+      logger.error("Failed to send verification email after registration", {
+        userId: result.user.id,
+        error: err instanceof Error ? err.message : String(err),
+      }),
+    );
 
   successResponse(
     res,
@@ -181,3 +194,25 @@ export const resetPassword = catchAsync(async (req: Request, res: Response) => {
   });
   successResponse(res, 200, null, "Password has been reset. Please log in.");
 });
+
+export const verifyEmail = catchAsync(async (req: Request, res: Response) => {
+  const {
+    body: { token },
+  } = pickVerifyEmail(req);
+  await feature.verifyEmail.execute({ token });
+  successResponse(res, 200, null, "Email verified successfully.");
+});
+
+export const resendVerification = catchAsync(
+  async (req: AuthRequest, res: Response) => {
+    assertAuthenticated(req);
+    const { id: userId, email } = req.user;
+    feature.requestEmailVerification.execute({ userId, email }).catch((err) =>
+      logger.error("Failed to resend verification email", {
+        userId,
+        error: err instanceof Error ? err.message : String(err),
+      }),
+    );
+    successResponse(res, 200, null, RESEND_VERIFICATION_RESPONSE);
+  },
+);

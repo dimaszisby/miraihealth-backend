@@ -89,6 +89,7 @@ describe("UserRepositorySequelize", () => {
       username: "new",
       password: "next",
       isPublicProfile: false,
+      emailVerifiedAt: null,
     });
     expect(instance.reload).toHaveBeenCalled();
     expect(saved.email).toBe("user@example.com");

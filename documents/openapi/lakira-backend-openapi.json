@@ -245,6 +245,20 @@
         },
         "required": ["status", "message", "errors"]
       },
+      "RateLimitError": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "number",
+            "example": 429
+          },
+          "message": {
+            "type": "string",
+            "example": "Too many requests, please try again later."
+          }
+        },
+        "required": ["status", "message"]
+      },
       "SuccessResponse": {
         "type": "object",
         "properties": {
@@ -483,6 +497,12 @@
             "enum": ["user", "admin"],
             "example": "user"
           },
+          "emailVerifiedAt": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when email was verified, or null if unverified",
+            "example": null
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -500,6 +520,7 @@
           "email",
           "isPublicProfile",
           "role",
+          "emailVerifiedAt",
           "createdAt",
           "updatedAt"
         ]
@@ -697,6 +718,17 @@
           }
         },
         "required": ["token", "password", "passwordConfirmation"]
+      },
+      "VerifyEmailRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "example": "AbCdEf0123456789AbCdEf0123456789AbCdEf01"
+          }
+        },
+        "required": ["token"]
       },
       "MetricCategory": {
         "type": "object",
@@ -2504,7 +2536,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessResponse"
+                  "$ref": "#/components/schemas/RateLimitError"
                 }
               }
             }
@@ -2549,7 +2581,92 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "$ref": "#/components/schemas/RateLimitError"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/auth/verify-email": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Verify email address with a token",
+        "description": "Accepts a single-use token from the verification email. Returns a generic 400 for unknown, used, or expired tokens (anti-enumeration). No JWT required.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email successfully verified",
+            "content": {
+              "application/json": {
+                "schema": {
                   "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "429": {
+            "description": "Rate limit exceeded for email verification requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitError"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/auth/resend-verification": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Resend verification email",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "description": "Always returns 200 regardless of current verification status (anti-enumeration). When the user is unverified, revokes any prior token and sends a fresh one. Rate-limited per user email and IP address.",
+        "responses": {
+          "200": {
+            "description": "Generic acknowledgement",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "429": {
+            "description": "Rate limit exceeded for resend verification requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitError"
                 }
               }
             }

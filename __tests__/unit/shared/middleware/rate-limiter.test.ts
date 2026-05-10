@@ -5,6 +5,8 @@ import {
   createGlobalRateLimiter,
   createUserRateLimiter,
   createAnalyticsRateLimiter,
+  createEmailVerificationEmailRateLimiter,
+  createEmailVerificationIpRateLimiter,
 } from "@/shared/middleware/rate-limiter.js";
 
 // Replace the real middleware factories with simple stubs so we can assert on the config that's passed in.
@@ -39,6 +41,8 @@ jest.mock("@/config/envManager.js", () => ({
     RATE_LIMIT_GLOBAL_MAX: 100,
     RATE_LIMIT_USER_MAX: 50,
     RATE_LIMIT_ANALYTICS_MAX: 25,
+    RATE_LIMIT_EMAIL_VERIFICATION_EMAIL_MAX: 3,
+    RATE_LIMIT_EMAIL_VERIFICATION_IP_MAX: 10,
     DISABLE_RATE_LIMITING: false,
   },
 }));
@@ -50,6 +54,8 @@ const { env: envMock } = jest.requireMock("@/config/envManager.js") as {
     RATE_LIMIT_GLOBAL_MAX: number;
     RATE_LIMIT_USER_MAX: number;
     RATE_LIMIT_ANALYTICS_MAX: number;
+    RATE_LIMIT_EMAIL_VERIFICATION_EMAIL_MAX: number;
+    RATE_LIMIT_EMAIL_VERIFICATION_IP_MAX: number;
     DISABLE_RATE_LIMITING: boolean;
   };
 };
@@ -184,6 +190,67 @@ describe("rate limiter middleware", () => {
     const req = { ip: "9.9.9.9" } as AuthRequest;
 
     expect(limiter.keyGenerator(req)).toBe("9.9.9.9");
+  });
+
+  it("uses per-email key and configured max for email verification email limiter", () => {
+    redisClient.isOpen = true;
+    const limiter = unwrapLimiter(createEmailVerificationEmailRateLimiter());
+    const res = createResponse();
+
+    const authedReq = {
+      user: { email: "test@example.com" },
+      ip: "1.2.3.4",
+    } as AuthRequest;
+    const anonReq = { ip: "1.2.3.4" } as AuthRequest;
+
+    expect(limiter.keyGenerator(authedReq)).toBe(
+      "email-verification:email:test@example.com",
+    );
+    expect(limiter.keyGenerator(anonReq)).toBe("email-verification:ip:1.2.3.4");
+    expect(limiter.max).toBe(envMock.RATE_LIMIT_EMAIL_VERIFICATION_EMAIL_MAX);
+
+    const options = {
+      statusCode: 429,
+      message: {
+        status: 429,
+        message:
+          "Too many verification email requests, please try again later.",
+      },
+    };
+    limiter.handler(authedReq, res, jest.fn(), options);
+
+    expect(loggerMock.warn).toHaveBeenCalledWith(
+      "Email verification email rate limit hit for test@example.com",
+    );
+    expect(res.status).toHaveBeenCalledWith(429);
+    expect(res.json).toHaveBeenCalledWith(options.message);
+  });
+
+  it("uses per-IP key and configured max for email verification IP limiter", () => {
+    redisClient.isOpen = true;
+    const limiter = unwrapLimiter(createEmailVerificationIpRateLimiter());
+    const res = createResponse();
+
+    const req = { ip: "5.6.7.8" } as AuthRequest;
+
+    expect(limiter.keyGenerator(req)).toBe("email-verification-ip:5.6.7.8");
+    expect(limiter.max).toBe(envMock.RATE_LIMIT_EMAIL_VERIFICATION_IP_MAX);
+
+    const options = {
+      statusCode: 429,
+      message: {
+        status: 429,
+        message:
+          "Too many verification email requests, please try again later.",
+      },
+    };
+    limiter.handler(req, res, jest.fn(), options);
+
+    expect(loggerMock.warn).toHaveBeenCalledWith(
+      "Email verification IP rate limit hit for 5.6.7.8",
+    );
+    expect(res.status).toHaveBeenCalledWith(429);
+    expect(res.json).toHaveBeenCalledWith(options.message);
   });
 
   it("returns a no-op middleware when DISABLE_RATE_LIMITING is true", () => {

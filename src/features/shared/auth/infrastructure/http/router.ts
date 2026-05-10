@@ -8,12 +8,16 @@ import {
   refresh,
   forgotPassword,
   resetPassword,
+  verifyEmail,
+  resendVerification,
 } from "./controller.js";
 import { authMiddleware } from "./authMiddleware.js";
 import {
   passwordResetEmailRateLimiter,
   passwordResetIpRateLimiter,
   userRateLimiter,
+  emailVerificationEmailRateLimiter,
+  emailVerificationIpRateLimiter,
 } from "@/shared/middleware/rate-limiter.js";
 import { validate } from "@/shared/middleware/validation.js";
 import {
@@ -22,6 +26,7 @@ import {
   loginUserSchema,
   resetPasswordSchema,
   updateUserSchema,
+  verifyEmailSchema,
 } from "./schema.zod.js";
 import { methodNotAllowed } from "@/shared/middleware/method-guard.js";
 import { requireJsonObjectBody } from "@/shared/middleware/require-json-object.js";
@@ -71,6 +76,21 @@ export const createAuthRouter = () => {
     resetPassword,
   );
 
+  router.post(
+    "/verify-email",
+    requireJsonObjectBody(),
+    validate(verifyEmailSchema),
+    verifyEmail,
+  );
+
+  router.post(
+    "/resend-verification",
+    authMiddleware,
+    emailVerificationIpRateLimiter,
+    emailVerificationEmailRateLimiter,
+    resendVerification,
+  );
+
   router.all("/register", methodNotAllowed(["POST"]));
   router.all("/login", methodNotAllowed(["POST"]));
   router.all("/profile", methodNotAllowed(["GET", "PUT"]));
@@ -78,6 +98,8 @@ export const createAuthRouter = () => {
   router.all("/refresh", methodNotAllowed(["POST"]));
   router.all("/forgot-password", methodNotAllowed(["POST"]));
   router.all("/reset-password", methodNotAllowed(["POST"]));
+  router.all("/verify-email", methodNotAllowed(["POST"]));
+  router.all("/resend-verification", methodNotAllowed(["POST"]));
 
   return router;
 };

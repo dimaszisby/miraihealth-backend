@@ -1,6 +1,7 @@
 import type { User } from "@/features/auth/infrastructure/persistence/models/user.sequelize.js";
 import type { PasswordResetToken } from "@/features/auth/infrastructure/persistence/models/password-reset-token.sequelize.js";
 import type { RefreshToken } from "@/features/auth/infrastructure/persistence/models/refresh-token.sequelize.js";
+import type { EmailVerificationToken } from "@/features/auth/infrastructure/persistence/models/email-verification-token.sequelize.js";
 import type { MetricCategory } from "@/features/metric-category/infrastructure/persistence/models/metric-category.sequelize.js";
 import type { Metric } from "@/features/metric/infrastructure/persistence/models/metric.sequelize.js";
 import type { MetricSettings } from "@/features/metric-settings/infrastructure/persistence/models/metric-settings.sequelize.js";
@@ -10,6 +11,7 @@ export type DbModels = {
   User: typeof User;
   PasswordResetToken: typeof PasswordResetToken;
   RefreshToken: typeof RefreshToken;
+  EmailVerificationToken: typeof EmailVerificationToken;
   MetricCategory: typeof MetricCategory;
   Metric: typeof Metric;
   MetricSettings: typeof MetricSettings;

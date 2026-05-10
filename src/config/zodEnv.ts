@@ -247,6 +247,44 @@ const envSchema = z.object({
     .string()
     .url()
     .default("http://localhost:3000/reset-password"),
+  FRONTEND_VERIFY_URL: z
+    .string()
+    .url()
+    .default("http://localhost:3000/verify-email"),
+  EMAIL_VERIFICATION_TTL_SEC: z
+    .string()
+    .transform((val) => {
+      const parsed = parseInt(val, 10);
+      if (isNaN(parsed) || parsed <= 0) {
+        throw new Error("EMAIL_VERIFICATION_TTL_SEC must be a positive number");
+      }
+      return parsed;
+    })
+    .default("86400"),
+  RATE_LIMIT_EMAIL_VERIFICATION_EMAIL_MAX: z
+    .string()
+    .transform((val) => {
+      const parsed = parseInt(val, 10);
+      if (isNaN(parsed) || parsed <= 0) {
+        throw new Error(
+          "RATE_LIMIT_EMAIL_VERIFICATION_EMAIL_MAX must be a positive number",
+        );
+      }
+      return parsed;
+    })
+    .default("3"),
+  RATE_LIMIT_EMAIL_VERIFICATION_IP_MAX: z
+    .string()
+    .transform((val) => {
+      const parsed = parseInt(val, 10);
+      if (isNaN(parsed) || parsed <= 0) {
+        throw new Error(
+          "RATE_LIMIT_EMAIL_VERIFICATION_IP_MAX must be a positive number",
+        );
+      }
+      return parsed;
+    })
+    .default("10"),
   RATE_LIMIT_PASSWORD_RESET_EMAIL_MAX: z
     .string()
     .transform((val) => {
