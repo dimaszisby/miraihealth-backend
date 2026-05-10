@@ -8,6 +8,7 @@ import { PasswordResetTokenRepository } from "@/features/auth/domain/repositorie
 import { EmailSender } from "@/features/auth/application/ports/EmailSender.js";
 import { AuthUser } from "@/features/auth/domain/entities/AuthUser.js";
 import { PasswordResetToken } from "@/features/auth/domain/entities/PasswordResetToken.js";
+import { buildPasswordResetEmail } from "@/features/auth/infrastructure/email/templates/password-reset.js";
 
 const FROZEN_NOW = new Date("2026-04-24T10:00:00.000Z");
 
@@ -44,6 +45,7 @@ const build = () => {
   };
   const sut = new RequestPasswordReset(userRepo, tokenRepo, emailSender, {
     frontendResetUrl: "https://app.example.com/reset-password",
+    buildEmail: buildPasswordResetEmail,
     now: () => FROZEN_NOW,
   });
   return { sut, userRepo, tokenRepo, emailSender };

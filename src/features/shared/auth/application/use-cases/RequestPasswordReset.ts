@@ -3,7 +3,6 @@ import logger from "@/utils/logger.js";
 import { UserRepository } from "../../domain/repositories/UserRepository.js";
 import { PasswordResetTokenRepository } from "../../domain/repositories/PasswordResetTokenRepository.js";
 import { EmailSender } from "../ports/EmailSender.js";
-import { buildPasswordResetEmail } from "../../infrastructure/email/templates/password-reset.js";
 
 export const RESET_TOKEN_TTL_MINUTES = 15;
 
@@ -13,6 +12,14 @@ export type RequestPasswordResetInput = {
 
 export type RequestPasswordResetDeps = {
   frontendResetUrl: string;
+  buildEmail: (
+    link: string,
+    ttlMinutes: number,
+  ) => {
+    subject: string;
+    text: string;
+    html: string;
+  };
   ttlMinutes?: number;
   now?: () => Date;
 };
@@ -45,7 +52,7 @@ export class RequestPasswordReset {
     await this.tokenRepo.create({ userId: user.id, tokenHash, expiresAt });
 
     const link = this.buildResetLink(rawToken);
-    const message = buildPasswordResetEmail(link, ttlMinutes);
+    const message = this.deps.buildEmail(link, ttlMinutes);
 
     try {
       await this.emailSender.send({

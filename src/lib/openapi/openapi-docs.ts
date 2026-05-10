@@ -11,6 +11,8 @@ import {
   UpdateUserRequestSchema,
   ForgotPasswordRequestSchema,
   ResetPasswordRequestSchema,
+  RateLimitErrorSchema,
+  VerifyEmailRequestSchema,
   MetricCategorySchema,
   CreateMetricCategoryRequestSchema,
   UpdateMetricCategoryRequestSchema,
@@ -292,7 +294,7 @@ registry.registerPath({
       description: "Rate limit exceeded for password reset requests",
       content: {
         "application/json": {
-          schema: SuccessResponseSchema,
+          schema: RateLimitErrorSchema,
         },
       },
     },
@@ -337,7 +339,87 @@ registry.registerPath({
       description: "Rate limit exceeded for password reset requests",
       content: {
         "application/json": {
+          schema: RateLimitErrorSchema,
+        },
+      },
+    },
+    500: {
+      $ref: "#/components/responses/InternalServerError",
+    },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/auth/verify-email",
+  tags: ["Auth"],
+  summary: "Verify email address with a token",
+  description:
+    "Accepts a single-use token from the verification email. Returns a generic " +
+    "400 for unknown, used, or expired tokens (anti-enumeration). No JWT required.",
+  request: {
+    body: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: VerifyEmailRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Email successfully verified",
+      content: {
+        "application/json": {
           schema: SuccessResponseSchema,
+        },
+      },
+    },
+    400: {
+      $ref: "#/components/responses/BadRequestError",
+    },
+    429: {
+      description: "Rate limit exceeded for email verification requests",
+      content: {
+        "application/json": {
+          schema: RateLimitErrorSchema,
+        },
+      },
+    },
+    500: {
+      $ref: "#/components/responses/InternalServerError",
+    },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/auth/resend-verification",
+  tags: ["Auth"],
+  summary: "Resend verification email",
+  security: [{ BearerAuth: [] }],
+  description:
+    "Always returns 200 regardless of current verification status (anti-enumeration). " +
+    "When the user is unverified, revokes any prior token and sends a fresh one. " +
+    "Rate-limited per user email and IP address.",
+  responses: {
+    200: {
+      description: "Generic acknowledgement",
+      content: {
+        "application/json": {
+          schema: SuccessResponseSchema,
+        },
+      },
+    },
+    401: {
+      $ref: "#/components/responses/UnauthorizedError",
+    },
+    429: {
+      description: "Rate limit exceeded for resend verification requests",
+      content: {
+        "application/json": {
+          schema: RateLimitErrorSchema,
         },
       },
     },

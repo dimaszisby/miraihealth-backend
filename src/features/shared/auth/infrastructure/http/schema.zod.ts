@@ -53,8 +53,16 @@ export const resetPasswordBody = z
     path: ["passwordConfirmation"],
   });
 
+export const verifyEmailBody = z.object({
+  token: z
+    .string()
+    .min(1, { message: "Verification token is required" })
+    .openapi({ example: "some-raw-token-value" }),
+});
+
 export const createUserSchema = { body: createUserBody };
 export const updateUserSchema = { body: updateUserBody };
 export const loginUserSchema = { body: loginUserBody };
 export const forgotPasswordSchema = { body: forgotPasswordBody };
 export const resetPasswordSchema = { body: resetPasswordBody };
+export const verifyEmailSchema = { body: verifyEmailBody };

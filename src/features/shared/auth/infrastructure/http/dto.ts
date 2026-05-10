@@ -11,6 +11,7 @@ export interface UserResponseDTO {
   readonly email: string;
   readonly role: "user" | "admin";
   readonly isPublicProfile: boolean;
+  readonly emailVerifiedAt: string | null;
   readonly createdAt: string;
   readonly updatedAt: string;
 }

@@ -197,3 +197,69 @@ export const createPasswordResetIpRateLimiter = () =>
       });
 
 export const passwordResetIpRateLimiter = createPasswordResetIpRateLimiter();
+
+export const createEmailVerificationEmailRateLimiter = () =>
+  env.DISABLE_RATE_LIMITING
+    ? (maybeLogDisableNotice(), noopRateLimiter)
+    : rateLimit({
+        keyGenerator: (req: AuthRequest): string => {
+          const email =
+            typeof req.user?.email === "string" ? req.user.email : null;
+          return email
+            ? `email-verification:email:${email}`
+            : `email-verification:ip:${req.ip || "anonymous"}`;
+        },
+        store: maybeCreateStore(),
+        windowMs: 60 * 60 * 1000,
+        max: env.RATE_LIMIT_EMAIL_VERIFICATION_EMAIL_MAX,
+        standardHeaders: true,
+        legacyHeaders: false,
+        message: {
+          status: 429,
+          message:
+            "Too many verification email requests, please try again later.",
+        },
+        handler: (
+          req: AuthRequest,
+          res: Response,
+          next: NextFunction,
+          options,
+        ) => {
+          const email = req.user?.email ?? req.ip;
+          logger.warn(`Email verification email rate limit hit for ${email}`);
+          res.status(options.statusCode).json(options.message);
+        },
+      });
+
+export const emailVerificationEmailRateLimiter =
+  createEmailVerificationEmailRateLimiter();
+
+export const createEmailVerificationIpRateLimiter = () =>
+  env.DISABLE_RATE_LIMITING
+    ? (maybeLogDisableNotice(), noopRateLimiter)
+    : rateLimit({
+        keyGenerator: (req: AuthRequest): string =>
+          `email-verification-ip:${req.ip || "anonymous"}`,
+        store: maybeCreateStore(),
+        windowMs: 60 * 60 * 1000,
+        max: env.RATE_LIMIT_EMAIL_VERIFICATION_IP_MAX,
+        standardHeaders: true,
+        legacyHeaders: false,
+        message: {
+          status: 429,
+          message:
+            "Too many verification email requests, please try again later.",
+        },
+        handler: (
+          req: AuthRequest,
+          res: Response,
+          next: NextFunction,
+          options,
+        ) => {
+          logger.warn(`Email verification IP rate limit hit for ${req.ip}`);
+          res.status(options.statusCode).json(options.message);
+        },
+      });
+
+export const emailVerificationIpRateLimiter =
+  createEmailVerificationIpRateLimiter();

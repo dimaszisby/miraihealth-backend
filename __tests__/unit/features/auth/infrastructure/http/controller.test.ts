@@ -10,6 +10,8 @@ let login: ControllerModule["login"];
 let getProfile: ControllerModule["getProfile"];
 let updateProfile: ControllerModule["updateProfile"];
 let logout: ControllerModule["logout"];
+let verifyEmail: ControllerModule["verifyEmail"];
+let resendVerification: ControllerModule["resendVerification"];
 let overrideAuthFeatureForTest: ControllerModule["overrideAuthFeatureForTest"];
 
 type AuthFeature = ReturnType<typeof buildAuthFeature>;
@@ -21,6 +23,10 @@ const getProfileExecute: AsyncMock = jest.fn();
 const updateProfileExecute: AsyncMock = jest.fn();
 const rotateRefreshTokenExecute: AsyncMock = jest.fn();
 const revokeRefreshTokenFamilyExecute: AsyncMock = jest.fn();
+const requestEmailVerificationExecute: AsyncMock = jest.fn(
+  async () => undefined,
+) as unknown as AsyncMock;
+const verifyEmailExecute: AsyncMock = jest.fn();
 
 const assertAuthenticatedMock = jest.fn();
 
@@ -37,6 +43,8 @@ const loadController = async () => {
   getProfile = controller.getProfile;
   updateProfile = controller.updateProfile;
   logout = controller.logout;
+  verifyEmail = controller.verifyEmail;
+  resendVerification = controller.resendVerification;
   overrideAuthFeatureForTest = controller.overrideAuthFeatureForTest;
 };
 
@@ -48,6 +56,8 @@ const buildFeatureMocks = (): AuthFeature =>
     updateProfile: { execute: updateProfileExecute },
     rotateRefreshToken: { execute: rotateRefreshTokenExecute },
     revokeRefreshTokenFamily: { execute: revokeRefreshTokenFamilyExecute },
+    requestEmailVerification: { execute: requestEmailVerificationExecute },
+    verifyEmail: { execute: verifyEmailExecute },
   }) as unknown as AuthFeature;
 
 const res = () =>
@@ -264,5 +274,58 @@ describe("Auth HTTP controller", () => {
         data: null,
       }),
     );
+  });
+
+  it("verifies email via use case and returns 200 with null data", async () => {
+    verifyEmailExecute.mockResolvedValue(undefined);
+
+    const req = {
+      body: { token: "some-raw-token" },
+    } as unknown as AuthRequest;
+
+    const response = res();
+    await verifyEmail(req, response, next);
+
+    expect(verifyEmailExecute).toHaveBeenCalledWith({
+      token: "some-raw-token",
+    });
+    expect(response.status).toHaveBeenCalledWith(200);
+    expect(response.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "success",
+        message: "Email verified successfully.",
+        data: null,
+      }),
+    );
+  });
+
+  it("resends verification email fire-and-forget and returns 200 immediately", async () => {
+    const req = {
+      user: { id: "user-1", email: "user@example.com" },
+    } as unknown as AuthRequest;
+
+    const response = res();
+    await resendVerification(req, response, next);
+
+    expect(requestEmailVerificationExecute).toHaveBeenCalledWith({
+      userId: "user-1",
+      email: "user@example.com",
+    });
+    expect(response.status).toHaveBeenCalledWith(200);
+    expect(response.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "success",
+        message: expect.stringMatching(/unverified/i),
+      }),
+    );
+  });
+
+  it("requires authentication for resend verification", async () => {
+    const response = res();
+    const errorNext = jest.fn();
+
+    await resendVerification({} as AuthRequest, response, errorNext);
+
+    expect(errorNext).toHaveBeenCalledWith(expect.any(Error));
   });
 });

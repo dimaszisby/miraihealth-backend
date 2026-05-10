@@ -12,6 +12,11 @@ import {
   associateRefreshToken,
   RefreshToken,
 } from "./refresh-token.sequelize.js";
+import {
+  initEmailVerificationToken,
+  associateEmailVerificationToken,
+  EmailVerificationToken,
+} from "./email-verification-token.sequelize.js";
 
 const isBcryptHash = (value: unknown): value is string =>
   typeof value === "string" && /^\$2[aby]\$\d{2}\$/.test(value);
@@ -39,6 +44,7 @@ export class User
   declare password: string;
   declare role: "user" | "admin";
   declare isPublicProfile: boolean;
+  declare emailVerifiedAt?: Date | null;
 
   declare createdAt?: Date | null;
   declare updatedAt?: Date | null;
@@ -76,6 +82,10 @@ export class User
           type: DataTypes.BOOLEAN,
           allowNull: false,
           defaultValue: true,
+        },
+        emailVerifiedAt: {
+          type: DataTypes.DATE,
+          allowNull: true,
         },
         deletedAt: {
           type: DataTypes.DATE,
@@ -137,6 +147,12 @@ export class User
       foreignKey: { name: "userId", field: "user_id", allowNull: false },
       onDelete: "CASCADE",
     });
+
+    User.hasMany(models.EmailVerificationToken, {
+      as: "emailVerificationTokens",
+      foreignKey: { name: "userId", field: "user_id", allowNull: false },
+      onDelete: "CASCADE",
+    });
   }
 
   async validPassword(password: string): Promise<boolean> {
@@ -155,11 +171,13 @@ export const registerAuthModels = (sequelize: Sequelize) => {
   initUser(sequelize);
   initPasswordResetToken(sequelize);
   initRefreshToken(sequelize);
-  return { User, PasswordResetToken, RefreshToken };
+  initEmailVerificationToken(sequelize);
+  return { User, PasswordResetToken, RefreshToken, EmailVerificationToken };
 };
 
 export const associateAuthModels = (models: DbModels) => {
   associateUser(models);
   associatePasswordResetToken(models);
   associateRefreshToken(models);
+  associateEmailVerificationToken(models);
 };

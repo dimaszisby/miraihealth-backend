@@ -5,6 +5,7 @@ export type AuthUserProps = {
   passwordHash: string;
   role: "user" | "admin";
   isPublicProfile: boolean;
+  emailVerifiedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
@@ -43,6 +44,14 @@ export class AuthUser {
   }
   get deletedAt() {
     return this.props.deletedAt;
+  }
+  get emailVerifiedAt(): Date | null {
+    return this.props.emailVerifiedAt ?? null;
+  }
+
+  setEmailVerifiedAt(date: Date) {
+    this.props.emailVerifiedAt = date;
+    this.touch();
   }
 
   changeEmail(next: string) {

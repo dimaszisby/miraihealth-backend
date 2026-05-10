@@ -14,6 +14,7 @@ const toDomain = (row: User): AuthUser =>
     passwordHash: row.password,
     role: row.role ?? "user",
     isPublicProfile: row.isPublicProfile ?? !!row.isPublicProfile,
+    emailVerifiedAt: row.emailVerifiedAt ?? null,
     createdAt: row.createdAt ?? new Date(0),
     updatedAt: row.updatedAt ?? new Date(0),
     deletedAt: row.deletedAt ?? null,
@@ -60,6 +61,7 @@ export class UserRepositorySequelize implements UserRepository {
       username: user.username,
       password: user.passwordHash,
       isPublicProfile: user.isPublicProfile,
+      emailVerifiedAt: user.emailVerifiedAt,
     });
     await row.reload();
     return toDomain(row);

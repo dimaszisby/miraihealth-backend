@@ -24,6 +24,7 @@ const toUserDomain = (user: AuthUser): UserDomain => ({
   email: user.email,
   role: user.role,
   isPublicProfile: user.isPublicProfile,
+  emailVerifiedAt: user.emailVerifiedAt,
   createdAt: user.createdAt,
   updatedAt: user.updatedAt,
   deletedAt: user.deletedAt,

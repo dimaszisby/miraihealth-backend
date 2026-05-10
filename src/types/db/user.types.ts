@@ -29,4 +29,9 @@ export interface UserAttributesBase {
    * @property {'user' | 'admin'} role - The role assigned to the user, determining their permissions.
    */
   role: "user" | "admin";
+
+  /**
+   * @property {Date | null} emailVerifiedAt - Timestamp when the user's email was verified. Null if unverified.
+   */
+  emailVerifiedAt?: Date | null;
 }

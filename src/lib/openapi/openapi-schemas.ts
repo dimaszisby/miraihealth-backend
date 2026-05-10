@@ -65,6 +65,16 @@ export const ValidationErrorSchema = registerSchema(
   }),
 );
 
+export const RateLimitErrorSchema = registerSchema(
+  "RateLimitError",
+  z.object({
+    status: z.number().openapi({ example: 429 }),
+    message: z
+      .string()
+      .openapi({ example: "Too many requests, please try again later." }),
+  }),
+);
+
 export const SuccessResponseSchema = registerSchema(
   "SuccessResponse",
   z.object({
@@ -416,6 +426,11 @@ export const UserSchema = registerSchema(
     email: z.string().email().openapi({ example: "test@example.com" }),
     isPublicProfile: z.boolean().openapi({ example: true }),
     role: z.enum(["user", "admin"]).openapi({ example: "user" }),
+    emailVerifiedAt: z.string().datetime().nullable().openapi({
+      example: null,
+      description:
+        "ISO 8601 timestamp when email was verified, or null if unverified",
+    }),
     createdAt: z
       .string()
       .datetime()
@@ -530,6 +545,15 @@ export const ResetPasswordRequestSchema = registerSchema(
       message: "Passwords do not match",
       path: ["passwordConfirmation"],
     }),
+);
+
+export const VerifyEmailRequestSchema = registerSchema(
+  "VerifyEmailRequest",
+  z.object({
+    token: z.string().min(1).openapi({
+      example: "AbCdEf0123456789AbCdEf0123456789AbCdEf01",
+    }),
+  }),
 );
 
 // Metric Category Schemas
