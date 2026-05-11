@@ -38,6 +38,7 @@ describe("CreateMetricSettings", () => {
     await expect(
       sut.execute({
         userId: "",
+        organizationId: "org-1",
         metricId: "metric-1",
       }),
     ).rejects.toBeInstanceOf(AppError);
@@ -53,6 +54,7 @@ describe("CreateMetricSettings", () => {
     await expect(
       sut.execute({
         userId: "user-1",
+        organizationId: "org-1",
         metricId: "metric-1",
       }),
     ).rejects.toBeInstanceOf(AppError);
@@ -78,12 +80,14 @@ describe("CreateMetricSettings", () => {
 
     const result = await sut.execute({
       userId: "user-123",
+      organizationId: "org-1",
       metricId: "metric-99",
     });
 
     expect(result).toBe(created);
     expect(repo.create).toHaveBeenCalledWith({
       metricId: "metric-99",
+      organizationId: "org-1",
       isActive: true,
       goalEnabled: false,
       goalType: null,

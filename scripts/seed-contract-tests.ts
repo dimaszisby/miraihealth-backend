@@ -10,6 +10,10 @@ const OUTPUT_PATH = path.resolve(process.cwd(), "tmp/contract-seed.json");
 const SEED_IDS = {
   primaryUser: "11111111-aaaa-4aaa-8aaa-000000000001",
   secondaryUser: "22222222-bbbb-4bbb-8bbb-000000000002",
+  primaryOrg: "00000000-0000-4000-8000-000000000010",
+  secondaryOrg: "00000000-0000-4000-8000-000000000020",
+  primaryMembership: "00000000-0000-4000-8000-000000000011",
+  secondaryMembership: "00000000-0000-4000-8000-000000000021",
   revenueCategory: "33333333-cccc-4ccc-8ccc-000000000003",
   productivityCategory: "44444444-dddd-4ddd-8ddd-000000000004",
   revenueMetric: "55555555-eeee-4eee-8eee-000000000005",
@@ -93,6 +97,8 @@ async function clearTables(transaction: Transaction) {
     "metric_settings",
     "metrics",
     "metric_categories",
+    "memberships",
+    "organizations",
     "users",
   ];
 
@@ -132,10 +138,61 @@ async function seedData(transaction: Transaction) {
     { transaction },
   );
 
+  await models.Organization.create(
+    {
+      id: SEED_IDS.primaryOrg,
+      name: "Primary Org",
+      slug: "primary-org",
+      createdAt: now,
+      updatedAt: now,
+    },
+    { transaction },
+  );
+
+  await models.Organization.create(
+    {
+      id: SEED_IDS.secondaryOrg,
+      name: "Secondary Org",
+      slug: "secondary-org",
+      createdAt: now,
+      updatedAt: now,
+    },
+    { transaction },
+  );
+
+  await models.Membership.create(
+    {
+      id: SEED_IDS.primaryMembership,
+      userId: primaryUser.id,
+      organizationId: SEED_IDS.primaryOrg,
+      role: "owner",
+      status: "active",
+      joinedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    },
+    { transaction },
+  );
+
+  await models.Membership.create(
+    {
+      id: SEED_IDS.secondaryMembership,
+      userId: secondaryUser.id,
+      organizationId: SEED_IDS.secondaryOrg,
+      role: "owner",
+      status: "active",
+      joinedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    },
+    { transaction },
+  );
+
   const revenueCategory = await models.MetricCategory.create(
     {
       id: SEED_IDS.revenueCategory,
       userId: primaryUser.id,
+      organizationId: SEED_IDS.primaryOrg,
       name: "Revenue",
       color: "#F59E0B",
       icon: "💰",
@@ -149,6 +206,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.productivityCategory,
       userId: primaryUser.id,
+      organizationId: SEED_IDS.primaryOrg,
       name: "Productivity",
       color: "#6366F1",
       icon: "⚙️",
@@ -162,6 +220,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.deletableCategory,
       userId: primaryUser.id,
+      organizationId: SEED_IDS.primaryOrg,
       name: "Deletable",
       color: "#10B981",
       icon: "🧪",
@@ -178,6 +237,7 @@ async function seedData(transaction: Transaction) {
         {
           id,
           userId: primaryUser.id,
+          organizationId: SEED_IDS.primaryOrg,
           name: `Deletable Extra ${index + 1}`,
           color: "#10B981",
           icon: "🧪",
@@ -193,6 +253,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.revenueMetric,
       userId: primaryUser.id,
+      organizationId: SEED_IDS.primaryOrg,
       categoryId: revenueCategory.id,
       name: "Monthly Recurring Revenue",
       defaultUnit: "USD",
@@ -208,6 +269,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.deletableMetric1,
       userId: primaryUser.id,
+      organizationId: SEED_IDS.primaryOrg,
       categoryId: deletableCategory.id,
       name: "Delete Pool Metric 1",
       defaultUnit: "count",
@@ -223,6 +285,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.deletableMetric2,
       userId: primaryUser.id,
+      organizationId: SEED_IDS.primaryOrg,
       categoryId: deletableCategory.id,
       name: "Delete Pool Metric 2",
       defaultUnit: "count",
@@ -238,6 +301,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.deletableMetric3,
       userId: primaryUser.id,
+      organizationId: SEED_IDS.primaryOrg,
       categoryId: deletableCategory.id,
       name: "Delete Pool Metric 3",
       defaultUnit: "count",
@@ -253,6 +317,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.deletableMetric4,
       userId: primaryUser.id,
+      organizationId: SEED_IDS.primaryOrg,
       categoryId: deletableCategory.id,
       name: "Delete Pool Metric 4",
       defaultUnit: "count",
@@ -271,6 +336,7 @@ async function seedData(transaction: Transaction) {
         {
           id,
           userId: primaryUser.id,
+          organizationId: SEED_IDS.primaryOrg,
           categoryId: deletableCategory.id,
           name: `Delete Only Metric ${index + 1}`,
           defaultUnit: "count",
@@ -291,6 +357,7 @@ async function seedData(transaction: Transaction) {
         {
           id,
           userId: primaryUser.id,
+          organizationId: SEED_IDS.primaryOrg,
           categoryId: deletableCategory.id,
           name: `Delete Settings Metric ${index + 1}`,
           defaultUnit: "count",
@@ -308,6 +375,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.settingsFreeMetric1,
       userId: primaryUser.id,
+      organizationId: SEED_IDS.primaryOrg,
       categoryId: deletableCategory.id,
       name: "Settings Pool Metric 1",
       defaultUnit: "count",
@@ -323,6 +391,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.settingsFreeMetric2,
       userId: primaryUser.id,
+      organizationId: SEED_IDS.primaryOrg,
       categoryId: deletableCategory.id,
       name: "Settings Pool Metric 2",
       defaultUnit: "count",
@@ -338,6 +407,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.settingsFreeMetric3,
       userId: primaryUser.id,
+      organizationId: SEED_IDS.primaryOrg,
       categoryId: deletableCategory.id,
       name: "Settings Pool Metric 3",
       defaultUnit: "count",
@@ -353,6 +423,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.settingsFreeMetric4,
       userId: primaryUser.id,
+      organizationId: SEED_IDS.primaryOrg,
       categoryId: deletableCategory.id,
       name: "Settings Pool Metric 4",
       defaultUnit: "count",
@@ -368,6 +439,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.settingsFreeMetric5,
       userId: primaryUser.id,
+      organizationId: SEED_IDS.primaryOrg,
       categoryId: deletableCategory.id,
       name: "Settings Pool Metric 5",
       defaultUnit: "count",
@@ -383,6 +455,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.settingsFreeMetric6,
       userId: primaryUser.id,
+      organizationId: SEED_IDS.primaryOrg,
       categoryId: deletableCategory.id,
       name: "Settings Pool Metric 6",
       defaultUnit: "count",
@@ -401,6 +474,7 @@ async function seedData(transaction: Transaction) {
         {
           id,
           userId: primaryUser.id,
+          organizationId: SEED_IDS.primaryOrg,
           categoryId: deletableCategory.id,
           name: `Settings Pool Metric ${index + 7}`,
           defaultUnit: "count",
@@ -418,6 +492,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.productivityMetric,
       userId: primaryUser.id,
+      organizationId: SEED_IDS.primaryOrg,
       categoryId: productivityCategory.id,
       name: "Daily Active Builders",
       defaultUnit: "count",
@@ -433,6 +508,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.revenueMetricSettings,
       metricId: revenueMetric.id,
+      organizationId: SEED_IDS.primaryOrg,
       goalEnabled: true,
       goalType: "cumulative",
       goalValue: 150000,
@@ -459,6 +535,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.productivityMetricSettings,
       metricId: productivityMetric.id,
+      organizationId: SEED_IDS.primaryOrg,
       goalEnabled: false,
       goalType: null,
       goalValue: null,
@@ -485,6 +562,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.deletableMetricSettings1,
       metricId: deletableMetric1.id,
+      organizationId: SEED_IDS.primaryOrg,
       goalEnabled: false,
       goalType: null,
       goalValue: null,
@@ -511,6 +589,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.deletableMetricSettings2,
       metricId: deletableMetric2.id,
+      organizationId: SEED_IDS.primaryOrg,
       goalEnabled: false,
       goalType: null,
       goalValue: null,
@@ -537,6 +616,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.deletableMetricSettings3,
       metricId: deletableMetric3.id,
+      organizationId: SEED_IDS.primaryOrg,
       goalEnabled: false,
       goalType: null,
       goalValue: null,
@@ -563,6 +643,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.deletableMetricSettings4,
       metricId: deletableMetric4.id,
+      organizationId: SEED_IDS.primaryOrg,
       goalEnabled: false,
       goalType: null,
       goalValue: null,
@@ -594,6 +675,7 @@ async function seedData(transaction: Transaction) {
         {
           id,
           metricId: metric.id,
+          organizationId: SEED_IDS.primaryOrg,
           goalEnabled: false,
           goalType: null,
           goalValue: null,
@@ -623,6 +705,7 @@ async function seedData(transaction: Transaction) {
       {
         id: SEED_IDS.revenueLogOldest,
         metricId: revenueMetric.id,
+        organizationId: SEED_IDS.primaryOrg,
         logValue: 120000,
         type: "manual",
         loggedAt: BASE_DATES.oldest,
@@ -632,6 +715,7 @@ async function seedData(transaction: Transaction) {
       {
         id: SEED_IDS.revenueLogLatest,
         metricId: revenueMetric.id,
+        organizationId: SEED_IDS.primaryOrg,
         logValue: 132500,
         type: "manual",
         loggedAt: BASE_DATES.latest,
@@ -645,6 +729,7 @@ async function seedData(transaction: Transaction) {
   type SeedMetricLogEntry = {
     id: string;
     metricId: string;
+    organizationId: string;
     logValue: number;
     type: "manual" | "automatic";
     loggedAt: Date;
@@ -656,6 +741,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.deletableLog1,
       metricId: deletableMetric1.id,
+      organizationId: SEED_IDS.primaryOrg,
       logValue: 10,
       type: "manual",
       loggedAt: BASE_DATES.mid,
@@ -665,6 +751,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.deletableLog2,
       metricId: deletableMetric2.id,
+      organizationId: SEED_IDS.primaryOrg,
       logValue: 20,
       type: "manual",
       loggedAt: BASE_DATES.mid,
@@ -674,6 +761,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.deletableLog3,
       metricId: deletableMetric1.id,
+      organizationId: SEED_IDS.primaryOrg,
       logValue: 30,
       type: "manual",
       loggedAt: BASE_DATES.latest,
@@ -683,6 +771,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.deletableLog4,
       metricId: deletableMetric2.id,
+      organizationId: SEED_IDS.primaryOrg,
       logValue: 40,
       type: "manual",
       loggedAt: BASE_DATES.latest,
@@ -692,6 +781,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.deletableLog5,
       metricId: deletableMetric3.id,
+      organizationId: SEED_IDS.primaryOrg,
       logValue: 50,
       type: "manual",
       loggedAt: BASE_DATES.mid,
@@ -701,6 +791,7 @@ async function seedData(transaction: Transaction) {
     {
       id: SEED_IDS.deletableLog6,
       metricId: deletableMetric4.id,
+      organizationId: SEED_IDS.primaryOrg,
       logValue: 60,
       type: "manual",
       loggedAt: BASE_DATES.mid,
@@ -724,6 +815,7 @@ async function seedData(transaction: Transaction) {
     deletableLogEntries.push({
       id,
       metricId: metric.id,
+      organizationId: SEED_IDS.primaryOrg,
       logValue: 100 + index,
       type: "manual",
       loggedAt,
@@ -741,6 +833,7 @@ async function seedData(transaction: Transaction) {
       {
         id: SEED_IDS.productivityLogOldest,
         metricId: productivityMetric.id,
+        organizationId: SEED_IDS.primaryOrg,
         logValue: 65,
         type: "manual",
         loggedAt: BASE_DATES.oldest,
@@ -750,6 +843,7 @@ async function seedData(transaction: Transaction) {
       {
         id: SEED_IDS.productivityLogLatest,
         metricId: productivityMetric.id,
+        organizationId: SEED_IDS.primaryOrg,
         logValue: 92,
         type: "manual",
         loggedAt: BASE_DATES.latest,

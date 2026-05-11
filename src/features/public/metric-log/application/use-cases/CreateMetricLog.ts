@@ -7,6 +7,7 @@ import { CachePort } from "../ports/CachePort.js";
 
 type Input = {
   userId: string;
+  organizationId: string;
   metricId: string;
   logValue: number;
   type?: "manual" | "automatic";
@@ -46,6 +47,7 @@ export class CreateMetricLog {
 
     const log = await this.repo.create({
       metricId,
+      organizationId: input.organizationId,
       logValue: input.logValue,
       type: input.type ?? "manual",
       loggedAt: timestamp,

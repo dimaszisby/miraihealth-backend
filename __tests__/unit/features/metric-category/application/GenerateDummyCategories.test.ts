@@ -28,6 +28,7 @@ describe("GenerateDummyCategories use-case", () => {
         jest.fn<
           (
             userId: string,
+            organizationId: string,
             data: { name: string; color?: string; icon?: string },
           ) => Promise<MetricCategory>
         >(),
@@ -65,15 +66,19 @@ describe("GenerateDummyCategories use-case", () => {
       factory as any,
     );
 
-    const result = await useCase.execute({ userId, count: 2 });
+    const result = await useCase.execute({
+      userId,
+      organizationId: "org-1",
+      count: 2,
+    });
 
     expect(result).toHaveLength(2);
-    expect(repo.create).toHaveBeenNthCalledWith(1, userId, {
+    expect(repo.create).toHaveBeenNthCalledWith(1, userId, "org-1", {
       name: "Health",
       color: "#111111",
       icon: "💪",
     });
-    expect(repo.create).toHaveBeenNthCalledWith(2, userId, {
+    expect(repo.create).toHaveBeenNthCalledWith(2, userId, "org-1", {
       name: "Mindfulness",
       color: "#222222",
       icon: "🧘",
@@ -101,7 +106,7 @@ describe("GenerateDummyCategories use-case", () => {
       factory as any,
     );
 
-    await useCase.execute({ userId, count: 1 });
+    await useCase.execute({ userId, organizationId: "org-1", count: 1 });
 
     expect(cache.delByPattern).not.toHaveBeenCalled();
     expect(repo.create).toHaveBeenCalledTimes(1);

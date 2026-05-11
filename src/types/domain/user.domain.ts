@@ -64,4 +64,10 @@ export interface UserDomain {
    * @readonly
    */
   readonly emailVerifiedAt: Date | null;
+
+  /**
+   * @property {string} organizationId - The active organization for the current request.
+   * @readonly
+   */
+  readonly organizationId: string;
 }

@@ -2,6 +2,7 @@ import { MetricLog } from "../entities/MetricLog.js";
 
 export type CreateMetricLogDTO = {
   metricId: string;
+  organizationId: string;
   logValue: number;
   type: "manual" | "automatic";
   loggedAt: Date;

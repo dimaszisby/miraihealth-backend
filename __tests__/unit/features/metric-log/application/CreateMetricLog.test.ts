@@ -48,6 +48,7 @@ describe("CreateMetricLog use case", () => {
 
     const result = await sut.execute({
       userId: "user-1",
+      organizationId: "org-1",
       metricId: "metric-1",
       logValue: 10,
       type: "automatic",
@@ -69,6 +70,7 @@ describe("CreateMetricLog use case", () => {
     await expect(
       sut.execute({
         userId: "user-1",
+        organizationId: "org-1",
         metricId: "metric-1",
         logValue: 10,
       }),

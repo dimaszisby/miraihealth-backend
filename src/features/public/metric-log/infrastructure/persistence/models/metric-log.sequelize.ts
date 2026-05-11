@@ -13,6 +13,7 @@ import { Metric } from "@/features/metric/infrastructure/persistence/models/metr
 export interface MetricLogAttributes extends MetricLogAttributesBase {
   id: string;
   metricId: string;
+  organizationId: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -25,6 +26,7 @@ export class MetricLog
 {
   declare id: string;
   declare metricId: string;
+  declare organizationId: string;
   declare type: "manual" | "automatic";
   declare logValue: number;
   declare loggedAt: Date;
@@ -47,6 +49,14 @@ export class MetricLog
           allowNull: false,
           references: {
             model: "metrics",
+            key: "id",
+          },
+        },
+        organizationId: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          references: {
+            model: "organizations",
             key: "id",
           },
         },
@@ -91,6 +101,16 @@ export class MetricLog
       as: "metric",
       foreignKey: { name: "metricId", field: "metric_id", allowNull: false },
       onDelete: "CASCADE",
+    });
+
+    MetricLog.belongsTo(models.Organization, {
+      as: "organization",
+      foreignKey: {
+        name: "organizationId",
+        field: "organization_id",
+        allowNull: false,
+      },
+      onDelete: "RESTRICT",
     });
   }
 }

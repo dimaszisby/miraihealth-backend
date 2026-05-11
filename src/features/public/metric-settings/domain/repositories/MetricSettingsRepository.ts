@@ -2,6 +2,7 @@ import { MetricSettings } from "../entities/MetricSettings.js";
 
 export type CreateMetricSettingsDTO = {
   metricId: string;
+  organizationId: string;
   isActive: boolean;
   goalEnabled: boolean;
   goalType: "cumulative" | "incremental" | null;

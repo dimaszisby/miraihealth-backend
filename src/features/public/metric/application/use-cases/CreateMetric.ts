@@ -42,7 +42,7 @@ export class CreateMetric {
     return this.tx.runInTransaction(async (t) => {
       const metric = await this.repo.create(input, t);
 
-      await this.settings.createDefault(metric.id, t);
+      await this.settings.createDefault(metric.id, input.organizationId, t);
 
       if (this.cache.isEnabled()) {
         await this.cache.invalidateMetrics(metric.userId, metric.id);

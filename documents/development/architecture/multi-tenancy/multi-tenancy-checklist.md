@@ -2,31 +2,31 @@
 
 ## Phase 0 — Gating
 
-- [ ] ADR-004 in `documents/development/architecture/saas-readiness/decisions.md` flipped Proposed → Accepted.
-- [ ] Kit-local ADRs reviewed (`./decisions.md`).
+- [x] ADR-004 in `documents/development/architecture/saas-readiness/decisions.md` flipped Proposed → Accepted.
+- [x] Kit-local ADRs reviewed (`./decisions.md`).
 
 ## Phase 1 — Schema
 
-- [ ] Migration: create `organizations` (paranoid, slug UNIQUE).
-- [ ] Migration: create `memberships` (UNIQUE `(user_id, organization_id)`).
-- [ ] Migration: create `organization_invites` (token-by-email shape).
-- [ ] Migrations have working `down`.
+- [x] Migration: create `organizations` (paranoid, slug UNIQUE). — `20260510000001-create-organizations.cjs`
+- [x] Migration: create `memberships` (UNIQUE `(user_id, organization_id)`). — `20260510000002-create-memberships.cjs`
+- [x] Migration: create `organization_invites` (token-by-email shape). — `20260510000003-create-organization-invites.cjs`
+- [x] Migrations have working `down`.
 - [ ] Run on dev + test; verify schema.
 
 ## Phase 2 — Backfill (existing data)
 
-- [ ] Backfill migration creates one Organization per user + owner Membership.
-- [ ] Idempotent (`WHERE NOT EXISTS`).
+- [x] Backfill migration creates one Organization per user + owner Membership. — `20260510000004-backfill-organizations.cjs`
+- [x] Idempotent (`WHERE NOT EXISTS`).
 - [ ] Row counts captured in `metrics-tracker.md` (before/after).
 - [ ] Run on staging; verify row counts.
 
 ## Phase 3 — Add `organization_id` to domain tables
 
-- [ ] Migration adds nullable `organization_id` to `metrics`, `metric_categories`, `metric_settings`, `metric_logs`, `processed_messages`.
+- [x] Migration adds nullable `organization_id` to `metrics`, `metric_categories`, `metric_settings`, `metric_logs`, `processed_messages`. — `20260510000005-add-organization-id-to-domain-tables.cjs`
 - [ ] (If present) Add to `password_reset_tokens`, `email_verification_tokens`, `refresh_tokens`.
-- [ ] Backfill: `UPDATE ... SET organization_id = (SELECT m.organization_id FROM memberships m WHERE m.user_id = X AND m.role = 'owner' LIMIT 1)`.
+- [x] Backfill: `UPDATE ... SET organization_id = (SELECT m.organization_id FROM memberships m WHERE m.user_id = X AND m.role = 'owner' LIMIT 1)`.
 - [ ] Verify zero NULLs remain (`SELECT COUNT(*) WHERE organization_id IS NULL` per table).
-- [ ] Follow-up migration: NOT NULL + FK constraint.
+- [x] Follow-up migration: NOT NULL + FK constraint. — `20260510000006-set-organization-id-not-null.cjs`
 
 ## Phase 4 — Auth + request scoping
 

@@ -89,6 +89,7 @@ describe("MetricSettingsRepositorySequelize", () => {
 
       const result = await repo.create({
         metricId: "metric-1",
+        organizationId: "org-1",
         isActive: true,
         goalEnabled: false,
         goalType: null,
@@ -120,6 +121,7 @@ describe("MetricSettingsRepositorySequelize", () => {
       await expect(
         repo.create({
           metricId: "metric-2",
+          organizationId: "org-1",
           isActive: true,
           goalEnabled: false,
           goalType: null,

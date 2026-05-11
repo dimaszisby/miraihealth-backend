@@ -10,6 +10,7 @@ import {
 
 type Input = {
   userId: string;
+  organizationId: string;
   metricId: string;
   count: number;
 };
@@ -27,7 +28,12 @@ export class GenerateDummyMetricLogs {
     private queue: MessageQueuePort,
   ) {}
 
-  async execute({ userId, metricId, count }: Input): Promise<Output> {
+  async execute({
+    userId,
+    organizationId,
+    metricId,
+    count,
+  }: Input): Promise<Output> {
     await this.access.ensureMetricOwnership(userId, metricId);
 
     const jobId = randomUUID();
@@ -35,7 +41,7 @@ export class GenerateDummyMetricLogs {
     if (this.queue.isEnabled()) {
       await this.queue.publish(
         EXCHANGES.JOBS,
-        { jobId, userId, metricId, count },
+        { jobId, userId, organizationId, metricId, count },
         {
           routingKey: ROUTING_KEYS.METRIC_LOG_GENERATE_DUMMY,
           messageId: jobId,
@@ -48,6 +54,7 @@ export class GenerateDummyMetricLogs {
     for (let i = 0; i < count; i++) {
       await models.MetricLog.create({
         metricId,
+        organizationId,
         logValue: Number((Math.random() * 100).toFixed(2)),
         loggedAt: new Date(
           Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000,

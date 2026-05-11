@@ -6,6 +6,7 @@ import { METRIC_CATEGORY_CURSOR_NAMESPACE_ALL } from "../cache.constants.js";
 
 type Input = {
   userId: string;
+  organizationId: string;
   count: number;
 };
 
@@ -16,12 +17,16 @@ export class GenerateDummyCategories {
     private factory: MetricCategoryFactory,
   ) {}
 
-  async execute({ userId, count }: Input): Promise<MetricCategory[]> {
+  async execute({
+    userId,
+    organizationId,
+    count,
+  }: Input): Promise<MetricCategory[]> {
     const created: MetricCategory[] = [];
 
     for (let i = 0; i < count; i++) {
       const aggregate = this.factory.generate({ userId });
-      const category = await this.repo.create(userId, {
+      const category = await this.repo.create(userId, organizationId, {
         name: aggregate.name,
         color: aggregate.color,
         icon: aggregate.icon,

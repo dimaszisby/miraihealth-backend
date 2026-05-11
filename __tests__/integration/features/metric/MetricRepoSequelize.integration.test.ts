@@ -7,6 +7,7 @@ import {
   createMetricRow,
   createUserRow,
   runInTransaction,
+  TEST_ORG_ID,
 } from "../../helpers/db-fixtures.js";
 
 const repo = new MetricRepoSequelize();
@@ -21,6 +22,7 @@ describe("MetricRepoSequelize (integration)", () => {
       repo.create(
         {
           userId: user.id,
+          organizationId: TEST_ORG_ID,
           categoryId: category.id,
           originalMetricId: null,
           name: "Weekly Steps",
@@ -46,6 +48,7 @@ describe("MetricRepoSequelize (integration)", () => {
     const metricRow = await models.Metric.create({
       id: randomUUID(),
       userId: user.id,
+      organizationId: TEST_ORG_ID,
       name: "Bench Press",
       defaultUnit: "kg",
       isPublic: true,

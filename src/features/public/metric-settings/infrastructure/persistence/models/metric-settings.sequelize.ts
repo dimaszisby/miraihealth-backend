@@ -13,6 +13,7 @@ import type { DbModels } from "@/infrastructure/db/types.js";
 export interface MetricSettingsAttributes extends MetricSettingsAttributesBase {
   id: string;
   metricId: string;
+  organizationId: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -28,6 +29,7 @@ export class MetricSettings
 {
   declare id: string;
   declare metricId: string;
+  declare organizationId: string;
   declare isActive: boolean;
 
   declare goalEnabled: boolean;
@@ -68,6 +70,14 @@ export class MetricSettings
           allowNull: false,
           references: {
             model: "metrics",
+            key: "id",
+          },
+        },
+        organizationId: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          references: {
+            model: "organizations",
             key: "id",
           },
         },
@@ -204,6 +214,16 @@ export class MetricSettings
       as: "metric",
       foreignKey: { name: "metricId", field: "metric_id", allowNull: false },
       onDelete: "CASCADE",
+    });
+
+    MetricSettings.belongsTo(models.Organization, {
+      as: "organization",
+      foreignKey: {
+        name: "organizationId",
+        field: "organization_id",
+        allowNull: false,
+      },
+      onDelete: "RESTRICT",
     });
   }
 

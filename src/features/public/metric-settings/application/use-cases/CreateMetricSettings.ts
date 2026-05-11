@@ -9,6 +9,7 @@ import { MetricAccessPort } from "../ports/MetricAccessPort.js";
 
 export type CreateMetricSettingsInput = Partial<CreateMetricSettingsDTO> & {
   userId: string;
+  organizationId: string;
   metricId: string;
 };
 
@@ -32,6 +33,7 @@ export class CreateMetricSettings {
 
     const created = await this.repo.create({
       metricId,
+      organizationId: input.organizationId,
       isActive: input.isActive ?? true,
       goalEnabled: input.goalEnabled ?? false,
       goalType: input.goalType ?? null,

@@ -115,7 +115,7 @@ features/{name}/
 
 **Decision (proposed):** Introduce `Organization` + `Membership(userId, organizationId, role)` and add `organizationId` to all current and future domain tables. `req.organizationId` is derived in `authMiddleware` from the active membership. Forks that genuinely need single-tenant-per-user can ship with `Organization` rows that 1:1 mirror users — but the column exists.
 
-**Status:** Proposed. Final acceptance pending the Lakira-domain restructure (metric\* slices need to learn `organizationId`).
+**Status:** Accepted (2026-05-10). User confirmed the Organization + Membership approach is the right direction for a forkable SaaS base.
 
 **Options considered:**
 

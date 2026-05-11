@@ -7,6 +7,7 @@ import {
   createMetricRow,
   createUserRow,
   truncateAllTables,
+  TEST_ORG_ID,
 } from "../../helpers/db-fixtures.js";
 
 const repo = new MetricLogRepoSequelize();
@@ -23,6 +24,7 @@ describe("MetricLog repositories (integration)", () => {
     const loggedAt = new Date("2025-01-01T00:00:00Z");
     const log = await repo.create({
       metricId: metric.id,
+      organizationId: TEST_ORG_ID,
       logValue: 10,
       type: "manual",
       loggedAt,
@@ -43,6 +45,7 @@ describe("MetricLog repositories (integration)", () => {
     const metric = await createMetricRow({ userId: owner.id });
     const created = await repo.create({
       metricId: metric.id,
+      organizationId: TEST_ORG_ID,
       logValue: 12,
       type: "manual",
       loggedAt: new Date("2025-01-02T00:00:00Z"),

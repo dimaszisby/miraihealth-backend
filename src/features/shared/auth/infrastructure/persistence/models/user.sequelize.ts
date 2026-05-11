@@ -17,6 +17,21 @@ import {
   associateEmailVerificationToken,
   EmailVerificationToken,
 } from "./email-verification-token.sequelize.js";
+import {
+  initOrganization,
+  associateOrganization,
+  Organization,
+} from "./organization.sequelize.js";
+import {
+  initMembership,
+  associateMembership,
+  Membership,
+} from "./membership.sequelize.js";
+import {
+  initOrganizationInvite,
+  associateOrganizationInvite,
+  OrganizationInvite,
+} from "./organization-invite.sequelize.js";
 
 const isBcryptHash = (value: unknown): value is string =>
   typeof value === "string" && /^\$2[aby]\$\d{2}\$/.test(value);
@@ -153,6 +168,12 @@ export class User
       foreignKey: { name: "userId", field: "user_id", allowNull: false },
       onDelete: "CASCADE",
     });
+
+    User.hasMany(models.Membership, {
+      as: "memberships",
+      foreignKey: { name: "userId", field: "user_id", allowNull: false },
+      onDelete: "CASCADE",
+    });
   }
 
   async validPassword(password: string): Promise<boolean> {
@@ -172,7 +193,18 @@ export const registerAuthModels = (sequelize: Sequelize) => {
   initPasswordResetToken(sequelize);
   initRefreshToken(sequelize);
   initEmailVerificationToken(sequelize);
-  return { User, PasswordResetToken, RefreshToken, EmailVerificationToken };
+  initOrganization(sequelize);
+  initMembership(sequelize);
+  initOrganizationInvite(sequelize);
+  return {
+    User,
+    PasswordResetToken,
+    RefreshToken,
+    EmailVerificationToken,
+    Organization,
+    Membership,
+    OrganizationInvite,
+  };
 };
 
 export const associateAuthModels = (models: DbModels) => {
@@ -180,4 +212,7 @@ export const associateAuthModels = (models: DbModels) => {
   associatePasswordResetToken(models);
   associateRefreshToken(models);
   associateEmailVerificationToken(models);
+  associateOrganization(models);
+  associateMembership(models);
+  associateOrganizationInvite(models);
 };

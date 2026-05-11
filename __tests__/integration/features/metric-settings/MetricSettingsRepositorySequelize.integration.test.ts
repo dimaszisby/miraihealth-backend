@@ -5,6 +5,7 @@ import {
   createMetricSettingsRow,
   createUserRow,
   truncateAllTables,
+  TEST_ORG_ID,
 } from "../../helpers/db-fixtures.js";
 
 const repo = new MetricSettingsRepositorySequelize();
@@ -21,6 +22,7 @@ describe("MetricSettingsRepositorySequelize (integration)", () => {
 
     const created = await repo.create({
       metricId: metric.id,
+      organizationId: TEST_ORG_ID,
       isActive: true,
       goalEnabled: true,
       goalType: "cumulative",
@@ -45,6 +47,7 @@ describe("MetricSettingsRepositorySequelize (integration)", () => {
     await expect(
       repo.create({
         metricId: metric.id,
+        organizationId: TEST_ORG_ID,
         isActive: true,
         goalEnabled: false,
         goalType: null,
@@ -89,6 +92,7 @@ describe("MetricSettingsRepositorySequelize (integration)", () => {
     const metric = await createMetricRow({ userId: user.id });
     const settings = await repo.create({
       metricId: metric.id,
+      organizationId: TEST_ORG_ID,
       isActive: true,
       goalEnabled: false,
       goalType: null,
@@ -175,6 +179,7 @@ describe("MetricSettingsRepositorySequelize (integration)", () => {
     const dummy = await repo.create({
       metricId: (await createMetricRow({ userId: (await createUserRow()).id }))
         .id,
+      organizationId: TEST_ORG_ID,
       isActive: true,
       goalEnabled: false,
       goalType: null,
