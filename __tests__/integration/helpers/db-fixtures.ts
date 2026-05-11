@@ -8,6 +8,8 @@ import { Metric } from "@/features/metric/domain/entities/Metric.js";
 const uniqueSuffix = () =>
   `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
+export const TEST_ORG_ID = "00000000-0000-4000-8000-000000000001";
+
 export type UserOverrides = Partial<{
   id: string;
   email: string;
@@ -18,14 +20,39 @@ export type UserOverrides = Partial<{
 }>;
 
 export async function createUserRow(overrides: UserOverrides = {}) {
-  return models.User.create({
-    id: overrides.id ?? randomUUID(),
+  const userId = overrides.id ?? randomUUID();
+  const user = await models.User.create({
+    id: userId,
     email: overrides.email ?? `${uniqueSuffix()}@example.com`,
     username: overrides.username ?? `user-${uniqueSuffix()}`,
     password: overrides.password ?? "hash",
     role: overrides.role ?? "user",
     isPublicProfile: overrides.isPublicProfile ?? true,
   });
+
+  const orgExists = await models.Organization.findByPk(TEST_ORG_ID);
+  if (!orgExists) {
+    await models.Organization.create({
+      id: TEST_ORG_ID,
+      name: "Test Organization",
+      slug: `test-org-${uniqueSuffix()}`,
+    });
+  }
+
+  const membershipExists = await models.Membership.findOne({
+    where: { userId, organizationId: TEST_ORG_ID },
+  });
+  if (!membershipExists) {
+    await models.Membership.create({
+      userId,
+      organizationId: TEST_ORG_ID,
+      role: "owner",
+      status: "active",
+      joinedAt: new Date(),
+    });
+  }
+
+  return user;
 }
 
 export type MetricCategoryOverrides = Partial<{
@@ -42,6 +69,7 @@ export async function createMetricCategoryRow(
   return models.MetricCategory.create({
     id: overrides.id ?? randomUUID(),
     userId,
+    organizationId: TEST_ORG_ID,
     name: overrides.name ?? `Category-${uniqueSuffix()}`,
     color: overrides.color ?? "#E897A3",
     icon: overrides.icon ?? "🔥",
@@ -98,6 +126,8 @@ export async function truncateAllTables() {
     "metric_settings",
     "metrics",
     "metric_categories",
+    "memberships",
+    "organizations",
     "users",
   ];
   for (const table of tables) {
@@ -122,6 +152,7 @@ export async function createMetricRow(data: MetricRowOverrides = {}) {
   return models.Metric.create({
     id: data.id ?? randomUUID(),
     userId: data.userId ?? randomUUID(),
+    organizationId: TEST_ORG_ID,
     categoryId: typeof data.categoryId === "undefined" ? null : data.categoryId,
     name: data.name ?? `Metric-${uniqueSuffix()}`,
     defaultUnit: data.defaultUnit ?? "units",
@@ -155,6 +186,7 @@ export async function createMetricSettingsRow(
   return models.MetricSettings.create({
     id: overrides.id ?? randomUUID(),
     metricId: overrides.metricId!,
+    organizationId: TEST_ORG_ID,
     isActive: overrides.isActive ?? true,
     goalEnabled: overrides.goalEnabled ?? false,
     goalType: overrides.goalType ?? null,
@@ -188,6 +220,7 @@ export async function createMetricLogRow(
   return models.MetricLog.create({
     id: overrides.id ?? randomUUID(),
     metricId: overrides.metricId ?? randomUUID(),
+    organizationId: TEST_ORG_ID,
     logValue: overrides.logValue ?? 1,
     type: overrides.type ?? "manual",
     loggedAt: overrides.loggedAt ?? new Date(),

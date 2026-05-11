@@ -32,6 +32,7 @@ export const createMetricSettings = catchAsync(
     const payload = body;
     const created = await feature.createSettings.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       ...payload,
     });
 

@@ -52,10 +52,12 @@ export class MetricCategoryRepoSequelize implements MetricCategoryRepository {
 
   async create(
     userId: string,
+    organizationId: string,
     data: { name: string; color?: string; icon?: string },
   ) {
     const created = await models.MetricCategory.create({
       userId,
+      organizationId,
       name: data.name,
       color: data.color ?? "#E897A3",
       icon: data.icon ?? "📁",

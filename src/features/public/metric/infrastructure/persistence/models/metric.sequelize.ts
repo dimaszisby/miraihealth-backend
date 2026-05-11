@@ -8,6 +8,7 @@ import { MetricLog } from "@/features/metric-log/infrastructure/persistence/mode
 export interface MetricAttributes extends MetricAttributesBase {
   id: string;
   userId: string;
+  organizationId: string;
   categoryId: string | null;
   originalMetricId: string | null;
   createdAt?: Date;
@@ -22,6 +23,7 @@ export class Metric
 {
   declare id: string;
   declare userId: string;
+  declare organizationId: string;
   declare categoryId: string | null;
   declare originalMetricId: string | null;
   declare name: string;
@@ -49,6 +51,14 @@ export class Metric
           allowNull: false,
           references: {
             model: "users",
+            key: "id",
+          },
+        },
+        organizationId: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          references: {
+            model: "organizations",
             key: "id",
           },
         },
@@ -108,6 +118,16 @@ export class Metric
       as: "user",
       foreignKey: { name: "userId", field: "user_id", allowNull: false },
       onDelete: "CASCADE",
+    });
+
+    Metric.belongsTo(models.Organization, {
+      as: "organization",
+      foreignKey: {
+        name: "organizationId",
+        field: "organization_id",
+        allowNull: false,
+      },
+      onDelete: "RESTRICT",
     });
 
     Metric.belongsTo(models.MetricCategory, {

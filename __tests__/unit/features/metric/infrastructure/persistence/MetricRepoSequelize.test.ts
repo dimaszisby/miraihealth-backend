@@ -58,6 +58,7 @@ describe("MetricRepoSequelize", () => {
     const result = await repo.create(
       {
         userId: "user-1",
+        organizationId: "org-1",
         categoryId: "cat-1",
         originalMetricId: null,
         name: "Steps",
@@ -71,6 +72,7 @@ describe("MetricRepoSequelize", () => {
     expect(createSpy).toHaveBeenCalledWith(
       {
         userId: "user-1",
+        organizationId: "org-1",
         categoryId: "cat-1",
         originalMetricId: null,
         name: "Steps",

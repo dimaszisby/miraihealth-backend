@@ -108,10 +108,13 @@ describe("MetricCategoryRepoSequelize", () => {
         buildRow({ id: "cat-1", name: "Deep Work", metricCount: 0 }),
       );
 
-      const created = await repo.create("user-1", { name: "Deep Work" });
+      const created = await repo.create("user-1", "org-1", {
+        name: "Deep Work",
+      });
 
       expect(metricCategoryModel.create).toHaveBeenCalledWith({
         userId: "user-1",
+        organizationId: "org-1",
         name: "Deep Work",
         color: "#E897A3",
         icon: "📁",

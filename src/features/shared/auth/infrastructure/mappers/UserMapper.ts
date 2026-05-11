@@ -1,20 +1,17 @@
-import { User } from "../persistence/models/user.sequelize.js";
-import { UserDomain } from "@/types/domain/user.domain.js";
 import { UserResponseDTO } from "../http/dto.js";
 
-export const toDomainUser = (user: User): UserDomain => ({
-  id: user.id,
-  username: user.username,
-  email: user.email,
-  role: user.role,
-  isPublicProfile: user.isPublicProfile,
-  emailVerifiedAt: user.emailVerifiedAt ?? null,
-  createdAt: user.createdAt!,
-  updatedAt: user.updatedAt!,
-  deletedAt: user.deletedAt,
-});
+type UserLike = {
+  id: string;
+  username: string;
+  email: string;
+  role: "user" | "admin";
+  isPublicProfile: boolean;
+  emailVerifiedAt?: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
-export const toUserResponseDTO = (user: UserDomain): UserResponseDTO => ({
+export const toUserResponseDTO = (user: UserLike): UserResponseDTO => ({
   id: user.id,
   username: user.username,
   email: user.email,

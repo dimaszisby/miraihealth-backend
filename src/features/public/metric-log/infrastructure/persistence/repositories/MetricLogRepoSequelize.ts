@@ -45,6 +45,7 @@ export class MetricLogRepoSequelize implements MetricLogRepository {
   async create(data: CreateMetricLogDTO): Promise<MetricLog> {
     const created = await models.MetricLog.create({
       metricId: data.metricId,
+      organizationId: data.organizationId,
       logValue: data.logValue,
       type: data.type,
       loggedAt: data.loggedAt,

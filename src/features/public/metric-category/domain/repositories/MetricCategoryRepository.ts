@@ -14,6 +14,7 @@ export interface MetricCategoryRepository {
   // CREATE
   create(
     userId: string,
+    organizationId: string,
     data: { name: string; color?: string; icon?: string },
   ): Promise<MetricCategory>;
 

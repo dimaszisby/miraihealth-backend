@@ -8,6 +8,8 @@ import { JwtTokenProvider } from "./infrastructure/providers/JwtTokenProvider.js
 import { ConsoleEmailSender } from "./infrastructure/providers/ConsoleEmailSender.js";
 import { ResendEmailSender } from "./infrastructure/providers/ResendEmailSender.js";
 import { EmailSender } from "./application/ports/EmailSender.js";
+import { OrganizationRepositorySequelize } from "./infrastructure/persistence/OrganizationRepositorySequelize.js";
+import { MembershipRepositorySequelize } from "./infrastructure/persistence/MembershipRepositorySequelize.js";
 import { RegisterUser } from "./application/use-cases/RegisterUser.js";
 import { LoginUser } from "./application/use-cases/LoginUser.js";
 import { GetProfile } from "./application/queries/GetProfile.js";
@@ -41,6 +43,8 @@ export type AuthFeatureOverrides = {
 
 export const buildAuthFeature = (overrides: AuthFeatureOverrides = {}) => {
   const repo = new UserRepositorySequelize();
+  const orgRepo = new OrganizationRepositorySequelize();
+  const membershipRepo = new MembershipRepositorySequelize();
   const resetTokenRepo = new PasswordResetTokenRepositorySequelize();
   const refreshTokenRepo = new RefreshTokenRepositorySequelize();
   const emailVerificationTokenRepo =
@@ -69,7 +73,13 @@ export const buildAuthFeature = (overrides: AuthFeatureOverrides = {}) => {
   );
 
   return {
-    registerUser: new RegisterUser(repo, hasher, token),
+    registerUser: new RegisterUser(
+      repo,
+      orgRepo,
+      membershipRepo,
+      hasher,
+      token,
+    ),
     loginUser: new LoginUser(repo, hasher, token, issueRefreshToken),
     getProfile: new GetProfile(repo),
     updateProfile: new UpdateProfile(repo, hasher),

@@ -5,6 +5,7 @@ import { CachePort } from "../ports/CachePort.js";
 
 type Input = {
   userId: string;
+  organizationId: string;
   count: number;
 };
 
@@ -13,12 +14,17 @@ const DEFAULT_UNITS = ["kg", "steps", "ml", "units"];
 export class GenerateDummyMetrics {
   constructor(private cache: CachePort) {}
 
-  async execute({ userId, count }: Input): Promise<MetricDomain[]> {
+  async execute({
+    userId,
+    organizationId,
+    count,
+  }: Input): Promise<MetricDomain[]> {
     const dummyMetrics: MetricDomain[] = [];
 
     for (let i = 0; i < count; i++) {
       const metric = await models.Metric.create({
         userId,
+        organizationId,
         name: `Dummy Metric ${Date.now()}-${i}`,
         description: "This is a dummy metric generated for testing pagination.",
         defaultUnit:

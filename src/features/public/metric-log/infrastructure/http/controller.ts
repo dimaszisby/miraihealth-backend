@@ -37,6 +37,7 @@ export const createMetricLog = catchAsync(
 
     const logDomain = await metricLogFeature.createLog.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       metricId,
       type,
       logValue,
@@ -164,6 +165,7 @@ export const generateDummyMetricLogs = catchAsync(
 
     const result = await metricLogFeature.generateDummyLogs.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       metricId,
       count,
     });

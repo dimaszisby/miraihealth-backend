@@ -54,6 +54,7 @@ export const createMetric = catchAsync(
 
     const metricDomain = await metricFeature.createMetric.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       categoryId,
       originalMetricId,
       name,
@@ -184,6 +185,7 @@ export const generateDummyMetrics = catchAsync(
 
     const dummyMetrics = await metricFeature.generateDummyMetrics.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       count,
     });
     const dto = dummyMetrics.map(toMetricResponseDTO);

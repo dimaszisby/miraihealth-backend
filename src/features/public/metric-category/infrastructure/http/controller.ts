@@ -32,6 +32,7 @@ export const createCategory = catchAsync(
     const payload = body;
     const category = await feature.createCategory.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       name: payload.name,
       color: payload.color,
       icon: payload.icon,
@@ -127,6 +128,7 @@ export const generateDummyCategories = catchAsync(
     const { body } = pickValidated(generateDummyMetricCategoriesSchema)(req);
     const created = await feature.generateDummyCategories.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       count: body.count,
     });
 

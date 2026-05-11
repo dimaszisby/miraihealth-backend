@@ -35,7 +35,12 @@ const setup = () => {
   return { sut, access, cache, queue };
 };
 
-const INPUT = { userId: "user-1", metricId: "metric-1", count: 3 };
+const INPUT = {
+  userId: "user-1",
+  organizationId: "org-1",
+  metricId: "metric-1",
+  count: 3,
+};
 
 describe("GenerateDummyMetricLogs use case", () => {
   beforeEach(() => jest.resetAllMocks());

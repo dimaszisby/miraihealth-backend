@@ -6,12 +6,14 @@ import { PersistenceTransaction } from "../../../application/ports/PersistenceTr
 export class MetricSettingsPortSequelize implements MetricSettingsPort {
   async createDefault(
     metricId: string,
+    organizationId: string,
     tx: PersistenceTransaction,
   ): Promise<void> {
     const transaction = tx as Transaction;
     await models.MetricSettings.create(
       {
         metricId,
+        organizationId,
         goalEnabled: false,
         goalType: null,
         goalValue: null,

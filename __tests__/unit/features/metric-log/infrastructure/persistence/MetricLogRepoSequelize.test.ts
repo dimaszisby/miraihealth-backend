@@ -46,6 +46,7 @@ describe("MetricLogRepoSequelize", () => {
 
     const result = await repo.create({
       metricId: "metric-1",
+      organizationId: "org-1",
       logValue: 10,
       type: "manual",
       loggedAt: new Date(),

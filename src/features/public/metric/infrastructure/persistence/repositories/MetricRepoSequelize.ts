@@ -52,6 +52,7 @@ export class MetricRepoSequelize implements MetricRepository {
     const created = await models.Metric.create(
       {
         userId: data.userId,
+        organizationId: data.organizationId,
         categoryId: data.categoryId ?? null,
         originalMetricId: data.originalMetricId ?? null,
         name: data.name,

@@ -3,6 +3,7 @@ import { PersistenceTransaction } from "../../application/ports/PersistenceTrans
 
 export type CreateMetricDTO = {
   userId: string;
+  organizationId: string;
   categoryId?: string | null;
   originalMetricId?: string | null;
   name: string;
