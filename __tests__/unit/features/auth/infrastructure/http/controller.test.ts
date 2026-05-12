@@ -12,6 +12,7 @@ let updateProfile: ControllerModule["updateProfile"];
 let logout: ControllerModule["logout"];
 let verifyEmail: ControllerModule["verifyEmail"];
 let resendVerification: ControllerModule["resendVerification"];
+let switchOrg: ControllerModule["switchOrg"];
 let overrideAuthFeatureForTest: ControllerModule["overrideAuthFeatureForTest"];
 
 type AuthFeature = ReturnType<typeof buildAuthFeature>;
@@ -27,6 +28,7 @@ const requestEmailVerificationExecute: AsyncMock = jest.fn(
   async () => undefined,
 ) as unknown as AsyncMock;
 const verifyEmailExecute: AsyncMock = jest.fn();
+const switchOrganizationExecute: AsyncMock = jest.fn();
 
 const assertAuthenticatedMock = jest.fn();
 
@@ -45,6 +47,7 @@ const loadController = async () => {
   logout = controller.logout;
   verifyEmail = controller.verifyEmail;
   resendVerification = controller.resendVerification;
+  switchOrg = controller.switchOrg;
   overrideAuthFeatureForTest = controller.overrideAuthFeatureForTest;
 };
 
@@ -58,6 +61,7 @@ const buildFeatureMocks = (): AuthFeature =>
     revokeRefreshTokenFamily: { execute: revokeRefreshTokenFamilyExecute },
     requestEmailVerification: { execute: requestEmailVerificationExecute },
     verifyEmail: { execute: verifyEmailExecute },
+    switchOrganization: { execute: switchOrganizationExecute },
   }) as unknown as AuthFeature;
 
 const res = () =>
@@ -183,6 +187,13 @@ describe("Auth HTTP controller", () => {
 
     const req = {
       user: { id: "user-1" },
+      organizationId: "org-1",
+      membership: {
+        id: "mem-1",
+        role: "owner",
+        organizationId: "org-1",
+        userId: "user-1",
+      },
     } as unknown as AuthRequest;
 
     const response = res();
@@ -213,6 +224,13 @@ describe("Auth HTTP controller", () => {
 
     const req = {
       user: { id: "user-1" },
+      organizationId: "org-1",
+      membership: {
+        id: "mem-1",
+        role: "owner",
+        organizationId: "org-1",
+        userId: "user-1",
+      },
       body: {
         email: "new@example.com",
         username: "new",
@@ -302,6 +320,13 @@ describe("Auth HTTP controller", () => {
   it("resends verification email fire-and-forget and returns 200 immediately", async () => {
     const req = {
       user: { id: "user-1", email: "user@example.com" },
+      organizationId: "org-1",
+      membership: {
+        id: "mem-1",
+        role: "owner",
+        organizationId: "org-1",
+        userId: "user-1",
+      },
     } as unknown as AuthRequest;
 
     const response = res();
@@ -325,6 +350,59 @@ describe("Auth HTTP controller", () => {
     const errorNext = jest.fn();
 
     await resendVerification({} as AuthRequest, response, errorNext);
+
+    expect(errorNext).toHaveBeenCalledWith(expect.any(Error));
+  });
+
+  it("switches org and returns new access token with refresh cookie", async () => {
+    const targetOrgId = "00000000-0000-4000-8000-000000000002";
+    switchOrganizationExecute.mockResolvedValue({
+      accessToken: "new-jwt",
+      rawRefreshToken: "new-refresh",
+    });
+
+    const req = {
+      user: { id: "user-1" },
+      organizationId: "org-1",
+      membership: {
+        id: "mem-1",
+        role: "owner",
+        organizationId: "org-1",
+        userId: "user-1",
+      },
+      body: { organizationId: targetOrgId },
+      headers: { "user-agent": "test" },
+      ip: "127.0.0.1",
+    } as unknown as AuthRequest;
+
+    const response = res();
+    await switchOrg(req, response, next);
+
+    expect(switchOrganizationExecute).toHaveBeenCalledWith({
+      userId: "user-1",
+      organizationId: targetOrgId,
+      userAgent: "test",
+      ip: "127.0.0.1",
+    });
+    expect(response.cookie).toHaveBeenCalled();
+    expect(response.status).toHaveBeenCalledWith(200);
+    expect(response.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "success",
+        data: expect.objectContaining({ token: "new-jwt" }),
+      }),
+    );
+  });
+
+  it("requires authentication for switch-org", async () => {
+    const response = res();
+    const errorNext = jest.fn();
+
+    await switchOrg(
+      { body: { organizationId: "org-2" } } as unknown as AuthRequest,
+      response,
+      errorNext,
+    );
 
     expect(errorNext).toHaveBeenCalledWith(expect.any(Error));
   });

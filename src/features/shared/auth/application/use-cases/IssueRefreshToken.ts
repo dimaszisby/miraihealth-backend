@@ -8,6 +8,7 @@ import { TokenHasher } from "../ports/TokenHasher.js";
 export type IssueRefreshTokenInput = {
   userId: string;
   familyId?: string;
+  organizationId?: string | null;
   userAgent?: string | null;
   ip?: string | null;
 };
@@ -32,6 +33,7 @@ export class IssueRefreshToken {
 
     const refreshToken = RefreshToken.issue(input.userId, tokenHash, {
       familyId: input.familyId,
+      organizationId: input.organizationId,
       ttlDays: this.ttlDays,
       userAgent: input.userAgent,
       ip: input.ip,
@@ -51,6 +53,7 @@ export class IssueRefreshToken {
 
     const refreshToken = RefreshToken.issue(input.userId, tokenHash, {
       familyId: input.familyId,
+      organizationId: input.organizationId,
       ttlDays: this.ttlDays,
       userAgent: input.userAgent,
       ip: input.ip,

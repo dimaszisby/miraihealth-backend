@@ -27,7 +27,7 @@ export class MembershipRepositorySequelize implements MembershipRepository {
     organizationId: string,
   ): Promise<Membership | null> {
     const row = await models.Membership.findOne({
-      where: { userId, organizationId },
+      where: { userId, organizationId, status: "active" },
     });
     return row ? toDomain(row) : null;
   }

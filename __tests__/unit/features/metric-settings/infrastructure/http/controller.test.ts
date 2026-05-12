@@ -50,6 +50,13 @@ describe("MetricSettings HTTP controller", () => {
   const makeAuthReq = (overrides: Partial<AuthRequest> = {}): AuthRequest => {
     return {
       user: { id: "user-1" } as any,
+      organizationId: "org-1",
+      membership: {
+        id: "mem-1",
+        role: "owner",
+        organizationId: "org-1",
+        userId: "user-1",
+      },
       ...overrides,
     } as AuthRequest;
   };

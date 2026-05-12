@@ -2,11 +2,13 @@ export interface TokenPayload {
   id: string;
   email: string;
   username: string;
+  organizationId: string;
 }
 
 export interface TokenClaims {
   userId: string;
   email: string;
+  organizationId: string | null;
   iat: number;
   exp: number;
 }

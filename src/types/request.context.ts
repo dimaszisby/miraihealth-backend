@@ -7,11 +7,15 @@ export type ValidatedBag = {
   params?: unknown;
 };
 
-/**
- * * Extended Request Interface for Authenticated Routes
- * Ensures all authenticated requests include user information.
- * The user property in AuthRequest is defined as optional (user?: User) because not all routes require authentication
- */
+export type MembershipInfo = {
+  id: string;
+  role: "owner" | "admin" | "member";
+  organizationId: string;
+  userId: string;
+};
+
 export interface AuthRequest extends Request {
   user?: UserDomain;
+  organizationId?: string;
+  membership?: MembershipInfo;
 }

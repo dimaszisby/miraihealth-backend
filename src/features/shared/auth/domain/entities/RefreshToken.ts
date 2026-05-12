@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 export type RefreshTokenProps = {
   id: string;
   userId: string;
+  organizationId: string | null;
   familyId: string;
   tokenHash: string;
   issuedAt: Date;
@@ -25,6 +26,7 @@ export class RefreshToken {
     tokenHash: string,
     opts: {
       familyId?: string;
+      organizationId?: string | null;
       ttlDays?: number;
       userAgent?: string | null;
       ip?: string | null;
@@ -37,6 +39,7 @@ export class RefreshToken {
     return new RefreshToken({
       id: crypto.randomUUID(),
       userId,
+      organizationId: opts.organizationId ?? null,
       familyId: opts.familyId ?? crypto.randomUUID(),
       tokenHash,
       issuedAt: now,
@@ -53,6 +56,9 @@ export class RefreshToken {
   }
   get userId() {
     return this.props.userId;
+  }
+  get organizationId() {
+    return this.props.organizationId;
   }
   get familyId() {
     return this.props.familyId;

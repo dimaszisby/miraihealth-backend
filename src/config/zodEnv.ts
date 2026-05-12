@@ -162,6 +162,17 @@ const envSchema = z.object({
     })
     .default("30"),
 
+  RATE_LIMIT_SWITCH_ORG_MAX: z
+    .string()
+    .transform((val) => {
+      const parsed = parseInt(val, 10);
+      if (isNaN(parsed) || parsed <= 0) {
+        throw new Error("RATE_LIMIT_SWITCH_ORG_MAX must be a positive number");
+      }
+      return parsed;
+    })
+    .default("10"),
+
   DISABLE_RATE_LIMITING: z
     .string()
     .transform((val) => val === "true")

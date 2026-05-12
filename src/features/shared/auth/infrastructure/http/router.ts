@@ -10,12 +10,14 @@ import {
   resetPassword,
   verifyEmail,
   resendVerification,
+  switchOrg,
 } from "./controller.js";
 import { authMiddleware } from "./authMiddleware.js";
 import {
   passwordResetEmailRateLimiter,
   passwordResetIpRateLimiter,
   userRateLimiter,
+  switchOrgRateLimiter,
   emailVerificationEmailRateLimiter,
   emailVerificationIpRateLimiter,
 } from "@/shared/middleware/rate-limiter.js";
@@ -27,6 +29,7 @@ import {
   resetPasswordSchema,
   updateUserSchema,
   verifyEmailSchema,
+  switchOrgSchema,
 } from "./schema.zod.js";
 import { methodNotAllowed } from "@/shared/middleware/method-guard.js";
 import { requireJsonObjectBody } from "@/shared/middleware/require-json-object.js";
@@ -91,6 +94,15 @@ export const createAuthRouter = () => {
     resendVerification,
   );
 
+  router.post(
+    "/switch-org",
+    switchOrgRateLimiter,
+    authMiddleware,
+    requireJsonObjectBody(),
+    validate(switchOrgSchema),
+    switchOrg,
+  );
+
   router.all("/register", methodNotAllowed(["POST"]));
   router.all("/login", methodNotAllowed(["POST"]));
   router.all("/profile", methodNotAllowed(["GET", "PUT"]));
@@ -100,6 +112,7 @@ export const createAuthRouter = () => {
   router.all("/reset-password", methodNotAllowed(["POST"]));
   router.all("/verify-email", methodNotAllowed(["POST"]));
   router.all("/resend-verification", methodNotAllowed(["POST"]));
+  router.all("/switch-org", methodNotAllowed(["POST"]));
 
   return router;
 };

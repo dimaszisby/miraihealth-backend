@@ -122,11 +122,13 @@ describe("RegisterUser use case", () => {
       userId: user.id,
       organizationId: org.id,
       role: "owner",
+      status: "active",
     });
     expect(token.sign).toHaveBeenCalledWith({
       id: user.id,
       email: user.email,
       username: user.username,
+      organizationId: org.id,
     });
     expect(result).toEqual({ user, token: "jwt-token" });
   });

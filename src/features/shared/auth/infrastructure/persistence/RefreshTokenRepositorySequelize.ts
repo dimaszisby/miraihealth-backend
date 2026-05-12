@@ -17,6 +17,7 @@ export class RefreshTokenRepositorySequelize
       {
         id: token.id,
         userId: token.userId,
+        organizationId: token.organizationId,
         familyId: token.familyId,
         tokenHash: token.tokenHash,
         issuedAt: token.issuedAt,

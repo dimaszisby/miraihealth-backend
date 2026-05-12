@@ -49,6 +49,7 @@ import {
   DashboardVisualizationQueryParamsSchema,
   SuccessResponseSchema,
   RefreshResponseSchema,
+  SwitchOrgRequestSchema,
   successEnvelope,
 } from "./openapi-schemas.js";
 import {
@@ -422,6 +423,50 @@ registry.registerPath({
           schema: RateLimitErrorSchema,
         },
       },
+    },
+    500: {
+      $ref: "#/components/responses/InternalServerError",
+    },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/auth/switch-org",
+  tags: ["Auth"],
+  summary: "Switch active organization",
+  description:
+    "Switches the authenticated user's active organization context. " +
+    "Validates the user has an active membership in the target organization, " +
+    "then issues a new access token with the new `organizationId` claim and a fresh refresh token cookie.",
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: SwitchOrgRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Organization switched; new tokens issued",
+      content: {
+        "application/json": {
+          schema: RefreshResponseSchema,
+        },
+      },
+    },
+    400: {
+      $ref: "#/components/responses/BadRequestError",
+    },
+    401: {
+      $ref: "#/components/responses/UnauthorizedError",
+    },
+    403: {
+      $ref: "#/components/responses/ForbiddenError",
     },
     500: {
       $ref: "#/components/responses/InternalServerError",

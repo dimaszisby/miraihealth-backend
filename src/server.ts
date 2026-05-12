@@ -33,7 +33,7 @@ import { RabbitMQPublisher } from "./shared/infrastructure/queue/RabbitMQPublish
 import sequelize from "./config/db.js";
 import { loadModels } from "./infrastructure/db/models.js";
 import { authMiddleware } from "./features/shared/auth/infrastructure/http/authMiddleware.js";
-import { requireAdmin } from "./features/shared/auth/infrastructure/http/requireAdmin.js";
+import { requireOrgRole } from "./features/shared/auth/infrastructure/http/assertHasOrgRole.js";
 import { disallowTraceMethod } from "@/shared/middleware/method-guard.js";
 import { requestIdMiddleware } from "@/shared/middleware/request-id.js";
 import * as Sentry from "@sentry/node";
@@ -169,9 +169,9 @@ app.use("/api/v1/metric-logs", metricLogRouter);
 // DDD based routes
 app.use("/api/v1/analytics", visualizationRouter);
 
-// * Admin routes — guarded by authMiddleware + requireAdmin
+// * Admin routes — guarded by authMiddleware + org role check
 const adminRouter = express.Router();
-adminRouter.use(authMiddleware, requireAdmin);
+adminRouter.use(authMiddleware, requireOrgRole("admin", "owner"));
 adminRouter.get("/_ping", (_req, res) =>
   res.json({ status: "ok", scope: "admin" }),
 );
