@@ -24,7 +24,14 @@ const getMetricDetailExecute = jest.fn<(payload: any) => Promise<any>>();
 const generateDummyMetricsExecute = jest.fn<(payload: any) => Promise<any>>();
 
 const userId = "00000000-0000-0000-0000-000000000001";
+const orgId = "aaaaaaaa-0000-0000-0000-000000000001";
 const metricId = "11111111-1111-1111-1111-111111111111";
+
+const authFields = {
+  user: { id: userId },
+  organizationId: orgId,
+  membership: { id: "mem-1", role: "owner", organizationId: orgId, userId },
+};
 
 const buildFeatureMocks = (): MetricFeature =>
   ({
@@ -88,7 +95,7 @@ describe("Metric HTTP controller", () => {
     createMetricExecute.mockResolvedValue(metric);
 
     const req = {
-      user: { id: userId },
+      ...authFields,
       body: {
         name: "Steps",
         defaultUnit: "steps",
@@ -133,7 +140,7 @@ describe("Metric HTTP controller", () => {
     getMetricDetailExecute.mockResolvedValue(metric);
 
     const req = {
-      user: { id: userId },
+      ...authFields,
       params: { id: metricId },
       query: { include: "full", logsLimit: 10 },
     } as unknown as AuthRequest;
@@ -173,7 +180,7 @@ describe("Metric HTTP controller", () => {
     deleteMetricExecute.mockResolvedValue(metric);
 
     const req = {
-      user: { id: userId },
+      ...authFields,
       params: { id: metricId },
     } as unknown as AuthRequest;
 

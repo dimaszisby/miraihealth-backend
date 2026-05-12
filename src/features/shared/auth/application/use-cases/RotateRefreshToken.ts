@@ -7,6 +7,7 @@ import {
 import { TokenProvider, TokenPayload } from "../ports/TokenProvider.js";
 import { TokenHasher } from "../ports/TokenHasher.js";
 import { UserRepository } from "../../domain/repositories/UserRepository.js";
+import { MembershipRepository } from "../../domain/repositories/MembershipRepository.js";
 import { IssueRefreshToken } from "./IssueRefreshToken.js";
 
 export type RotateRefreshTokenInput = {
@@ -33,6 +34,7 @@ export class RotateRefreshToken {
   constructor(
     private refreshTokenRepo: RefreshTokenRepository,
     private userRepo: UserRepository,
+    private membershipRepo: MembershipRepository,
     private tokenProvider: TokenProvider,
     private tokenHasher: TokenHasher,
     private issueRefreshToken: IssueRefreshToken,
@@ -80,12 +82,36 @@ export class RotateRefreshToken {
         throw new AppError("Unauthorized: User not found", 401);
       }
 
+      let organizationId: string;
+      if (existing.organizationId) {
+        const membership = await this.membershipRepo.findByUserAndOrg(
+          existing.userId,
+          existing.organizationId,
+        );
+        if (!membership || !membership.isActive()) {
+          throw new AppError(
+            "Unauthorized: Organization membership inactive",
+            401,
+          );
+        }
+        organizationId = existing.organizationId;
+      } else {
+        const membership = await this.membershipRepo.findDefaultByUser(
+          existing.userId,
+        );
+        if (!membership) {
+          throw new AppError("Unauthorized: No organization membership", 401);
+        }
+        organizationId = membership.organizationId;
+      }
+
       existing.markRevoked();
       const { rawToken: newRawToken, refreshToken: newRefreshToken } =
         await this.issueRefreshToken.executeInTransaction(
           {
             userId: existing.userId,
             familyId: existing.familyId,
+            organizationId,
             userAgent: input.userAgent,
             ip: input.ip,
           },
@@ -99,6 +125,7 @@ export class RotateRefreshToken {
         id: user.id,
         email: user.email,
         username: user.username,
+        organizationId,
       } as TokenPayload);
 
       logger.info("auth.refresh.success", {

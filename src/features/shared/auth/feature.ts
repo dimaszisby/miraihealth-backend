@@ -21,6 +21,7 @@ import { VerifyEmail } from "./application/use-cases/VerifyEmail.js";
 import { IssueRefreshToken } from "./application/use-cases/IssueRefreshToken.js";
 import { RotateRefreshToken } from "./application/use-cases/RotateRefreshToken.js";
 import { RevokeRefreshTokenFamily } from "./application/use-cases/RevokeRefreshTokenFamily.js";
+import { SwitchOrganization } from "./application/use-cases/SwitchOrganization.js";
 import { RefreshTokenCrypto } from "./infrastructure/providers/RefreshTokenCrypto.js";
 import { buildPasswordResetEmail } from "./infrastructure/email/templates/password-reset.js";
 import { buildEmailVerificationEmail } from "./infrastructure/email/templates/email-verification.js";
@@ -62,6 +63,7 @@ export const buildAuthFeature = (overrides: AuthFeatureOverrides = {}) => {
   const rotateRefreshToken = new RotateRefreshToken(
     refreshTokenRepo,
     repo,
+    membershipRepo,
     token,
     tokenHasher,
     issueRefreshToken,
@@ -80,7 +82,13 @@ export const buildAuthFeature = (overrides: AuthFeatureOverrides = {}) => {
       hasher,
       token,
     ),
-    loginUser: new LoginUser(repo, hasher, token, issueRefreshToken),
+    loginUser: new LoginUser(
+      repo,
+      membershipRepo,
+      hasher,
+      token,
+      issueRefreshToken,
+    ),
     getProfile: new GetProfile(repo),
     updateProfile: new UpdateProfile(repo, hasher),
     requestPasswordReset: new RequestPasswordReset(
@@ -104,6 +112,13 @@ export const buildAuthFeature = (overrides: AuthFeatureOverrides = {}) => {
       },
     ),
     verifyEmail: new VerifyEmail(repo, emailVerificationTokenRepo),
+    switchOrganization: new SwitchOrganization(
+      membershipRepo,
+      repo,
+      refreshTokenRepo,
+      token,
+      issueRefreshToken,
+    ),
     rotateRefreshToken,
     revokeRefreshTokenFamily,
   };

@@ -23,19 +23,27 @@
 ## Phase 3 — Add `organization_id` to domain tables
 
 - [x] Migration adds nullable `organization_id` to `metrics`, `metric_categories`, `metric_settings`, `metric_logs`, `processed_messages`. — `20260510000005-add-organization-id-to-domain-tables.cjs`
-- [ ] (If present) Add to `password_reset_tokens`, `email_verification_tokens`, `refresh_tokens`.
+- [x] Add `organization_id` to `refresh_tokens` (nullable). — `20260512000001-add-organization-id-to-refresh-tokens.cjs`
+- [ ] (If needed) Add `organization_id` to `password_reset_tokens`, `email_verification_tokens`.
 - [x] Backfill: `UPDATE ... SET organization_id = (SELECT m.organization_id FROM memberships m WHERE m.user_id = X AND m.role = 'owner' LIMIT 1)`.
 - [ ] Verify zero NULLs remain (`SELECT COUNT(*) WHERE organization_id IS NULL` per table).
 - [x] Follow-up migration: NOT NULL + FK constraint. — `20260510000006-set-organization-id-not-null.cjs`
 
 ## Phase 4 — Auth + request scoping
 
-- [ ] JWT access-token claims include `organizationId`.
-- [ ] Login picks default membership (oldest `joined_at`, status `active`).
-- [ ] `authMiddleware` validates the membership is still active; sets `req.organizationId`, `req.membership.role`.
-- [ ] `assertHasOrgRole(req, role)` helper added.
-- [ ] `POST /auth/switch-org` route + `SwitchOrganization` use case; reissues access token via the refresh flow.
-- [ ] All `requireAdmin` usages migrated to `assertHasOrgRole(req, "admin")`.
+- [x] JWT access-token claims include `organizationId`.
+- [x] Login picks default membership (oldest `joined_at`, status `active`).
+- [x] `authMiddleware` validates the membership is still active; sets `req.organizationId`, `req.membership.role`.
+- [x] `assertHasOrgRole(req, role)` helper added.
+- [x] `POST /auth/switch-org` route + `SwitchOrganization` use case; reissues access token via the refresh flow.
+- [x] `SwitchOrganization` revokes all active refresh families before issuing new tokens.
+- [x] `RotateRefreshToken` preserves org context from refresh token (falls back to default for legacy tokens).
+- [x] Registration creates default Organization + owner Membership with explicit `status: "active"`.
+- [x] Dedicated `switchOrgRateLimiter` (10 req / 15 min) on `POST /auth/switch-org`.
+- [x] `TokenClaims.organizationId` typed as `string | null`; `JwtTokenProvider` returns `null` for legacy tokens.
+- [x] `findByUserAndOrg` filters by `status: 'active'` at DB level.
+- [x] Unit tests for `SwitchOrganization`, `assertHasOrgRole`/`requireOrgRole`, and negative paths (LoginUser, RotateRefreshToken, controller switchOrg).
+- [x] All `requireAdmin` usages migrated to `assertHasOrgRole(req, "admin")`.
 
 ## Phase 5 — Repositories filter by org
 

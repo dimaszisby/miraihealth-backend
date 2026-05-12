@@ -487,6 +487,17 @@ export const RefreshResponseSchema = registerSchema(
   successEnvelope(RefreshTokenPayloadSchema),
 );
 
+export const SwitchOrgRequestSchema = registerSchema(
+  "SwitchOrgRequest",
+  z.object({
+    organizationId: z.string().uuid().regex(UUID_REGEX).openapi({
+      description: "Target organization ID to switch to",
+      example: "123e4567-e89b-42d3-a456-426614174000",
+      pattern: UUID_PATTERN,
+    }),
+  }),
+);
+
 export const RegisterRequestSchema = registerSchema(
   "RegisterRequest",
   z

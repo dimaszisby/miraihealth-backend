@@ -6,10 +6,12 @@ import {
   TransactionPort,
 } from "@/features/auth/domain/repositories/RefreshTokenRepository.js";
 import { UserRepository } from "@/features/auth/domain/repositories/UserRepository.js";
+import { MembershipRepository } from "@/features/auth/domain/repositories/MembershipRepository.js";
 import { TokenProvider } from "@/features/auth/application/ports/TokenProvider.js";
 import { TokenHasher } from "@/features/auth/application/ports/TokenHasher.js";
 import { RefreshToken } from "@/features/auth/domain/entities/RefreshToken.js";
 import { AuthUser } from "@/features/auth/domain/entities/AuthUser.js";
+import { Membership } from "@/features/auth/domain/entities/Membership.js";
 import AppError from "@/utils/AppError.js";
 import crypto from "node:crypto";
 
@@ -22,6 +24,7 @@ const makeRefreshToken = (
   RefreshToken.fromPersistence({
     id: "rt-1",
     userId: "user-1",
+    organizationId: "org-1",
     familyId: "fam-1",
     tokenHash: TOKEN_HASH,
     issuedAt: new Date("2026-01-01"),
@@ -44,6 +47,16 @@ const makeUser = () =>
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
+  });
+
+const makeMembership = () =>
+  Membership.fromPersistence({
+    id: "mem-1",
+    userId: "user-1",
+    organizationId: "org-1",
+    role: "owner",
+    status: "active",
+    joinedAt: new Date(),
   });
 
 const build = () => {
@@ -69,6 +82,16 @@ const build = () => {
     create: jest.fn(),
     save: jest.fn(),
   };
+  const membershipRepo: jest.Mocked<MembershipRepository> = {
+    findById: jest.fn(),
+    findByUserAndOrg: jest.fn(),
+    findDefaultByUser: jest.fn(),
+    findAllByUser: jest.fn(),
+    findAllByOrganization: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+    delete: jest.fn(),
+  };
   const tokenProvider: jest.Mocked<TokenProvider> = {
     sign: jest.fn<TokenProvider["sign"]>().mockReturnValue("new-access-jwt"),
     verify: jest.fn(),
@@ -91,23 +114,25 @@ const build = () => {
   const sut = new RotateRefreshToken(
     refreshTokenRepo,
     userRepo,
+    membershipRepo,
     tokenProvider,
     tokenHasher,
     issueRefreshToken,
     tx,
   );
-  return { sut, refreshTokenRepo, userRepo, tokenProvider };
+  return { sut, refreshTokenRepo, userRepo, membershipRepo, tokenProvider };
 };
 
 describe("RotateRefreshToken use case", () => {
   beforeEach(() => jest.resetAllMocks());
 
   it("rotates a valid refresh token and returns new tokens", async () => {
-    const { sut, refreshTokenRepo, userRepo } = build();
+    const { sut, refreshTokenRepo, userRepo, membershipRepo } = build();
     refreshTokenRepo.findByTokenHashForUpdate.mockResolvedValue(
       makeRefreshToken(),
     );
     userRepo.findById.mockResolvedValue(makeUser());
+    membershipRepo.findByUserAndOrg.mockResolvedValue(makeMembership());
 
     const result = await sut.execute({ rawToken: RAW_TOKEN });
 
@@ -161,5 +186,31 @@ describe("RotateRefreshToken use case", () => {
     await expect(sut.execute({ rawToken: RAW_TOKEN })).rejects.toBeInstanceOf(
       AppError,
     );
+  });
+
+  it("throws 401 when org membership is inactive", async () => {
+    const { sut, refreshTokenRepo, userRepo, membershipRepo } = build();
+    refreshTokenRepo.findByTokenHashForUpdate.mockResolvedValue(
+      makeRefreshToken({ organizationId: "org-1" }),
+    );
+    userRepo.findById.mockResolvedValue(makeUser());
+    membershipRepo.findByUserAndOrg.mockResolvedValue(null);
+
+    await expect(sut.execute({ rawToken: RAW_TOKEN })).rejects.toMatchObject({
+      statusCode: 401,
+    });
+  });
+
+  it("throws 401 when legacy token has no default membership", async () => {
+    const { sut, refreshTokenRepo, userRepo, membershipRepo } = build();
+    refreshTokenRepo.findByTokenHashForUpdate.mockResolvedValue(
+      makeRefreshToken({ organizationId: null }),
+    );
+    userRepo.findById.mockResolvedValue(makeUser());
+    membershipRepo.findDefaultByUser.mockResolvedValue(null);
+
+    await expect(sut.execute({ rawToken: RAW_TOKEN })).rejects.toMatchObject({
+      statusCode: 401,
+    });
   });
 });

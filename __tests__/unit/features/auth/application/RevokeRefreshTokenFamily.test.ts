@@ -27,6 +27,7 @@ const makeToken = () =>
   RefreshToken.fromPersistence({
     id: "rt-1",
     userId: "user-1",
+    organizationId: "org-1",
     familyId: "fam-1",
     tokenHash: "hashed",
     issuedAt: new Date("2026-01-01"),

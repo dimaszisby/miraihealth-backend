@@ -1,3 +1,6 @@
 # Memory Index
 
 - [JWT Refresh Token Phase D Review](project_jwt_refresh_review.md) — Phase D shipped: opaque tokens, SHA-256 hash, family rotation, HttpOnly cookie. Key DDD violation: crypto helpers imported from infrastructure into application layer.
+- [Email Verification Phase 3 Review](project_email_verification_review.md) — Fix-then-ship verdict. Recurring DDD violation: email template builders imported into application use cases. Also: UserSchema missing emailVerifiedAt, .env.example not updated, TOCTOU in VerifyEmail.
+- [Multi-Tenancy Phase 0–3 Review](project_multi_tenancy_review.md) — REQUEST CHANGES. 5 CRITICALs: processed_messages model not updated, migration 000004 down deletes all orgs/memberships, migration 000006 takes table-lock without NOT VALID, authMiddleware instantiates repos directly (bypasses DI), Membership.status missing.
+- [Multi-Tenancy Phase 4 Review](project_multi_tenancy_phase4_review.md) — REQUEST CHANGES. 2 CRITICALs: authMiddleware DI violation persists; SwitchOrganization issues new refresh family without revoking old one (token accumulation). RotateRefreshToken ignores switched org context.

@@ -2,11 +2,13 @@ import { jest } from "@jest/globals";
 import { LoginUser } from "@/features/auth/application/use-cases/LoginUser.js";
 import { IssueRefreshToken } from "@/features/auth/application/use-cases/IssueRefreshToken.js";
 import { UserRepository } from "@/features/auth/domain/repositories/UserRepository.js";
+import { MembershipRepository } from "@/features/auth/domain/repositories/MembershipRepository.js";
 import { PasswordHasher } from "@/features/auth/application/ports/PasswordHasher.js";
 import { TokenProvider } from "@/features/auth/application/ports/TokenProvider.js";
 import { RefreshTokenRepository } from "@/features/auth/domain/repositories/RefreshTokenRepository.js";
 import { TokenHasher } from "@/features/auth/application/ports/TokenHasher.js";
 import { AuthUser } from "@/features/auth/domain/entities/AuthUser.js";
+import { Membership } from "@/features/auth/domain/entities/Membership.js";
 import AppError from "@/utils/AppError.js";
 
 const makeUser = () =>
@@ -22,6 +24,16 @@ const makeUser = () =>
     deletedAt: null,
   });
 
+const makeMembership = () =>
+  Membership.fromPersistence({
+    id: "mem-1",
+    userId: "user-1",
+    organizationId: "org-1",
+    role: "owner",
+    status: "active",
+    joinedAt: new Date(),
+  });
+
 const build = () => {
   const repo: jest.Mocked<UserRepository> = {
     existsByEmail: jest.fn(),
@@ -30,6 +42,16 @@ const build = () => {
     findByEmail: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
+  };
+  const membershipRepo: jest.Mocked<MembershipRepository> = {
+    findById: jest.fn(),
+    findByUserAndOrg: jest.fn(),
+    findDefaultByUser: jest.fn(),
+    findAllByUser: jest.fn(),
+    findAllByOrganization: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+    delete: jest.fn(),
   };
   const hasher: jest.Mocked<PasswordHasher> = {
     hash: jest.fn(),
@@ -57,8 +79,14 @@ const build = () => {
     tokenHasher,
     30,
   );
-  const sut = new LoginUser(repo, hasher, token, issueRefreshToken);
-  return { sut, repo, hasher, token, refreshTokenRepo };
+  const sut = new LoginUser(
+    repo,
+    membershipRepo,
+    hasher,
+    token,
+    issueRefreshToken,
+  );
+  return { sut, repo, membershipRepo, hasher, token, refreshTokenRepo };
 };
 
 describe("LoginUser use case", () => {
@@ -67,9 +95,11 @@ describe("LoginUser use case", () => {
   });
 
   it("returns token and refresh token when credentials are valid", async () => {
-    const { sut, repo, hasher, token, refreshTokenRepo } = build();
+    const { sut, repo, membershipRepo, hasher, token, refreshTokenRepo } =
+      build();
     const user = makeUser();
     repo.findByEmail.mockResolvedValue(user);
+    membershipRepo.findDefaultByUser.mockResolvedValue(makeMembership());
     hasher.compare.mockResolvedValue(true);
     token.sign.mockReturnValue("jwt");
     refreshTokenRepo.save.mockResolvedValue(undefined);
@@ -104,5 +134,16 @@ describe("LoginUser use case", () => {
     await expect(
       sut.execute({ email: "user@example.com", password: "WrongPassword" }),
     ).rejects.toBeInstanceOf(AppError);
+  });
+
+  it("throws 403 when user has no active membership", async () => {
+    const { sut, repo, hasher, membershipRepo } = build();
+    repo.findByEmail.mockResolvedValue(makeUser());
+    hasher.compare.mockResolvedValue(true);
+    membershipRepo.findDefaultByUser.mockResolvedValue(null);
+
+    await expect(
+      sut.execute({ email: "user@example.com", password: "Password123!" }),
+    ).rejects.toMatchObject({ statusCode: 403 });
   });
 });

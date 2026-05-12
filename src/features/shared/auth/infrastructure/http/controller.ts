@@ -16,6 +16,7 @@ import {
   resetPasswordBody,
   updateUserBody,
   verifyEmailBody,
+  switchOrgBody,
 } from "./schema.zod.js";
 import { z } from "zod";
 
@@ -56,6 +57,7 @@ const pickForgotPassword = pickValidated(
 );
 const pickResetPassword = pickValidated(z.object({ body: resetPasswordBody }));
 const pickVerifyEmail = pickValidated(z.object({ body: verifyEmailBody }));
+const pickSwitchOrg = pickValidated(z.object({ body: switchOrgBody }));
 
 const FORGOT_PASSWORD_RESPONSE =
   "If an account exists for that email, we've sent reset instructions.";
@@ -216,3 +218,21 @@ export const resendVerification = catchAsync(
     successResponse(res, 200, null, RESEND_VERIFICATION_RESPONSE);
   },
 );
+
+export const switchOrg = catchAsync(async (req: AuthRequest, res: Response) => {
+  assertAuthenticated(req);
+  const {
+    body: { organizationId },
+  } = pickSwitchOrg(req);
+
+  const result = await feature.switchOrganization.execute({
+    userId: req.user.id,
+    organizationId,
+    userAgent: req.headers["user-agent"] ?? null,
+    ip: req.ip ?? null,
+  });
+
+  setRefreshCookie(res, result.rawRefreshToken);
+
+  successResponse(res, 200, { token: result.accessToken });
+});

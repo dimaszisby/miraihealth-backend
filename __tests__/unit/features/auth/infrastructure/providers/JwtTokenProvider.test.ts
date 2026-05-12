@@ -12,7 +12,12 @@ describe("JwtTokenProvider", () => {
     it("returns claims for a valid token", async () => {
       const provider = buildProvider();
       const token = jwt.sign(
-        { id: "user-1", email: "user@example.com", username: "tester" },
+        {
+          id: "user-1",
+          email: "user@example.com",
+          username: "tester",
+          organizationId: "org-1",
+        },
         SECRET,
         { expiresIn: "1h" },
       );
@@ -28,7 +33,12 @@ describe("JwtTokenProvider", () => {
     it("throws InvalidTokenError for an expired token", async () => {
       const provider = buildProvider();
       const token = jwt.sign(
-        { id: "user-1", email: "user@example.com", username: "tester" },
+        {
+          id: "user-1",
+          email: "user@example.com",
+          username: "tester",
+          organizationId: "org-1",
+        },
         SECRET,
         { expiresIn: "-1s" },
       );
@@ -49,7 +59,12 @@ describe("JwtTokenProvider", () => {
     it("throws InvalidTokenError for a token signed with wrong secret", async () => {
       const provider = buildProvider();
       const token = jwt.sign(
-        { id: "user-1", email: "user@example.com", username: "tester" },
+        {
+          id: "user-1",
+          email: "user@example.com",
+          username: "tester",
+          organizationId: "org-1",
+        },
         "wrong-secret",
         { expiresIn: "1h" },
       );
@@ -76,6 +91,7 @@ describe("JwtTokenProvider", () => {
         id: "user-1",
         email: "user@example.com",
         username: "tester",
+        organizationId: "org-1",
       });
 
       const decoded = jwt.verify(token, SECRET) as any;

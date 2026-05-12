@@ -62,12 +62,14 @@ export class RegisterUser {
       userId: user.id,
       organizationId: org.id,
       role: "owner",
+      status: "active",
     });
 
     const token = this.tokenProvider.sign({
       id: user.id,
       email: user.email,
       username: user.username,
+      organizationId: org.id,
     });
 
     return { user, token };

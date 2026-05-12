@@ -625,6 +625,19 @@
           }
         ]
       },
+      "SwitchOrgRequest": {
+        "type": "object",
+        "properties": {
+          "organizationId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
+            "description": "Target organization ID to switch to",
+            "example": "123e4567-e89b-42d3-a456-426614174000"
+          }
+        },
+        "required": ["organizationId"]
+      },
       "RegisterRequest": {
         "type": "object",
         "properties": {
@@ -2670,6 +2683,52 @@
                 }
               }
             }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/auth/switch-org": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Switch active organization",
+        "description": "Switches the authenticated user's active organization context. Validates the user has an active membership in the target organization, then issues a new access token with the new `organizationId` claim and a fresh refresh token cookie.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwitchOrgRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Organization switched; new tokens issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"

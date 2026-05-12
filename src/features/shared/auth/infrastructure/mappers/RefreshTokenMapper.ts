@@ -7,6 +7,7 @@ export const toDomainRefreshToken = (
   RefreshTokenDomain.fromPersistence({
     id: row.id,
     userId: row.userId,
+    organizationId: row.organizationId ?? null,
     familyId: row.familyId,
     tokenHash: row.tokenHash,
     issuedAt: row.issuedAt,

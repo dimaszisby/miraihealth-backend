@@ -1,5 +1,6 @@
 import AppError from "@/utils/AppError.js";
 import { UserRepository } from "../../domain/repositories/UserRepository.js";
+import { MembershipRepository } from "../../domain/repositories/MembershipRepository.js";
 import { PasswordHasher } from "../ports/PasswordHasher.js";
 import { TokenProvider } from "../ports/TokenProvider.js";
 import { AuthUser } from "../../domain/entities/AuthUser.js";
@@ -21,6 +22,7 @@ export type LoginResult = {
 export class LoginUser {
   constructor(
     private repo: UserRepository,
+    private membershipRepo: MembershipRepository,
     private hasher: PasswordHasher,
     private tokenProvider: TokenProvider,
     private issueRefreshToken: IssueRefreshToken,
@@ -34,14 +36,21 @@ export class LoginUser {
     const valid = await this.hasher.compare(input.password, user.passwordHash);
     if (!valid) throw new AppError("Invalid email or password", 401);
 
+    const membership = await this.membershipRepo.findDefaultByUser(user.id);
+    if (!membership) {
+      throw new AppError("No active organization membership", 403);
+    }
+
     const token = this.tokenProvider.sign({
       id: user.id,
       email: user.email,
       username: user.username,
+      organizationId: membership.organizationId,
     });
 
     const { rawToken } = await this.issueRefreshToken.execute({
       userId: user.id,
+      organizationId: membership.organizationId,
       userAgent: input.userAgent,
       ip: input.ip,
     });

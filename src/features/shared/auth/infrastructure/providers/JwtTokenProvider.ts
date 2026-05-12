@@ -22,6 +22,7 @@ export class JwtTokenProvider implements TokenProvider {
       const decoded = jwt.verify(token, this.secret) as {
         id?: string;
         email?: string;
+        organizationId?: string;
         iat?: number;
         exp?: number;
       };
@@ -33,6 +34,7 @@ export class JwtTokenProvider implements TokenProvider {
       return {
         userId: decoded.id,
         email: decoded.email,
+        organizationId: decoded.organizationId ?? null,
         iat: decoded.iat ?? 0,
         exp: decoded.exp ?? 0,
       };

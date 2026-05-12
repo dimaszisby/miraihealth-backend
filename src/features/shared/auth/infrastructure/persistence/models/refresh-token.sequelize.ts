@@ -4,6 +4,7 @@ import type { DbModels } from "@/infrastructure/db/types.js";
 export interface RefreshTokenAttributes {
   id: string;
   userId: string;
+  organizationId: string | null;
   familyId: string;
   tokenHash: string;
   issuedAt: Date;
@@ -18,7 +19,7 @@ export interface RefreshTokenAttributes {
 
 export type RefreshTokenCreationAttributes = Optional<
   RefreshTokenAttributes,
-  "id" | "revokedAt" | "replacedById" | "userAgent" | "ip"
+  "id" | "organizationId" | "revokedAt" | "replacedById" | "userAgent" | "ip"
 >;
 
 export class RefreshToken
@@ -27,6 +28,7 @@ export class RefreshToken
 {
   declare id: string;
   declare userId: string;
+  declare organizationId: string | null;
   declare familyId: string;
   declare tokenHash: string;
   declare issuedAt: Date;
@@ -49,6 +51,10 @@ export class RefreshToken
         userId: {
           type: DataTypes.UUID,
           allowNull: false,
+        },
+        organizationId: {
+          type: DataTypes.UUID,
+          allowNull: true,
         },
         familyId: {
           type: DataTypes.UUID,
