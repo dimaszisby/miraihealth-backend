@@ -9,13 +9,17 @@ export class DeleteCategory {
     private cache: CachePort,
   ) {}
 
-  async execute(userId: string, categoryId: string) {
-    const category = await this.repo.findById(userId, categoryId);
+  async execute(userId: string, organizationId: string, categoryId: string) {
+    const category = await this.repo.findById(
+      userId,
+      organizationId,
+      categoryId,
+    );
     if (!category) {
       throw new AppError("Metric Category not found", 404);
     }
 
-    await this.repo.delete(userId, categoryId);
+    await this.repo.delete(userId, organizationId, categoryId);
 
     if (this.cache.isEnabled()) {
       await this.cache.delByPattern(

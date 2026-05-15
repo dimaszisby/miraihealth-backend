@@ -55,6 +55,7 @@ describe("GenerateDummyMetricLogs use case", () => {
 
       expect(access.ensureMetricOwnership).toHaveBeenCalledWith(
         "user-1",
+        "org-1",
         "metric-1",
       );
       expect(queue.publish).toHaveBeenCalledWith(

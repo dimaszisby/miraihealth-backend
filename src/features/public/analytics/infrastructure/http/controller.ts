@@ -35,6 +35,7 @@ export async function handleGetVisualization(
 
     const data = await feature.getVisualization.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       metricId: params.metricId,
       startISO: query.start,
       endISO: query.end,
@@ -64,6 +65,7 @@ export async function handleGetDashboardVisualization(
 
     const data = await feature.getDashboardVisualization.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       startISO: query.start,
       endISO: query.end,
       bucket: query.bucket,

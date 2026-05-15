@@ -4,12 +4,13 @@ export type SortParam = SortField | `-${SortField}`;
 export type ListFilter = { name?: string };
 export type ListQuery = {
   userId: string;
+  organizationId: string;
   limit: number;
   sort: SortParam;
   q?: string;
   filter?: ListFilter;
-  after?: string; // opaque cursor
-  includeTotal?: boolean; // careful: can be costly
+  after?: string;
+  includeTotal?: boolean;
 };
 export type ListResult<T> = {
   items: T[];

@@ -13,6 +13,7 @@ export class MetricLogQueryRepoSequelize implements MetricLogQueryPort {
   async listLogs(options: ListOpts): Promise<ListLogsResult> {
     const {
       userId,
+      organizationId,
       limit,
       sort,
       q,
@@ -23,7 +24,7 @@ export class MetricLogQueryRepoSequelize implements MetricLogQueryPort {
 
     const { field, dir } = normalizeSort(sort);
     const pageSize = clampLimit(limit);
-    const include = includeForOwnership(userId);
+    const include = includeForOwnership(userId, organizationId);
     const baseWhere = buildWhere(filter, q);
 
     const totalCount = includeTotal
@@ -221,14 +222,14 @@ function buildOrder(field: SortField, dir: Dir): OrderItem[] {
   }
 }
 
-function includeForOwnership(userId: string) {
+function includeForOwnership(userId: string, organizationId: string) {
   return [
     {
       model: models.Metric,
       as: "metric",
       attributes: [],
       required: true,
-      where: { userId, deletedAt: null },
+      where: { userId, organizationId, deletedAt: null },
     },
   ];
 }

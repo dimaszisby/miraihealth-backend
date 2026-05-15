@@ -5,6 +5,7 @@ import { CachePort } from "../ports/CachePort.js";
 
 type Input = {
   userId: string;
+  organizationId: string;
   logId: string;
 };
 
@@ -14,11 +15,11 @@ export class DeleteMetricLog {
     private cache: CachePort,
   ) {}
 
-  async execute({ userId, logId }: Input): Promise<MetricLog> {
-    const log = await this.repo.findById(userId, logId);
+  async execute({ userId, organizationId, logId }: Input): Promise<MetricLog> {
+    const log = await this.repo.findById(userId, organizationId, logId);
     if (!log) throw new AppError("Log not found", 404);
 
-    await this.repo.delete(log);
+    await this.repo.delete(organizationId, log);
     if (this.cache.isEnabled()) {
       await this.cache.invalidate(userId, log.metricId, log.id);
     }

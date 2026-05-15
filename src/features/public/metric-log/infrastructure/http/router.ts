@@ -48,7 +48,7 @@ const logCacheKey = (req: AuthRequest) =>
   `log:${req.user?.id}:${req.params.id}`;
 
 const METRIC_LOG_CURSOR_FEATURE = "metric-logs.js";
-const METRIC_LOG_CURSOR_VERSION = 2;
+const METRIC_LOG_CURSOR_VERSION = 3;
 
 const logsCursorCacheKey = (req: AuthRequest) => {
   const q = req.query;
@@ -82,6 +82,7 @@ const logsCursorCacheKey = (req: AuthRequest) => {
     version: METRIC_LOG_CURSOR_VERSION,
     userId: req.user?.id,
     segments: [
+      ["org", req.user?.organizationId],
       ["l", limit],
       ["s", sort],
       ["q", search],

@@ -5,6 +5,7 @@ import { MetricAccessPort } from "../ports/MetricAccessPort.js";
 
 type Input = {
   userId: string;
+  organizationId: string;
   metricId?: string;
 };
 
@@ -19,14 +20,21 @@ const EMPTY_STATS: Stats = { average: 0, min: 0, max: 0 };
 export class GetMetricLogStats {
   constructor(private access: MetricAccessPort) {}
 
-  async execute({ userId, metricId }: Input): Promise<Stats> {
+  async execute({ userId, organizationId, metricId }: Input): Promise<Stats> {
     if (metricId) {
-      await this.access.ensureMetricOwnership(userId, metricId);
+      await this.access.ensureMetricOwnership(userId, organizationId, metricId);
     }
 
+    // Two intentionally different scoping strategies:
+    // - With metricId: org boundary enforced directly on the log row (metricId already
+    //   identifies the metric, ownership was checked above via ensureMetricOwnership).
+    // - Without metricId: org boundary enforced via INNER JOIN on Metric with
+    //   { userId, organizationId } so only logs belonging to this user's metrics in
+    //   this org are aggregated. A plain WHERE on the log row would be insufficient
+    //   because metric_logs only carries organizationId, not userId.
     const where: WhereOptions<MetricLogAttributes> = metricId
-      ? { metricId }
-      : {};
+      ? { metricId, organizationId }
+      : { organizationId };
     const query: FindOptions<MetricLogAttributes> = { where };
 
     if (!metricId) {
@@ -35,7 +43,7 @@ export class GetMetricLogStats {
         as: "metric",
         attributes: [],
         required: true,
-        where: { userId },
+        where: { userId, organizationId },
       };
       query.include = [metricInclude];
     }

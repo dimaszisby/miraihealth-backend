@@ -4,8 +4,11 @@ import { VisualizationReadRepoSequelize } from "@/features/analytics/infrastruct
 import type { VisualizationCachePort } from "@/features/analytics/application/ports/VisualizationCachePort.js";
 import { sequelize } from "@/infrastructure/db/models.js";
 
+const TEST_ORG_ID = "org-test-id";
+
 const defaultInput = {
   userId: "user-123",
+  organizationId: TEST_ORG_ID,
   startISO: "2024-01-01T00:00:00.000Z",
   endISO: "2024-01-31T00:00:00.000Z",
   bucket: "1d" as const,

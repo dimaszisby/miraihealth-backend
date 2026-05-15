@@ -62,6 +62,7 @@ describe("CreateMetricSettings", () => {
     expect(repo.create).not.toHaveBeenCalled();
     expect(metricAccess.ensureMetricOwnership).toHaveBeenCalledWith(
       "user-1",
+      "org-1",
       "metric-1",
     );
   });
@@ -113,6 +114,7 @@ describe("CreateMetricSettings", () => {
     );
     expect(metricAccess.ensureMetricOwnership).toHaveBeenCalledWith(
       "user-123",
+      "org-1",
       "metric-99",
     );
   });

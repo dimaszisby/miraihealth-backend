@@ -5,10 +5,14 @@ import { MetricSettingsRepository } from "../../domain/repositories/MetricSettin
 export class GetMetricSettings {
   constructor(private repo: MetricSettingsRepository) {}
 
-  async execute(userId: string, settingsId: string): Promise<MetricSettings> {
+  async execute(
+    userId: string,
+    organizationId: string,
+    settingsId: string,
+  ): Promise<MetricSettings> {
     if (!userId) throw new AppError("User not authenticated", 401);
 
-    const found = await this.repo.findById(userId, settingsId);
+    const found = await this.repo.findById(userId, organizationId, settingsId);
     if (!found) throw new AppError("Metric Settings not found", 404);
 
     return found;

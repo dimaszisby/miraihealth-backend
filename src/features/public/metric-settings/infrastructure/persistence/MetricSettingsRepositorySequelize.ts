@@ -10,13 +10,7 @@ import {
   SortField,
   SortParam,
 } from "../../domain/repositories/MetricSettingsRepository.js";
-import {
-  Op,
-  OrderItem,
-  UniqueConstraintError,
-  WhereOptions,
-  InstanceError,
-} from "sequelize";
+import { Op, OrderItem, UniqueConstraintError, WhereOptions } from "sequelize";
 import type { MetricSettingsAttributes } from "./models/metric-settings.sequelize.js";
 
 const includeMetric = () => [
@@ -82,9 +76,12 @@ export class MetricSettingsRepositorySequelize implements MetricSettingsReposito
     }
   }
 
-  async findByMetricId(metricId: string): Promise<MetricSettings | null> {
+  async findByMetricId(
+    organizationId: string,
+    metricId: string,
+  ): Promise<MetricSettings | null> {
     const row = await models.MetricSettings.findOne({
-      where: { metricId },
+      where: { metricId, organizationId },
       include: includeMetric(),
     });
     return row ? toEntity(row) : null;
@@ -92,26 +89,35 @@ export class MetricSettingsRepositorySequelize implements MetricSettingsReposito
 
   async findById(
     userId: string,
+    organizationId: string,
     settingsId: string,
   ): Promise<MetricSettings | null> {
+    // Authorization is enforced by the INNER JOIN: the Metric WHERE clause
+    // { userId, organizationId } ensures only settings whose parent metric is
+    // owned by this user in this org are returned. A non-matching join yields
+    // null, which the caller treats as not found / unauthorized.
     const row = await models.MetricSettings.findOne({
-      where: { id: settingsId },
-      include: includeMetric(),
+      where: { id: settingsId, organizationId },
+      include: [
+        {
+          model: models.Metric,
+          as: "metric",
+          attributes: ["id", "userId"],
+          where: { userId, organizationId },
+        },
+      ],
     });
     if (!row) return null;
-    if (row.metric && row.metric.userId !== userId) {
-      throw new AppError("Unauthorized access to metric settings", 403);
-    }
     return toEntity(row);
   }
 
-  async save(settings: MetricSettings): Promise<MetricSettings> {
+  async save(
+    organizationId: string,
+    settings: MetricSettings,
+  ): Promise<MetricSettings> {
     const snapshot = settings.snapshot();
-    const row = await models.MetricSettings.findByPk(snapshot.id);
-    if (!row) throw new AppError("Metric Settings not found", 404);
-
-    try {
-      await row.update({
+    const [affectedCount] = await models.MetricSettings.update(
+      {
         isActive: snapshot.isActive,
         goalEnabled: snapshot.goalEnabled,
         goalType: snapshot.goalType,
@@ -123,26 +129,27 @@ export class MetricSettingsRepositorySequelize implements MetricSettingsReposito
         alertThresholds: snapshot.alertThresholds,
         isAchieved: snapshot.isAchieved,
         displayOptions: snapshot.displayOptions,
-      });
-    } catch (error) {
-      if (error instanceof InstanceError) {
-        throw new AppError("Metric Settings not found", 404);
-      }
-      throw error;
-    }
-    try {
-      await row.reload({ include: includeMetric() });
-    } catch (error) {
-      if (error instanceof InstanceError) {
-        throw new AppError("Metric Settings not found", 404);
-      }
-      throw error;
-    }
-    return toEntity(row);
+      },
+      { where: { id: snapshot.id, organizationId } },
+    );
+    if (affectedCount === 0)
+      throw new AppError("Metric Settings not found", 404);
+
+    const updated = await models.MetricSettings.findOne({
+      where: { id: snapshot.id, organizationId },
+      include: includeMetric(),
+    });
+    if (!updated) throw new AppError("Metric Settings not found", 404);
+    return toEntity(updated);
   }
 
-  async delete(settings: MetricSettings): Promise<void> {
-    await models.MetricSettings.destroy({ where: { id: settings.id } });
+  async delete(
+    organizationId: string,
+    settings: MetricSettings,
+  ): Promise<void> {
+    await models.MetricSettings.destroy({
+      where: { id: settings.id, organizationId },
+    });
   }
 
   async listByCursor(
@@ -151,7 +158,7 @@ export class MetricSettingsRepositorySequelize implements MetricSettingsReposito
     const { field, dir } = normalizeSort(opts.sort);
     const pageSize = Math.min(Math.max(opts.limit || 20, 1), 100);
 
-    const include = baseIncludeForOwnership(opts.userId);
+    const include = baseIncludeForOwnership(opts.userId, opts.organizationId);
     const baseWhere = buildWhere(opts.filter, opts.q);
 
     const totalCount = opts.includeTotal
@@ -303,13 +310,13 @@ const buildOrder = (field: SortField, dir: "ASC" | "DESC"): OrderItem[] => {
   }
 };
 
-const baseIncludeForOwnership = (userId: string) => [
+const baseIncludeForOwnership = (userId: string, organizationId: string) => [
   {
     model: models.Metric,
     as: "metric",
     attributes: [],
     required: true,
-    where: { userId, deletedAt: null },
+    where: { userId, organizationId, deletedAt: null },
   },
 ];
 

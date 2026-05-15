@@ -3,6 +3,8 @@ import AppError from "@/utils/AppError.js";
 import { ListMetricLogs } from "@/features/metric-log/application/queries/ListMetricLogs.js";
 import type { ListLogsResult } from "@/features/metric-log/application/ports/MetricLogQueryPort.js";
 
+const TEST_ORG_ID = "org-test-id";
+
 describe("ListMetricLogs query", () => {
   const response: ListLogsResult = {
     items: [],
@@ -18,7 +20,12 @@ describe("ListMetricLogs query", () => {
     const query = new ListMetricLogs(repo);
 
     await expect(
-      query.execute({ userId: "" as any, limit: 25, sort: "-createdAt" }),
+      query.execute({
+        userId: "" as any,
+        organizationId: TEST_ORG_ID,
+        limit: 25,
+        sort: "-createdAt",
+      }),
     ).rejects.toBeInstanceOf(AppError);
     expect(repo.listLogs).not.toHaveBeenCalled();
   });
@@ -33,6 +40,7 @@ describe("ListMetricLogs query", () => {
 
     const opts = {
       userId: "user-1",
+      organizationId: TEST_ORG_ID,
       limit: 5,
       sort: "-updatedAt" as const,
       q: "42",

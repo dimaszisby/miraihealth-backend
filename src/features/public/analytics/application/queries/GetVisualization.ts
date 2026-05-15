@@ -9,6 +9,7 @@ import type { VisualizationReadRepository } from "../ports/VisualizationReadRepo
 
 export type GetVisualizationInput = {
   userId: string;
+  organizationId: string;
   metricId: string;
   startISO: string;
   endISO: string;
@@ -28,6 +29,7 @@ export class GetVisualization {
 
     const result = await this.repo.fetchVisualization({
       userId: input.userId,
+      organizationId: input.organizationId,
       metricId: input.metricId,
       startISO: input.startISO,
       endISO: input.endISO,

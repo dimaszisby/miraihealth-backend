@@ -5,6 +5,8 @@ import AppError from "@/utils/AppError.js";
 import { buildMetricSettings } from "../../../../factories/metric-settings.js";
 import { UniqueConstraintError, ValidationErrorItem } from "sequelize";
 
+const TEST_ORG_ID = "org-test-id";
+
 const repo = new MetricSettingsRepositorySequelize();
 
 type AsyncFn<T = any> = (...args: any[]) => Promise<T>;
@@ -14,6 +16,7 @@ type MetricSettingsModelMock = {
   create: AsyncMock;
   findOne: AsyncMock;
   findByPk: AsyncMock;
+  update: AsyncMock;
   destroy: AsyncMock;
   findAll: AsyncMock;
   count: AsyncMock;
@@ -26,6 +29,7 @@ const metricSettingsModel: MetricSettingsModelMock = {
   create: makeAsyncMock(),
   findOne: makeAsyncMock(),
   findByPk: makeAsyncMock(),
+  update: makeAsyncMock(),
   destroy: makeAsyncMock(),
   findAll: makeAsyncMock(),
   count: makeAsyncMock(),
@@ -151,27 +155,26 @@ describe("MetricSettingsRepositorySequelize", () => {
         metric: { id: "metric-1", userId: "user-1" },
       });
 
-      const result = await repo.findById("user-1", "settings-9");
+      const result = await repo.findById("user-1", TEST_ORG_ID, "settings-9");
       expect(result?.id).toBe("settings-9");
     });
 
-    it("throws AppError when owner mismatches", async () => {
-      metricSettingsModel.findOne.mockResolvedValue({
-        metric: { userId: "other-user" },
-      });
+    it("returns null when owner does not match", async () => {
+      metricSettingsModel.findOne.mockResolvedValue(null);
 
-      await expect(
-        repo.findById("user-1", "settings-9"),
-      ).rejects.toBeInstanceOf(AppError);
+      const result = await repo.findById("user-1", TEST_ORG_ID, "settings-9");
+      expect(result).toBeNull();
     });
   });
 
   describe("save", () => {
     it("throws when row missing", async () => {
-      metricSettingsModel.findByPk.mockResolvedValue(null);
+      metricSettingsModel.update.mockResolvedValue([0]);
       const entity = buildMetricSettings();
 
-      await expect(repo.save(entity)).rejects.toBeInstanceOf(AppError);
+      await expect(repo.save(TEST_ORG_ID, entity)).rejects.toBeInstanceOf(
+        AppError,
+      );
     });
 
     it("updates persistence row and returns reloaded entity", async () => {
@@ -180,23 +183,20 @@ describe("MetricSettingsRepositorySequelize", () => {
         metricId: "metric-1",
       });
       const row: any = {
-        update: jest.fn<AsyncFn<void>>().mockResolvedValue(undefined),
-        reload: jest.fn<AsyncFn<any>>().mockImplementation(async () => {
-          Object.assign(row, {
-            ...entity.snapshot(),
-            metric: { id: "metric-1", userId: "user-1" },
-          });
-          return row;
-        }),
+        ...entity.snapshot(),
+        metric: { id: "metric-1", userId: "user-1" },
       };
-      metricSettingsModel.findByPk.mockResolvedValue(row);
+      metricSettingsModel.update.mockResolvedValue([1]);
+      metricSettingsModel.findOne.mockResolvedValue(row);
 
-      const result = await repo.save(entity);
+      const result = await repo.save(TEST_ORG_ID, entity);
 
-      expect(row.update).toHaveBeenCalledWith(
+      expect(metricSettingsModel.update).toHaveBeenCalledWith(
         expect.objectContaining({ isActive: entity.snapshot().isActive }),
+        expect.objectContaining({
+          where: { id: "settings-10", organizationId: TEST_ORG_ID },
+        }),
       );
-      expect(row.reload).toHaveBeenCalled();
       expect(result.id).toBe("settings-10");
     });
   });
@@ -204,9 +204,12 @@ describe("MetricSettingsRepositorySequelize", () => {
   describe("delete", () => {
     it("invokes destroy with id", async () => {
       metricSettingsModel.destroy.mockResolvedValue(1);
-      await repo.delete(buildMetricSettings({ id: "settings-12" }));
+      await repo.delete(
+        TEST_ORG_ID,
+        buildMetricSettings({ id: "settings-12" }),
+      );
       expect(metricSettingsModel.destroy).toHaveBeenCalledWith({
-        where: { id: "settings-12" },
+        where: { id: "settings-12", organizationId: TEST_ORG_ID },
       });
     });
   });
@@ -218,7 +221,7 @@ describe("MetricSettingsRepositorySequelize", () => {
         ...entity.snapshot(),
         metric: { id: "metric-xyz", userId: "user-1" },
       });
-      const result = await repo.findByMetricId("metric-xyz");
+      const result = await repo.findByMetricId(TEST_ORG_ID, "metric-xyz");
       expect(result?.metricId).toBe("metric-xyz");
     });
   });
@@ -234,6 +237,7 @@ describe("MetricSettingsRepositorySequelize", () => {
 
       const result = await repo.listByCursor({
         userId: "user-1",
+        organizationId: TEST_ORG_ID,
         limit: 1,
         sort: "-createdAt",
         includeTotal: true,

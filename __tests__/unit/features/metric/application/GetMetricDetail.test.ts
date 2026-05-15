@@ -3,6 +3,8 @@ import AppError from "@/utils/AppError.js";
 import { GetMetricDetail } from "@/features/metric/application/queries/GetMetricDetail.js";
 import type { MetricDomainExtended } from "@/types/domain/metric.domain.js";
 
+const TEST_ORG_ID = "org-test-id";
+
 const sampleMetric: MetricDomainExtended = {
   id: "metric-1",
   userId: "owner-1",
@@ -31,12 +33,14 @@ describe("GetMetricDetail query", () => {
 
     const result = await query.execute({
       userId: "user-1",
+      organizationId: TEST_ORG_ID,
       metricId: "missing",
     });
 
     expect(result).toBeNull();
     expect(repo.findDetailedMetric).toHaveBeenCalledWith({
       userId: "user-1",
+      organizationId: TEST_ORG_ID,
       metricId: "missing",
       includes: [],
       logsLimit: 20,
@@ -54,6 +58,7 @@ describe("GetMetricDetail query", () => {
     await expect(
       query.execute({
         userId: "intruder",
+        organizationId: TEST_ORG_ID,
         metricId: "metric-1",
       }),
     ).rejects.toBeInstanceOf(AppError);
@@ -69,6 +74,7 @@ describe("GetMetricDetail query", () => {
 
     const output = await query.execute({
       userId: "owner-1",
+      organizationId: TEST_ORG_ID,
       metricId: "metric-1",
       includes: ["logs", "category"],
       logsLimit: 5,
@@ -76,6 +82,7 @@ describe("GetMetricDetail query", () => {
 
     expect(repo.findDetailedMetric).toHaveBeenCalledWith({
       userId: "owner-1",
+      organizationId: TEST_ORG_ID,
       metricId: "metric-1",
       includes: ["logs", "category"],
       logsLimit: 5,

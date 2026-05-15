@@ -1,6 +1,9 @@
 import { jest } from "@jest/globals";
 import { MetricReadRepoSequelize } from "@/features/metric/infrastructure/persistence/repositories/MetricReadRepoSequelize.js";
 import { models } from "@/infrastructure/db/models.js";
+
+const TEST_ORG_ID = "org-test-id";
+
 describe("MetricReadRepoSequelize", () => {
   afterEach(() => {
     jest.restoreAllMocks();
@@ -35,6 +38,7 @@ describe("MetricReadRepoSequelize", () => {
 
     const result = await repo.listMetrics({
       userId: "user-1",
+      organizationId: TEST_ORG_ID,
       limit: 2,
       sort: "-createdAt",
       q: "ste",
@@ -91,13 +95,14 @@ describe("MetricReadRepoSequelize", () => {
 
     const result = await repo.findDetailedMetric({
       userId: "user-1",
+      organizationId: TEST_ORG_ID,
       metricId: "metric-1",
       includes: ["category", "settings", "logs"],
       logsLimit: 5,
     });
 
     expect(findOne).toHaveBeenCalledWith({
-      where: { id: "metric-1", userId: "user-1" },
+      where: { id: "metric-1", userId: "user-1", organizationId: TEST_ORG_ID },
       include: expect.arrayContaining([
         expect.objectContaining({ as: "category" }),
         expect.objectContaining({ as: "settings" }),

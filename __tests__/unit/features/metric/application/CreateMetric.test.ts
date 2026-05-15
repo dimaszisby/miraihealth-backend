@@ -78,8 +78,12 @@ describe("CreateMetric use case", () => {
     });
 
     expect(result).toBe(metric);
-    expect(repo.existsByName).toHaveBeenCalledWith("user-1", "Steps");
-    expect(repo.categoryExists).toHaveBeenCalledWith("user-1", "cat-1");
+    expect(repo.existsByName).toHaveBeenCalledWith("user-1", "org-1", "Steps");
+    expect(repo.categoryExists).toHaveBeenCalledWith(
+      "user-1",
+      "org-1",
+      "cat-1",
+    );
     expect(repo.create).toHaveBeenCalledWith(
       {
         userId: "user-1",

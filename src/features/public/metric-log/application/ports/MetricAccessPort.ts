@@ -1,3 +1,7 @@
 export interface MetricAccessPort {
-  ensureMetricOwnership(userId: string, metricId: string): Promise<void>;
+  ensureMetricOwnership(
+    userId: string,
+    organizationId: string,
+    metricId: string,
+  ): Promise<void>;
 }

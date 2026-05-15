@@ -36,6 +36,8 @@ const {
   };
 };
 
+const TEST_ORG_ID = "org-test-id";
+
 describe("db-helper", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -43,7 +45,9 @@ describe("db-helper", () => {
 
   describe("validateMetricAccess", () => {
     it("throws when userId is missing", async () => {
-      await expect(validateMetricAccess("", "metric-1")).rejects.toMatchObject({
+      await expect(
+        validateMetricAccess("", TEST_ORG_ID, "metric-1"),
+      ).rejects.toMatchObject({
         message: "User not authenticated",
         statusCode: 401,
       });
@@ -54,7 +58,7 @@ describe("db-helper", () => {
       metricFindOne.mockResolvedValueOnce(null);
 
       await expect(
-        validateMetricAccess("user-1", "metric-1"),
+        validateMetricAccess("user-1", TEST_ORG_ID, "metric-1"),
       ).rejects.toMatchObject({ message: "Metric not found", statusCode: 404 });
     });
 
@@ -62,7 +66,7 @@ describe("db-helper", () => {
       metricFindOne.mockResolvedValueOnce({ id: "metric-1", userId: "user-2" });
 
       await expect(
-        validateMetricAccess("user-1", "metric-1"),
+        validateMetricAccess("user-1", TEST_ORG_ID, "metric-1"),
       ).rejects.toMatchObject({
         message: "Unauthorized access to metric",
         statusCode: 403,
@@ -73,9 +77,9 @@ describe("db-helper", () => {
       const record = { id: "metric-1", userId: "user-1" };
       metricFindOne.mockResolvedValueOnce(record);
 
-      await expect(validateMetricAccess("user-1", "metric-1")).resolves.toBe(
-        record,
-      );
+      await expect(
+        validateMetricAccess("user-1", TEST_ORG_ID, "metric-1"),
+      ).resolves.toBe(record);
     });
   });
 
@@ -84,7 +88,7 @@ describe("db-helper", () => {
       metricCategoryFindOne.mockResolvedValueOnce(null);
 
       await expect(
-        validateMetricCategoryAccess("user-1", "category-1"),
+        validateMetricCategoryAccess("user-1", TEST_ORG_ID, "category-1"),
       ).rejects.toMatchObject({
         message: "Metric Category not found",
         statusCode: 404,
@@ -98,7 +102,7 @@ describe("db-helper", () => {
       });
 
       await expect(
-        validateMetricCategoryAccess("user-1", "category-1"),
+        validateMetricCategoryAccess("user-1", TEST_ORG_ID, "category-1"),
       ).rejects.toMatchObject({
         message: "Unauthorized access to metric category",
         statusCode: 403,
@@ -110,7 +114,7 @@ describe("db-helper", () => {
       metricCategoryFindOne.mockResolvedValueOnce(record);
 
       await expect(
-        validateMetricCategoryAccess("user-1", "category-1"),
+        validateMetricCategoryAccess("user-1", TEST_ORG_ID, "category-1"),
       ).resolves.toBe(record);
     });
   });
@@ -123,16 +127,20 @@ describe("db-helper", () => {
         .mockResolvedValueOnce(validationRecord)
         .mockResolvedValueOnce(metricRecord);
 
-      await expect(findOwnedMetric("user-1", "metric-1")).resolves.toBe(
-        metricRecord,
-      );
+      await expect(
+        findOwnedMetric("user-1", TEST_ORG_ID, "metric-1"),
+      ).resolves.toBe(metricRecord);
 
       expect(metricFindOne).toHaveBeenNthCalledWith(1, {
-        where: { id: "metric-1" },
-        attributes: ["id", "userId"],
+        where: { id: "metric-1", organizationId: TEST_ORG_ID },
+        attributes: ["id", "userId", "organizationId"],
       });
       expect(metricFindOne).toHaveBeenNthCalledWith(2, {
-        where: { id: "metric-1", userId: "user-1" },
+        where: {
+          id: "metric-1",
+          userId: "user-1",
+          organizationId: TEST_ORG_ID,
+        },
       });
     });
 
@@ -142,12 +150,12 @@ describe("db-helper", () => {
         .mockResolvedValueOnce(validationRecord)
         .mockResolvedValueOnce(null);
 
-      await expect(findOwnedMetric("user-1", "metric-1")).rejects.toMatchObject(
-        {
-          message: "Metric not found",
-          statusCode: 404,
-        },
-      );
+      await expect(
+        findOwnedMetric("user-1", TEST_ORG_ID, "metric-1"),
+      ).rejects.toMatchObject({
+        message: "Metric not found",
+        statusCode: 404,
+      });
     });
   });
 
@@ -163,12 +171,16 @@ describe("db-helper", () => {
         .mockResolvedValueOnce(validationRecord)
         .mockResolvedValueOnce(categoryRecord);
 
-      await expect(findOwnedCategory("user-1", "category-1")).resolves.toBe(
-        categoryRecord,
-      );
+      await expect(
+        findOwnedCategory("user-1", TEST_ORG_ID, "category-1"),
+      ).resolves.toBe(categoryRecord);
 
       expect(metricCategoryFindOne).toHaveBeenNthCalledWith(2, {
-        where: { id: "category-1", userId: "user-1" },
+        where: {
+          id: "category-1",
+          userId: "user-1",
+          organizationId: TEST_ORG_ID,
+        },
       });
     });
 
@@ -179,7 +191,7 @@ describe("db-helper", () => {
         .mockResolvedValueOnce(null);
 
       await expect(
-        findOwnedCategory("user-1", "category-1"),
+        findOwnedCategory("user-1", TEST_ORG_ID, "category-1"),
       ).rejects.toMatchObject({
         message: "Category not found",
         statusCode: 404,
@@ -196,16 +208,17 @@ describe("db-helper", () => {
       metricSettingsFindOne.mockResolvedValueOnce(settingsRecord);
 
       await expect(
-        findOwnedMetricSettings("user-1", "settings-1"),
+        findOwnedMetricSettings("user-1", TEST_ORG_ID, "settings-1"),
       ).resolves.toBe(settingsRecord);
 
       expect(metricSettingsFindOne).toHaveBeenCalledWith({
-        where: { id: "settings-1" },
+        where: { id: "settings-1", organizationId: TEST_ORG_ID },
         include: [
           {
             model: expect.anything(),
             as: "metric",
             attributes: ["id", "userId", "isPublic"],
+            where: { userId: "user-1", organizationId: TEST_ORG_ID },
           },
         ],
       });
@@ -215,7 +228,7 @@ describe("db-helper", () => {
       metricSettingsFindOne.mockResolvedValueOnce(null);
 
       await expect(
-        findOwnedMetricSettings("user-1", "settings-1"),
+        findOwnedMetricSettings("user-1", TEST_ORG_ID, "settings-1"),
       ).rejects.toMatchObject({
         message: "Metric Settings not found",
         statusCode: 404,
@@ -223,17 +236,16 @@ describe("db-helper", () => {
     });
 
     it("throws when metric ownership mismatch occurs", async () => {
-      const settingsRecord = {
-        id: "settings-1",
-        metric: { id: "metric-1", userId: "user-2" },
-      };
-      metricSettingsFindOne.mockResolvedValueOnce(settingsRecord);
+      // The updated implementation uses an INNER JOIN scoped to { userId, organizationId }
+      // so a userId mismatch causes findOne to return null (join excludes the row),
+      // resulting in a 404 rather than a 403.
+      metricSettingsFindOne.mockResolvedValueOnce(null);
 
       await expect(
-        findOwnedMetricSettings("user-1", "settings-1"),
+        findOwnedMetricSettings("user-1", TEST_ORG_ID, "settings-1"),
       ).rejects.toMatchObject({
-        message: "Unauthorized access to metric settings",
-        statusCode: 403,
+        message: "Metric Settings not found",
+        statusCode: 404,
       });
     });
   });
@@ -246,35 +258,34 @@ describe("db-helper", () => {
       };
       metricLogFindOne.mockResolvedValueOnce(logRecord);
 
-      await expect(findOwnedMetricLog("user-1", "log-1")).resolves.toBe(
-        logRecord,
-      );
+      await expect(
+        findOwnedMetricLog("user-1", TEST_ORG_ID, "log-1"),
+      ).resolves.toBe(logRecord);
     });
 
     it("throws when log lookup fails", async () => {
       metricLogFindOne.mockResolvedValueOnce(null);
 
-      await expect(findOwnedMetricLog("user-1", "log-1")).rejects.toMatchObject(
-        {
-          message: "Metric Log not found",
-          statusCode: 404,
-        },
-      );
+      await expect(
+        findOwnedMetricLog("user-1", TEST_ORG_ID, "log-1"),
+      ).rejects.toMatchObject({
+        message: "Metric Log not found",
+        statusCode: 404,
+      });
     });
 
     it("throws when metric ownership mismatch occurs", async () => {
-      const logRecord = {
-        id: "log-1",
-        metric: { id: "metric-1", userId: "user-2" },
-      };
-      metricLogFindOne.mockResolvedValueOnce(logRecord);
+      // The updated implementation uses an INNER JOIN scoped to { userId, organizationId }
+      // so a userId mismatch causes findOne to return null (join excludes the row),
+      // resulting in a 404 rather than a 403.
+      metricLogFindOne.mockResolvedValueOnce(null);
 
-      await expect(findOwnedMetricLog("user-1", "log-1")).rejects.toMatchObject(
-        {
-          message: "Unauthorized access to metric log",
-          statusCode: 403,
-        },
-      );
+      await expect(
+        findOwnedMetricLog("user-1", TEST_ORG_ID, "log-1"),
+      ).rejects.toMatchObject({
+        message: "Metric Log not found",
+        statusCode: 404,
+      });
     });
   });
 });
