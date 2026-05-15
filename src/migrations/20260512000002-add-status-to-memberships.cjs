@@ -4,6 +4,14 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     return queryInterface.sequelize.transaction(async (transaction) => {
+      const columns = await queryInterface.describeTable("memberships");
+      if (columns.status) {
+        console.log(
+          "[DB PROCESS] memberships.status already exists — skipping.",
+        );
+        return;
+      }
+
       console.log("[DB PROCESS] Adding status column to memberships...");
 
       await queryInterface.addColumn(
