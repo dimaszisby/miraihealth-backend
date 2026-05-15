@@ -7,6 +7,7 @@ export type ListFilter = { metricId?: string; logValue?: number };
 
 export interface ListOpts {
   userId: string;
+  organizationId: string;
   limit: number;
   sort: SortParam;
   q?: string;

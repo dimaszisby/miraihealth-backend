@@ -13,12 +13,14 @@ export class GetMetricDetail {
 
   async execute({
     userId,
+    organizationId,
     metricId,
     includes = [],
     logsLimit = 20,
   }: Input): Promise<MetricDomainExtended | null> {
     const metric = await this.repo.findDetailedMetric({
       userId,
+      organizationId,
       metricId,
       includes,
       logsLimit,

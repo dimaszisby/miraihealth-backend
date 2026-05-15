@@ -5,6 +5,7 @@ import AppError from "@/utils/AppError.js";
 
 type Input = {
   userId: string;
+  organizationId: string;
   metricId: string;
   data: UpdateMetricRequestDTO;
 };
@@ -15,11 +16,19 @@ export class UpdateMetric {
     private cache: CachePort,
   ) {}
 
-  async execute({ userId, metricId, data }: Input) {
-    const metric = await this.repo.findOwnedById(userId, metricId);
+  async execute({ userId, organizationId, metricId, data }: Input) {
+    const metric = await this.repo.findOwnedById(
+      userId,
+      organizationId,
+      metricId,
+    );
 
     if (data.categoryId != null) {
-      const exists = await this.repo.categoryExists(userId, data.categoryId);
+      const exists = await this.repo.categoryExists(
+        userId,
+        organizationId,
+        data.categoryId,
+      );
       if (!exists) throw new AppError("Category not found", 404);
     }
 
@@ -35,7 +44,11 @@ export class UpdateMetric {
       const normalizedName = data.name.trim().toLowerCase();
       const currentName = metric.name.trim().toLowerCase();
       if (normalizedName !== currentName) {
-        const exists = await this.repo.existsByName(userId, data.name);
+        const exists = await this.repo.existsByName(
+          userId,
+          organizationId,
+          data.name,
+        );
         if (exists) throw new AppError("Metric already exists", 409);
       }
     }
@@ -59,7 +72,7 @@ export class UpdateMetric {
 
     metric.update(update);
 
-    const saved = await this.repo.save(metric);
+    const saved = await this.repo.save(organizationId, metric);
 
     if (this.cache.isEnabled() && metric.id) {
       await this.cache.invalidateMetrics(userId, metric.id);

@@ -77,14 +77,14 @@ describe("MetricSettingsRepositorySequelize (integration)", () => {
       goalEnabled: false,
     });
 
-    const byMetric = await repo.findByMetricId(metric.id);
+    const byMetric = await repo.findByMetricId(TEST_ORG_ID, metric.id);
     expect(byMetric?.id).toBe(settings.id);
 
-    const byId = await repo.findById(owner.id, settings.id);
+    const byId = await repo.findById(owner.id, TEST_ORG_ID, settings.id);
     expect(byId?.metricId).toBe(metric.id);
-    await expect(repo.findById(intruder.id, settings.id)).rejects.toThrow(
-      "Unauthorized access to metric settings",
-    );
+    await expect(
+      repo.findById(intruder.id, TEST_ORG_ID, settings.id),
+    ).resolves.toBeNull();
   });
 
   it("updates settings via save() and deletes persisted rows", async () => {
@@ -124,14 +124,14 @@ describe("MetricSettingsRepositorySequelize (integration)", () => {
     });
     settings.markAchieved();
 
-    const saved = await repo.save(settings);
+    const saved = await repo.save(TEST_ORG_ID, settings);
     expect(saved.snapshot().goalEnabled).toBe(true);
     expect(saved.snapshot().goalType).toBe("incremental");
     expect(saved.snapshot().timeFrameEnabled).toBe(true);
     expect(saved.snapshot().alertEnabled).toBe(true);
     expect(saved.snapshot().isAchieved).toBe(true);
 
-    await repo.delete(saved);
+    await repo.delete(TEST_ORG_ID, saved);
     await expect(models.MetricSettings.findByPk(saved.id)).resolves.toBeNull();
   });
 
@@ -156,6 +156,7 @@ describe("MetricSettingsRepositorySequelize (integration)", () => {
 
     const firstPage = await repo.listByCursor({
       userId: user.id,
+      organizationId: TEST_ORG_ID,
       limit: 1,
       sort: "-createdAt",
       includeTotal: true,
@@ -167,6 +168,7 @@ describe("MetricSettingsRepositorySequelize (integration)", () => {
 
     const secondPage = await repo.listByCursor({
       userId: user.id,
+      organizationId: TEST_ORG_ID,
       limit: 1,
       sort: "-createdAt",
       filter: { isActive: true },
@@ -197,7 +199,9 @@ describe("MetricSettingsRepositorySequelize (integration)", () => {
         color: "#ABCDE0",
       },
     });
-    await repo.delete(dummy);
-    await expect(repo.save(dummy)).rejects.toThrow("Metric Settings not found");
+    await repo.delete(TEST_ORG_ID, dummy);
+    await expect(repo.save(TEST_ORG_ID, dummy)).rejects.toThrow(
+      "Metric Settings not found",
+    );
   });
 });

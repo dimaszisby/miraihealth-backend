@@ -77,6 +77,7 @@ export const getUserMetricLibrariesViaCursor = catchAsync(
 
     const page = await metricFeature.listMetrics.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       limit,
       sort,
       q,
@@ -121,6 +122,7 @@ export const getUserDetailMetricById = catchAsync(
 
     const metric = await metricFeature.getMetricDetail.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       metricId: params.id,
       includes,
       logsLimit,
@@ -153,6 +155,7 @@ export const updateMetric = catchAsync(
     const { body, params } = pickValidated(updateMetricSchema)(req);
     const updatedMetricDomain = await metricFeature.updateMetric.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       metricId: params.id,
       data: body,
     });
@@ -169,6 +172,7 @@ export const deleteMetric = catchAsync(
     const { params } = pickValidated(deleteMetricSchema)(req);
     const metricDomain = await metricFeature.deleteMetric.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       metricId: params.id,
     });
     const dto = toMetricResponseDTO(metricDomain);
@@ -211,6 +215,7 @@ export const handleMetricTrend = catchAsync(
 
     const data = await analyticsFeature.getMetricTrend.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       metricId,
     });
 

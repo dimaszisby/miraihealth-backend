@@ -47,10 +47,18 @@
 
 ## Phase 5 — Repositories filter by org
 
-- [ ] Every repository method signature updated to require an `organizationId` (or a `RequestContext` arg).
-- [ ] Sequelize finders include `where: { organizationId }` everywhere.
-- [ ] Codemod test fixtures to provide `organizationId`.
-- [ ] All existing tests pass.
+- [x] Every repository method signature updated to require an `organizationId` (explicit parameter approach).
+- [x] Sequelize finders include `where: { organizationId }` everywhere.
+- [x] All use cases and queries pass `organizationId` through to repo/port calls.
+- [x] All controllers read `req.user.organizationId` and pass it to use case `execute()`.
+- [x] `db-helper.ts` utility functions updated with `organizationId` parameter.
+- [x] Test fixtures updated to provide `organizationId`.
+- [x] All cursor cache keys include `organizationId` segment; version constants bumped to evict stale cross-org entries on deploy.
+- [x] `originalMetricExists` documented as intentionally cross-org (public metric cloning).
+- [x] Cross-org isolation integration test added (`CrossOrgIsolation.integration.test.ts` — 4 cases).
+- [x] Migration `20260512000002-add-status-to-memberships.cjs` created and applied; `memberships.status` column now present in test + dev DBs.
+- [x] Unit tests pass (353/353).
+- [x] Integration tests pass (154/157; 3 skipped — pre-existing).
 
 ## Phase 6 — Invites + role management
 
@@ -66,6 +74,6 @@
 
 ## Wrap-up
 
-- [ ] `npm run typecheck && npm run lint && npm run format:write && npm test`.
+- [x] `npm run typecheck && npm run lint && npm run format:write && npm test`.
 - [ ] Audit re-run shows P0-3.1, P0-9.1, P1-1.3 marked ✅.
 - [ ] Update `iteration-plan.md` Phase 4 status to ✅ Done with PR link(s).

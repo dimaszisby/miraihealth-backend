@@ -23,7 +23,7 @@ export class GenerateDummyMetricLogsHandler {
     const payload = JSON.parse(msg.content.toString()) as JobPayload;
     const { userId, organizationId, metricId, count } = payload;
 
-    await this.access.ensureMetricOwnership(userId, metricId);
+    await this.access.ensureMetricOwnership(userId, organizationId, metricId);
 
     for (let i = 0; i < count; i++) {
       await models.MetricLog.create({

@@ -3,6 +3,8 @@ import { VisualizationReadRepoSequelize } from "@/features/analytics/infrastruct
 import { models, sequelize } from "@/infrastructure/db/models.js";
 import AppError from "@/utils/AppError.js";
 
+const TEST_ORG_ID = "org-test-id";
+
 const bucketSpec = {
   unit: "day",
   iso: "P1D",
@@ -49,6 +51,7 @@ describe("VisualizationReadRepoSequelize", () => {
     const repo = new VisualizationReadRepoSequelize(cache as any);
     const result = await repo.fetchVisualization({
       userId: "user-1",
+      organizationId: TEST_ORG_ID,
       metricId: "metric-1",
       startISO: "2024-01-01T00:00:00.000Z",
       endISO: "2024-01-02T00:00:00.000Z",
@@ -73,6 +76,7 @@ describe("VisualizationReadRepoSequelize", () => {
     await expect(
       repo.fetchVisualization({
         userId: "user-1",
+        organizationId: TEST_ORG_ID,
         metricId: "metric-9",
         startISO: "2024-01-01T00:00:00.000Z",
         endISO: "2024-01-02T00:00:00.000Z",
@@ -129,6 +133,7 @@ describe("VisualizationReadRepoSequelize", () => {
 
     const response = await repo.fetchDashboardVisualization({
       userId: "user-1",
+      organizationId: TEST_ORG_ID,
       startISO: "2024-01-01T00:00:00.000Z",
       endISO: "2024-01-05T00:00:00.000Z",
       bucket: "1d",
@@ -143,6 +148,7 @@ describe("VisualizationReadRepoSequelize", () => {
     expect(cache.setDashboardVisualization).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: "user-1",
+        organizationId: TEST_ORG_ID,
         metricIds: ["metric-1"],
       }),
       response,

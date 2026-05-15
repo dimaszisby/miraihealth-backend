@@ -44,7 +44,7 @@ const asString = (value: unknown): string | undefined =>
   typeof value === "string" ? value : undefined;
 
 const METRIC_SETTINGS_CURSOR_FEATURE = "metric-settings";
-const METRIC_SETTINGS_CURSOR_VERSION = 1;
+const METRIC_SETTINGS_CURSOR_VERSION = 2;
 
 const metricSettingsCursorCacheKey = (req: AuthRequest) => {
   const q = req.query;
@@ -71,6 +71,7 @@ const metricSettingsCursorCacheKey = (req: AuthRequest) => {
     version: METRIC_SETTINGS_CURSOR_VERSION,
     userId: req.user?.id,
     segments: [
+      ["org", req.user?.organizationId],
       ["l", limit],
       ["s", sort],
       ["fm", metricId],

@@ -31,7 +31,7 @@ const asString = (value: unknown): string | undefined =>
   typeof value === "string" ? value : undefined;
 
 const METRIC_CURSOR_FEATURE = "metrics";
-const METRIC_CURSOR_VERSION = 1;
+const METRIC_CURSOR_VERSION = 2;
 
 const metricsCursorCacheKey = (req: AuthRequest) => {
   const limit = Number(asString(req.query.limit) ?? 20);
@@ -47,6 +47,7 @@ const metricsCursorCacheKey = (req: AuthRequest) => {
     version: METRIC_CURSOR_VERSION,
     userId: req.user?.id,
     segments: [
+      ["org", req.user?.organizationId],
       ["l", limit],
       ["s", sort],
       ["q", search],

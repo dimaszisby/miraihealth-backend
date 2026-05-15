@@ -56,6 +56,7 @@ export const listCategories = catchAsync(
 
     const page = await feature.listCategories.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       limit,
       sort,
       q,
@@ -82,7 +83,11 @@ export const getCategory = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
     const { params } = pickValidated(getMetricCategorySchema)(req);
-    const category = await feature.getCategory.execute(req.user.id, params.id);
+    const category = await feature.getCategory.execute(
+      req.user.id,
+      req.user.organizationId,
+      params.id,
+    );
     successResponse(
       res,
       200,
@@ -98,6 +103,7 @@ export const updateCategory = catchAsync(
     const { body, params } = pickValidated(updateMetricCategorySchema)(req);
     const category = await feature.updateCategory.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       categoryId: params.id,
       name: body.name,
       color: body.color,
@@ -117,7 +123,11 @@ export const deleteCategory = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
     const { params } = pickValidated(deleteMetricCategorySchema)(req);
-    await feature.deleteCategory.execute(req.user.id, params.id);
+    await feature.deleteCategory.execute(
+      req.user.id,
+      req.user.organizationId,
+      params.id,
+    );
     successResponse(res, 200, null, "Category deleted successfully");
   },
 );

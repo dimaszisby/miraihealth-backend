@@ -19,6 +19,7 @@ export interface ListMetricsResult {
 
 export interface ListOpts {
   userId: string;
+  organizationId: string;
   limit: number;
   sort: SortParam;
   q?: string;
@@ -31,6 +32,7 @@ export type IncludeKey = "settings" | "category" | "logs";
 
 export interface MetricDetailQuery {
   userId: string;
+  organizationId: string;
   metricId: string;
   includes?: IncludeKey[];
   logsLimit?: number;

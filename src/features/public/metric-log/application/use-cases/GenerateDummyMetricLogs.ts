@@ -34,7 +34,7 @@ export class GenerateDummyMetricLogs {
     metricId,
     count,
   }: Input): Promise<Output> {
-    await this.access.ensureMetricOwnership(userId, metricId);
+    await this.access.ensureMetricOwnership(userId, organizationId, metricId);
 
     const jobId = randomUUID();
 

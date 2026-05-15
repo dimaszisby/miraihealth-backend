@@ -6,6 +6,7 @@ import type { MetricLog } from "@/features/metric-log/infrastructure/persistence
 
 type GetMetricTrendInput = {
   userId: string;
+  organizationId: string;
   metricId: string;
   days?: number;
 };
@@ -17,13 +18,14 @@ export type MetricTrendPoint = {
 
 export async function getMetricTrend({
   userId,
+  organizationId,
   metricId,
   days = 30,
 }: GetMetricTrendInput): Promise<MetricTrendPoint[]> {
   if (!userId) throw new AppError("User not authenticated", 401);
   if (!metricId) throw new AppError("Metric ID is required", 400);
 
-  await validateMetricAccess(userId, metricId);
+  await validateMetricAccess(userId, organizationId, metricId);
 
   const since = new Date();
   since.setDate(since.getDate() - days);
@@ -31,6 +33,7 @@ export async function getMetricTrend({
   const logs = await models.MetricLog.findAll({
     where: {
       metricId,
+      organizationId,
       createdAt: { [Op.gte]: since },
     },
     order: [["createdAt", "ASC"]],

@@ -49,7 +49,7 @@ describe("MetricSettings HTTP controller", () => {
 
   const makeAuthReq = (overrides: Partial<AuthRequest> = {}): AuthRequest => {
     return {
-      user: { id: "user-1" } as any,
+      user: { id: "user-1", organizationId: "org-1" } as any,
       organizationId: "org-1",
       membership: {
         id: "mem-1",
@@ -75,6 +75,7 @@ describe("MetricSettings HTTP controller", () => {
 
     expect(feature.createSettings.execute).toHaveBeenCalledWith({
       userId: "user-1",
+      organizationId: "org-1",
       ...payload,
     });
     expect(successResponseMock).toHaveBeenCalledWith(
@@ -100,6 +101,7 @@ describe("MetricSettings HTTP controller", () => {
 
     expect(feature.listSettings.execute).toHaveBeenCalledWith({
       userId: "user-1",
+      organizationId: "org-1",
       limit: 10,
       sort: "-createdAt",
     });
@@ -125,6 +127,7 @@ describe("MetricSettings HTTP controller", () => {
 
     expect(feature.getSettings.execute).toHaveBeenCalledWith(
       "user-1",
+      "org-1",
       "settings-3",
     );
     expect(successResponseMock).toHaveBeenCalledWith(
@@ -151,6 +154,7 @@ describe("MetricSettings HTTP controller", () => {
 
     expect(feature.updateSettings.execute).toHaveBeenCalledWith(
       "user-1",
+      "org-1",
       "settings-4",
       body,
     );
@@ -172,6 +176,7 @@ describe("MetricSettings HTTP controller", () => {
 
     expect(feature.deleteSettings.execute).toHaveBeenCalledWith(
       "user-1",
+      "org-1",
       "settings-5",
     );
     expect(successResponseMock).toHaveBeenCalledWith(
@@ -193,6 +198,7 @@ describe("MetricSettings HTTP controller", () => {
 
     expect(feature.updateGoalAchievement.execute).toHaveBeenCalledWith(
       "user-1",
+      "org-1",
       "settings-6",
     );
     expect(successResponseMock).toHaveBeenCalledWith(
@@ -229,6 +235,7 @@ describe("MetricSettings HTTP controller", () => {
 
     expect(feature.updateDisplayOptions.execute).toHaveBeenCalledWith(
       "user-1",
+      "org-1",
       "settings-7",
       displayOptions,
     );

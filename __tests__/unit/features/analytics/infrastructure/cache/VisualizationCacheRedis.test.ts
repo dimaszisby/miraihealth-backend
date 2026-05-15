@@ -30,10 +30,13 @@ const { redisClient } = jest.requireMock("@/utils/redis-client.js") as {
   };
 };
 
+const TEST_ORG_ID = "org-test-id";
+
 const cache = new VisualizationCacheRedis();
 
 const singleKey: SingleVizCacheKey = {
   userId: "user-1",
+  organizationId: TEST_ORG_ID,
   metricId: "metric-2",
   bucket: "1d" as BucketAlias,
   bucketIso: "1d",
@@ -45,6 +48,7 @@ const singleKey: SingleVizCacheKey = {
 
 const dashKey: DashboardVizCacheKey = {
   userId: "user-1",
+  organizationId: TEST_ORG_ID,
   metricIds: ["metric-2", "metric-3"],
   bucket: "1w" as BucketAlias,
   bucketIso: "1w",

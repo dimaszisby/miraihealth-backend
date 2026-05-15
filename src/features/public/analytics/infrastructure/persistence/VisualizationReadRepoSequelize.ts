@@ -71,6 +71,7 @@ export class VisualizationReadRepoSequelize implements VisualizationReadReposito
 
   async fetchVisualization({
     userId,
+    organizationId,
     metricId,
     startISO,
     endISO,
@@ -79,9 +80,10 @@ export class VisualizationReadRepoSequelize implements VisualizationReadReposito
     tz,
     fill,
   }: VisualizationQueryParams): Promise<VizResponse> {
-    const metric = await this.assertOwnership(userId, metricId);
+    const metric = await this.assertOwnership(userId, organizationId, metricId);
     const cacheKey: SingleVizCacheKey = {
       userId,
+      organizationId,
       metricId,
       startISO,
       endISO,
@@ -160,6 +162,7 @@ export class VisualizationReadRepoSequelize implements VisualizationReadReposito
 
     const cacheKey: DashboardVizCacheKey = {
       userId: params.userId,
+      organizationId: params.organizationId,
       metricIds,
       startISO: params.startISO,
       endISO: params.endISO,
@@ -251,9 +254,13 @@ export class VisualizationReadRepoSequelize implements VisualizationReadReposito
     return response;
   }
 
-  private async assertOwnership(userId: string, metricId: string) {
+  private async assertOwnership(
+    userId: string,
+    organizationId: string,
+    metricId: string,
+  ) {
     const metric = await models.Metric.findOne({
-      where: { id: metricId, userId },
+      where: { id: metricId, userId, organizationId },
     });
     if (!metric) throw new AppError("Metric not found", 404);
     return metric;
@@ -279,6 +286,7 @@ export class VisualizationReadRepoSequelize implements VisualizationReadReposito
       JOIN metrics m ON m.id = ms.metric_id
       LEFT JOIN metric_categories c ON m.category_id = c.id AND c.deleted_at IS NULL
       WHERE m.user_id = :userId
+        AND m.organization_id = :organizationId
         AND COALESCE((ms.display_options->>'showOnDashboard')::boolean, false) = true
         AND COALESCE(ms.is_active, true) = true
       ORDER BY priority NULLS LAST, ms.created_at DESC
@@ -286,7 +294,11 @@ export class VisualizationReadRepoSequelize implements VisualizationReadReposito
     `,
       {
         type: QueryTypes.SELECT,
-        replacements: { userId: params.userId, limit: params.limit },
+        replacements: {
+          userId: params.userId,
+          organizationId: params.organizationId,
+          limit: params.limit,
+        },
       },
     );
     return rows as DashboardMetricRow[];

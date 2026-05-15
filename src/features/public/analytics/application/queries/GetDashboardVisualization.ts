@@ -12,6 +12,7 @@ import type {
 
 export type GetDashboardVisualizationInput = {
   userId: string;
+  organizationId: string;
   startISO: string;
   endISO: string;
   bucket: BucketAlias;
@@ -38,6 +39,7 @@ export class GetDashboardVisualization {
 
     return this.repo.fetchDashboardVisualization({
       userId: input.userId,
+      organizationId: input.organizationId,
       startISO: input.startISO,
       endISO: input.endISO,
       bucket: input.bucket,

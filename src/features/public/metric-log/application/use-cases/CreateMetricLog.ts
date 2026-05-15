@@ -22,10 +22,14 @@ export class CreateMetricLog {
   ) {}
 
   async execute(input: Input): Promise<MetricLog> {
-    const { userId, metricId } = input;
+    const { userId, organizationId, metricId } = input;
     if (!metricId) throw new AppError("metricId is required", 400);
 
-    await this.metricAccess.ensureMetricOwnership(userId, metricId);
+    await this.metricAccess.ensureMetricOwnership(
+      userId,
+      organizationId,
+      metricId,
+    );
 
     const timestamp =
       input.loggedAt instanceof Date
@@ -38,7 +42,9 @@ export class CreateMetricLog {
       throw new AppError("loggedAt is invalid", 400);
     }
 
-    if (await this.repo.existsAtTimestamp(metricId, timestamp)) {
+    if (
+      await this.repo.existsAtTimestamp(organizationId, metricId, timestamp)
+    ) {
       throw new AppError(
         "A log entry already exists for this timestamp for this metric",
         409,

@@ -14,6 +14,7 @@ import type { MetricLog } from "@/features/metric-log/infrastructure/persistence
  */
 export const validateMetricAccess = async (
   userId: string,
+  organizationId: string,
   metricId: string,
 ): Promise<Metric> => {
   if (!userId) {
@@ -21,8 +22,8 @@ export const validateMetricAccess = async (
   }
 
   const metric = await models.Metric.findOne({
-    where: { id: metricId },
-    attributes: ["id", "userId"],
+    where: { id: metricId, organizationId },
+    attributes: ["id", "userId", "organizationId"],
   });
 
   if (!metric) {
@@ -44,17 +45,16 @@ export const validateMetricAccess = async (
  */
 export const validateMetricCategoryAccess = async (
   userId: string,
+  organizationId: string,
   categoryId: string,
 ): Promise<MetricCategory> => {
-  // 1. Fetch the metric category regardless of the userId.
   const metricCategory = await models.MetricCategory.findOne({
-    where: { id: categoryId },
-    attributes: ["id", "userId"],
+    where: { id: categoryId, organizationId },
+    attributes: ["id", "userId", "organizationId"],
   });
   if (!metricCategory) {
     throw new AppError("Metric Category not found", 404);
   }
-  // 2. If the metric is does not belong to the user, throw unauthorized.
   if (metricCategory.userId !== userId) {
     throw new AppError("Unauthorized access to metric category", 403);
   }
@@ -75,13 +75,13 @@ export const validateMetricCategoryAccess = async (
  */
 export const findOwnedMetric = async (
   userId: string,
+  organizationId: string,
   metricId: string,
 ): Promise<Metric> => {
-  // Overhaul: Stuck Here
-  await validateMetricAccess(userId, metricId);
+  await validateMetricAccess(userId, organizationId, metricId);
 
   const metric = await models.Metric.findOne({
-    where: { id: metricId, userId },
+    where: { id: metricId, userId, organizationId },
   });
   if (!metric) throw new AppError("Metric not found", 404);
 
@@ -97,12 +97,13 @@ export const findOwnedMetric = async (
  */
 export const findOwnedCategory = async (
   userId: string,
+  organizationId: string,
   categoryId: string,
 ): Promise<MetricCategory> => {
-  await validateMetricCategoryAccess(userId, categoryId);
+  await validateMetricCategoryAccess(userId, organizationId, categoryId);
 
   const category = await models.MetricCategory.findOne({
-    where: { id: categoryId, userId },
+    where: { id: categoryId, userId, organizationId },
   });
   if (!category) throw new AppError("Category not found", 404);
 
@@ -119,25 +120,21 @@ export const findOwnedCategory = async (
  */
 export const findOwnedMetricSettings = async (
   userId: string,
+  organizationId: string,
   settingsId: string,
 ): Promise<MetricSettings> => {
   const settings = await models.MetricSettings.findOne({
-    where: { id: settingsId },
+    where: { id: settingsId, organizationId },
     include: [
       {
         model: models.Metric,
         as: "metric",
         attributes: ["id", "userId", "isPublic"],
+        where: { userId, organizationId },
       },
     ],
   });
   if (!settings) throw new AppError("Metric Settings not found", 404);
-
-  // Ensure the user has access to the associated metric
-  const metric = settings.metric;
-  if (metric && metric.userId !== userId) {
-    throw new AppError("Unauthorized access to metric settings", 403);
-  }
 
   return settings;
 };
@@ -152,24 +149,21 @@ export const findOwnedMetricSettings = async (
  */
 export const findOwnedMetricLog = async (
   userId: string,
+  organizationId: string,
   logId: string,
 ): Promise<MetricLog> => {
   const log = await models.MetricLog.findOne({
-    where: { id: logId },
+    where: { id: logId, organizationId },
     include: [
       {
         model: models.Metric,
         as: "metric",
         attributes: ["id", "userId", "isPublic"],
+        where: { userId, organizationId },
       },
     ],
   });
   if (!log) throw new AppError("Metric Log not found", 404);
 
-  // Ensure the user has access to the associated metric
-  const metric = log.metric;
-  if (metric && metric.userId !== userId) {
-    throw new AppError("Unauthorized access to metric log", 403);
-  }
   return log;
 };

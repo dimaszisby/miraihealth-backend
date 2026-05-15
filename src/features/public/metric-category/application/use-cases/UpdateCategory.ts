@@ -5,6 +5,7 @@ import { METRIC_CATEGORY_CURSOR_NAMESPACE_ALL } from "../cache.constants.js";
 
 type Input = {
   userId: string;
+  organizationId: string;
   categoryId: string;
   name?: string;
   color?: string;
@@ -17,20 +18,31 @@ export class UpdateCategory {
     private cache: CachePort,
   ) {}
 
-  async execute({ userId, categoryId, name, color, icon }: Input) {
-    const current = await this.repo.findById(userId, categoryId);
+  async execute({
+    userId,
+    organizationId,
+    categoryId,
+    name,
+    color,
+    icon,
+  }: Input) {
+    const current = await this.repo.findById(
+      userId,
+      organizationId,
+      categoryId,
+    );
     if (!current) {
       throw new AppError("Metric Category not found", 404);
     }
 
     if (name && name !== current.name) {
-      const exists = await this.repo.existsByName(userId, name);
+      const exists = await this.repo.existsByName(userId, organizationId, name);
       if (exists) {
         throw new AppError("Metric Category name already exists", 409);
       }
     }
 
-    const updated = await this.repo.update(userId, categoryId, {
+    const updated = await this.repo.update(userId, organizationId, categoryId, {
       name,
       color,
       icon,

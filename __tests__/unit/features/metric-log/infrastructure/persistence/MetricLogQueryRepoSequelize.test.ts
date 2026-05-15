@@ -11,6 +11,8 @@ import { Op } from "sequelize";
 import { MetricLogQueryRepoSequelize } from "@/features/metric-log/infrastructure/persistence/repositories/MetricLogQueryRepoSequelize.js";
 import { models } from "@/infrastructure/db/models.js";
 
+const TEST_ORG_ID = "org-test-id";
+
 const repo = new MetricLogQueryRepoSequelize();
 
 type AsyncMock<T = unknown> = jest.MockedFunction<
@@ -66,6 +68,7 @@ describe("MetricLogQueryRepoSequelize", () => {
 
     const result = await repo.listLogs({
       userId: "user-9",
+      organizationId: TEST_ORG_ID,
       limit: 1,
       sort: "-createdAt",
       includeTotal: true,
@@ -83,7 +86,11 @@ describe("MetricLogQueryRepoSequelize", () => {
         ],
         include: expect.arrayContaining([
           expect.objectContaining({
-            where: { userId: "user-9", deletedAt: null },
+            where: {
+              userId: "user-9",
+              organizationId: TEST_ORG_ID,
+              deletedAt: null,
+            },
           }),
         ]),
       }),
@@ -118,6 +125,7 @@ describe("MetricLogQueryRepoSequelize", () => {
 
     await repo.listLogs({
       userId: "user-1",
+      organizationId: TEST_ORG_ID,
       limit: 200,
       sort: "-logValue",
       filter: { metricId: "metric-1", logValue: 5 },

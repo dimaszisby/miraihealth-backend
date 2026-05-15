@@ -19,13 +19,20 @@ export class CreateMetric {
   ) {}
 
   async execute(input: Input): Promise<Metric> {
-    if (await this.repo.existsByName(input.userId, input.name)) {
+    if (
+      await this.repo.existsByName(
+        input.userId,
+        input.organizationId,
+        input.name,
+      )
+    ) {
       throw new AppError("Metric already exists", 409);
     }
 
     if (input.categoryId) {
       const exists = await this.repo.categoryExists(
         input.userId,
+        input.organizationId,
         input.categoryId,
       );
       if (!exists) throw new AppError("Category not found", 404);
