@@ -274,7 +274,7 @@ describe("metric log router", () => {
     ) => string;
 
     const req: any = {
-      user: { id: "user-123" },
+      user: { id: "user-123", organizationId: "org-1" },
       params: {},
       query: {
         filter: { metricId: "metric-1" },
@@ -289,9 +289,10 @@ describe("metric log router", () => {
     const key = cursorBuilder(req);
     expect(buildCursorCacheKeyMock).toHaveBeenCalledWith({
       feature: "metric-logs.js",
-      version: 2,
+      version: 3,
       userId: "user-123",
       segments: [
+        ["org", "org-1"],
         ["l", 10],
         ["s", "createdAt"],
         ["q", "progress"],

@@ -16,6 +16,7 @@ type MetricSettingsModelMock = {
   create: AsyncMock;
   findOne: AsyncMock;
   findByPk: AsyncMock;
+  update: AsyncMock;
   destroy: AsyncMock;
   findAll: AsyncMock;
   count: AsyncMock;
@@ -28,6 +29,7 @@ const metricSettingsModel: MetricSettingsModelMock = {
   create: makeAsyncMock(),
   findOne: makeAsyncMock(),
   findByPk: makeAsyncMock(),
+  update: makeAsyncMock(),
   destroy: makeAsyncMock(),
   findAll: makeAsyncMock(),
   count: makeAsyncMock(),
@@ -167,7 +169,7 @@ describe("MetricSettingsRepositorySequelize", () => {
 
   describe("save", () => {
     it("throws when row missing", async () => {
-      metricSettingsModel.findOne.mockResolvedValue(null);
+      metricSettingsModel.update.mockResolvedValue([0]);
       const entity = buildMetricSettings();
 
       await expect(repo.save(TEST_ORG_ID, entity)).rejects.toBeInstanceOf(
@@ -181,23 +183,20 @@ describe("MetricSettingsRepositorySequelize", () => {
         metricId: "metric-1",
       });
       const row: any = {
-        update: jest.fn<AsyncFn<void>>().mockResolvedValue(undefined),
-        reload: jest.fn<AsyncFn<any>>().mockImplementation(async () => {
-          Object.assign(row, {
-            ...entity.snapshot(),
-            metric: { id: "metric-1", userId: "user-1" },
-          });
-          return row;
-        }),
+        ...entity.snapshot(),
+        metric: { id: "metric-1", userId: "user-1" },
       };
+      metricSettingsModel.update.mockResolvedValue([1]);
       metricSettingsModel.findOne.mockResolvedValue(row);
 
       const result = await repo.save(TEST_ORG_ID, entity);
 
-      expect(row.update).toHaveBeenCalledWith(
+      expect(metricSettingsModel.update).toHaveBeenCalledWith(
         expect.objectContaining({ isActive: entity.snapshot().isActive }),
+        expect.objectContaining({
+          where: { id: "settings-10", organizationId: TEST_ORG_ID },
+        }),
       );
-      expect(row.reload).toHaveBeenCalled();
       expect(result.id).toBe("settings-10");
     });
   });

@@ -65,7 +65,9 @@ describe("MetricLogRepoSequelize", () => {
 
   it("saves updates", async () => {
     const instance = makeInstance();
-    jest.spyOn(models.MetricLog, "findOne").mockResolvedValue(instance as any);
+    jest
+      .spyOn(models.MetricLog, "update")
+      .mockResolvedValue([1, [instance]] as any);
     const repo = new MetricLogRepoSequelize();
 
     const domain = MetricLog.fromProps({
