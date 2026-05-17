@@ -1,4 +1,4 @@
-import { PersistenceTransaction } from "./PersistenceTransaction.js";
+import { PersistenceTransaction } from "./TransactionPort.js";
 
 export interface MetricSettingsPort {
   createDefault(

@@ -7,10 +7,19 @@ import { GenerateDummyCategories } from "./application/use-cases/GenerateDummyCa
 import { ListCategories } from "./application/queries/ListCategories.js";
 import { GetCategory } from "./application/queries/GetCategory.js";
 import { MetricCategoryFactory } from "./domain/services/MetricCategoryFactory.js";
+import type { MetricCategoryRepository } from "./domain/repositories/MetricCategoryRepository.js";
+import type { CachePort } from "./application/ports/CachePort.js";
 
-export const buildMetricCategoryFeature = () => {
-  const repo = new MetricCategoryRepoSequelize();
-  const cache = new MetricCategoryCacheRedis();
+export type MetricCategoryFeatureOverrides = {
+  repo?: MetricCategoryRepository;
+  cache?: CachePort;
+};
+
+export const buildMetricCategoryFeature = (
+  overrides: MetricCategoryFeatureOverrides = {},
+) => {
+  const repo = overrides.repo ?? new MetricCategoryRepoSequelize();
+  const cache = overrides.cache ?? new MetricCategoryCacheRedis();
   const factory = new MetricCategoryFactory();
 
   return {

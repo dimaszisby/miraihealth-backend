@@ -1,7 +1,7 @@
 import { models } from "@/infrastructure/db/models.js";
 import { Transaction } from "sequelize";
 import { MetricSettingsPort } from "../../../application/ports/MetricSettingsPort.js";
-import { PersistenceTransaction } from "../../../application/ports/PersistenceTransaction.js";
+import { PersistenceTransaction } from "../../../application/ports/TransactionPort.js";
 
 export class MetricSettingsPortSequelize implements MetricSettingsPort {
   async createDefault(

@@ -1,6 +1,6 @@
 import { models } from "@/infrastructure/db/models.js";
 import { MetricDomain } from "@/types/domain/metric.domain.js";
-import { toDomainMetric } from "@/utils/mappers/metric.mapper.js";
+import { toDomainMetric } from "../../infrastructure/persistence/mappers/MetricReadMapper.js";
 import { CachePort } from "../ports/CachePort.js";
 
 type Input = {

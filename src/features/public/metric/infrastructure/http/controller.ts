@@ -14,7 +14,7 @@ import {
   toMetricLibraryResponseDTO,
   toMetricResponseDTO,
   toUserMetricDetailResponseDTO,
-} from "@/utils/mappers/metric.mapper.js";
+} from "./dto.js";
 import AppError from "@/utils/AppError.js";
 import { successResponse } from "@/utils/response-formatter.js";
 import catchAsync from "@/utils/catch-async.js";

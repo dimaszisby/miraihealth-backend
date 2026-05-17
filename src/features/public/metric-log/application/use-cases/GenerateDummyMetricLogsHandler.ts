@@ -1,6 +1,6 @@
 import type { ConsumeMessage } from "amqplib";
 import { models } from "@/infrastructure/db/models.js";
-import type { MetricAccessPort } from "../ports/MetricAccessPort.js";
+import type { MetricAccessPort } from "@/features/public/metric/application/ports/MetricAccessPort.js";
 import type { CachePort } from "../ports/CachePort.js";
 
 type JobPayload = {

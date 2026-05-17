@@ -5,7 +5,7 @@ import {
   MetricSettingsRepository,
 } from "../../domain/repositories/MetricSettingsRepository.js";
 import { CacheInvalidationPort } from "../ports/CacheInvalidationPort.js";
-import { MetricAccessPort } from "../ports/MetricAccessPort.js";
+import type { MetricAccessPort } from "@/features/public/metric/application/ports/MetricAccessPort.js";
 
 export type CreateMetricSettingsInput = Partial<CreateMetricSettingsDTO> & {
   userId: string;
