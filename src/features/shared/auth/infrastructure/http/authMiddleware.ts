@@ -9,7 +9,6 @@ import { MembershipRepositorySequelize } from "../persistence/MembershipReposito
 import { TokenProvider } from "../../application/ports/TokenProvider.js";
 import { JwtTokenProvider } from "../providers/JwtTokenProvider.js";
 import { AuthUser } from "../../domain/entities/AuthUser.js";
-import { Membership } from "../../domain/entities/Membership.js";
 
 type Dependencies = {
   userRepo: UserRepository;
@@ -27,7 +26,6 @@ const toUserDomain = (user: AuthUser, organizationId: string): UserDomain => ({
   id: user.id,
   username: user.username,
   email: user.email,
-  role: user.role,
   isPublicProfile: user.isPublicProfile,
   emailVerifiedAt: user.emailVerifiedAt,
   createdAt: user.createdAt,
@@ -56,25 +54,20 @@ export const makeAuthMiddleware = (
         return next(new AppError("Unauthorized: User not found", 401));
       }
 
-      let membership: Membership | null;
-
-      if (claims.organizationId) {
-        membership = await membershipRepo.findByUserAndOrg(
-          authUser.id,
-          claims.organizationId,
+      if (!claims.organizationId) {
+        return next(
+          new AppError("Unauthorized: Token missing organization context", 401),
         );
-        if (!membership || !membership.isActive()) {
-          return next(
-            new AppError("Unauthorized: Organization membership inactive", 401),
-          );
-        }
-      } else {
-        membership = await membershipRepo.findDefaultByUser(authUser.id);
-        if (!membership || !membership.isActive()) {
-          return next(
-            new AppError("Unauthorized: No organization membership", 401),
-          );
-        }
+      }
+
+      const membership = await membershipRepo.findByUserAndOrg(
+        authUser.id,
+        claims.organizationId,
+      );
+      if (!membership || !membership.isActive()) {
+        return next(
+          new AppError("Unauthorized: Organization membership inactive", 401),
+        );
       }
 
       req.user = toUserDomain(authUser, membership.organizationId);

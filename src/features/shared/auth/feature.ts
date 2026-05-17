@@ -22,9 +22,16 @@ import { IssueRefreshToken } from "./application/use-cases/IssueRefreshToken.js"
 import { RotateRefreshToken } from "./application/use-cases/RotateRefreshToken.js";
 import { RevokeRefreshTokenFamily } from "./application/use-cases/RevokeRefreshTokenFamily.js";
 import { SwitchOrganization } from "./application/use-cases/SwitchOrganization.js";
+import { InviteUserToOrganization } from "./application/use-cases/InviteUserToOrganization.js";
+import { AcceptInvite } from "./application/use-cases/AcceptInvite.js";
+import { RemoveMembership } from "./application/use-cases/RemoveMembership.js";
+import { ChangeMemberRole } from "./application/use-cases/ChangeMemberRole.js";
+import { ListOrganizationMembers } from "./application/queries/ListOrganizationMembers.js";
+import { OrganizationInviteRepositorySequelize } from "./infrastructure/persistence/OrganizationInviteRepositorySequelize.js";
 import { RefreshTokenCrypto } from "./infrastructure/providers/RefreshTokenCrypto.js";
 import { buildPasswordResetEmail } from "./infrastructure/email/templates/password-reset.js";
 import { buildEmailVerificationEmail } from "./infrastructure/email/templates/email-verification.js";
+import { buildOrganizationInviteEmail } from "./infrastructure/email/templates/organization-invite.js";
 
 const buildEmailSender = (): EmailSender => {
   if (env.EMAIL_PROVIDER === "resend") {
@@ -46,6 +53,7 @@ export const buildAuthFeature = (overrides: AuthFeatureOverrides = {}) => {
   const repo = new UserRepositorySequelize();
   const orgRepo = new OrganizationRepositorySequelize();
   const membershipRepo = new MembershipRepositorySequelize();
+  const inviteRepo = new OrganizationInviteRepositorySequelize();
   const resetTokenRepo = new PasswordResetTokenRepositorySequelize();
   const refreshTokenRepo = new RefreshTokenRepositorySequelize();
   const emailVerificationTokenRepo =
@@ -121,5 +129,19 @@ export const buildAuthFeature = (overrides: AuthFeatureOverrides = {}) => {
     ),
     rotateRefreshToken,
     revokeRefreshTokenFamily,
+    inviteUserToOrganization: new InviteUserToOrganization(
+      inviteRepo,
+      orgRepo,
+      emailSender,
+      {
+        frontendInviteUrl: env.FRONTEND_INVITE_URL,
+        buildEmail: buildOrganizationInviteEmail,
+        ttlDays: env.INVITE_TOKEN_TTL_DAYS,
+      },
+    ),
+    acceptInvite: new AcceptInvite(inviteRepo, membershipRepo, repo),
+    removeMembership: new RemoveMembership(membershipRepo),
+    changeMemberRole: new ChangeMemberRole(membershipRepo),
+    listOrganizationMembers: new ListOrganizationMembers(membershipRepo, repo),
   };
 };

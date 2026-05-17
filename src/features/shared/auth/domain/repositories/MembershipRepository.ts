@@ -20,6 +20,10 @@ export interface MembershipRepository {
   findDefaultByUser(userId: string): Promise<Membership | null>;
   findAllByUser(userId: string): Promise<Membership[]>;
   findAllByOrganization(organizationId: string): Promise<Membership[]>;
+  countByOrgAndRole(
+    organizationId: string,
+    role: MembershipRole,
+  ): Promise<number>;
   create(data: CreateMembershipDTO): Promise<Membership>;
   save(membership: Membership): Promise<Membership>;
   delete(id: string): Promise<void>;

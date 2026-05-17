@@ -492,11 +492,6 @@
             "type": "boolean",
             "example": true
           },
-          "role": {
-            "type": "string",
-            "enum": ["user", "admin"],
-            "example": "user"
-          },
           "emailVerifiedAt": {
             "type": ["string", "null"],
             "format": "date-time",
@@ -519,7 +514,6 @@
           "username",
           "email",
           "isPublicProfile",
-          "role",
           "emailVerifiedAt",
           "createdAt",
           "updatedAt"
@@ -638,6 +632,113 @@
         },
         "required": ["organizationId"]
       },
+      "CreateInviteRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+            "example": "invitee@example.com"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["admin", "member"],
+            "example": "member"
+          }
+        },
+        "required": ["email", "role"]
+      },
+      "AcceptInviteRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "example": "dGVzdC1pbnZpdGUtdG9rZW4"
+          }
+        },
+        "required": ["token"]
+      },
+      "ChangeMemberRoleRequest": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": ["admin", "member"],
+            "example": "admin"
+          }
+        },
+        "required": ["role"]
+      },
+      "Member": {
+        "type": "object",
+        "properties": {
+          "membershipId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "userId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "username": {
+            "type": "string",
+            "example": "johndoe"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "john@example.com"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["owner", "admin", "member"],
+            "example": "member"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "invited", "removed"],
+            "example": "active"
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-01-15T09:30:00Z"
+          }
+        },
+        "required": [
+          "membershipId",
+          "userId",
+          "username",
+          "email",
+          "role",
+          "status",
+          "joinedAt"
+        ]
+      },
+      "MemberListResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SuccessResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "members": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Member"
+                    }
+                  }
+                },
+                "required": ["members"]
+              }
+            }
+          }
+        ]
+      },
       "RegisterRequest": {
         "type": "object",
         "properties": {
@@ -691,11 +792,6 @@
           "isPublicProfile": {
             "type": "boolean",
             "example": false
-          },
-          "role": {
-            "type": "string",
-            "enum": ["user", "admin"],
-            "example": "admin"
           }
         }
       },
@@ -2729,6 +2825,265 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/organizations/{id}/invites": {
+      "post": {
+        "tags": ["Organizations"],
+        "summary": "Invite a user to the organization",
+        "description": "Sends an invitation email with a single-use token. Only owners and admins can invite. Rejects if a pending invite already exists for the email.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization ID",
+              "example": "123e4567-e89b-42d3-a456-426614174000"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInviteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Invitation sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/organizations/{id}/members": {
+      "get": {
+        "tags": ["Organizations"],
+        "summary": "List organization members",
+        "description": "Returns all active memberships for the organization with user details. Any member of the organization can call this endpoint.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization ID",
+              "example": "123e4567-e89b-42d3-a456-426614174000"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of organization members",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/invites/accept": {
+      "post": {
+        "tags": ["Organizations"],
+        "summary": "Accept an organization invite",
+        "description": "Accepts a pending invite using the raw token from the invitation email. Returns a generic 400 for invalid, expired, or already-accepted tokens (anti-enumeration).",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptInviteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Invitation accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/memberships/{id}": {
+      "patch": {
+        "tags": ["Organizations"],
+        "summary": "Change a member's role",
+        "description": "Only organization owners can change roles. Cannot demote the last owner.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "A UUID identifier for the resource",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeMemberRoleRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Member role updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Organizations"],
+        "summary": "Remove a member from the organization",
+        "description": "Only organization owners can remove members. Cannot remove yourself or the last owner.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "A UUID identifier for the resource",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Member removed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"

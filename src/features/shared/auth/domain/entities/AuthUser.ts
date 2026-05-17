@@ -3,7 +3,6 @@ export type AuthUserProps = {
   email: string;
   username: string;
   passwordHash: string;
-  role: "user" | "admin";
   isPublicProfile: boolean;
   emailVerifiedAt?: Date | null;
   createdAt: Date;
@@ -32,9 +31,6 @@ export class AuthUser {
   }
   get isPublicProfile() {
     return this.props.isPublicProfile;
-  }
-  get role() {
-    return this.props.role;
   }
   get createdAt() {
     return this.props.createdAt;
@@ -70,14 +66,6 @@ export class AuthUser {
 
   togglePublicProfile(value: boolean) {
     this.props.isPublicProfile = value;
-    this.touch();
-  }
-
-  setRole(role: AuthUserProps["role"]) {
-    if (!["user", "admin"].includes(role)) {
-      throw new Error("Invalid role");
-    }
-    this.props.role = role;
     this.touch();
   }
 

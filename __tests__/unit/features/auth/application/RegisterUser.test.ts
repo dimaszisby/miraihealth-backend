@@ -16,7 +16,6 @@ const makeUser = () =>
     email: "user@example.com",
     username: "tester",
     passwordHash: "hash",
-    role: "user",
     isPublicProfile: true,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -48,6 +47,7 @@ const build = () => {
     existsByEmail: jest.fn(),
     existsByUsername: jest.fn(),
     findById: jest.fn(),
+    findByIds: jest.fn(),
     findByEmail: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
@@ -67,6 +67,7 @@ const build = () => {
     findAllByOrganization: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
+    countByOrgAndRole: jest.fn(),
     delete: jest.fn(),
   };
   const hasher: jest.Mocked<PasswordHasher> = {

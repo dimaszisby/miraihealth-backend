@@ -11,7 +11,6 @@ const makeReq = (user?: Partial<AuthRequest["user"]>): AuthRequest =>
           id: "user-1",
           email: "user@example.com",
           username: "tester",
-          role: "user",
           isPublicProfile: true,
           emailVerifiedAt: null,
           createdAt: new Date(),

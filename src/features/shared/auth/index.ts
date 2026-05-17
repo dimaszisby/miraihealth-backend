@@ -5,3 +5,8 @@ export {
   assertHasOrgRole,
   requireOrgRole,
 } from "./infrastructure/http/assertHasOrgRole.js";
+export {
+  organizationRouter,
+  inviteRouter,
+  membershipRouter,
+} from "./infrastructure/http/organization.router.js";

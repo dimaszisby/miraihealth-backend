@@ -62,18 +62,28 @@
 
 ## Phase 6 — Invites + role management
 
-- [ ] Use cases: `InviteUserToOrganization`, `AcceptInvite`, `RemoveMembership`, `ChangeMemberRole`.
-- [ ] Routes: `POST /organizations/:id/invites`, `POST /invites/accept`, `DELETE /memberships/:id`, `PATCH /memberships/:id`.
-- [ ] Email template `organization-invite.ts`.
-- [ ] OpenAPI regen.
+- [x] Use cases: `InviteUserToOrganization`, `AcceptInvite`, `RemoveMembership`, `ChangeMemberRole`.
+- [x] Query: `ListOrganizationMembers`.
+- [x] Routes: `POST /organizations/:id/invites`, `POST /invites/accept`, `DELETE /memberships/:id`, `PATCH /memberships/:id`, `GET /organizations/:id/members`.
+- [x] Email template `organization-invite.ts`.
+- [x] `OrganizationInviteRepository` port + Sequelize implementation.
+- [x] `MembershipRepository.countByOrgAndRole` added.
+- [x] Zod schemas + OpenAPI registration for all new endpoints.
+- [x] DI wiring in `feature.ts` + routers mounted in `server.ts`.
+- [x] `FRONTEND_INVITE_URL` and `INVITE_TOKEN_TTL_DAYS` env vars added.
+- [x] Unit tests: 28 tests across 4 use case files (happy paths + edge cases).
+- [x] Integration tests: 9 tests covering full invite→accept flow, member listing, role change, member removal, cross-org isolation.
+- [x] OpenAPI regen.
 
 ## Phase 7 — Cleanup
 
-- [ ] Migration to drop `users.role` after all read sites are off it.
-- [ ] Remove the auth-middleware fallback for tokens lacking `organizationId` (after refresh-token TTL has passed since Phase 4 deployed).
+- [x] Migration `20260516000001-drop-users-role-column.cjs` drops `users.role`.
+- [x] Removed `role` from `AuthUser`, `UserDomain`, `UserAttributesBase`, `UserResponseDTO`, `UserMapper`, `UserRepositorySequelize`, `openapi-schemas.ts`, `zod-rules.ts`.
+- [x] Removed auth-middleware fallback for tokens lacking `organizationId` — now returns 401.
+- [x] Deleted legacy `src/shared/middleware/role.ts`.
 
 ## Wrap-up
 
-- [x] `npm run typecheck && npm run lint && npm run format:write && npm test`.
+- [x] `npm run typecheck && npm run lint && npm run format:write && npm test` — all 163 tests pass, 0 failures.
 - [ ] Audit re-run shows P0-3.1, P0-9.1, P1-1.3 marked ✅.
 - [ ] Update `iteration-plan.md` Phase 4 status to ✅ Done with PR link(s).

@@ -57,7 +57,6 @@ export class User
   declare username: string;
   declare email: string;
   declare password: string;
-  declare role: "user" | "admin";
   declare isPublicProfile: boolean;
   declare emailVerifiedAt?: Date | null;
 
@@ -87,11 +86,6 @@ export class User
         password: {
           type: DataTypes.STRING,
           allowNull: false,
-        },
-        role: {
-          type: DataTypes.ENUM("user", "admin"),
-          allowNull: false,
-          defaultValue: "user",
         },
         isPublicProfile: {
           type: DataTypes.BOOLEAN,

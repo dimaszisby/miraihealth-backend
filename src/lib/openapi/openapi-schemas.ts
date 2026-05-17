@@ -425,7 +425,6 @@ export const UserSchema = registerSchema(
     username: z.string().openapi({ example: "testuser" }),
     email: z.string().email().openapi({ example: "test@example.com" }),
     isPublicProfile: z.boolean().openapi({ example: true }),
-    role: z.enum(["user", "admin"]).openapi({ example: "user" }),
     emailVerifiedAt: z.string().datetime().nullable().openapi({
       example: null,
       description:
@@ -498,6 +497,57 @@ export const SwitchOrgRequestSchema = registerSchema(
   }),
 );
 
+export const CreateInviteRequestSchema = registerSchema(
+  "CreateInviteRequest",
+  z.object({
+    email: emailSchema("invitee@example.com"),
+    role: z.enum(["admin", "member"]).openapi({ example: "member" }),
+  }),
+);
+
+export const AcceptInviteRequestSchema = registerSchema(
+  "AcceptInviteRequest",
+  z.object({
+    token: z.string().min(1).openapi({
+      example: "dGVzdC1pbnZpdGUtdG9rZW4",
+    }),
+  }),
+);
+
+export const ChangeMemberRoleRequestSchema = registerSchema(
+  "ChangeMemberRoleRequest",
+  z.object({
+    role: z.enum(["admin", "member"]).openapi({ example: "admin" }),
+  }),
+);
+
+export const MemberSchema = registerSchema(
+  "Member",
+  z.object({
+    membershipId: UuidSchema,
+    userId: UuidSchema,
+    username: z.string().openapi({ example: "johndoe" }),
+    email: z.string().email().openapi({ example: "john@example.com" }),
+    role: z.enum(["owner", "admin", "member"]).openapi({ example: "member" }),
+    status: z
+      .enum(["active", "invited", "removed"])
+      .openapi({ example: "active" }),
+    joinedAt: z
+      .string()
+      .datetime()
+      .openapi({ example: "2025-01-15T09:30:00Z" }),
+  }),
+);
+
+export const MemberListResponseSchema = registerSchema(
+  "MemberListResponse",
+  successEnvelope(
+    z.object({
+      members: z.array(MemberSchema),
+    }),
+  ),
+);
+
 export const RegisterRequestSchema = registerSchema(
   "RegisterRequest",
   z
@@ -528,7 +578,6 @@ export const UpdateUserRequestSchema = registerSchema(
       .optional()
       .openapi({ example: "updatedpassword" }),
     isPublicProfile: z.boolean().optional().openapi({ example: false }),
-    role: z.enum(["user", "admin"]).optional().openapi({ example: "admin" }),
   }),
 );
 

@@ -262,6 +262,20 @@ const envSchema = z.object({
     .string()
     .url()
     .default("http://localhost:3000/verify-email"),
+  FRONTEND_INVITE_URL: z
+    .string()
+    .url()
+    .default("http://localhost:3000/invites/accept"),
+  INVITE_TOKEN_TTL_DAYS: z
+    .string()
+    .transform((val) => {
+      const parsed = parseInt(val, 10);
+      if (isNaN(parsed) || parsed <= 0) {
+        throw new Error("INVITE_TOKEN_TTL_DAYS must be a positive number");
+      }
+      return parsed;
+    })
+    .default("7"),
   EMAIL_VERIFICATION_TTL_SEC: z
     .string()
     .transform((val) => {
