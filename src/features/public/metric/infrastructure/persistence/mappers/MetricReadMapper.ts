@@ -1,9 +1,7 @@
 import { Metric } from "@/features/metric/infrastructure/persistence/models/metric.sequelize.js";
-import { MetricLibraryDomain } from "@/types/domain/metric.domain.js";
 import { MetricCategory } from "@/features/metric-category/infrastructure/persistence/models/metric-category.sequelize.js";
 import {
   toDomain as toMetricCategoryDomain,
-  toResponseDTO as toMetricCategoryResponseDTO,
   MetricCategoryRow,
 } from "@/features/metric-category/infrastructure/mappers/MetricCategoryMapper.js";
 import { MetricSettings } from "@/features/metric-settings/infrastructure/persistence/models/metric-settings.sequelize.js";
@@ -11,21 +9,13 @@ import { MetricLog } from "@/features/metric-log/infrastructure/persistence/mode
 import {
   MetricDomain,
   MetricDomainExtended,
+  MetricLibraryDomain,
   MetricLibraryCategoryInfoDomain,
 } from "@/types/domain/metric.domain.js";
-import {
-  MetricPreviewResponseDTO,
-  MetricResponseDTO,
-  UserMetricDetailResponseDTO,
-} from "@/types/dtos/metric.dto.js";
-import logger from "../logger.js";
+import logger from "@/utils/logger.js";
 import AppError from "@/utils/AppError.js";
-import {
-  toMetricSettingsResponseDTO,
-  toDomainMetricSettings,
-} from "@/features/metric-settings/infrastructure/mappers/MetricSettingsMapper.js";
-import { toMetricLogResponseDTO } from "./metric-log.mapper.js";
-import { toDomainMetricLog } from "./metric-log.mapper.js";
+import { toDomainMetricSettings } from "@/features/metric-settings/infrastructure/persistence/mappers/MetricSettingsMapper.js";
+import { toDomainMetricLog } from "@/features/metric-log/infrastructure/persistence/mappers/MetricLogReadMapper.js";
 
 const toCategoryRow = (
   category: Partial<MetricCategoryRow>,
@@ -55,9 +45,6 @@ const validateUserId = (userId: string | null | undefined) => {
   return userId;
 };
 
-/**
- * * Mapper: Sequelize → Domain
- */
 export const toDomainMetric = (metric: Metric): MetricDomain => {
   validateUserId(metric.userId);
 
@@ -81,12 +68,8 @@ export const toDomainMetricLibrary = (
 ): MetricLibraryDomain => {
   validateUserId(metric.userId);
 
-  // Accept both shapes: instance include (MetricCategory) and raw+alias include (category)
   const rawCategory = metric.MetricCategory ?? metric.category ?? null;
-
   const categoryDomain = rawCategory ? toDomainCategoryInfo(rawCategory) : null;
-
-  // Guard against NaN if the subquery isn't present for any reason
   const logCount = Number(metric.logCount ?? 0);
 
   return {
@@ -124,10 +107,6 @@ type MetricWithAssociations = Metric & {
   logCount?: number | string;
 };
 
-/**
- * * Mapper: Sequelize (with associations) → Domain (Extended)
- */
-// TODO: Refactor this mapper to use the base mapper first for each association for better readability
 export const toExtendedMetricDomain = (
   metric: MetricWithAssociations,
 ): MetricDomainExtended => {
@@ -153,66 +132,3 @@ export const toExtendedMetricDomain = (
     logs: logsDomain,
   };
 };
-
-/**
- * * Mapper: Domain → DTO (for API Response - Base Metric)
- */
-export const toMetricResponseDTO = (
-  metric: MetricDomain, // Takes the base domain object
-): MetricResponseDTO => ({
-  id: metric.id,
-  userId: metric.userId,
-  categoryId: metric.categoryId,
-  originalMetricId: metric.originalMetricId,
-  name: metric.name,
-  description: metric.description,
-  defaultUnit: metric.defaultUnit,
-  isPublic: metric.isPublic,
-  createdAt: metric.createdAt.toISOString(),
-  updatedAt: metric.updatedAt.toISOString(),
-  // deletedAt
-});
-
-/**
- * * Mapper: Domain (Extended) → DTO (for Detailed Metric API Response)
- */
-export const toUserMetricDetailResponseDTO = (
-  metric: MetricDomainExtended,
-): UserMetricDetailResponseDTO => ({
-  // Map base
-  id: metric.id,
-  userId: metric.userId,
-  categoryId: metric.categoryId,
-  originalMetricId: metric.originalMetricId,
-  name: metric.name,
-  description: metric.description,
-  defaultUnit: metric.defaultUnit,
-  isPublic: metric.isPublic,
-  createdAt: metric.createdAt.toISOString(),
-  updatedAt: metric.updatedAt.toISOString(),
-
-  // Map associated
-  category: metric.category
-    ? toMetricCategoryResponseDTO(metric.category)
-    : null,
-  settings: metric.settings
-    ? toMetricSettingsResponseDTO(metric.settings)
-    : null,
-  logs: metric.logs ? metric.logs?.map(toMetricLogResponseDTO) : null,
-});
-
-/**
- * * Mapper: Domain → DTO (for Metric Library Response)
- */
-export const toMetricLibraryResponseDTO = (
-  metric: MetricLibraryDomain,
-): MetricPreviewResponseDTO => ({
-  id: metric.id,
-  name: metric.name,
-  category: metric.category,
-  goalType: metric.goalType,
-  defaultUnit: metric.defaultUnit,
-  description: metric.description,
-  isPublic: metric.isPublic,
-  logCount: metric.logCount,
-});

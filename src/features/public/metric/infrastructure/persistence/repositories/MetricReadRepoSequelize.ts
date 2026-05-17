@@ -15,7 +15,7 @@ import {
 import {
   toDomainMetricLibrary,
   toExtendedMetricDomain,
-} from "@/utils/mappers/metric.mapper.js";
+} from "../mappers/MetricReadMapper.js";
 import {
   FindAttributeOptions,
   ProjectionAlias,

@@ -2,7 +2,7 @@ import type { Response, NextFunction } from "express";
 import { AuthRequest } from "@/types/request.context.js";
 import { assertAuthenticated } from "@/utils/auth-guards.js";
 import { pickValidated } from "@/shared/middleware/validated.js";
-import { getDashboardVizSchema, getVisualizationSchema } from "./validators.js";
+import { getDashboardVizSchema, getVisualizationSchema } from "./schema.zod.js";
 import { successResponse } from "@/utils/response-formatter.js";
 import { buildAnalyticsFeature } from "../../feature.js";
 

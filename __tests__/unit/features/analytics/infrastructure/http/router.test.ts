@@ -44,7 +44,7 @@ jest.mock("@/features/analytics/infrastructure/http/controller.js", () => ({
   handleGetVisualization: jest.fn(),
 }));
 
-jest.mock("@/features/analytics/infrastructure/http/validators.js", () => ({
+jest.mock("@/features/analytics/infrastructure/http/schema.zod.js", () => ({
   getDashboardVizSchema: "getDashboardVizSchema",
   getVisualizationSchema: "getVisualizationSchema",
 }));

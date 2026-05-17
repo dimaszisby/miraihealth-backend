@@ -88,7 +88,7 @@ features/{name}/
   index.ts
 ```
 
-**Status:** Proposed. To be Accepted only after an architecture-test (`__tests__/unit/architecture.test.ts`) is added that fails CI when a slice deviates. Without enforcement, the standard drifts again.
+**Status:** Accepted (2026-05-17). The architecture-test (`__tests__/unit/architecture.test.ts`) has been added as part of the drift-cleanup phase to enforce the standard going forward.
 
 **Options considered:**
 

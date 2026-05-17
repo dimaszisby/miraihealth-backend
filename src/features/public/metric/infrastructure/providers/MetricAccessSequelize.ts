@@ -1,5 +1,5 @@
+import type { MetricAccessPort } from "../../application/ports/MetricAccessPort.js";
 import { validateMetricAccess } from "@/utils/db-helper.js";
-import { MetricAccessPort } from "../../application/ports/MetricAccessPort.js";
 
 export class MetricAccessSequelize implements MetricAccessPort {
   async ensureMetricOwnership(

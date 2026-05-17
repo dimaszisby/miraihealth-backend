@@ -1,22 +1,34 @@
 import { GetVisualization } from "./application/queries/GetVisualization.js";
 import { GetDashboardVisualization } from "./application/queries/GetDashboardVisualization.js";
-import { getMetricTrend } from "./application/queries/getMetricTrend.js";
+import { GetMetricTrend } from "./application/queries/GetMetricTrend.js";
 import { VisualizationReadRepoSequelize } from "./infrastructure/persistence/VisualizationReadRepoSequelize.js";
 import { VisualizationCacheRedis } from "./infrastructure/cache/VisualizationCacheRedis.js";
+import { TrendRepoSequelize } from "./infrastructure/persistence/TrendRepoSequelize.js";
+import { MetricAccessSequelize } from "@/features/metric/infrastructure/providers/MetricAccessSequelize.js";
+import type { MetricAccessPort } from "@/features/public/metric/application/ports/MetricAccessPort.js";
+import type { TrendRepository } from "./application/ports/TrendRepository.js";
+import type { VisualizationCachePort } from "./application/ports/VisualizationCachePort.js";
+import type { VisualizationReadRepository } from "./application/ports/VisualizationReadRepository.js";
 
-class GetMetricTrendWrapper {
-  async execute(params: Parameters<typeof getMetricTrend>[0]) {
-    return getMetricTrend(params);
-  }
-}
+export type AnalyticsFeatureOverrides = {
+  metricAccess?: MetricAccessPort;
+  trendRepo?: TrendRepository;
+  vizCache?: VisualizationCachePort;
+  vizRepo?: VisualizationReadRepository;
+};
 
-export const buildAnalyticsFeature = () => {
-  const cache = new VisualizationCacheRedis();
-  const repo = new VisualizationReadRepoSequelize(cache);
+export const buildAnalyticsFeature = (
+  overrides: AnalyticsFeatureOverrides = {},
+) => {
+  const metricAccess = overrides.metricAccess ?? new MetricAccessSequelize();
+  const trendRepo = overrides.trendRepo ?? new TrendRepoSequelize();
+  const cache = overrides.vizCache ?? new VisualizationCacheRedis();
+  const repo = overrides.vizRepo ?? new VisualizationReadRepoSequelize(cache);
 
   return {
     getVisualization: new GetVisualization(repo),
     getDashboardVisualization: new GetDashboardVisualization(repo),
-    getMetricTrend: new GetMetricTrendWrapper(),
+    // wired and ready; endpoint not yet exposed via router
+    getMetricTrend: new GetMetricTrend(metricAccess, trendRepo),
   };
 };

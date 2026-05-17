@@ -1,6 +1,9 @@
-import { MetricSettings } from "../persistence/models/metric-settings.sequelize.js";
+import { MetricSettings } from "../models/metric-settings.sequelize.js";
 import { MetricSettingsDomain } from "@/types/domain/metric-settings.domain.js";
-import { DisplayOptionsDTO, MetricSettingsResponseDTO } from "../http/dto.js";
+import {
+  DisplayOptionsDTO,
+  MetricSettingsResponseDTO,
+} from "../../http/dto.js";
 
 export const toDomainMetricSettings = (
   settings: MetricSettings,

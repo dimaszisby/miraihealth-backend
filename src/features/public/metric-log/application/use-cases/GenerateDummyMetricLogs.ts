@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { models } from "@/infrastructure/db/models.js";
-import { MetricAccessPort } from "../ports/MetricAccessPort.js";
+import type { MetricAccessPort } from "@/features/public/metric/application/ports/MetricAccessPort.js";
 import { CachePort } from "../ports/CachePort.js";
 import type { MessageQueuePort } from "@/shared/application/ports/MessageQueuePort.js";
 import {

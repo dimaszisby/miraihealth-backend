@@ -3,10 +3,7 @@ import AppError from "@/utils/AppError.js";
 import { successResponse } from "@/utils/response-formatter.js";
 import catchAsync from "@/utils/catch-async.js";
 import { AuthRequest } from "@/types/request.context.js";
-import {
-  toMetricLogListResponseDTO,
-  toMetricLogResponseDTO,
-} from "@/utils/mappers/metric-log.mapper.js";
+import { toMetricLogListResponseDTO, toMetricLogResponseDTO } from "./dto.js";
 import {
   createMetricLogSchema,
   deleteMetricLogSchema,

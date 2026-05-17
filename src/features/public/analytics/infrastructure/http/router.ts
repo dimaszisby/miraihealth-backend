@@ -5,7 +5,7 @@ import {
 } from "./controller.js";
 import { authMiddleware } from "@/features/auth/infrastructure/http/authMiddleware.js";
 import { validate } from "@/shared/middleware/validation.js";
-import { getDashboardVizSchema, getVisualizationSchema } from "./validators.js";
+import { getDashboardVizSchema, getVisualizationSchema } from "./schema.zod.js";
 import catchAsync from "@/utils/catch-async.js";
 import { analyticsRateLimiter } from "@/shared/middleware/rate-limiter.js";
 import { methodNotAllowed } from "@/shared/middleware/method-guard.js";

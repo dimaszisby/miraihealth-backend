@@ -7,7 +7,7 @@ import { assertAuthenticated } from "@/utils/auth-guards.js";
 import {
   toDisplayOptionsResponseDTO,
   toMetricSettingsResponseDTO,
-} from "../mappers/MetricSettingsMapper.js";
+} from "../persistence/mappers/MetricSettingsMapper.js";
 import {
   createMetricSettingsSchema,
   deleteMetricSettingsSchema,
