@@ -1,18 +1,19 @@
 import { env } from "../config/envManager.js";
 import jwt from "jsonwebtoken";
-import type { UserInstance } from "@/features/auth/infrastructure/persistence/models/user.sequelize.js";
 
-type TokenSubject = Pick<UserInstance, "id" | "email">;
+type TokenSubject = {
+  id: string;
+  email: string;
+  organizationId?: string;
+};
 
-/**
- * * Generate JWT Token
- * @param user - Authenticated user object
- * @returns {string} JWT token
- */
 export const tokenGenerator = (user: TokenSubject): string => {
-  return jwt.sign(
-    { id: user.id, email: user.email },
-    env.JWT_SECRET as string,
-    { expiresIn: "7d" },
-  );
+  const payload: Record<string, string> = {
+    id: user.id,
+    email: user.email,
+  };
+  if (user.organizationId) {
+    payload.organizationId = user.organizationId;
+  }
+  return jwt.sign(payload, env.JWT_SECRET as string, { expiresIn: "7d" });
 };

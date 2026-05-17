@@ -15,7 +15,6 @@ export type UserOverrides = Partial<{
   email: string;
   username: string;
   password: string;
-  role: "user" | "admin";
   isPublicProfile: boolean;
 }>;
 
@@ -26,7 +25,6 @@ export async function createUserRow(overrides: UserOverrides = {}) {
     email: overrides.email ?? `${uniqueSuffix()}@example.com`,
     username: overrides.username ?? `user-${uniqueSuffix()}`,
     password: overrides.password ?? "hash",
-    role: overrides.role ?? "user",
     isPublicProfile: overrides.isPublicProfile ?? true,
   });
 

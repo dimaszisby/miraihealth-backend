@@ -30,12 +30,6 @@ export interface UserDomain {
   readonly email: string;
 
   /**
-   * @property {'user' | 'admin'} role - The assigned role determining user permissions.
-   * @readonly
-   */
-  readonly role: "user" | "admin";
-
-  /**
    * @property {boolean} isPublicProfile - Indicates if the user's profile is publicly visible.
    * @readonly
    */

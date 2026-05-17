@@ -22,7 +22,6 @@ async function createOrgWithUser(orgId: string) {
     email: `${uniqueSuffix()}@test.com`,
     username: `user-${uniqueSuffix()}`,
     password: "hash",
-    role: "user",
     isPublicProfile: true,
   });
   await models.Membership.create({

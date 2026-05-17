@@ -1,5 +1,8 @@
 import { models } from "@/infrastructure/db/models.js";
-import { Membership } from "../../domain/entities/Membership.js";
+import {
+  Membership,
+  MembershipRole,
+} from "../../domain/entities/Membership.js";
 import {
   CreateMembershipDTO,
   MembershipRepository,
@@ -76,6 +79,15 @@ export class MembershipRepositorySequelize implements MembershipRepository {
     });
     await row.reload();
     return toDomain(row);
+  }
+
+  async countByOrgAndRole(
+    organizationId: string,
+    role: MembershipRole,
+  ): Promise<number> {
+    return models.Membership.count({
+      where: { organizationId, role, status: "active" },
+    });
   }
 
   async delete(id: string): Promise<void> {

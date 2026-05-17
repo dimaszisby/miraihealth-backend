@@ -116,7 +116,6 @@ async function seedData(transaction: Transaction) {
       email: "contract-primary@lakira.dev",
       username: "contract_primary",
       password: "ContractPrimary!123",
-      role: "user",
       isPublicProfile: true,
       createdAt: now,
       updatedAt: now,
@@ -130,7 +129,6 @@ async function seedData(transaction: Transaction) {
       email: "contract-secondary@lakira.dev",
       username: "contract_secondary",
       password: "ContractSecondary!123",
-      role: "user",
       isPublicProfile: true,
       createdAt: now,
       updatedAt: now,
@@ -905,10 +903,12 @@ async function main() {
   const primaryToken = tokenGenerator({
     id: result.primaryUser.id,
     email: result.primaryUser.email,
+    organizationId: SEED_IDS.primaryOrg,
   });
   const secondaryToken = tokenGenerator({
     id: result.secondaryUser.id,
     email: result.secondaryUser.email,
+    organizationId: SEED_IDS.secondaryOrg,
   });
 
   const output = {

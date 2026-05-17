@@ -11,7 +11,12 @@ import { getOpenApiDocumentation } from "./lib/openapi/openapi-docs.js";
 import logger from "@/utils/logger.js";
 
 // Routes
-import { authRouter } from "./features/shared/auth/index.js";
+import {
+  authRouter,
+  organizationRouter,
+  inviteRouter,
+  membershipRouter,
+} from "./features/shared/auth/index.js";
 import { metricRouter } from "./features/public/metric/index.js";
 import { metricLogRouter } from "./features/public/metric-log/index.js";
 import { metricSettingsRouter } from "./features/public/metric-settings/index.js";
@@ -162,6 +167,9 @@ app.use(globalRateLimiter);
 
 // * Routes
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/organizations", organizationRouter);
+app.use("/api/v1/invites", inviteRouter);
+app.use("/api/v1/memberships", membershipRouter);
 app.use("/api/v1/metrics", metricRouter);
 app.use("/api/v1/metric-categories", metricCategoryRouter);
 app.use("/api/v1/metric-settings", metricSettingsRouter);

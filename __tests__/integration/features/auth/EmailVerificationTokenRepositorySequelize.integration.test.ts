@@ -8,7 +8,6 @@ const createUserRow = async (email = "test@example.com") => {
     email,
     username: `user_${Date.now()}_${Math.random().toString(36).slice(2)}`,
     password: "hashed",
-    role: "user",
     isPublicProfile: true,
   });
   await user.reload();
