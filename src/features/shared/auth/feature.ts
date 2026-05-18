@@ -1,4 +1,11 @@
 import { env } from "@/config/envManager.js";
+import { redisClient } from "@/utils/redis-client.js";
+import {
+  checkLockout,
+  recordFailedAttempt,
+  resetLockout,
+  type LockoutRedisClient,
+} from "./infrastructure/http/loginLockout.js";
 import { UserRepositorySequelize } from "./infrastructure/persistence/UserRepositorySequelize.js";
 import { PasswordResetTokenRepositorySequelize } from "./infrastructure/persistence/PasswordResetTokenRepositorySequelize.js";
 import { RefreshTokenRepositorySequelize } from "./infrastructure/persistence/RefreshTokenRepositorySequelize.js";
@@ -47,9 +54,18 @@ const buildEmailSender = (): EmailSender => {
 
 export type AuthFeatureOverrides = {
   emailSender?: EmailSender;
+  lockoutRedis?: LockoutRedisClient;
 };
 
 export const buildAuthFeature = (overrides: AuthFeatureOverrides = {}) => {
+  const lockoutRedis: LockoutRedisClient =
+    overrides.lockoutRedis ?? (redisClient as unknown as LockoutRedisClient);
+  const loginLockout = {
+    check: (email: string) => checkLockout(email, lockoutRedis),
+    recordFailedAttempt: (email: string) =>
+      recordFailedAttempt(email, lockoutRedis),
+    reset: (email: string) => resetLockout(email, lockoutRedis),
+  };
   const repo = new UserRepositorySequelize();
   const orgRepo = new OrganizationRepositorySequelize();
   const membershipRepo = new MembershipRepositorySequelize();
@@ -143,5 +159,6 @@ export const buildAuthFeature = (overrides: AuthFeatureOverrides = {}) => {
     removeMembership: new RemoveMembership(membershipRepo),
     changeMemberRole: new ChangeMemberRole(membershipRepo),
     listOrganizationMembers: new ListOrganizationMembers(membershipRepo, repo),
+    loginLockout,
   };
 };

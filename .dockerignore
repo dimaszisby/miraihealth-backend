@@ -2,12 +2,13 @@ node_modules/
 dist/
 build/
 .git/
+.github/
 .vscode/
 .venv-schemathesis/
 .claude/
 documents/
-npm-debug.log
-yarn-debug.log
-yarn-error.log
+__tests__/
+coverage/
+*.log
 .env
 .env.*

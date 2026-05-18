@@ -104,5 +104,12 @@ export default {
         },
       },
     },
+    {
+      ...projectBase,
+      displayName: "e2e",
+      testMatch: ["<rootDir>/__tests__/e2e/**/*.test.ts"],
+      setupFilesAfterEnv: ["<rootDir>/jest.setup.e2e.ts"],
+      testTimeout: 30_000,
+    },
   ],
 };

@@ -32,8 +32,13 @@ const switchOrganizationExecute: AsyncMock = jest.fn();
 
 const assertAuthenticatedMock = jest.fn();
 
-jest.unstable_mockModule("@/utils/auth-guards", () => ({
-  __esModule: true,
+const checkLockoutMock: AsyncMock = jest.fn(async () => undefined) as AsyncMock;
+const recordFailedAttemptMock: AsyncMock = jest.fn(
+  async () => undefined,
+) as AsyncMock;
+const resetLockoutMock: AsyncMock = jest.fn(async () => undefined) as AsyncMock;
+
+jest.mock("@/utils/auth-guards.js", () => ({
   assertAuthenticated: assertAuthenticatedMock,
 }));
 
@@ -62,6 +67,11 @@ const buildFeatureMocks = (): AuthFeature =>
     requestEmailVerification: { execute: requestEmailVerificationExecute },
     verifyEmail: { execute: verifyEmailExecute },
     switchOrganization: { execute: switchOrganizationExecute },
+    loginLockout: {
+      check: checkLockoutMock,
+      recordFailedAttempt: recordFailedAttemptMock,
+      reset: resetLockoutMock,
+    },
   }) as unknown as AuthFeature;
 
 const res = () =>
@@ -70,6 +80,7 @@ const res = () =>
     json: jest.fn(),
     cookie: jest.fn(),
     clearCookie: jest.fn(),
+    setHeader: jest.fn(),
   }) as unknown as Response;
 
 const next: NextFunction = jest.fn();
@@ -154,6 +165,7 @@ describe("Auth HTTP controller", () => {
 
     const response = res();
     await login(req, response, next);
+    await new Promise((resolve) => setImmediate(resolve));
 
     expect(loginExecute).toHaveBeenCalledWith({
       email: "user@example.com",
@@ -168,6 +180,52 @@ describe("Auth HTTP controller", () => {
         data: expect.objectContaining({ token: "jwt" }),
       }),
     );
+    expect(checkLockoutMock).toHaveBeenCalledWith("user@example.com");
+    expect(resetLockoutMock).toHaveBeenCalledWith("user@example.com");
+    expect(recordFailedAttemptMock).not.toHaveBeenCalled();
+  });
+
+  it("records a failed attempt when login throws 401", async () => {
+    const { default: AppError } = await import("@/utils/AppError.js");
+    loginExecute.mockRejectedValue(new AppError("Invalid credentials", 401));
+
+    const req = {
+      body: { email: "user@example.com", password: "Password123!" },
+      headers: { "user-agent": "test" },
+      ip: "127.0.0.1",
+    } as unknown as AuthRequest;
+
+    const response = res();
+    const errorNext = jest.fn();
+    await login(req, response, errorNext);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(recordFailedAttemptMock).toHaveBeenCalledWith("user@example.com");
+    expect(resetLockoutMock).not.toHaveBeenCalled();
+    expect(errorNext).toHaveBeenCalledWith(expect.any(Error));
+  });
+
+  it("sets Retry-After header and skips use case when lockout returns 429", async () => {
+    const { default: AppError } = await import("@/utils/AppError.js");
+    checkLockoutMock.mockRejectedValueOnce(
+      new AppError("Too many failed login attempts", 429),
+    );
+
+    const req = {
+      body: { email: "victim@example.com", password: "Password123!" },
+      headers: { "user-agent": "test" },
+      ip: "127.0.0.1",
+    } as unknown as AuthRequest;
+
+    const response = res();
+    const errorNext = jest.fn();
+    await login(req, response, errorNext);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(response.setHeader).toHaveBeenCalledWith("Retry-After", "900");
+    expect(loginExecute).not.toHaveBeenCalled();
+    expect(recordFailedAttemptMock).not.toHaveBeenCalled();
+    expect(errorNext).toHaveBeenCalledWith(expect.any(Error));
   });
 
   it("returns the authenticated profile", async () => {

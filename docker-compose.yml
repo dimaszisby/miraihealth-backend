@@ -80,7 +80,7 @@ services:
   app: # Node.js backend application service
     build: # Define build context and Dockerfile
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: node_app
     restart: always # Restart the container automatically if it fails
     env_file: # Load environment variables from .env.development

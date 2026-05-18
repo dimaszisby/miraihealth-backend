@@ -2,7 +2,7 @@
 
 ---
 
-## ADR-001 — Account lockout: Redis sliding window vs express-brute (Proposed 2026-05-03)
+## ADR-001 — Account lockout: Redis sliding window vs express-brute (Accepted 2026-05-18)
 
 **Context:** The audit flagged no per-account brute-force protection ([P1-4.4]). The existing rate limiters (global, user, analytics) are IP-based or user-ID-based via `express-rate-limit` + Redis. A per-email lockout is a different concern — it targets credential-stuffing attacks that stay under the per-IP limit by distributing across IPs.
 
@@ -14,7 +14,9 @@
 4. Reset on success (DEL key).
 5. Graceful degradation: if Redis is unreachable, log a warning and allow the login attempt (don't block auth because the lockout store is down).
 
-**Status:** Proposed.
+**Status:** Accepted (2026-05-18).
+
+**Implementation:** `src/features/shared/auth/infrastructure/http/loginLockout.ts` — `checkLockout` / `recordFailedAttempt` / `resetLockout`, wired into the login controller. Unit coverage in `__tests__/unit/features/auth/infrastructure/http/loginLockout.test.ts`; integration coverage (gated by `ENABLE_REDIS_INTEGRATION`) in `__tests__/integration/api/auth-lockout.test.ts`.
 
 **Options considered:**
 
@@ -34,7 +36,7 @@
 
 ---
 
-## ADR-002 — e2e Jest project: add vs remove the broken script (Proposed 2026-05-03)
+## ADR-002 — e2e Jest project: add vs remove the broken script (Accepted 2026-05-18)
 
 **Context:** `package.json` declares `npm run test:e2e` but `jest.config.mjs` has no `e2e` project and no `__tests__/e2e/` directory exists. The script fails today.
 
@@ -45,7 +47,9 @@
 3. Start with a single placeholder `auth-flow.e2e.test.ts` that boots the full Express app via `supertest`.
 4. e2e tests run in CI but do NOT block the `test` script (`npm test` stays unit + integration only). `npm run test:e2e` is opt-in.
 
-**Status:** Proposed.
+**Status:** Accepted (2026-05-18).
+
+**Implementation:** Third Jest project added in `jest.config.mjs` with `setupFilesAfterEnv: ["<rootDir>/jest.setup.e2e.ts"]` (no per-test truncation — e2e owns its data). First spec lives at `__tests__/e2e/auth-flow.e2e.test.ts` covering register → login → protected endpoint → logout.
 
 **Options considered:**
 
