@@ -7,6 +7,12 @@
 - Use plan mode for verification steps, not just building
 - Write detailed specs upfront to reduce ambiguity
 
+## Branching Convention
+
+- **Always create new branches off `dev`**, never off `main`
+- Branch promotion order: `feature/* → dev → staging → main`
+- Every subagent prompt for implementation must instruct: `branch off dev`
+
 ## Subagent Strategy
 
 - Use subagents liberally to keep main context window clean

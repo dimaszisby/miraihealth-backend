@@ -41,27 +41,47 @@ if [[ -z "$NEW_NAME" ]]; then
   exit 1
 fi
 
+# Reject anything that isn't a safe slug. Prevents sed-delimiter injection
+# (e.g. names containing '/' or '|') and downstream shell-quoting hazards.
+if ! [[ "$NEW_NAME" =~ ^[a-z][a-z0-9-]*$ ]]; then
+  echo "Error: --name must match ^[a-z][a-z0-9-]*$ (lowercase letters, digits, hyphens; must start with a letter)." >&2
+  echo "Got: '$NEW_NAME'" >&2
+  exit 1
+fi
+
 # Derive short name (strip trailing -backend, -api, etc.)
 SHORT_NAME="${NEW_NAME%%-backend}"
 SHORT_NAME="${SHORT_NAME%%-api}"
 
+# Derive Title-Cased display name from short name (matches src/config/app-name.ts toTitleCase).
+# e.g. "my-app" → "My App", "lakira" → "Lakira"
+DISPLAY_NAME=""
+IFS='-' read -ra _PARTS <<< "$SHORT_NAME"
+for _p in "${_PARTS[@]}"; do
+  [[ -z "$_p" ]] && continue
+  _head="$(printf '%s' "${_p:0:1}" | tr '[:lower:]' '[:upper:]')"
+  DISPLAY_NAME+="${_head}${_p:1} "
+done
+DISPLAY_NAME="${DISPLAY_NAME% }"
+
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # ---------------------------------------------------------------------------
-# Detect sed flavour (BSD vs GNU)
+# Detect sed flavour (BSD vs GNU) and build an argument array.
+# Using an array (not eval) so patterns containing spaces work correctly.
 # ---------------------------------------------------------------------------
 if sed --version 2>/dev/null | grep -q GNU; then
-  SED="sed -i"
+  SED_INPLACE=(sed -i)
 else
-  # macOS / BSD sed requires an extension argument
-  SED="sed -i ''"
+  # macOS / BSD sed requires an empty extension argument
+  SED_INPLACE=(sed -i '')
 fi
 
 do_sed() {
   local pattern="$1"
   local file="$2"
   if [[ -f "$file" ]]; then
-    eval $SED "$pattern" "$file"
+    "${SED_INPLACE[@]}" "$pattern" "$file"
   fi
 }
 
@@ -83,6 +103,7 @@ FILES_FULL=(
   "$REPO_ROOT/package.json"
   "$REPO_ROOT/package-lock.json"
   "$REPO_ROOT/docker-compose.test.yml"
+  "$REPO_ROOT/.env.example"
   "$REPO_ROOT/.github/workflows/backend-ci.yml"
   "$REPO_ROOT/.github/workflows/backend-prd-drift-warning.yml"
   "$REPO_ROOT/.github/workflows/promote-dev-to-staging.yml"
@@ -94,19 +115,26 @@ for f in "${FILES_FULL[@]}"; do
 done
 
 # ---------------------------------------------------------------------------
-# 2. Replace "lakira" → SHORT_NAME in DB names, CI refs, queue topology refs
+# 2. Replace "lakira" → SHORT_NAME in DB names, CI refs, queue topology refs,
+#    and Title-cased "Lakira" → DISPLAY_NAME in human-readable workflow strings.
 #    (Only in config/CI files — runtime src/ uses app-name.ts)
 # ---------------------------------------------------------------------------
 FILES_SHORT=(
   "$REPO_ROOT/docker-compose.test.yml"
   "$REPO_ROOT/.github/workflows/backend-ci.yml"
+  "$REPO_ROOT/.github/workflows/backend-prd-drift-warning.yml"
+  "$REPO_ROOT/.github/workflows/promote-dev-to-staging.yml"
+  "$REPO_ROOT/scripts/test-ci.sh"
   "$REPO_ROOT/.env.example"
 )
 
 for f in "${FILES_SHORT[@]}"; do
-  # Only replace "lakira" that appears as a word-boundary prefix in DB/queue context
-  do_sed "s/lakira_/${SHORT_NAME}_/g" "$f"
-  do_sed "s/lakira\./${SHORT_NAME}./g" "$f"
+  # DB/queue/identifier slots (case-insensitive prefix match)
+  do_sed "s/[Ll]akira_/${SHORT_NAME}_/g" "$f"
+  do_sed "s/[Ll]akira\./${SHORT_NAME}./g" "$f"
+  # Human-readable Title Case in workflow names, badge text, etc.
+  do_sed "s/Lakira Backend/${DISPLAY_NAME} Backend/g" "$f"
+  do_sed "s/Lakira/${DISPLAY_NAME}/g" "$f"
 done
 
 # ---------------------------------------------------------------------------

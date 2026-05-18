@@ -29,7 +29,7 @@
 - [x] Script drops `FORKED-FROM.md` with upstream commit SHA.
 - [x] Script is idempotent (safe to run twice).
 - [x] Add "Forking" section to `README.md`.
-- [ ] Verify: `npm run typecheck && npm run lint` pass in a temp worktree after running the script.
+- [x] Verify: `npm run typecheck && npm run lint` pass in a temp worktree after running the script.
 
 ## Phase C — CONTRIBUTING.md
 
