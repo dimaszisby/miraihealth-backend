@@ -3,7 +3,7 @@ import {
   extendZodWithOpenApi,
 } from "@asteasolutions/zod-to-openapi";
 import { z } from "zod";
-import { APP_NAME } from "@/config/app-name.js";
+import { APP_DISPLAY_NAME } from "@/config/app-name.js";
 
 extendZodWithOpenApi(z);
 
@@ -16,9 +16,9 @@ export const registerPath = registry.registerPath.bind(registry);
 export const openApiDocument = {
   openapi: "3.1.0",
   info: {
-    title: `${APP_NAME} API`,
+    title: `${APP_DISPLAY_NAME} API`,
     version: "1.0.0",
-    description: `API documentation for the ${APP_NAME} application.`,
+    description: `API documentation for the ${APP_DISPLAY_NAME} application.`,
   },
   servers: [
     {
