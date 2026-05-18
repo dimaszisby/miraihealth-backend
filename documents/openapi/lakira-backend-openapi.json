@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Lakira Backend API",
+    "title": "Lakira API",
     "version": "1.0.0",
-    "description": "API documentation for the Lakira Backend application."
+    "description": "API documentation for the Lakira application."
   },
   "servers": [
     {

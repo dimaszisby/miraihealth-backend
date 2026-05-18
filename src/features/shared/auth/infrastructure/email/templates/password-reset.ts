@@ -1,3 +1,5 @@
+import { APP_DISPLAY_NAME } from "@/config/app-name.js";
+
 const escapeHtml = (value: string): string =>
   value
     .replace(/&/g, "&amp;")
@@ -17,25 +19,25 @@ export const buildPasswordResetEmail = (
   expiresInMinutes: number,
 ): PasswordResetEmail => {
   const safeLink = escapeHtml(resetLink);
-  const subject = "Reset your Lakira password";
+  const subject = `Reset your ${APP_DISPLAY_NAME} password`;
   const text = [
     "Hi,",
     "",
-    "We received a request to reset your Lakira password.",
+    `We received a request to reset your ${APP_DISPLAY_NAME} password.`,
     `Open the link below within ${expiresInMinutes} minutes to choose a new password:`,
     "",
     resetLink,
     "",
     "If you didn't request a password reset, you can ignore this email — your password will stay the same.",
     "",
-    "— The Lakira team",
+    `— The ${APP_DISPLAY_NAME} team`,
   ].join("\n");
 
   const html = `<!doctype html>
 <html lang="en">
   <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #1f2937; line-height: 1.5;">
     <p>Hi,</p>
-    <p>We received a request to reset your Lakira password.</p>
+    <p>We received a request to reset your ${APP_DISPLAY_NAME} password.</p>
     <p>Click the button below within <strong>${expiresInMinutes} minutes</strong> to choose a new password:</p>
     <p>
       <a href="${safeLink}" style="display:inline-block;padding:10px 18px;background:#2563eb;color:#ffffff;border-radius:6px;text-decoration:none;">Reset password</a>
@@ -43,7 +45,7 @@ export const buildPasswordResetEmail = (
     <p>If the button doesn't work, copy this link into your browser:</p>
     <p><a href="${safeLink}">${safeLink}</a></p>
     <p>If you didn't request a password reset, you can ignore this email — your password will stay the same.</p>
-    <p>— The Lakira team</p>
+    <p>— The ${APP_DISPLAY_NAME} team</p>
   </body>
 </html>`;
 

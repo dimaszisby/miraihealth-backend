@@ -195,3 +195,5 @@ The PR title is `chore: cheap-P0 sweep (LICENSE, README, .env.example, trust-pro
 - `audit-2026-05-01.md` § [P0-6.1], [P0-6.2], [P0-11.1], [P0-4.1]
 - `iteration-plan.md` § Phase 0
 - After merge, this entry will be amended with: `Commit: <sha>`, `PR: <link>`.
+
+**Completed:** P0-4.1 implemented (TRUST_PROXY env var + HTTPS redirect). P0-11.1 (LICENSE), P0-6.2 (README.md), P0-6.1 (.env.example) were fulfilled by earlier phases. PR: (to be filled in by user after merge).

@@ -14,6 +14,11 @@ export class RedisCacheAdapter implements CachePort {
     if (!this.isEnabled()) return;
     await redisClient.set(key, JSON.stringify(value), { EX: ttlSec });
   }
+  async delete(key: string) {
+    if (!this.isEnabled()) return;
+    await redisClient.del(key);
+  }
+
   async delByPattern(pattern: string) {
     if (!this.isEnabled()) return;
     await invalidateCacheByPattern(pattern);

@@ -27,6 +27,11 @@ export class MetricCategoryCacheRedis implements CachePort {
     );
   }
 
+  async delete(key: string): Promise<void> {
+    if (!this.isEnabled()) return;
+    await redisClient.del(key);
+  }
+
   async delByPattern(pattern: string): Promise<void> {
     if (!this.isEnabled()) return;
     try {

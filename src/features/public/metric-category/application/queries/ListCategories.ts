@@ -30,7 +30,9 @@ export class ListCategories {
       ],
     });
     if (this.cache.isEnabled()) {
-      const cached = await this.cache.get<ListResult<MetricCategory>>(key);
+      const cached = (await this.cache.get(
+        key,
+      )) as ListResult<MetricCategory> | null;
       if (cached) return cached;
     }
     const page = await this.repo.list(q);

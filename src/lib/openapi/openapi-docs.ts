@@ -2,6 +2,7 @@ import { OpenApiGeneratorV31 } from "@asteasolutions/zod-to-openapi";
 import type { ComponentsObject } from "openapi3-ts/oas31";
 import { z } from "zod";
 import { openApiDocument, registry } from "./openapi-config.js";
+import { APP_SHORT_NAME } from "@/config/app-name.js";
 import {
   LoginRequestSchema,
   LoginResponseSchema,
@@ -235,12 +236,12 @@ registry.registerPath({
   tags: ["Auth"],
   summary: "Rotate refresh token and get a new access token",
   description:
-    "Reads the `lakira_refresh` HttpOnly cookie. " +
+    `Reads the \`${APP_SHORT_NAME}_refresh\` HttpOnly cookie. ` +
     "Rotates the refresh token (revokes old, issues new) and returns a fresh access token. " +
     "If the presented token was already revoked, the entire token family is invalidated (reuse detection).",
   request: {
     cookies: z.object({
-      lakira_refresh: z.string().openapi({
+      [`${APP_SHORT_NAME}_refresh`]: z.string().openapi({
         description: "Opaque refresh token set by login",
         example: "dGVzdC1yZWZyZXNoLXRva2Vu",
       }),

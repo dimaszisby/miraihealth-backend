@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { env } from "@/config/envManager.js";
+import { APP_SHORT_NAME } from "@/config/app-name.js";
 import { successResponse } from "@/utils/response-formatter.js";
 import catchAsync from "@/utils/catch-async.js";
 import AppError from "@/utils/AppError.js";
@@ -27,7 +28,7 @@ export const overrideAuthFeatureForTest = (custom: AuthFeature) => {
   feature = custom;
 };
 
-const REFRESH_COOKIE_NAME = "lakira_refresh";
+const REFRESH_COOKIE_NAME = `${APP_SHORT_NAME}_refresh`;
 const REFRESH_COOKIE_PATH = "/api/v1/auth/refresh";
 
 const setRefreshCookie = (res: Response, rawToken: string) => {
