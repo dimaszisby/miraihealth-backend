@@ -1,9 +1,12 @@
 import { api, buildUserPayload, authHeader } from "../helpers/test-utils.js";
+import { APP_SHORT_NAME } from "@/config/app-name.js";
+
+const REFRESH_COOKIE_NAME = `${APP_SHORT_NAME}_refresh`;
 
 const extractRefreshCookie = (res: any): string | undefined => {
   const cookies: string[] = res.headers["set-cookie"] ?? [];
   const match = cookies
-    .map((c: string) => c.match(/^lakira_refresh=([^;]+)/))
+    .map((c: string) => c.match(new RegExp(`^${REFRESH_COOKIE_NAME}=([^;]+)`)))
     .find(Boolean);
   return match?.[1];
 };
@@ -34,7 +37,7 @@ describe("Auth Refresh Token Flow", () => {
 
     const refreshRes = await api
       .post("/api/v1/auth/refresh")
-      .set("Cookie", `lakira_refresh=${cookie}`);
+      .set("Cookie", `${REFRESH_COOKIE_NAME}=${cookie}`);
 
     expect(refreshRes.status).toBe(200);
     expect(refreshRes.body.data).toHaveProperty("token");
@@ -51,18 +54,18 @@ describe("Auth Refresh Token Flow", () => {
 
     const firstRefresh = await api
       .post("/api/v1/auth/refresh")
-      .set("Cookie", `lakira_refresh=${originalCookie}`);
+      .set("Cookie", `${REFRESH_COOKIE_NAME}=${originalCookie}`);
     expect(firstRefresh.status).toBe(200);
 
     const reuseRes = await api
       .post("/api/v1/auth/refresh")
-      .set("Cookie", `lakira_refresh=${originalCookie}`);
+      .set("Cookie", `${REFRESH_COOKIE_NAME}=${originalCookie}`);
     expect(reuseRes.status).toBe(401);
 
     const newCookie = extractRefreshCookie(firstRefresh)!;
     const familyRevokedRes = await api
       .post("/api/v1/auth/refresh")
-      .set("Cookie", `lakira_refresh=${newCookie}`);
+      .set("Cookie", `${REFRESH_COOKIE_NAME}=${newCookie}`);
     expect(familyRevokedRes.status).toBe(401);
   });
 
@@ -72,13 +75,13 @@ describe("Auth Refresh Token Flow", () => {
 
     const logoutRes = await api
       .post("/api/v1/auth/logout")
-      .set("Cookie", `lakira_refresh=${cookie}`);
+      .set("Cookie", `${REFRESH_COOKIE_NAME}=${cookie}`);
     expect(logoutRes.status).toBe(200);
     expect(logoutRes.body.message).toBe("Logged out successfully");
 
     const refreshAfterLogout = await api
       .post("/api/v1/auth/refresh")
-      .set("Cookie", `lakira_refresh=${cookie}`);
+      .set("Cookie", `${REFRESH_COOKIE_NAME}=${cookie}`);
     expect(refreshAfterLogout.status).toBe(401);
   });
 

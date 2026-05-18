@@ -235,6 +235,7 @@ const envSchema = z.object({
     .default("0"),
 
   // HTTP
+  TRUST_PROXY: z.coerce.number().optional(),
   REQUEST_BODY_LIMIT: z.string().default("1mb"),
   SWAGGER_REQUIRE_AUTH: z
     .string()

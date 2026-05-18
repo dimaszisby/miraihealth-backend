@@ -9,6 +9,7 @@ import http from "http";
 import swaggerUi from "swagger-ui-express";
 import { getOpenApiDocumentation } from "./lib/openapi/openapi-docs.js";
 import logger from "@/utils/logger.js";
+import { APP_NAME } from "@/config/app-name.js";
 
 // Routes
 import {
@@ -91,7 +92,7 @@ export const serverReady = serverBootstrapPromise;
 // * Environment Variables
 
 const app: Application = express();
-app.set("trust proxy", 1);
+app.set("trust proxy", env.TRUST_PROXY ?? 1);
 
 // * Middlewares
 app.use(
@@ -109,6 +110,19 @@ app.use(requestIdMiddleware);
 
 // Security Enhancements
 app.use(helmet()); // Secure HTTP headers
+
+// HTTPS redirect — after helmet() so the 301 response includes HSTS and other security headers
+if (env.NODE_ENV === "production") {
+  app.use((req, res, next) => {
+    if (!req.secure && req.get("x-forwarded-proto") !== "https") {
+      return res.redirect(
+        301,
+        `https://${req.headers.host ?? ""}${req.originalUrl}`,
+      );
+    }
+    next();
+  });
+}
 app.use(xssClean()); // Prevent XSS attacks
 app.use(hpp()); // Prevent HTTP Parameter Pollution
 
@@ -230,7 +244,7 @@ const startServer = async () => {
     // Start HTTP Server
     const PORT = env.PORT || 5000;
     server = app.listen(PORT, () => {
-      logger.info(`[SERVER] Lakira backend running on port ${PORT}`);
+      logger.info(`[SERVER] ${APP_NAME} running on port ${PORT}`);
     });
   } catch (error) {
     logger.error("[SERVER ERROR] Server initialization failed:", error);

@@ -3,6 +3,7 @@ import {
   extendZodWithOpenApi,
 } from "@asteasolutions/zod-to-openapi";
 import { z } from "zod";
+import { APP_NAME } from "@/config/app-name.js";
 
 extendZodWithOpenApi(z);
 
@@ -15,9 +16,9 @@ export const registerPath = registry.registerPath.bind(registry);
 export const openApiDocument = {
   openapi: "3.1.0",
   info: {
-    title: "Lakira Backend API",
+    title: `${APP_NAME} API`,
     version: "1.0.0",
-    description: "API documentation for the Lakira Backend application.",
+    description: `API documentation for the ${APP_NAME} application.`,
   },
   servers: [
     {

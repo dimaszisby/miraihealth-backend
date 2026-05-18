@@ -1,13 +1,15 @@
 import type { Channel } from "amqplib";
+import { APP_SHORT_NAME } from "@/config/app-name.js";
+import logger from "@/utils/logger.js";
 
 export const EXCHANGES = {
-  JOBS: "lakira.jobs",
-  PARKING: "lakira.jobs.parking",
+  JOBS: `${APP_SHORT_NAME}.jobs`,
+  PARKING: `${APP_SHORT_NAME}.jobs.parking`,
 } as const;
 
 export const QUEUES = {
-  METRIC_LOG_GENERATE_DUMMY: "lakira.metric-log.generate-dummy",
-  PARKING: "lakira.jobs.parking.queue",
+  METRIC_LOG_GENERATE_DUMMY: `${APP_SHORT_NAME}.metric-log.generate-dummy`,
+  PARKING: `${APP_SHORT_NAME}.jobs.parking.queue`,
 } as const;
 
 export const ROUTING_KEYS = {
@@ -15,6 +17,7 @@ export const ROUTING_KEYS = {
 } as const;
 
 export const assertTopology = async (channel: Channel): Promise<void> => {
+  logger.info(`[QUEUE] Asserting topology with prefix: ${APP_SHORT_NAME}`);
   await channel.assertExchange(EXCHANGES.JOBS, "topic", { durable: true });
   await channel.assertExchange(EXCHANGES.PARKING, "topic", { durable: true });
 

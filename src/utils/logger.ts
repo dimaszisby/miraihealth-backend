@@ -1,6 +1,7 @@
 import { createLogger, format, transports, Logger } from "winston";
 import { SENSITIVE_KEY_PATTERN } from "../config/sensitive-keys.js";
 import { requestIdStorage } from "@/shared/middleware/request-id.js";
+import { APP_NAME } from "@/config/app-name.js";
 
 const { combine, timestamp, printf, errors, colorize, json, splat } = format;
 const nodeEnv = process.env.NODE_ENV || "development";
@@ -60,7 +61,7 @@ const logger: Logger = createLogger({
     redactSensitive(),
     json(),
   ),
-  defaultMeta: { service: "lakira-backend" },
+  defaultMeta: { service: APP_NAME },
   transports: [
     new transports.File({ filename: "logs/error.log", level: "error" }),
     new transports.File({ filename: "logs/combined.log" }),
