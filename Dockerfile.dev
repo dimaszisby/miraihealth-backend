@@ -1,0 +1,19 @@
+# Dockerfile.dev — local-only development image used by docker-compose.yml.
+# The production `Dockerfile` is a hardened multi-stage build (dumb-init,
+# USER node, no devDependencies). This image trades that hardening for a
+# faster local dev loop: it installs devDependencies, runs `npm run dev`
+# (tsx watch), and keeps source bind-mounted via docker-compose.
+#
+# Not used in CI/production. If you change the build flow, edit `Dockerfile`,
+# not this file.
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+CMD ["npm", "run", "dev"]

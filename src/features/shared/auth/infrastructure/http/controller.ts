@@ -5,6 +5,7 @@ import { successResponse } from "@/utils/response-formatter.js";
 import catchAsync from "@/utils/catch-async.js";
 import AppError from "@/utils/AppError.js";
 import logger from "@/utils/logger.js";
+import { LOCKOUT_TTL_SECONDS } from "@/features/auth/infrastructure/http/loginLockout.js";
 import { toUserResponseDTO } from "../../infrastructure/mappers/UserMapper.js";
 import { buildAuthFeature } from "../../feature.js";
 import { AuthRequest } from "@/types/request.context.js";
@@ -98,12 +99,32 @@ export const login = catchAsync(async (req: Request, res: Response) => {
   const {
     body: { email, password },
   } = pickLoginUser(req);
-  const result = await feature.loginUser.execute({
-    email,
-    password,
-    userAgent: req.headers["user-agent"] ?? null,
-    ip: req.ip ?? null,
-  });
+
+  try {
+    await feature.loginLockout.check(email);
+  } catch (err) {
+    if (err instanceof AppError && err.statusCode === 429) {
+      res.setHeader("Retry-After", String(LOCKOUT_TTL_SECONDS));
+    }
+    throw err;
+  }
+
+  let result;
+  try {
+    result = await feature.loginUser.execute({
+      email,
+      password,
+      userAgent: req.headers["user-agent"] ?? null,
+      ip: req.ip ?? null,
+    });
+  } catch (err) {
+    if (err instanceof AppError && err.statusCode === 401) {
+      await feature.loginLockout.recordFailedAttempt(email);
+    }
+    throw err;
+  }
+
+  await feature.loginLockout.reset(email);
 
   setRefreshCookie(res, result.rawRefreshToken);
 
