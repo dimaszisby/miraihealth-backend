@@ -93,7 +93,7 @@ ADR-style entries scoped to the observability kit. Cross-kit decisions live in `
 
 **Context:** The 2026-05-20 re-audit (`documents/development/architecture/saas-readiness/audit-2026-05-20.md` § [P1-4.2]) flagged six analytics files still reading `process.env.VIZ_*` and `process.env.DEFAULT_TZ` directly with inline `Number(...) ?? <default>` fallbacks. This bypassed the Zod-validated singleton (`src/config/envManager.ts`) — defaults were duplicated at every call site, types were `string | undefined` instead of parsed numbers, and the values escaped the masked snapshot / validation flow used everywhere else. It was the single P1 keeping Category 4 (Security) below the 80% bar required by ADR-001's fork-ready exit criteria.
 
-**Decision:** Add seven entries to `src/config/zodEnv.ts` under a new "Analytics / Visualization" section — `VIZ_MAX_BUCKETS` (400), `VIZ_DASH_MAX_METRICS` (24), `VIZ_DEFAULT_TTL_SEC` (120), `VIZ_CACHE_MAX_AGE_SEC` (60), `VIZ_CACHE_STALE_SEC` (30), `VIZ_FALLBACK_GUARD_BUCKETS` (96), and `DEFAULT_TZ` ("Asia/Jakarta"). Numerics use `z.coerce.number().int().positive().default(...)`; `DEFAULT_TZ` uses `z.string().default(...)`. Replace all six analytics `process.env.X` reads with `env.X` from `@/config/envManager.js`. Defaults preserve the previous inline fallbacks exactly, so runtime behaviour is unchanged.
+**Decision:** Add seven entries to `src/config/zodEnv.ts` under a new "Analytics / Visualization" section — `VIZ_MAX_BUCKETS` (400), `VIZ_DASH_MAX_METRICS` (24), `VIZ_DEFAULT_TTL_SEC` (120), `VIZ_CACHE_MAX_AGE_SEC` (60), `VIZ_CACHE_STALE_SEC` (30), `VIZ_FALLBACK_GUARD_BUCKETS` (96), and `DEFAULT_TZ` ("Asia/Jakarta"). Numerics use `z.coerce.number().int().positive().default(...)`; `DEFAULT_TZ` uses `z.string().default(...)`. Route all six analytics call sites through `envManager`: `GetDashboardVisualization.ts` calls `loadEnvOrExit()` inside `execute()` (required so the existing `withTestEnv` unit test can override `VIZ_DASH_MAX_METRICS` at runtime — the module-level `env` singleton in `envManager.ts:114` snapshots at first import and ignores `resetEnvCacheForTesting()`); the remaining five files import the `env` singleton at module top. Defaults preserve the previous inline fallbacks exactly, so runtime behaviour is unchanged.
 
 **Options considered:**
 
@@ -108,8 +108,13 @@ ADR-style entries scoped to the observability kit. Cross-kit decisions live in `
 - `grep -rn 'process\.env\.' src/features/public/analytics/` is now zero — the file boundary becomes part of the contract.
 - Cat 4 in the audit moves from 62.5% to 75%; closes 1 of the remaining 4 P1 gaps.
 
+**Follow-ups (open, non-blocking):**
+
+- Align the five `env`-singleton call sites with `.claude/rules/environment.md` — "Use in code via `const env = loadEnvOrExit(); env.YOUR_VAR`". Files: `GetVisualization.ts`, `VisualizationCacheRedis.ts`, `schema.zod.ts` (the module-top `MAX_BUCKETS` / `DEFAULT_TZ` consts feed Zod schema definitions evaluated at import time — likely needs `.default(() => loadEnvOrExit().DEFAULT_TZ)` and moving the `MAX_BUCKETS` read inside `validateRelativeWindow`), `controller.ts`, `VisualizationReadRepoSequelize.ts`. P1-4.2 audit criterion is already satisfied (zero direct `process.env.*` reads in analytics); this is a project-rule compliance item, not an audit gap. Severity: P3 quality. Risk if deferred: future unit tests on these files that use `withTestEnv` will silently fail to override (the singleton snapshots at first import).
+
 **Links:**
 
 - `documents/development/architecture/saas-readiness/audit-2026-05-20.md` § [P1-4.2]
+- `.claude/rules/environment.md` (project pattern reference for the follow-up)
 - `src/config/zodEnv.ts` (Analytics / Visualization section)
 - `src/features/public/analytics/**` (six call sites)

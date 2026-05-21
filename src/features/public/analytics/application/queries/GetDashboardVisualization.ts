@@ -1,5 +1,5 @@
 import AppError from "@/utils/AppError.js";
-import { env } from "@/config/envManager.js";
+import { loadEnvOrExit } from "@/config/envManager.js";
 import type { FillMode } from "../../domain/types.js";
 import {
   resolveBucket,
@@ -28,6 +28,7 @@ export class GetDashboardVisualization {
   async execute(
     input: GetDashboardVisualizationInput,
   ): Promise<DashboardVizResponse> {
+    const env = loadEnvOrExit();
     const spec = resolveBucket(input.bucket);
     assertBounds(input.startISO, input.endISO, spec, env.VIZ_MAX_BUCKETS);
 
