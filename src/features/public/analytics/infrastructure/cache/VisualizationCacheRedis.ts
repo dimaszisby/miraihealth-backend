@@ -1,4 +1,5 @@
 import { redisClient } from "@/utils/redis-client.js";
+import { env } from "@/config/envManager.js";
 import crypto from "node:crypto";
 import {
   VisualizationCachePort,
@@ -8,7 +9,7 @@ import {
 import type { VizResponse } from "../../domain/types.js";
 import type { DashboardVizResponse } from "../../application/ports/VisualizationReadRepository.js";
 
-const TTL = Number(process.env.VIZ_DEFAULT_TTL_SEC ?? 120);
+const TTL = env.VIZ_DEFAULT_TTL_SEC;
 
 export class VisualizationCacheRedis implements VisualizationCachePort {
   async getSingleVisualization(

@@ -1,10 +1,11 @@
 import { z } from "zod";
+import { env } from "@/config/envManager.js";
 import { resolveBucket } from "../../domain/buckets.js";
 
-const DEFAULT_TZ = process.env.DEFAULT_TZ ?? "Asia/Jakarta";
+const DEFAULT_TZ = env.DEFAULT_TZ;
 const BucketEnum = z.enum(["1h", "1d", "1w", "1m", "1y"]);
 const FillEnum = z.enum(["none", "zero", "nan"]);
-const MAX_BUCKETS = Number(process.env.VIZ_MAX_BUCKETS ?? 400);
+const MAX_BUCKETS = env.VIZ_MAX_BUCKETS;
 const MAX_DATE_RANGE_MS = 8_640_000_000_000_000; // JS Date min/max span (~275k years)
 const LAST_WINDOW_REGEX = /^[1-9][0-9]*(h|d|w|m|y)$/;
 type RelativeUnit = "h" | "d" | "w" | "m" | "y";

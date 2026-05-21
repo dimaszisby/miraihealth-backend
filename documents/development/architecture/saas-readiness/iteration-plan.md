@@ -12,16 +12,18 @@ This is the master roadmap for closing the 18 ❌ + 21 ⚠️ items in the audit
 | #   | Phase                          | Kit folder                                                                                                 | Closes audit gaps                  | Effort | Status              | Gating ADR(s)                                       |
 | --- | ------------------------------ | ---------------------------------------------------------------------------------------------------------- | ---------------------------------- | ------ | ------------------- | --------------------------------------------------- |
 | 0   | Cheap-P0 sweep                 | (no kit; ADR-006 in this folder)                                                                           | P0-6.1, P0-6.2, P0-11.1, P0-4.1    | S      | ✅ Done             | —                                                   |
-| 1   | JWT lifecycle + refresh tokens | [`../jwt/`](../jwt/)                                                                                       | P0-1.1, P1-10.3                    | L      | ⏳ Scaffolded       | ADR-001 (kit-local)                                 |
-| 2   | Observability foundations      | [`../observability/`](../observability/)                                                                   | P0-5.1, P1-5.2, P1-5.3, P1-4.3     | M      | ⏳ Scaffolded       | —                                                   |
-| 3   | Email verification             | [`../email-verification/`](../email-verification/)                                                         | P1-1.2                             | M      | ⏳ Scaffolded       | —                                                   |
-| 4   | Multi-tenancy foundation       | [`../multi-tenancy/`](../multi-tenancy/)                                                                   | P0-3.1, P0-9.1, P1-1.3             | L      | ⏳ Blocked          | ADR-004 (this folder) must flip Proposed → Accepted |
-| 5   | Architecture drift cleanup     | [`../feature-vertical-slice-migration/`](../feature-vertical-slice-migration/) (existing kit, new tracker) | P1-10.1, P1-10.2, P2-10.4, P2-10.5 | M      | ⏳ Blocked          | ADR-003 (this folder) must flip Proposed → Accepted |
-| 6   | Forkability scaffolding        | [`../forkability/`](../forkability/)                                                                       | P1-11.2, P1-11.3, P1-11.4, P2-11.5 | M      | ⏳ Scaffolded       | —                                                   |
+| 1   | JWT lifecycle + refresh tokens | [`../jwt/`](../jwt/)                                                                                       | P0-1.1, P1-10.3                    | L      | ✅ Done             | ADR-001 (kit-local)                                 |
+| 2   | Observability foundations      | [`../observability/`](../observability/)                                                                   | P0-5.1, P1-5.2, P1-5.3, P1-4.3     | M      | ✅ Done             | —                                                   |
+| 3   | Email verification             | [`../email-verification/`](../email-verification/)                                                         | P1-1.2                             | M      | ✅ Done             | —                                                   |
+| 4   | Multi-tenancy foundation       | [`../multi-tenancy/`](../multi-tenancy/)                                                                   | P0-3.1, P0-9.1, P1-1.3             | L      | ✅ Done             | ADR-004 (this folder) must flip Proposed → Accepted |
+| 5   | Architecture drift cleanup     | [`../feature-vertical-slice-migration/`](../feature-vertical-slice-migration/) (existing kit, new tracker) | P1-10.1, P1-10.2, P2-10.4, P2-10.5 | M      | ✅ Done             | ADR-003 (this folder) must flip Proposed → Accepted |
+| 6   | Forkability scaffolding        | [`../forkability/`](../forkability/)                                                                       | P1-11.2, P1-11.3, P1-11.4, P2-11.5 | M      | ⚠️ Mostly Done      | —                                                   |
 | 7   | Production runtime + CI/CD     | [`../production-readiness/`](../production-readiness/)                                                     | P1-8.3, P1-8.4, P1-4.4, P1-7.1     | M      | ✅ Done             | —                                                   |
 | 8   | Subscription model             | [`../subscription-billing/`](../subscription-billing/)                                                     | P1-9.2                             | L      | 🅿️ Deferred kickoff | Phase 4 must complete first                         |
 
-Status legend: ⏳ Scaffolded = doc kit exists, no code yet · ⏳ Ready to kick off = no kit, single ADR is the artifact · ⏳ Blocked = kit exists but a Proposed ADR must be Accepted before code starts · 🅿️ Deferred = scaffold only; do not start.
+Status legend: ⏳ Scaffolded = doc kit exists, no code yet · ⏳ Ready to kick off = no kit, single ADR is the artifact · ⏳ Blocked = kit exists but a Proposed ADR must be Accepted before code starts · ⚠️ Mostly Done = primary targets closed but one or more sub-items remain partial · ✅ Done = all phase targets closed · 🅿️ Deferred = scaffold only; do not start.
+
+**Phase 6 partial:** P1-11.2 (CONTRIBUTING.md), P1-11.3 (`scripts/bootstrap-fork.sh`), and P1-11.4 (APP_NAME centralization) are closed. P2-11.5 (CachePort consolidation) shipped a shared `CachePort<T>` in `src/shared/application/ports/`, but only `metric-category` re-exports it; `metric`, `metric-log`, `analytics`, and `metric-settings` still declare per-feature ports. See `audit-2026-05-20.md` § P2-11.5.
 
 ## Recommended Execution Order
 
@@ -70,3 +72,8 @@ These items in `audit-2026-05-01.md` are not blocking and have no kit yet. Open 
 - **One mutable surface:** the **Status** column of each row. Everything else describes intent and should not change.
 - **Cross-link bidirectionally:** every kit's `README.md` references this file in its "Predecessor / dependency" line; this file references every kit folder.
 - **Rerun audit after each phase:** generate a new dated `audit-YYYY-MM-DD.md`; diff its scorecard against `audit-2026-05-01.md` so the closed gaps are visible in the public `SAAS-BASE-CHECKLIST.md`.
+
+## Audit History
+
+- `audit-2026-05-01.md` — original baseline: 26 ✅ / 21 ⚠️ / 18 ❌; 7 P0, 17 P1, 11 P2 open; NOT fork-ready (3 of 4 ADR-001 criteria fail).
+- `audit-2026-05-20.md` — post Phases 0–7: 52 ✅ / 9 ⚠️ / 4 ❌; 0 P0, 4 P1, 9 P2 open; criterion #3 still fails on Cat 4 (62.5%, blocked by P1-4.2 env-reads). Functionally shippable; not strictly fork-ready under ADR-001.
