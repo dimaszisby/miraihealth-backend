@@ -2,6 +2,7 @@ import { QueryTypes } from "sequelize";
 import { sequelize } from "@/infrastructure/db/models.js";
 import { models } from "@/infrastructure/db/models.js";
 import AppError from "@/utils/AppError.js";
+import { env } from "@/config/envManager.js";
 import {
   buildDashboardLifecycleSQL,
   buildDashboardSQL,
@@ -331,7 +332,7 @@ export class VisualizationReadRepoSequelize implements VisualizationReadReposito
     const fallbackRange = computeFallbackRange({
       requested: baseRequestedRange,
       lastLogAt: lifecycle?.last_log_at ?? null,
-      guardBuckets: Number(process.env.VIZ_FALLBACK_GUARD_BUCKETS ?? 96),
+      guardBuckets: env.VIZ_FALLBACK_GUARD_BUCKETS,
     });
 
     let fallbackApplied = false;

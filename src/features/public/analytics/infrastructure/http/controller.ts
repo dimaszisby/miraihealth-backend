@@ -1,15 +1,14 @@
 import type { Response, NextFunction } from "express";
 import { AuthRequest } from "@/types/request.context.js";
 import { assertAuthenticated } from "@/utils/auth-guards.js";
+import { env } from "@/config/envManager.js";
 import { pickValidated } from "@/shared/middleware/validated.js";
 import { getDashboardVizSchema, getVisualizationSchema } from "./schema.zod.js";
 import { successResponse } from "@/utils/response-formatter.js";
 import { buildAnalyticsFeature } from "../../feature.js";
 
-const DASH_CACHE_MAX_AGE = Number(process.env.VIZ_CACHE_MAX_AGE_SEC ?? 60);
-const DASH_CACHE_STALE_WHILE_REVALIDATE = Number(
-  process.env.VIZ_CACHE_STALE_SEC ?? 30,
-);
+const DASH_CACHE_MAX_AGE = env.VIZ_CACHE_MAX_AGE_SEC;
+const DASH_CACHE_STALE_WHILE_REVALIDATE = env.VIZ_CACHE_STALE_SEC;
 
 type AnalyticsFeature = ReturnType<typeof buildAnalyticsFeature>;
 let feature: AnalyticsFeature = buildAnalyticsFeature();

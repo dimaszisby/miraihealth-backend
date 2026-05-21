@@ -1,4 +1,5 @@
 import AppError from "@/utils/AppError.js";
+import { loadEnvOrExit } from "@/config/envManager.js";
 import type { FillMode } from "../../domain/types.js";
 import {
   resolveBucket,
@@ -21,21 +22,17 @@ export type GetDashboardVisualizationInput = {
   limit?: number;
 };
 
-const DASH_MAX_BUCKETS = Number(process.env.VIZ_MAX_BUCKETS ?? 400);
-
 export class GetDashboardVisualization {
   constructor(private repo: VisualizationReadRepository) {}
 
   async execute(
     input: GetDashboardVisualizationInput,
   ): Promise<DashboardVizResponse> {
+    const env = loadEnvOrExit();
     const spec = resolveBucket(input.bucket);
-    assertBounds(input.startISO, input.endISO, spec);
+    assertBounds(input.startISO, input.endISO, spec, env.VIZ_MAX_BUCKETS);
 
-    const limit = Math.min(
-      input.limit ?? 12,
-      Number(process.env.VIZ_DASH_MAX_METRICS ?? 24),
-    );
+    const limit = Math.min(input.limit ?? 12, env.VIZ_DASH_MAX_METRICS);
 
     return this.repo.fetchDashboardVisualization({
       userId: input.userId,
@@ -51,7 +48,12 @@ export class GetDashboardVisualization {
   }
 }
 
-function assertBounds(startISO: string, endISO: string, spec: BucketSpec) {
+function assertBounds(
+  startISO: string,
+  endISO: string,
+  spec: BucketSpec,
+  maxBuckets: number,
+) {
   const start = Date.parse(startISO);
   const end = Date.parse(endISO);
 
@@ -60,9 +62,9 @@ function assertBounds(startISO: string, endISO: string, spec: BucketSpec) {
   }
 
   const est = Math.ceil((end - start) / spec.approxMs) + 2;
-  if (est > DASH_MAX_BUCKETS) {
+  if (est > maxBuckets) {
     throw new AppError(
-      `Range too large for ${spec.iso} (~${est} buckets, max=${DASH_MAX_BUCKETS})`,
+      `Range too large for ${spec.iso} (~${est} buckets, max=${maxBuckets})`,
       400,
     );
   }

@@ -1,4 +1,5 @@
 import AppError from "@/utils/AppError.js";
+import { env } from "@/config/envManager.js";
 import type { FillMode, VizResponse } from "../../domain/types.js";
 import {
   resolveBucket,
@@ -18,7 +19,7 @@ export type GetVisualizationInput = {
   fill?: FillMode;
 };
 
-const MAX_BUCKETS = Number(process.env.VIZ_MAX_BUCKETS ?? 400);
+const MAX_BUCKETS = env.VIZ_MAX_BUCKETS;
 
 export class GetVisualization {
   constructor(private repo: VisualizationReadRepository) {}
