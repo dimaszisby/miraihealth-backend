@@ -1,5 +1,5 @@
 import express, { Application } from "express";
-import { env } from "./config/envManager.js";
+import { env, loadEnvOrExit } from "./config/envManager.js";
 import cors from "cors";
 import helmet from "helmet";
 import xssClean from "xss-clean";
@@ -130,9 +130,10 @@ app.use(hpp()); // Prevent HTTP Parameter Pollution
 app.use(disallowTraceMethod);
 
 // Configure CORS
+const corsOrigins = loadEnvOrExit().CORS_ORIGIN ?? ["http://localhost:3000"];
 app.use(
   cors({
-    origin: env.CORS_ORIGIN || "http://localhost:3000",
+    origin: corsOrigins,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true, // Allow cookies and auth headers
   }),

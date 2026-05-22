@@ -50,7 +50,19 @@ const envSchema = z.object({
     .default("30"),
 
   // CORS
-  CORS_ORIGIN: z.string().optional(),
+  // Comma-separated list of allowed origins. Single origin still works
+  // (parses to a 1-element array). Empty entries are dropped after trimming.
+  CORS_ORIGIN: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (val === undefined) return undefined;
+      const parsed = val
+        .split(",")
+        .map((origin) => origin.trim())
+        .filter((origin) => origin.length > 0);
+      return parsed.length > 0 ? parsed : undefined;
+    }),
 
   // Database URLs (separate environment variables for dev/test/prod)
   DATABASE_URL: z.string().optional(),
