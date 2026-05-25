@@ -231,3 +231,31 @@ The PR title is `chore: cheap-P0 sweep (LICENSE, README, .env.example, trust-pro
 - `src/config/zodEnv.ts` (CORS_ORIGIN schema)
 - `src/server.ts` (cors() wiring)
 - `__tests__/integration/middleware/cors.test.ts` (allowed / disallowed / single-origin / whitespace coverage)
+
+---
+
+## ADR-008 — Accept "GOLD WITH CAVEATS" as the gone-gold verdict (Accepted 2026-05-24)
+
+**Context:** An independent, deliberately-skeptical "gone-gold" review (`audit-2026-05-24-independent.md`) re-ran all six empirical gates (green), pressure-tested the security- and multi-tenancy-critical ✅ claims by reading code rather than trusting the 2026-05-20 self-audit, ran an architectural-drift sweep, and performed a live forkability dry-run. It confirmed the strict ADR-001 fork-ready gate now **passes** (zero P0; Cat 1/4/6/7/8/11 ≥80% — Cat 4 at 87.5% after P1-4.2 + P2-4.5 both closed; `LICENSE` + `.env.example` present), with no exploitable P0 remaining. It also found six industry-standard quality gaps (C1–C6), each scoped to ≤1 day, that an outside reviewer would close before recommending the repo as a base. A decision is needed: declare the repo publishable now, or hold until every caveat closes.
+
+**Decision:** Accept the verdict **GOLD WITH CAVEATS** — the repo is publishable as a forkable SaaS base **today**, with C1–C6 tracked as visible ≤1-day follow-ups in `FINAL-AUDIT-SUMMARY.md`. The repo is re-stated as a clean **GOLD** (and a new dated `audit-YYYY-MM-DD.md` produced per ADR-002) only when C1–C6 are closed. The two caveats a forker / API consumer hits first — **C1** (the bootstrap-fork flow does not work as printed: secret rotation no-ops on a fresh clone and `npm test` fails without an undocumented `.env.test`) and **C3** (the error envelope is inconsistent, violates `api-design.md`, and is undocumented in the OpenAPI contract) — lead the punch list.
+
+**Options considered:**
+
+- _Hold until clean GOLD (close C1–C6 first)._ Rejected: there is no P0 blocker, the ADR-001 gate already passes, and the caveats are quality/DX/contract gaps rather than security holes. Blocking publication on ≤1-day polish items delays a usable base for no risk reduction.
+- _Declare clean GOLD now, fold the caveats silently into the backlog._ Rejected: C1 and C3 are real and would visibly trip a forker; suppressing them would repeat the friendly-self-audit failure mode this independent review exists to correct. The caveats must be tracked in the open.
+- _Re-open the iteration plan with a "Phase 9: gone-gold hardening."_ Deferred: the six caveats are small and cross-cutting; a tracked punch list in `FINAL-AUDIT-SUMMARY.md` § 4 is lighter-weight than a full kit. Promote to a phase only if the list grows.
+
+**Consequences:**
+
+- The repo may be published/forked now; the C1–C6 punch list governs the path to a clean GOLD verdict.
+- `SAAS-BASE-CHECKLIST.md` (repo root) is updated to point at `audit-2026-05-24-independent.md` and reflect the GOLD WITH CAVEATS verdict + re-graded scorecard.
+- Audit cadence (ADR-002 unchanged): produce a new dated audit when C1–C6 close, and re-state the verdict.
+- The independent scorecard is intentionally stricter than the 2026-05-20 self-audit (47✅ / 14⚠️ / 4❌ vs 52 / 9 / 4) because the review downgraded items the self-audit over-credited (error envelope, architecture-test rigor, runtime branding leak, Sentry PII scrubbing, log-redaction coverage). This is expected: the independent grade is the conservative one of record.
+
+**Links:**
+
+- `audit-2026-05-24-independent.md` (evidence of record)
+- `FINAL-AUDIT-SUMMARY.md` § 4 (the C1–C6 punch list with fix-status checkboxes)
+- `decisions.md` § ADR-001 (the fork-ready gate this verdict clears), § ADR-002 (audit cadence + checklist convention), § ADR-007 (the CORS closure that completed criterion #3)
+- `SAAS-BASE-CHECKLIST.md` (repo root, updated alongside this ADR)
