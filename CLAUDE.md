@@ -40,3 +40,9 @@ Feature-Slice DDD with manual dependency injection. Entry point: `src/server.ts`
 - `documents/tests/TESTING_STRATEGY.md` — Testing approach
 - `documents/ci-cd/CI_CD_STRATEGY.md` — CI/CD pipeline details
 - `documents/openapi/` — Generated OpenAPI spec
+
+## Task Defaults
+
+Before proposing model, effort, plan mode, or subagent strategy for a non-trivial task, consult the **effort + model matrix** in user memory (`feedback-effort-model-matrix`). Currently in experimental trial through **2026-07-02** — flag friction (delegation misfires, re-work, context loss) so the review has data.
+
+**Commit & PR ownership:** Claude does not run `git commit`, `git push`, or `gh pr create`. Only the user does these manually. End every completed task with a ready-to-use PR message instead. Full rule: `.claude/rules/workflow.md` § Commit & PR Ownership.
