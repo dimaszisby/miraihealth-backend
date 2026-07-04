@@ -67,6 +67,9 @@ Thumbs.db
 CLAUDE.local.md
 tasks/
 
+# Graphify output (generated knowledge graph, rebuilt on demand)
+graphify-out/
+
 # Miscellaneous
 *.tgz
 *.bak
