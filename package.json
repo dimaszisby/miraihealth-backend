@@ -152,5 +152,8 @@
     "tsx": "^4.19.2",
     "typescript": "^5.8.3",
     "wait-on": "^9.0.3"
+  },
+  "overrides": {
+    "multer": "^2.2.0"
   }
 }

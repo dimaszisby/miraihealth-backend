@@ -64,6 +64,23 @@
 5. **Document Results**: Add review section to the same `documents/todos/...` file
 6. **Capture Lessons**: Update `.claude/lessons.md` after corrections
 
+## Graphify Usage in Feature Implementation
+
+When generating a prompt or implementing a feature from a plan/doc:
+
+- Always mention **what concepts to query**, not just "use Graphify"
+- Run `graphify query` on relevant concepts **before writing any code**
+- Typical queries: how the target feature's use cases are structured, how repositories are wired in DI, how similar existing features are organized
+
+**Template:**
+
+```
+Implement <feature> following the plan at <path/to/plan.md>.
+Before writing any code, query the Graphify graph:
+- graphify query "<concept A>"
+- graphify query "<concept B>"
+```
+
 ## Core Principles
 
 - **Simplicity First**: Make every change as simple as possible. Impact minimal code.
