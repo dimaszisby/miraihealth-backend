@@ -7,7 +7,7 @@ import { assertAuthenticated } from "@/utils/auth-guards.js";
 import {
   toDisplayOptionsResponseDTO,
   toMetricSettingsResponseDTO,
-} from "../mappers/MetricSettingsMapper.js";
+} from "../persistence/mappers/MetricSettingsMapper.js";
 import {
   createMetricSettingsSchema,
   deleteMetricSettingsSchema,
@@ -32,6 +32,7 @@ export const createMetricSettings = catchAsync(
     const payload = body;
     const created = await feature.createSettings.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       ...payload,
     });
 
@@ -50,6 +51,7 @@ export const getAllMetricSettingsViaCursor = catchAsync(
     const { query } = pickValidated(listMetricSettingsViaCursorSchema)(req);
     const result = await feature.listSettings.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       ...query,
     });
 
@@ -73,7 +75,11 @@ export const getMetricSettingsById = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
     const { params } = pickValidated(getMetricSettingsSchema)(req);
-    const settings = await feature.getSettings.execute(req.user.id, params.id);
+    const settings = await feature.getSettings.execute(
+      req.user.id,
+      req.user.organizationId,
+      params.id,
+    );
     successResponse(res, 200, toMetricSettingsResponseDTO(settings.snapshot()));
   },
 );
@@ -84,6 +90,7 @@ export const updateMetricSettings = catchAsync(
     const { body, params } = pickValidated(updateMetricSettingsSchema)(req);
     const updated = await feature.updateSettings.execute(
       req.user.id,
+      req.user.organizationId,
       params.id,
       body,
     );
@@ -100,7 +107,11 @@ export const deleteMetricSettings = catchAsync(
   async (req: AuthRequest, res: Response) => {
     assertAuthenticated(req);
     const { params } = pickValidated(deleteMetricSettingsSchema)(req);
-    await feature.deleteSettings.execute(req.user.id, params.id);
+    await feature.deleteSettings.execute(
+      req.user.id,
+      req.user.organizationId,
+      params.id,
+    );
     successResponse(res, 200, null, "Metric settings deleted successfully");
   },
 );
@@ -111,6 +122,7 @@ export const updateGoalAchievement = catchAsync(
     const { params } = pickValidated(getMetricSettingsSchema)(req);
     const updated = await feature.updateGoalAchievement.execute(
       req.user.id,
+      req.user.organizationId,
       params.id,
     );
     successResponse(
@@ -129,6 +141,7 @@ export const updateDisplayOptions = catchAsync(
     const { displayOptions } = body;
     const updated = await feature.updateDisplayOptions.execute(
       req.user.id,
+      req.user.organizationId,
       params.id,
       displayOptions,
     );

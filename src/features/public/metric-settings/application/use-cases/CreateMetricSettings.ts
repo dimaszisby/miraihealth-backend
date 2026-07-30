@@ -5,10 +5,11 @@ import {
   MetricSettingsRepository,
 } from "../../domain/repositories/MetricSettingsRepository.js";
 import { CacheInvalidationPort } from "../ports/CacheInvalidationPort.js";
-import { MetricAccessPort } from "../ports/MetricAccessPort.js";
+import type { MetricAccessPort } from "@/features/public/metric/application/ports/MetricAccessPort.js";
 
 export type CreateMetricSettingsInput = Partial<CreateMetricSettingsDTO> & {
   userId: string;
+  organizationId: string;
   metricId: string;
 };
 
@@ -20,18 +21,23 @@ export class CreateMetricSettings {
   ) {}
 
   async execute(input: CreateMetricSettingsInput): Promise<MetricSettings> {
-    const { userId, metricId } = input;
+    const { userId, organizationId, metricId } = input;
     if (!userId) throw new AppError("User not authenticated", 401);
 
-    await this.metricAccess.ensureMetricOwnership(userId, metricId);
+    await this.metricAccess.ensureMetricOwnership(
+      userId,
+      organizationId,
+      metricId,
+    );
 
-    const existing = await this.repo.findByMetricId(metricId);
+    const existing = await this.repo.findByMetricId(organizationId, metricId);
     if (existing) {
       throw new AppError("Metric settings already exist for this metric", 409);
     }
 
     const created = await this.repo.create({
       metricId,
+      organizationId: input.organizationId,
       isActive: input.isActive ?? true,
       goalEnabled: input.goalEnabled ?? false,
       goalType: input.goalType ?? null,

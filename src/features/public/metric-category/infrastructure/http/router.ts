@@ -45,6 +45,7 @@ const categoriesCacheKey = (req: AuthRequest) => {
     version: METRIC_CATEGORY_CURSOR_VERSION,
     userId: req.user?.id,
     segments: [
+      ["org", req.user?.organizationId],
       ["l", Number(limitParam ?? 20)],
       ["s", sortParam ?? "-createdAt"],
       ["q", qParam ?? ""],

@@ -3,10 +3,7 @@ import AppError from "@/utils/AppError.js";
 import { successResponse } from "@/utils/response-formatter.js";
 import catchAsync from "@/utils/catch-async.js";
 import { AuthRequest } from "@/types/request.context.js";
-import {
-  toMetricLogListResponseDTO,
-  toMetricLogResponseDTO,
-} from "@/utils/mappers/metric-log.mapper.js";
+import { toMetricLogListResponseDTO, toMetricLogResponseDTO } from "./dto.js";
 import {
   createMetricLogSchema,
   deleteMetricLogSchema,
@@ -37,6 +34,7 @@ export const createMetricLog = catchAsync(
 
     const logDomain = await metricLogFeature.createLog.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       metricId,
       type,
       logValue,
@@ -57,6 +55,7 @@ export const getUserLogLibrariesViaCursor = catchAsync(
 
     const page = await metricLogFeature.listLogs.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       limit,
       sort,
       q,
@@ -88,6 +87,7 @@ export const getLogById = catchAsync(
 
     const logDomain = await metricLogFeature.getLog.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       logId: params.id,
     });
 
@@ -107,6 +107,7 @@ export const updateLog = catchAsync(async (req: AuthRequest, res: Response) => {
 
   const logDomain = await metricLogFeature.updateLog.execute({
     userId: req.user.id,
+    organizationId: req.user.organizationId,
     logId: params.id,
     updates: { logValue, type, loggedAt },
   });
@@ -125,6 +126,7 @@ export const deleteLog = catchAsync(async (req: AuthRequest, res: Response) => {
   const { params } = pickValidated(deleteMetricLogSchema)(req);
   const logDomain = await metricLogFeature.deleteLog.execute({
     userId: req.user.id,
+    organizationId: req.user.organizationId,
     logId: params.id,
   });
 
@@ -142,6 +144,7 @@ export const getAggregatedStats = catchAsync(
     const { query } = pickValidated(getAggregatedStatsSchema)(req);
     const stats = await metricLogFeature.getStats.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       metricId: query.metricId,
     });
     successResponse(res, 200, stats);
@@ -164,6 +167,7 @@ export const generateDummyMetricLogs = catchAsync(
 
     const result = await metricLogFeature.generateDummyLogs.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       metricId,
       count,
     });

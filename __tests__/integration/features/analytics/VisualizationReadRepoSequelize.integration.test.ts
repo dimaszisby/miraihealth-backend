@@ -16,6 +16,7 @@ import {
   seedDashboardWithMetrics,
   seedMetricWithLogs,
   truncateAllTables,
+  TEST_ORG_ID,
 } from "../../helpers/db-fixtures.js";
 
 class InMemoryVizCache implements VisualizationCachePort {
@@ -100,6 +101,7 @@ describe("VisualizationReadRepoSequelize (integration)", () => {
     const endISO = "2025-03-05T00:00:00Z";
     const first = await repo.fetchVisualization({
       userId: user.id,
+      organizationId: TEST_ORG_ID,
       metricId: metric.id,
       startISO,
       endISO,
@@ -119,6 +121,7 @@ describe("VisualizationReadRepoSequelize (integration)", () => {
 
     const second = await repo.fetchVisualization({
       userId: user.id,
+      organizationId: TEST_ORG_ID,
       metricId: metric.id,
       startISO,
       endISO,
@@ -176,6 +179,7 @@ describe("VisualizationReadRepoSequelize (integration)", () => {
 
     const params = {
       userId: user.id,
+      organizationId: TEST_ORG_ID,
       startISO: "2025-04-09T00:00:00Z",
       endISO: "2025-04-13T00:00:00Z",
       bucket: "1d" as const,

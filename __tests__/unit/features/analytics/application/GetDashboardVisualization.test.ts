@@ -29,8 +29,11 @@ const makeRepo = () => {
 };
 
 describe("GetDashboardVisualization query", () => {
+  const TEST_ORG_ID = "org-test-id";
+
   const baseInput = {
     userId: "user-1",
+    organizationId: TEST_ORG_ID,
     startISO: "2024-01-01T00:00:00.000Z",
     endISO: "2024-01-05T00:00:00.000Z",
     bucket: "1d" as const,
@@ -51,6 +54,7 @@ describe("GetDashboardVisualization query", () => {
           .calls[0][0] as any;
         expect(payload).toMatchObject({
           userId: baseInput.userId,
+          organizationId: TEST_ORG_ID,
           startISO: baseInput.startISO,
           endISO: baseInput.endISO,
           bucket: baseInput.bucket,

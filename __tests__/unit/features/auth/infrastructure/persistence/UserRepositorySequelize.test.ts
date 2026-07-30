@@ -7,7 +7,6 @@ const makeRow = () => ({
   email: "user@example.com",
   username: "tester",
   password: "hash",
-  role: "user",
   isPublicProfile: true,
   deletedAt: null,
   createdAt: new Date(),
@@ -57,7 +56,6 @@ describe("UserRepositorySequelize", () => {
       username: "tester",
       password: "hash",
       isPublicProfile: true,
-      role: "user",
     });
     expect(instance.reload).toHaveBeenCalled();
     expect(result.email).toBe("user@example.com");
@@ -89,6 +87,7 @@ describe("UserRepositorySequelize", () => {
       username: "new",
       password: "next",
       isPublicProfile: false,
+      emailVerifiedAt: null,
     });
     expect(instance.reload).toHaveBeenCalled();
     expect(saved.email).toBe("user@example.com");

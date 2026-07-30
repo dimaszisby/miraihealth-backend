@@ -12,6 +12,8 @@ import { MetricCategoryRepoSequelize } from "@/features/metric-category/infrastr
 import { models } from "@/infrastructure/db/models.js";
 import type { MetricCategoryRow } from "@/features/metric-category/infrastructure/mappers/MetricCategoryMapper.js";
 
+const TEST_ORG_ID = "org-test-id";
+
 const repo = new MetricCategoryRepoSequelize();
 
 type AsyncMock<T = unknown, A extends any[] = any[]> = jest.MockedFunction<
@@ -72,11 +74,16 @@ describe("MetricCategoryRepoSequelize", () => {
     it("returns mapped domain entity when row exists", async () => {
       metricCategoryModel.findOne.mockResolvedValue(buildRow({ id: "cat-9" }));
 
-      const result = await repo.findById("user-1", "cat-9");
+      const result = await repo.findById("user-1", TEST_ORG_ID, "cat-9");
 
       expect(metricCategoryModel.findOne).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: "cat-9", userId: "user-1", deletedAt: null },
+          where: {
+            id: "cat-9",
+            userId: "user-1",
+            organizationId: TEST_ORG_ID,
+            deletedAt: null,
+          },
           raw: true,
           nest: true,
         }),
@@ -88,16 +95,22 @@ describe("MetricCategoryRepoSequelize", () => {
     it("returns null when row missing", async () => {
       metricCategoryModel.findOne.mockResolvedValue(null);
 
-      expect(await repo.findById("user-1", "missing")).toBeNull();
+      expect(await repo.findById("user-1", TEST_ORG_ID, "missing")).toBeNull();
     });
   });
 
   it("existsByName returns true when count greater than zero", async () => {
     metricCategoryModel.count.mockResolvedValue(2);
 
-    await expect(repo.existsByName("user-1", "Planning")).resolves.toBe(true);
+    await expect(
+      repo.existsByName("user-1", TEST_ORG_ID, "Planning"),
+    ).resolves.toBe(true);
     expect(metricCategoryModel.count).toHaveBeenCalledWith({
-      where: { userId: "user-1", name: "Planning" },
+      where: {
+        userId: "user-1",
+        organizationId: TEST_ORG_ID,
+        name: "Planning",
+      },
     });
   });
 
@@ -108,10 +121,13 @@ describe("MetricCategoryRepoSequelize", () => {
         buildRow({ id: "cat-1", name: "Deep Work", metricCount: 0 }),
       );
 
-      const created = await repo.create("user-1", { name: "Deep Work" });
+      const created = await repo.create("user-1", "org-1", {
+        name: "Deep Work",
+      });
 
       expect(metricCategoryModel.create).toHaveBeenCalledWith({
         userId: "user-1",
+        organizationId: "org-1",
         name: "Deep Work",
         color: "#E897A3",
         icon: "📁",
@@ -131,7 +147,7 @@ describe("MetricCategoryRepoSequelize", () => {
       metricCategoryModel.findOne.mockResolvedValue(null);
 
       await expect(
-        repo.update("user-1", "cat-1", { name: "Focus" }),
+        repo.update("user-1", TEST_ORG_ID, "cat-1", { name: "Focus" }),
       ).rejects.toThrow("Category not found");
     });
 
@@ -144,7 +160,9 @@ describe("MetricCategoryRepoSequelize", () => {
         buildRow({ id: "cat-2", name: "Focus" }),
       );
 
-      const updated = await repo.update("user-1", "cat-2", { name: "Focus" });
+      const updated = await repo.update("user-1", TEST_ORG_ID, "cat-2", {
+        name: "Focus",
+      });
 
       expect(row.update).toHaveBeenCalledWith({ name: "Focus" });
       expect(metricCategoryModel.findByPk).toHaveBeenCalledWith("cat-2", {
@@ -159,10 +177,10 @@ describe("MetricCategoryRepoSequelize", () => {
   it("delete removes record scoped to user", async () => {
     metricCategoryModel.destroy.mockResolvedValue(undefined);
 
-    await repo.delete("user-1", "cat-1");
+    await repo.delete("user-1", TEST_ORG_ID, "cat-1");
 
     expect(metricCategoryModel.destroy).toHaveBeenCalledWith({
-      where: { id: "cat-1", userId: "user-1" },
+      where: { id: "cat-1", userId: "user-1", organizationId: TEST_ORG_ID },
     });
   });
 
@@ -175,6 +193,7 @@ describe("MetricCategoryRepoSequelize", () => {
 
       const result = await repo.list({
         userId: "user-1",
+        organizationId: TEST_ORG_ID,
         limit: 1,
         sort: "createdAt",
         includeTotal: true,
@@ -194,7 +213,11 @@ describe("MetricCategoryRepoSequelize", () => {
         expect.objectContaining({ include: expect.any(Array) }),
       );
       expect(args.where[Op.and]).toEqual(
-        expect.arrayContaining([{ userId: "user-1" }, { deletedAt: null }]),
+        expect.arrayContaining([
+          { userId: "user-1" },
+          { organizationId: TEST_ORG_ID },
+          { deletedAt: null },
+        ]),
       );
       expect(result.items).toHaveLength(1);
       expect(result.items[0].id).toBe("cat-1");

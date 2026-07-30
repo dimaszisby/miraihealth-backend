@@ -242,7 +242,7 @@ describe("metric settings router", () => {
     ) => string;
 
     const req: any = {
-      user: { id: "user-1" },
+      user: { id: "user-1", organizationId: "org-1" },
       query: {
         filter: { metricId: "metric-42" },
         limit: "50",
@@ -256,9 +256,10 @@ describe("metric settings router", () => {
 
     expect(buildCursorCacheKeyMock).toHaveBeenCalledWith({
       feature: "metric-settings",
-      version: 1,
+      version: 2,
       userId: "user-1",
       segments: [
+        ["org", "org-1"],
         ["l", 50],
         ["s", "createdAt"],
         ["fm", "metric-42"],

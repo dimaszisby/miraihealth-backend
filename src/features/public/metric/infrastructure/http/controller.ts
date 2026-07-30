@@ -14,7 +14,7 @@ import {
   toMetricLibraryResponseDTO,
   toMetricResponseDTO,
   toUserMetricDetailResponseDTO,
-} from "@/utils/mappers/metric.mapper.js";
+} from "./dto.js";
 import AppError from "@/utils/AppError.js";
 import { successResponse } from "@/utils/response-formatter.js";
 import catchAsync from "@/utils/catch-async.js";
@@ -54,6 +54,7 @@ export const createMetric = catchAsync(
 
     const metricDomain = await metricFeature.createMetric.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       categoryId,
       originalMetricId,
       name,
@@ -76,6 +77,7 @@ export const getUserMetricLibrariesViaCursor = catchAsync(
 
     const page = await metricFeature.listMetrics.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       limit,
       sort,
       q,
@@ -120,6 +122,7 @@ export const getUserDetailMetricById = catchAsync(
 
     const metric = await metricFeature.getMetricDetail.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       metricId: params.id,
       includes,
       logsLimit,
@@ -152,6 +155,7 @@ export const updateMetric = catchAsync(
     const { body, params } = pickValidated(updateMetricSchema)(req);
     const updatedMetricDomain = await metricFeature.updateMetric.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       metricId: params.id,
       data: body,
     });
@@ -168,6 +172,7 @@ export const deleteMetric = catchAsync(
     const { params } = pickValidated(deleteMetricSchema)(req);
     const metricDomain = await metricFeature.deleteMetric.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       metricId: params.id,
     });
     const dto = toMetricResponseDTO(metricDomain);
@@ -184,6 +189,7 @@ export const generateDummyMetrics = catchAsync(
 
     const dummyMetrics = await metricFeature.generateDummyMetrics.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       count,
     });
     const dto = dummyMetrics.map(toMetricResponseDTO);
@@ -209,6 +215,7 @@ export const handleMetricTrend = catchAsync(
 
     const data = await analyticsFeature.getMetricTrend.execute({
       userId: req.user.id,
+      organizationId: req.user.organizationId,
       metricId,
     });
 

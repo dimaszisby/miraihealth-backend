@@ -430,3 +430,67 @@ jobs:
         with:
           name: newman-contract-staging
           path: documents/tests/4-contract-tests/postman-newman/reports/staging
+
+  deploy_production:
+    name: Deploy Backend to Production
+    runs-on: ubuntu-latest
+    needs: contract_local
+    if: github.ref == 'refs/heads/main'
+    environment: production # Manual approval gate via GitHub environment protection rules
+    timeout-minutes: 20
+    # NOTE: RENDER_PRODUCTION_DEPLOY_HOOK_URL must be configured in GitHub repo secrets
+    # before this job is usable. Without it, the deploy step will fail fast.
+    #
+    # Gate model: contract_staging runs only on `refs/heads/staging`, so this job
+    # cannot list it under `needs:`. Instead we re-run the staging contract suite
+    # against STAGING_BASE_URL as a pre-deploy probe — if staging is unhealthy or
+    # the commit being promoted to main has drifted from what staging validated,
+    # the production deploy aborts before migrations run.
+    env:
+      RENDER_PRODUCTION_DEPLOY_HOOK_URL: ${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK_URL }}
+      PRODUCTION_HEALTH_URL: ${{ secrets.PRODUCTION_HEALTH_URL }}
+      PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+      STAGING_BASE_URL: ${{ secrets.STAGING_BASE_URL }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET_PRODUCTION }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify staging is healthy (contract test gate)
+        run: |
+          if [ -z "$STAGING_BASE_URL" ]; then
+            echo "STAGING_BASE_URL secret is not configured — cannot gate production deploy on staging health."
+            exit 1
+          fi
+          npm run test:contract:staging
+
+      - name: Upload pre-deploy contract reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-contract-pre-production
+          path: documents/tests/4-contract-tests/postman-newman/reports/staging
+
+      - name: Build
+        run: npm run build
+
+      - name: Run DB migrations (production)
+        run: npm run migrate:production:ci
+
+      - name: Trigger production deploy
+        run: |
+          if [ -z "$RENDER_PRODUCTION_DEPLOY_HOOK_URL" ]; then
+            echo "RENDER_PRODUCTION_DEPLOY_HOOK_URL secret is not configured."
+            exit 1
+          fi
+          curl -X POST "$RENDER_PRODUCTION_DEPLOY_HOOK_URL"

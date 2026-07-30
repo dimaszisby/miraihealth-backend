@@ -1,4 +1,12 @@
 import { authRouter, createAuthRouter } from "./infrastructure/http/router.js";
 export { buildAuthFeature } from "./feature.js";
 export { authRouter, createAuthRouter };
-export { requireAdmin } from "./infrastructure/http/requireAdmin.js";
+export {
+  assertHasOrgRole,
+  requireOrgRole,
+} from "./infrastructure/http/assertHasOrgRole.js";
+export {
+  organizationRouter,
+  inviteRouter,
+  membershipRouter,
+} from "./infrastructure/http/organization.router.js";

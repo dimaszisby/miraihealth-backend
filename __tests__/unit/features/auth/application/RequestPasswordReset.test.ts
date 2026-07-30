@@ -8,6 +8,7 @@ import { PasswordResetTokenRepository } from "@/features/auth/domain/repositorie
 import { EmailSender } from "@/features/auth/application/ports/EmailSender.js";
 import { AuthUser } from "@/features/auth/domain/entities/AuthUser.js";
 import { PasswordResetToken } from "@/features/auth/domain/entities/PasswordResetToken.js";
+import { buildPasswordResetEmail } from "@/features/auth/infrastructure/email/templates/password-reset.js";
 
 const FROZEN_NOW = new Date("2026-04-24T10:00:00.000Z");
 
@@ -17,7 +18,6 @@ const makeUser = () =>
     email: "user@example.com",
     username: "tester",
     passwordHash: "hash",
-    role: "user",
     isPublicProfile: true,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -29,6 +29,7 @@ const build = () => {
     existsByEmail: jest.fn(),
     existsByUsername: jest.fn(),
     findById: jest.fn(),
+    findByIds: jest.fn(),
     findByEmail: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
@@ -44,6 +45,7 @@ const build = () => {
   };
   const sut = new RequestPasswordReset(userRepo, tokenRepo, emailSender, {
     frontendResetUrl: "https://app.example.com/reset-password",
+    buildEmail: buildPasswordResetEmail,
     now: () => FROZEN_NOW,
   });
   return { sut, userRepo, tokenRepo, emailSender };

@@ -23,15 +23,17 @@ function toRow(model: MetricLogModel): MetricLogRow {
 
 export class MetricLogRepoSequelize implements MetricLogRepository {
   async existsAtTimestamp(
+    organizationId: string,
     metricId: string,
     loggedAt: Date,
     excludeLogId?: string,
   ): Promise<boolean> {
     const where: {
+      organizationId: string;
       metricId: string;
       loggedAt: Date;
       id?: Record<typeof Op.ne, string>;
-    } = { metricId, loggedAt };
+    } = { organizationId, metricId, loggedAt };
     if (excludeLogId) {
       where.id = { [Op.ne]: excludeLogId };
     }
@@ -45,6 +47,7 @@ export class MetricLogRepoSequelize implements MetricLogRepository {
   async create(data: CreateMetricLogDTO): Promise<MetricLog> {
     const created = await models.MetricLog.create({
       metricId: data.metricId,
+      organizationId: data.organizationId,
       logValue: data.logValue,
       type: data.type,
       loggedAt: data.loggedAt,
@@ -54,16 +57,20 @@ export class MetricLogRepoSequelize implements MetricLogRepository {
     return toDomain(toRow(created));
   }
 
-  async findById(userId: string, logId: string): Promise<MetricLog | null> {
+  async findById(
+    userId: string,
+    organizationId: string,
+    logId: string,
+  ): Promise<MetricLog | null> {
     const log = await models.MetricLog.findOne({
-      where: { id: logId },
+      where: { id: logId, organizationId },
       include: [
         {
           model: models.Metric,
           as: "metric",
           attributes: ["userId"],
           required: true,
-          where: { userId },
+          where: { userId, organizationId },
         },
       ],
     });
@@ -72,21 +79,18 @@ export class MetricLogRepoSequelize implements MetricLogRepository {
     return toDomain(toRow(log));
   }
 
-  async save(log: MetricLog): Promise<MetricLog> {
-    const existing = await models.MetricLog.findByPk(log.id);
-    if (!existing) throw new AppError("Log not found", 404);
-
-    await existing.update({
-      logValue: log.logValue,
-      type: log.type,
-      loggedAt: log.loggedAt,
-    });
-    await existing.reload();
-
-    return toDomain(toRow(existing));
+  async save(organizationId: string, log: MetricLog): Promise<MetricLog> {
+    const [affectedCount, rows] = await models.MetricLog.update(
+      { logValue: log.logValue, type: log.type, loggedAt: log.loggedAt },
+      { where: { id: log.id, organizationId }, returning: true },
+    );
+    if (affectedCount === 0) throw new AppError("Log not found", 404);
+    return toDomain(toRow(rows[0]));
   }
 
-  async delete(log: MetricLog): Promise<void> {
-    await models.MetricLog.destroy({ where: { id: log.id } });
+  async delete(organizationId: string, log: MetricLog): Promise<void> {
+    await models.MetricLog.destroy({
+      where: { id: log.id, organizationId },
+    });
   }
 }

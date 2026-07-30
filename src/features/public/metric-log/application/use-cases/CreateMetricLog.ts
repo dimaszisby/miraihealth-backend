@@ -2,11 +2,12 @@ import AppError from "@/utils/AppError.js";
 import { parseIsoToDate } from "@/utils/date-io.js";
 import { MetricLogRepository } from "../../domain/repositories/MetricLogRepository.js";
 import { MetricLog } from "../../domain/entities/MetricLog.js";
-import { MetricAccessPort } from "../ports/MetricAccessPort.js";
+import type { MetricAccessPort } from "@/features/public/metric/application/ports/MetricAccessPort.js";
 import { CachePort } from "../ports/CachePort.js";
 
 type Input = {
   userId: string;
+  organizationId: string;
   metricId: string;
   logValue: number;
   type?: "manual" | "automatic";
@@ -21,10 +22,14 @@ export class CreateMetricLog {
   ) {}
 
   async execute(input: Input): Promise<MetricLog> {
-    const { userId, metricId } = input;
+    const { userId, organizationId, metricId } = input;
     if (!metricId) throw new AppError("metricId is required", 400);
 
-    await this.metricAccess.ensureMetricOwnership(userId, metricId);
+    await this.metricAccess.ensureMetricOwnership(
+      userId,
+      organizationId,
+      metricId,
+    );
 
     const timestamp =
       input.loggedAt instanceof Date
@@ -37,7 +42,9 @@ export class CreateMetricLog {
       throw new AppError("loggedAt is invalid", 400);
     }
 
-    if (await this.repo.existsAtTimestamp(metricId, timestamp)) {
+    if (
+      await this.repo.existsAtTimestamp(organizationId, metricId, timestamp)
+    ) {
       throw new AppError(
         "A log entry already exists for this timestamp for this metric",
         409,
@@ -46,6 +53,7 @@ export class CreateMetricLog {
 
     const log = await this.repo.create({
       metricId,
+      organizationId: input.organizationId,
       logValue: input.logValue,
       type: input.type ?? "manual",
       loggedAt: timestamp,

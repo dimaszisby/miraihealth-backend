@@ -6,6 +6,8 @@ import { AuthRequest } from "@/types/request.context.js";
 import { ZodError } from "zod";
 import { formatZodIssues } from "@/shared/utils/zod-error-formatter.js";
 import { UniqueConstraintError, DatabaseError } from "sequelize";
+import * as Sentry from "@sentry/node";
+import { getRequestId } from "@/shared/middleware/request-id.js";
 
 const isBodyParseError = (
   error: unknown,
@@ -61,6 +63,12 @@ export const createErrorHandler =
         : err instanceof UniqueConstraintError
           ? new AppError("Duplicate value", 409)
           : new AppError("Internal Server Error", 500);
+
+    if (appError.statusCode >= 500) {
+      Sentry.captureException(err, {
+        tags: { requestId: getRequestId() },
+      });
+    }
 
     if (env.NODE_ENV === "production") {
       res.status(appError.statusCode).json({

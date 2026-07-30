@@ -4,6 +4,7 @@ import type { FillMode } from "../../domain/types.js";
 
 export type VisualizationQueryParams = {
   userId: string;
+  organizationId: string;
   metricId: string;
   startISO: string;
   endISO: string;
@@ -15,6 +16,7 @@ export type VisualizationQueryParams = {
 
 export type DashboardVisualizationParams = {
   userId: string;
+  organizationId: string;
   startISO: string;
   endISO: string;
   bucket: BucketAlias;

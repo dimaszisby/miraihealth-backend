@@ -1,5 +1,9 @@
-import { PersistenceTransaction } from "./PersistenceTransaction.js";
+import { PersistenceTransaction } from "./TransactionPort.js";
 
 export interface MetricSettingsPort {
-  createDefault(metricId: string, tx?: PersistenceTransaction): Promise<void>;
+  createDefault(
+    metricId: string,
+    organizationId: string,
+    tx?: PersistenceTransaction,
+  ): Promise<void>;
 }

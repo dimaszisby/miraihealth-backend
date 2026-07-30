@@ -3,6 +3,8 @@ import { MetricRepoSequelize } from "@/features/metric/infrastructure/persistenc
 import { models } from "@/infrastructure/db/models.js";
 import { Op } from "sequelize";
 
+const TEST_ORG_ID = "org-test-id";
+
 const makeInstance = () => {
   const reload = jest.fn<(options?: any) => Promise<void>>();
   reload.mockResolvedValue(undefined);
@@ -34,13 +36,14 @@ describe("MetricRepoSequelize", () => {
       .mockResolvedValue(1 as any);
     const repo = new MetricRepoSequelize();
 
-    const exists = await repo.existsByName("user-1", "Steps");
+    const exists = await repo.existsByName("user-1", TEST_ORG_ID, "Steps");
 
     expect(exists).toBe(true);
     expect(countSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
           userId: "user-1",
+          organizationId: TEST_ORG_ID,
           [Op.and]: expect.anything(),
         }),
       }),
@@ -58,6 +61,7 @@ describe("MetricRepoSequelize", () => {
     const result = await repo.create(
       {
         userId: "user-1",
+        organizationId: "org-1",
         categoryId: "cat-1",
         originalMetricId: null,
         name: "Steps",
@@ -71,6 +75,7 @@ describe("MetricRepoSequelize", () => {
     expect(createSpy).toHaveBeenCalledWith(
       {
         userId: "user-1",
+        organizationId: "org-1",
         categoryId: "cat-1",
         originalMetricId: null,
         name: "Steps",

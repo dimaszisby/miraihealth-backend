@@ -6,6 +6,7 @@ import { CachePort } from "../ports/CachePort.js";
 
 type Input = {
   userId: string;
+  organizationId: string;
   logId: string;
   updates: Partial<{
     logValue: number;
@@ -20,8 +21,13 @@ export class UpdateMetricLog {
     private cache: CachePort,
   ) {}
 
-  async execute({ userId, logId, updates }: Input): Promise<MetricLog> {
-    const log = await this.repo.findById(userId, logId);
+  async execute({
+    userId,
+    organizationId,
+    logId,
+    updates,
+  }: Input): Promise<MetricLog> {
+    const log = await this.repo.findById(userId, organizationId, logId);
     if (!log) throw new AppError("Log not found", 404);
 
     if (typeof updates.logValue !== "undefined") {
@@ -44,7 +50,14 @@ export class UpdateMetricLog {
       if (Number.isNaN(timestamp.getTime())) {
         throw new AppError("loggedAt is invalid", 400);
       }
-      if (await this.repo.existsAtTimestamp(log.metricId, timestamp, log.id)) {
+      if (
+        await this.repo.existsAtTimestamp(
+          organizationId,
+          log.metricId,
+          timestamp,
+          log.id,
+        )
+      ) {
         throw new AppError(
           "A log entry already exists for this timestamp for this metric",
           409,
@@ -53,7 +66,7 @@ export class UpdateMetricLog {
       log.setLoggedAt(timestamp);
     }
 
-    const saved = await this.repo.save(log);
+    const saved = await this.repo.save(organizationId, log);
     if (this.cache.isEnabled()) {
       await this.cache.invalidate(userId, saved.metricId, saved.id);
     }

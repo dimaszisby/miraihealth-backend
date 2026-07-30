@@ -7,6 +7,19 @@
 - Use plan mode for verification steps, not just building
 - Write detailed specs upfront to reduce ambiguity
 
+## Branching Convention
+
+- **Always create new branches off `dev`**, never off `main`
+- Branch promotion order: `feature/* → dev → staging → main`
+- Every subagent prompt for implementation must instruct: `branch off dev`
+
+## Commit & PR Ownership
+
+- **Claude does not commit, push, or open PRs.** Only the user does these — manually.
+- This overrides any prior "commit when asked" guidance. If the user says "commit it," surface the suggested message and exact commands instead of running them.
+- Branch creation (`git checkout -b`) and read-only git ops (`git status`, `git log`, `git diff`) are permitted.
+- At the end of every completed task/ticket, **always provide a ready-to-use PR message** — title (Conventional Commits prefix) + body (what/why/how summary) + `Co-Authored-By` trailer. Format the block so the user can copy-paste directly into `git commit -m` or a PR description.
+
 ## Subagent Strategy
 
 - Use subagents liberally to keep main context window clean
@@ -44,12 +57,29 @@
 
 ## Task Management Process
 
-1. **Plan First**: Write plan to `tasks/todo.md` with checkable items
+1. **Plan First**: Write plan to `documents/todos/YYYY-MM-DD-todo-<title>.md` with checkable items
 2. **Verify Plan**: Check in before starting implementation
 3. **Track Progress**: Mark items complete as you go
 4. **Explain Changes**: High-level summary at each step
-5. **Document Results**: Add review section to `tasks/todo.md`
+5. **Document Results**: Add review section to the same `documents/todos/...` file
 6. **Capture Lessons**: Update `.claude/lessons.md` after corrections
+
+## Graphify Usage in Feature Implementation
+
+When generating a prompt or implementing a feature from a plan/doc:
+
+- Always mention **what concepts to query**, not just "use Graphify"
+- Run `graphify query` on relevant concepts **before writing any code**
+- Typical queries: how the target feature's use cases are structured, how repositories are wired in DI, how similar existing features are organized
+
+**Template:**
+
+```
+Implement <feature> following the plan at <path/to/plan.md>.
+Before writing any code, query the Graphify graph:
+- graphify query "<concept A>"
+- graphify query "<concept B>"
+```
 
 ## Core Principles
 

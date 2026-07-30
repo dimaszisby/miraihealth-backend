@@ -65,6 +65,16 @@ export const ValidationErrorSchema = registerSchema(
   }),
 );
 
+export const RateLimitErrorSchema = registerSchema(
+  "RateLimitError",
+  z.object({
+    status: z.number().openapi({ example: 429 }),
+    message: z
+      .string()
+      .openapi({ example: "Too many requests, please try again later." }),
+  }),
+);
+
 export const SuccessResponseSchema = registerSchema(
   "SuccessResponse",
   z.object({
@@ -415,7 +425,11 @@ export const UserSchema = registerSchema(
     username: z.string().openapi({ example: "testuser" }),
     email: z.string().email().openapi({ example: "test@example.com" }),
     isPublicProfile: z.boolean().openapi({ example: true }),
-    role: z.enum(["user", "admin"]).openapi({ example: "user" }),
+    emailVerifiedAt: z.string().datetime().nullable().openapi({
+      example: null,
+      description:
+        "ISO 8601 timestamp when email was verified, or null if unverified",
+    }),
     createdAt: z
       .string()
       .datetime()
@@ -461,6 +475,79 @@ export const LoginResponseSchema = registerSchema(
   successEnvelope(AuthTokenPayloadSchema),
 );
 
+const RefreshTokenPayloadSchema = z.object({
+  token: z.string().openapi({
+    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  }),
+});
+
+export const RefreshResponseSchema = registerSchema(
+  "RefreshResponse",
+  successEnvelope(RefreshTokenPayloadSchema),
+);
+
+export const SwitchOrgRequestSchema = registerSchema(
+  "SwitchOrgRequest",
+  z.object({
+    organizationId: z.string().uuid().regex(UUID_REGEX).openapi({
+      description: "Target organization ID to switch to",
+      example: "123e4567-e89b-42d3-a456-426614174000",
+      pattern: UUID_PATTERN,
+    }),
+  }),
+);
+
+export const CreateInviteRequestSchema = registerSchema(
+  "CreateInviteRequest",
+  z.object({
+    email: emailSchema("invitee@example.com"),
+    role: z.enum(["admin", "member"]).openapi({ example: "member" }),
+  }),
+);
+
+export const AcceptInviteRequestSchema = registerSchema(
+  "AcceptInviteRequest",
+  z.object({
+    token: z.string().min(1).openapi({
+      example: "dGVzdC1pbnZpdGUtdG9rZW4",
+    }),
+  }),
+);
+
+export const ChangeMemberRoleRequestSchema = registerSchema(
+  "ChangeMemberRoleRequest",
+  z.object({
+    role: z.enum(["admin", "member"]).openapi({ example: "admin" }),
+  }),
+);
+
+export const MemberSchema = registerSchema(
+  "Member",
+  z.object({
+    membershipId: UuidSchema,
+    userId: UuidSchema,
+    username: z.string().openapi({ example: "johndoe" }),
+    email: z.string().email().openapi({ example: "john@example.com" }),
+    role: z.enum(["owner", "admin", "member"]).openapi({ example: "member" }),
+    status: z
+      .enum(["active", "invited", "removed"])
+      .openapi({ example: "active" }),
+    joinedAt: z
+      .string()
+      .datetime()
+      .openapi({ example: "2025-01-15T09:30:00Z" }),
+  }),
+);
+
+export const MemberListResponseSchema = registerSchema(
+  "MemberListResponse",
+  successEnvelope(
+    z.object({
+      members: z.array(MemberSchema),
+    }),
+  ),
+);
+
 export const RegisterRequestSchema = registerSchema(
   "RegisterRequest",
   z
@@ -491,7 +578,6 @@ export const UpdateUserRequestSchema = registerSchema(
       .optional()
       .openapi({ example: "updatedpassword" }),
     isPublicProfile: z.boolean().optional().openapi({ example: false }),
-    role: z.enum(["user", "admin"]).optional().openapi({ example: "admin" }),
   }),
 );
 
@@ -519,6 +605,15 @@ export const ResetPasswordRequestSchema = registerSchema(
       message: "Passwords do not match",
       path: ["passwordConfirmation"],
     }),
+);
+
+export const VerifyEmailRequestSchema = registerSchema(
+  "VerifyEmailRequest",
+  z.object({
+    token: z.string().min(1).openapi({
+      example: "AbCdEf0123456789AbCdEf0123456789AbCdEf01",
+    }),
+  }),
 );
 
 // Metric Category Schemas

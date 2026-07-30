@@ -28,9 +28,41 @@ const envSchema = z.object({
 
   // Security
   JWT_SECRET: z.string().min(1, { message: "JWT_SECRET is required" }),
+  ACCESS_TOKEN_TTL_SEC: z
+    .string()
+    .transform((val) => {
+      const parsed = parseInt(val, 10);
+      if (isNaN(parsed) || parsed <= 0) {
+        throw new Error("ACCESS_TOKEN_TTL_SEC must be a positive number");
+      }
+      return parsed;
+    })
+    .default("900"),
+  REFRESH_TOKEN_TTL_DAYS: z
+    .string()
+    .transform((val) => {
+      const parsed = parseInt(val, 10);
+      if (isNaN(parsed) || parsed <= 0) {
+        throw new Error("REFRESH_TOKEN_TTL_DAYS must be a positive number");
+      }
+      return parsed;
+    })
+    .default("30"),
 
   // CORS
-  CORS_ORIGIN: z.string().optional(),
+  // Comma-separated list of allowed origins. Single origin still works
+  // (parses to a 1-element array). Empty entries are dropped after trimming.
+  CORS_ORIGIN: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (val === undefined) return undefined;
+      const parsed = val
+        .split(",")
+        .map((origin) => origin.trim())
+        .filter((origin) => origin.length > 0);
+      return parsed.length > 0 ? parsed : undefined;
+    }),
 
   // Database URLs (separate environment variables for dev/test/prod)
   DATABASE_URL: z.string().optional(),
@@ -142,6 +174,17 @@ const envSchema = z.object({
     })
     .default("30"),
 
+  RATE_LIMIT_SWITCH_ORG_MAX: z
+    .string()
+    .transform((val) => {
+      const parsed = parseInt(val, 10);
+      if (isNaN(parsed) || parsed <= 0) {
+        throw new Error("RATE_LIMIT_SWITCH_ORG_MAX must be a positive number");
+      }
+      return parsed;
+    })
+    .default("10"),
+
   DISABLE_RATE_LIMITING: z
     .string()
     .transform((val) => val === "true")
@@ -193,7 +236,18 @@ const envSchema = z.object({
     })
     .default("5"),
 
+  // Observability
+  SENTRY_DSN: z.string().optional(),
+  SENTRY_TRACES_SAMPLE_RATE: z
+    .string()
+    .transform((val) => {
+      const parsed = parseFloat(val);
+      return isNaN(parsed) ? 0 : parsed;
+    })
+    .default("0"),
+
   // HTTP
+  TRUST_PROXY: z.coerce.number().optional(),
   REQUEST_BODY_LIMIT: z.string().default("1mb"),
   SWAGGER_REQUIRE_AUTH: z
     .string()
@@ -217,6 +271,58 @@ const envSchema = z.object({
     .string()
     .url()
     .default("http://localhost:3000/reset-password"),
+  FRONTEND_VERIFY_URL: z
+    .string()
+    .url()
+    .default("http://localhost:3000/verify-email"),
+  FRONTEND_INVITE_URL: z
+    .string()
+    .url()
+    .default("http://localhost:3000/invites/accept"),
+  INVITE_TOKEN_TTL_DAYS: z
+    .string()
+    .transform((val) => {
+      const parsed = parseInt(val, 10);
+      if (isNaN(parsed) || parsed <= 0) {
+        throw new Error("INVITE_TOKEN_TTL_DAYS must be a positive number");
+      }
+      return parsed;
+    })
+    .default("7"),
+  EMAIL_VERIFICATION_TTL_SEC: z
+    .string()
+    .transform((val) => {
+      const parsed = parseInt(val, 10);
+      if (isNaN(parsed) || parsed <= 0) {
+        throw new Error("EMAIL_VERIFICATION_TTL_SEC must be a positive number");
+      }
+      return parsed;
+    })
+    .default("86400"),
+  RATE_LIMIT_EMAIL_VERIFICATION_EMAIL_MAX: z
+    .string()
+    .transform((val) => {
+      const parsed = parseInt(val, 10);
+      if (isNaN(parsed) || parsed <= 0) {
+        throw new Error(
+          "RATE_LIMIT_EMAIL_VERIFICATION_EMAIL_MAX must be a positive number",
+        );
+      }
+      return parsed;
+    })
+    .default("3"),
+  RATE_LIMIT_EMAIL_VERIFICATION_IP_MAX: z
+    .string()
+    .transform((val) => {
+      const parsed = parseInt(val, 10);
+      if (isNaN(parsed) || parsed <= 0) {
+        throw new Error(
+          "RATE_LIMIT_EMAIL_VERIFICATION_IP_MAX must be a positive number",
+        );
+      }
+      return parsed;
+    })
+    .default("10"),
   RATE_LIMIT_PASSWORD_RESET_EMAIL_MAX: z
     .string()
     .transform((val) => {
@@ -241,6 +347,15 @@ const envSchema = z.object({
       return parsed;
     })
     .default("10"),
+
+  // Analytics / Visualization
+  VIZ_MAX_BUCKETS: z.coerce.number().int().positive().default(400),
+  VIZ_DASH_MAX_METRICS: z.coerce.number().int().positive().default(24),
+  VIZ_DEFAULT_TTL_SEC: z.coerce.number().int().positive().default(120),
+  VIZ_CACHE_MAX_AGE_SEC: z.coerce.number().int().positive().default(60),
+  VIZ_CACHE_STALE_SEC: z.coerce.number().int().positive().default(30),
+  VIZ_FALLBACK_GUARD_BUCKETS: z.coerce.number().int().positive().default(96),
+  DEFAULT_TZ: z.string().default("Asia/Jakarta"),
 });
 
 /**

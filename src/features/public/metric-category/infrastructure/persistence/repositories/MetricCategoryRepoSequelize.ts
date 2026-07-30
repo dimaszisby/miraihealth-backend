@@ -32,9 +32,9 @@ const baseAttrs = (): FindAttributeOptions => {
 };
 
 export class MetricCategoryRepoSequelize implements MetricCategoryRepository {
-  async findById(userId: string, id: string) {
+  async findById(userId: string, organizationId: string, id: string) {
     const row = (await models.MetricCategory.findOne({
-      where: { id, userId, deletedAt: null },
+      where: { id, userId, organizationId, deletedAt: null },
       attributes: baseAttrs(), // includes metricCount
       raw: true,
       nest: true,
@@ -43,19 +43,21 @@ export class MetricCategoryRepoSequelize implements MetricCategoryRepository {
     return row ? toDomain(row) : null;
   }
 
-  async existsByName(userId: string, name: string) {
+  async existsByName(userId: string, organizationId: string, name: string) {
     const count = await models.MetricCategory.count({
-      where: { userId, name },
+      where: { userId, organizationId, name },
     });
     return count > 0;
   }
 
   async create(
     userId: string,
+    organizationId: string,
     data: { name: string; color?: string; icon?: string },
   ) {
     const created = await models.MetricCategory.create({
       userId,
+      organizationId,
       name: data.name,
       color: data.color ?? "#E897A3",
       icon: data.icon ?? "📁",
@@ -74,11 +76,12 @@ export class MetricCategoryRepoSequelize implements MetricCategoryRepository {
 
   async update(
     userId: string,
+    organizationId: string,
     id: string,
     patch: Partial<{ name: string; color: string; icon: string }>,
   ) {
     const row = await models.MetricCategory.findOne({
-      where: { id, userId, deletedAt: null },
+      where: { id, userId, organizationId, deletedAt: null },
     });
     if (!row) throw new Error("Category not found");
     await row.update(patch);
@@ -92,13 +95,15 @@ export class MetricCategoryRepoSequelize implements MetricCategoryRepository {
     return toDomain(fresh);
   }
 
-  async delete(userId: string, id: string) {
-    await models.MetricCategory.destroy({ where: { id, userId } }); // paranoid=true -> soft delete
+  async delete(userId: string, organizationId: string, id: string) {
+    await models.MetricCategory.destroy({
+      where: { id, userId, organizationId },
+    });
   }
 
   async list(q: ListQuery): Promise<ListResult<MetricCategory>> {
     const { field, dir } = normalizeSort(q.sort);
-    const where = buildWhere(q.userId, q.q, q.filter);
+    const where = buildWhere(q.userId, q.organizationId, q.q, q.filter);
     const pageSize = Math.min(Math.max(q.limit || 20, 1), 100);
 
     const totalCount = q.includeTotal
@@ -181,11 +186,16 @@ function normalizeSort(sort: SortParam): { field: SortField; dir: Dir } {
 }
 function buildWhere(
   userId: string,
+  organizationId: string,
   q?: string,
   filter?: { name?: string },
 ): WhereOptions {
   const like = (v: string) => ({ [Op.iLike]: `%${v}%` });
-  const and: Array<Record<string, unknown>> = [{ userId }, { deletedAt: null }];
+  const and: Array<Record<string, unknown>> = [
+    { userId },
+    { organizationId },
+    { deletedAt: null },
+  ];
   if (q) and.push({ name: like(q) });
   if (filter?.name) and.push({ name: like(filter.name) });
   return { [Op.and]: and };

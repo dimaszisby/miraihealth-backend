@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import { models } from "@/infrastructure/db/models.js";
 import { AuthUser } from "../../domain/entities/AuthUser.js";
 import {
@@ -12,8 +13,8 @@ const toDomain = (row: User): AuthUser =>
     email: row.email,
     username: row.username,
     passwordHash: row.password,
-    role: row.role ?? "user",
     isPublicProfile: row.isPublicProfile ?? !!row.isPublicProfile,
+    emailVerifiedAt: row.emailVerifiedAt ?? null,
     createdAt: row.createdAt ?? new Date(0),
     updatedAt: row.updatedAt ?? new Date(0),
     deletedAt: row.deletedAt ?? null,
@@ -35,6 +36,14 @@ export class UserRepositorySequelize implements UserRepository {
     return user ? toDomain(user) : null;
   }
 
+  async findByIds(ids: string[]): Promise<AuthUser[]> {
+    if (ids.length === 0) return [];
+    const rows = await models.User.findAll({
+      where: { id: { [Op.in]: ids } },
+    });
+    return rows.map(toDomain);
+  }
+
   async findByEmail(email: string): Promise<AuthUser | null> {
     const user = await models.User.findOne({ where: { email } });
     return user ? toDomain(user) : null;
@@ -46,7 +55,6 @@ export class UserRepositorySequelize implements UserRepository {
       username: data.username,
       password: data.passwordHash,
       isPublicProfile: data.isPublicProfile,
-      role: "user",
     });
     await created.reload();
     return toDomain(created);
@@ -60,6 +68,7 @@ export class UserRepositorySequelize implements UserRepository {
       username: user.username,
       password: user.passwordHash,
       isPublicProfile: user.isPublicProfile,
+      emailVerifiedAt: user.emailVerifiedAt,
     });
     await row.reload();
     return toDomain(row);

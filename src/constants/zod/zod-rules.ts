@@ -63,8 +63,6 @@ export const zPasswordConfirmation = z
   .string()
   .min(6, { message: ZodMessages.user.passwordConfirmMin });
 export const zPublicProfile = z.boolean().optional();
-export const zRoleEnum = z.enum(["user", "admin"]);
-export const zRole = zRoleEnum.optional().default("user");
 
 /**
  * * Metric Category

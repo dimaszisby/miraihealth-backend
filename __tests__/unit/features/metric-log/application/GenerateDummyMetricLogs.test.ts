@@ -1,6 +1,6 @@
 import { jest } from "@jest/globals";
 import { GenerateDummyMetricLogs } from "@/features/metric-log/application/use-cases/GenerateDummyMetricLogs.js";
-import { MetricAccessPort } from "@/features/metric-log/application/ports/MetricAccessPort.js";
+import type { MetricAccessPort } from "@/features/public/metric/application/ports/MetricAccessPort.js";
 import { CachePort } from "@/features/metric-log/application/ports/CachePort.js";
 import { MessageQueuePort } from "@/shared/application/ports/MessageQueuePort.js";
 import {
@@ -35,7 +35,12 @@ const setup = () => {
   return { sut, access, cache, queue };
 };
 
-const INPUT = { userId: "user-1", metricId: "metric-1", count: 3 };
+const INPUT = {
+  userId: "user-1",
+  organizationId: "org-1",
+  metricId: "metric-1",
+  count: 3,
+};
 
 describe("GenerateDummyMetricLogs use case", () => {
   beforeEach(() => jest.resetAllMocks());
@@ -50,6 +55,7 @@ describe("GenerateDummyMetricLogs use case", () => {
 
       expect(access.ensureMetricOwnership).toHaveBeenCalledWith(
         "user-1",
+        "org-1",
         "metric-1",
       );
       expect(queue.publish).toHaveBeenCalledWith(

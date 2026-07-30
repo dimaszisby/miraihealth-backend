@@ -20,6 +20,7 @@ export class ListCategories {
       version: METRIC_CATEGORY_CURSOR_VERSION,
       userId: q.userId,
       segments: [
+        ["org", q.organizationId],
         ["l", q.limit],
         ["s", q.sort],
         ["q", q.q ?? ""],
@@ -29,7 +30,9 @@ export class ListCategories {
       ],
     });
     if (this.cache.isEnabled()) {
-      const cached = await this.cache.get<ListResult<MetricCategory>>(key);
+      const cached = (await this.cache.get(
+        key,
+      )) as ListResult<MetricCategory> | null;
       if (cached) return cached;
     }
     const page = await this.repo.list(q);

@@ -7,6 +7,7 @@ import {
   createMetricRow,
   createUserRow,
   truncateAllTables,
+  TEST_ORG_ID,
 } from "../../helpers/db-fixtures.js";
 
 const repo = new MetricLogRepoSequelize();
@@ -23,16 +24,17 @@ describe("MetricLog repositories (integration)", () => {
     const loggedAt = new Date("2025-01-01T00:00:00Z");
     const log = await repo.create({
       metricId: metric.id,
+      organizationId: TEST_ORG_ID,
       logValue: 10,
       type: "manual",
       loggedAt,
     });
 
-    await expect(repo.existsAtTimestamp(metric.id, loggedAt)).resolves.toBe(
-      true,
-    );
     await expect(
-      repo.existsAtTimestamp(metric.id, loggedAt, log.id),
+      repo.existsAtTimestamp(TEST_ORG_ID, metric.id, loggedAt),
+    ).resolves.toBe(true);
+    await expect(
+      repo.existsAtTimestamp(TEST_ORG_ID, metric.id, loggedAt, log.id),
     ).resolves.toBe(false);
   });
 
@@ -43,6 +45,7 @@ describe("MetricLog repositories (integration)", () => {
     const metric = await createMetricRow({ userId: owner.id });
     const created = await repo.create({
       metricId: metric.id,
+      organizationId: TEST_ORG_ID,
       logValue: 12,
       type: "manual",
       loggedAt: new Date("2025-01-02T00:00:00Z"),
@@ -51,19 +54,23 @@ describe("MetricLog repositories (integration)", () => {
     const row = await models.MetricLog.findByPk(created.id);
     expect(row?.metricId).toBe(metric.id);
 
-    const foundOwner = await repo.findById(owner.id, created.id);
+    const foundOwner = await repo.findById(owner.id, TEST_ORG_ID, created.id);
     expect(foundOwner?.id).toBe(created.id);
-    const foundIntruder = await repo.findById(intruder.id, created.id);
+    const foundIntruder = await repo.findById(
+      intruder.id,
+      TEST_ORG_ID,
+      created.id,
+    );
     expect(foundIntruder).toBeNull();
 
     foundOwner?.setLogValue(99);
     foundOwner?.setType("automatic");
     foundOwner?.setLoggedAt(new Date("2025-01-03T00:00:00Z"));
-    const saved = await repo.save(foundOwner!);
+    const saved = await repo.save(TEST_ORG_ID, foundOwner!);
     expect(saved.logValue).toBe(99);
     expect(saved.type).toBe("automatic");
 
-    await repo.delete(saved);
+    await repo.delete(TEST_ORG_ID, saved);
     await expect(models.MetricLog.findByPk(saved.id)).resolves.toBeNull();
   });
 
@@ -101,6 +108,7 @@ describe("MetricLog repositories (integration)", () => {
 
     const firstPage = await queryRepo.listLogs({
       userId: owner.id,
+      organizationId: TEST_ORG_ID,
       limit: 2,
       sort: "-loggedAt",
       includeTotal: true,
@@ -115,6 +123,7 @@ describe("MetricLog repositories (integration)", () => {
 
     const secondPage = await queryRepo.listLogs({
       userId: owner.id,
+      organizationId: TEST_ORG_ID,
       limit: 2,
       sort: "-loggedAt",
       filter: { metricId: metric.id },
@@ -145,6 +154,7 @@ describe("MetricLog repositories (integration)", () => {
 
     const byValue = await queryRepo.listLogs({
       userId: owner.id,
+      organizationId: TEST_ORG_ID,
       limit: 10,
       sort: "-logValue",
       q: "15",

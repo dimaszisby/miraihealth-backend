@@ -8,6 +8,8 @@ import { buildMetricSettings } from "../../../factories/metric-settings.js";
 type RepoMock = jest.Mocked<MetricSettingsRepository>;
 type CacheMock = jest.Mocked<CacheInvalidationPort>;
 
+const TEST_ORG_ID = "org-test-id";
+
 const setup = () => {
   const repo: RepoMock = {
     create: jest.fn(),
@@ -30,7 +32,7 @@ describe("UpdateMetricSettings", () => {
   it("throws when user is missing", async () => {
     const { sut } = setup();
     await expect(
-      sut.execute("", "settings-1", { goalEnabled: false }),
+      sut.execute("", TEST_ORG_ID, "settings-1", { goalEnabled: false }),
     ).rejects.toBeInstanceOf(AppError);
   });
 
@@ -39,7 +41,7 @@ describe("UpdateMetricSettings", () => {
     repo.findById.mockResolvedValue(null);
 
     await expect(
-      sut.execute("user-1", "settings-unknown", {}),
+      sut.execute("user-1", TEST_ORG_ID, "settings-unknown", {}),
     ).rejects.toBeInstanceOf(AppError);
 
     expect(repo.save).not.toHaveBeenCalled();
@@ -76,7 +78,12 @@ describe("UpdateMetricSettings", () => {
       },
     };
 
-    const result = await sut.execute("user-1", "settings-5", payload);
+    const result = await sut.execute(
+      "user-1",
+      TEST_ORG_ID,
+      "settings-5",
+      payload,
+    );
 
     expect(updateSpy).toHaveBeenCalledWith({
       goalEnabled: true,
@@ -90,7 +97,7 @@ describe("UpdateMetricSettings", () => {
       displayOptions: payload.displayOptions,
     });
 
-    expect(repo.save).toHaveBeenCalledWith(entity);
+    expect(repo.save).toHaveBeenCalledWith(TEST_ORG_ID, entity);
     expect(cache.invalidate).toHaveBeenCalledWith(
       "user-1",
       "metric-9",

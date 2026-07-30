@@ -4,6 +4,7 @@ import {
   updateMetricLogSchema,
   generateDummyMetricLogsSchema,
 } from "./schema.zod.js";
+import { MetricLogDomain } from "@/types/domain/metric-log.domain.js";
 
 export interface MetricLogResponseDTO {
   readonly id: string;
@@ -16,6 +17,22 @@ export interface MetricLogResponseDTO {
 }
 
 export type MetricLogListResponseDTO = MetricLogResponseDTO[];
+
+export const toMetricLogResponseDTO = (
+  domain: MetricLogDomain,
+): MetricLogResponseDTO => ({
+  id: domain.id,
+  metricId: domain.metricId,
+  type: domain.type,
+  logValue: domain.logValue,
+  loggedAt: domain.loggedAt.toISOString(),
+  createdAt: domain.createdAt.toISOString(),
+  updatedAt: domain.updatedAt.toISOString(),
+});
+
+export const toMetricLogListResponseDTO = (
+  logs: MetricLogDomain[],
+): MetricLogListResponseDTO => logs.map(toMetricLogResponseDTO);
 
 export type CreateMetricLogRequestDTO = z.infer<
   typeof createMetricLogSchema.shape.body

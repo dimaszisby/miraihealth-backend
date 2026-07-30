@@ -248,7 +248,7 @@ describe("metric router", () => {
     ) => string;
 
     const req: any = {
-      user: { id: "user-99" },
+      user: { id: "user-99", organizationId: "org-1" },
       query: {
         limit: "50",
         sort: "createdAt",
@@ -263,9 +263,10 @@ describe("metric router", () => {
     const key = cursorBuilder(req);
     expect(buildCursorCacheKeyMock).toHaveBeenCalledWith({
       feature: "metrics",
-      version: 1,
+      version: 2,
       userId: "user-99",
       segments: [
+        ["org", "org-1"],
         ["l", 50],
         ["s", "createdAt"],
         ["q", "search"],

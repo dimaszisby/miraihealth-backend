@@ -6,6 +6,7 @@ import {
   zPassword,
   zPasswordConfirmation,
   zPublicProfile,
+  zUUID,
 } from "@/constants/zod/zod-rules.js";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 
@@ -53,8 +54,21 @@ export const resetPasswordBody = z
     path: ["passwordConfirmation"],
   });
 
+export const verifyEmailBody = z.object({
+  token: z
+    .string()
+    .min(1, { message: "Verification token is required" })
+    .openapi({ example: "some-raw-token-value" }),
+});
+
+export const switchOrgBody = z.object({
+  organizationId: zUUID,
+});
+
 export const createUserSchema = { body: createUserBody };
 export const updateUserSchema = { body: updateUserBody };
 export const loginUserSchema = { body: loginUserBody };
 export const forgotPasswordSchema = { body: forgotPasswordBody };
 export const resetPasswordSchema = { body: resetPasswordBody };
+export const verifyEmailSchema = { body: verifyEmailBody };
+export const switchOrgSchema = { body: switchOrgBody };

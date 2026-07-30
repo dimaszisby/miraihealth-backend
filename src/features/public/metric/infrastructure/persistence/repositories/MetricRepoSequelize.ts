@@ -5,16 +5,21 @@ import {
   MetricRepository,
 } from "../../../domain/repositories/MetricRepository.js";
 import { Metric } from "../../../domain/entities/Metric.js";
-import { PersistenceTransaction } from "../../../application/ports/PersistenceTransaction.js";
+import { PersistenceTransaction } from "../../../application/ports/TransactionPort.js";
 import { MetricRow, toDomain } from "../mappers/MetricMapper.js";
 import AppError from "@/utils/AppError.js";
 
 export class MetricRepoSequelize implements MetricRepository {
-  async existsByName(userId: string, name: string): Promise<boolean> {
+  async existsByName(
+    userId: string,
+    organizationId: string,
+    name: string,
+  ): Promise<boolean> {
     const normalized = name.trim().toLowerCase();
     const count = await models.Metric.count({
       where: {
         userId,
+        organizationId,
         [Op.and]: Sequelize.where(
           Sequelize.fn("lower", Sequelize.col("name")),
           normalized,
@@ -24,13 +29,18 @@ export class MetricRepoSequelize implements MetricRepository {
     return count > 0;
   }
 
-  async categoryExists(userId: string, categoryId: string): Promise<boolean> {
+  async categoryExists(
+    userId: string,
+    organizationId: string,
+    categoryId: string,
+  ): Promise<boolean> {
     const count = await models.MetricCategory.count({
-      where: { userId, id: categoryId },
+      where: { userId, organizationId, id: categoryId },
     });
     return count > 0;
   }
 
+  // Cross-org: intentionally unscoped — allows referencing public metrics from any org for cloning.
   async originalMetricExists(
     userId: string,
     metricId: string,
@@ -52,6 +62,7 @@ export class MetricRepoSequelize implements MetricRepository {
     const created = await models.Metric.create(
       {
         userId: data.userId,
+        organizationId: data.organizationId,
         categoryId: data.categoryId ?? null,
         originalMetricId: data.originalMetricId ?? null,
         name: data.name,
@@ -81,9 +92,13 @@ export class MetricRepoSequelize implements MetricRepository {
     return toDomain(row);
   }
 
-  async findOwnedById(userId: string, metricId: string): Promise<Metric> {
+  async findOwnedById(
+    userId: string,
+    organizationId: string,
+    metricId: string,
+  ): Promise<Metric> {
     const metric = await models.Metric.findOne({
-      where: { id: metricId, userId },
+      where: { id: metricId, userId, organizationId },
     });
     if (!metric) {
       throw new AppError("Metric not found", 404);
@@ -106,9 +121,9 @@ export class MetricRepoSequelize implements MetricRepository {
     return toDomain(row);
   }
 
-  async save(metric: Metric): Promise<Metric> {
+  async save(organizationId: string, metric: Metric): Promise<Metric> {
     const instance = await models.Metric.findOne({
-      where: { id: metric.id, userId: metric.userId },
+      where: { id: metric.id, userId: metric.userId, organizationId },
     });
     if (!instance) throw new AppError("Metric not found", 404);
 
@@ -145,9 +160,9 @@ export class MetricRepoSequelize implements MetricRepository {
     });
   }
 
-  async delete(metric: Metric): Promise<void> {
+  async delete(organizationId: string, metric: Metric): Promise<void> {
     const instance = await models.Metric.findOne({
-      where: { id: metric.id, userId: metric.userId },
+      where: { id: metric.id, userId: metric.userId, organizationId },
     });
     if (!instance) throw new AppError("Metric not found", 404);
     await instance.destroy();

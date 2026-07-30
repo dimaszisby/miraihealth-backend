@@ -20,9 +20,12 @@ if [[ "$REL_PATH" == ".claude/settings.json" ]] || [[ "$REL_PATH" == ".claude/se
 fi
 
 # --- Block: environment files ---
-if [[ "$REL_PATH" == .env* ]] || [[ "$REL_PATH" == *.env ]] || [[ "$REL_PATH" == *.env.* ]]; then
-  echo "Protected: environment files (.env*) must not be edited by Claude. Modify manually." >&2
-  exit 2
+# .env.example is a committed template (no secrets) and is always allowed.
+if [[ "$REL_PATH" != ".env.example" ]]; then
+  if [[ "$REL_PATH" == .env* ]] || [[ "$REL_PATH" == *.env ]] || [[ "$REL_PATH" == *.env.* ]]; then
+    echo "Protected: environment files (.env*) must not be edited by Claude. Modify manually." >&2
+    exit 2
+  fi
 fi
 
 # --- Block: lock files ---

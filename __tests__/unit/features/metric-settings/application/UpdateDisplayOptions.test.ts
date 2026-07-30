@@ -8,6 +8,8 @@ import { buildMetricSettings } from "../../../factories/metric-settings.js";
 type RepoMock = jest.Mocked<MetricSettingsRepository>;
 type CacheMock = jest.Mocked<CacheInvalidationPort>;
 
+const TEST_ORG_ID = "org-test-id";
+
 const setup = () => {
   const repo: RepoMock = {
     create: jest.fn(),
@@ -30,7 +32,7 @@ describe("UpdateDisplayOptions", () => {
   it("requires authenticated user", async () => {
     const { sut } = setup();
     await expect(
-      sut.execute("", "settings-1", {
+      sut.execute("", TEST_ORG_ID, "settings-1", {
         showOnDashboard: true,
         priority: 1,
         chartType: "line",
@@ -44,7 +46,7 @@ describe("UpdateDisplayOptions", () => {
     repo.findById.mockResolvedValue(null);
 
     await expect(
-      sut.execute("user-1", "settings-1", {
+      sut.execute("user-1", TEST_ORG_ID, "settings-1", {
         showOnDashboard: true,
         priority: null,
         chartType: null,
@@ -66,7 +68,7 @@ describe("UpdateDisplayOptions", () => {
     repo.save.mockResolvedValue(entity);
     cache.invalidate.mockResolvedValue();
 
-    const result = await sut.execute("user-5", "settings-20", {
+    const result = await sut.execute("user-5", TEST_ORG_ID, "settings-20", {
       showOnDashboard: false,
       priority: 10,
       chartType: "bar",
@@ -79,7 +81,7 @@ describe("UpdateDisplayOptions", () => {
       chartType: "bar",
       color: "#ABCDEF",
     });
-    expect(repo.save).toHaveBeenCalledWith(entity);
+    expect(repo.save).toHaveBeenCalledWith(TEST_ORG_ID, entity);
     expect(cache.invalidate).toHaveBeenCalledWith(
       "user-5",
       "metric-55",

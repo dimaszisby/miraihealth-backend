@@ -3,6 +3,7 @@ import { CachePort } from "../ports/CachePort.js";
 
 type Input = {
   userId: string;
+  organizationId: string;
   metricId: string;
 };
 
@@ -12,14 +13,18 @@ export class DeleteMetric {
     private cache: CachePort,
   ) {}
 
-  async execute({ userId, metricId }: Input) {
-    const metric = await this.repo.findOwnedById(userId, metricId);
+  async execute({ userId, organizationId, metricId }: Input) {
+    const metric = await this.repo.findOwnedById(
+      userId,
+      organizationId,
+      metricId,
+    );
 
     if (this.cache.isEnabled() && metric.id) {
       await this.cache.invalidateMetrics(userId, metric.id);
     }
 
-    await this.repo.delete(metric);
+    await this.repo.delete(organizationId, metric);
 
     return metric;
   }

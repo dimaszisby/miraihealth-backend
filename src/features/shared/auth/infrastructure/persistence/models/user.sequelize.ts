@@ -7,6 +7,31 @@ import {
   associatePasswordResetToken,
   PasswordResetToken,
 } from "./password-reset-token.sequelize.js";
+import {
+  initRefreshToken,
+  associateRefreshToken,
+  RefreshToken,
+} from "./refresh-token.sequelize.js";
+import {
+  initEmailVerificationToken,
+  associateEmailVerificationToken,
+  EmailVerificationToken,
+} from "./email-verification-token.sequelize.js";
+import {
+  initOrganization,
+  associateOrganization,
+  Organization,
+} from "./organization.sequelize.js";
+import {
+  initMembership,
+  associateMembership,
+  Membership,
+} from "./membership.sequelize.js";
+import {
+  initOrganizationInvite,
+  associateOrganizationInvite,
+  OrganizationInvite,
+} from "./organization-invite.sequelize.js";
 
 const isBcryptHash = (value: unknown): value is string =>
   typeof value === "string" && /^\$2[aby]\$\d{2}\$/.test(value);
@@ -32,8 +57,8 @@ export class User
   declare username: string;
   declare email: string;
   declare password: string;
-  declare role: "user" | "admin";
   declare isPublicProfile: boolean;
+  declare emailVerifiedAt?: Date | null;
 
   declare createdAt?: Date | null;
   declare updatedAt?: Date | null;
@@ -62,15 +87,14 @@ export class User
           type: DataTypes.STRING,
           allowNull: false,
         },
-        role: {
-          type: DataTypes.ENUM("user", "admin"),
-          allowNull: false,
-          defaultValue: "user",
-        },
         isPublicProfile: {
           type: DataTypes.BOOLEAN,
           allowNull: false,
           defaultValue: true,
+        },
+        emailVerifiedAt: {
+          type: DataTypes.DATE,
+          allowNull: true,
         },
         deletedAt: {
           type: DataTypes.DATE,
@@ -126,6 +150,24 @@ export class User
       foreignKey: { name: "userId", field: "user_id", allowNull: false },
       onDelete: "CASCADE",
     });
+
+    User.hasMany(models.RefreshToken, {
+      as: "refreshTokens",
+      foreignKey: { name: "userId", field: "user_id", allowNull: false },
+      onDelete: "CASCADE",
+    });
+
+    User.hasMany(models.EmailVerificationToken, {
+      as: "emailVerificationTokens",
+      foreignKey: { name: "userId", field: "user_id", allowNull: false },
+      onDelete: "CASCADE",
+    });
+
+    User.hasMany(models.Membership, {
+      as: "memberships",
+      foreignKey: { name: "userId", field: "user_id", allowNull: false },
+      onDelete: "CASCADE",
+    });
   }
 
   async validPassword(password: string): Promise<boolean> {
@@ -143,10 +185,28 @@ export function associateUser(models: DbModels) {
 export const registerAuthModels = (sequelize: Sequelize) => {
   initUser(sequelize);
   initPasswordResetToken(sequelize);
-  return { User, PasswordResetToken };
+  initRefreshToken(sequelize);
+  initEmailVerificationToken(sequelize);
+  initOrganization(sequelize);
+  initMembership(sequelize);
+  initOrganizationInvite(sequelize);
+  return {
+    User,
+    PasswordResetToken,
+    RefreshToken,
+    EmailVerificationToken,
+    Organization,
+    Membership,
+    OrganizationInvite,
+  };
 };
 
 export const associateAuthModels = (models: DbModels) => {
   associateUser(models);
   associatePasswordResetToken(models);
+  associateRefreshToken(models);
+  associateEmailVerificationToken(models);
+  associateOrganization(models);
+  associateMembership(models);
+  associateOrganizationInvite(models);
 };

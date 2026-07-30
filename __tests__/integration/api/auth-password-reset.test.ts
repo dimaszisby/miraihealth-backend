@@ -40,6 +40,13 @@ const extractTokenFromLink = (link: string): string => {
   return decodeURIComponent(match[1]);
 };
 
+const findResetEmail = (sender: CapturingEmailSender): EmailMessage => {
+  const msg = sender.messages.find((m) => /reset/i.test(m.subject));
+  if (!msg)
+    throw new Error("No password-reset email found in captured messages");
+  return msg;
+};
+
 describe("Password reset API", () => {
   afterEach(() => {
     restoreFeature();
@@ -65,9 +72,9 @@ describe("Password reset API", () => {
       expect(tokens).toHaveLength(1);
       expect(tokens[0].tokenHash).toMatch(/^[0-9a-f]{64}$/);
 
-      expect(sender.messages).toHaveLength(1);
-      expect(sender.messages[0].to).toBe(payload.email);
-      expect(sender.messages[0].text).toContain("?token=");
+      const resetMsg = findResetEmail(sender);
+      expect(resetMsg.to).toBe(payload.email);
+      expect(resetMsg.text).toContain("?token=");
     });
 
     it("returns 200 with no token row and no email when the address is unknown (anti-enumeration)", async () => {
@@ -128,7 +135,7 @@ describe("Password reset API", () => {
         .post("/api/v1/auth/forgot-password")
         .send({ email: payload.email });
       expect(forgotRes.status).toBe(200);
-      const rawToken = extractTokenFromLink(sender.messages[0].text);
+      const rawToken = extractTokenFromLink(findResetEmail(sender).text);
 
       const newPassword = "BrandNewPass123!";
       const resetRes = await api.post("/api/v1/auth/reset-password").send({
@@ -160,7 +167,7 @@ describe("Password reset API", () => {
       await api
         .post("/api/v1/auth/forgot-password")
         .send({ email: payload.email });
-      const rawToken = extractTokenFromLink(sender.messages[0].text);
+      const rawToken = extractTokenFromLink(findResetEmail(sender).text);
 
       const newPassword = "BrandNewPass123!";
       const first = await api.post("/api/v1/auth/reset-password").send({
@@ -186,7 +193,7 @@ describe("Password reset API", () => {
       await api
         .post("/api/v1/auth/forgot-password")
         .send({ email: payload.email });
-      const rawToken = extractTokenFromLink(sender.messages[0].text);
+      const rawToken = extractTokenFromLink(findResetEmail(sender).text);
 
       await models.PasswordResetToken.update(
         { expiresAt: new Date(Date.now() - 60 * 1000) },

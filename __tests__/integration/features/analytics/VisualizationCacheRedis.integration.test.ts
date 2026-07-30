@@ -12,6 +12,8 @@ import { VisualizationCacheRedis } from "@/features/analytics/infrastructure/cac
 import { redisClient } from "@/utils/redis-client.js";
 import { env } from "@/config/envManager.js";
 
+const TEST_ORG_ID = "org-test-id";
+
 const bucketAlias: BucketAlias = "1d";
 const bucketSpec = resolveBucket(bucketAlias);
 const fillMode: FillMode = "zero";
@@ -22,6 +24,7 @@ const range = {
 
 const singleKey = {
   userId: "redis-user",
+  organizationId: TEST_ORG_ID,
   metricId: "redis-metric",
   bucket: bucketAlias,
   bucketIso: bucketSpec.iso,
@@ -124,6 +127,7 @@ describeRedis("VisualizationCacheRedis (integration with Redis)", () => {
 
     const dashboardKey = {
       userId: singleKey.userId,
+      organizationId: TEST_ORG_ID,
       metricIds: [singleKey.metricId],
       bucket: bucketAlias,
       bucketIso: bucketSpec.iso,
@@ -200,6 +204,7 @@ describeRedis("VisualizationCacheRedis (integration with Redis)", () => {
 
     const dashboardKey = {
       userId: singleKey.userId,
+      organizationId: TEST_ORG_ID,
       metricIds: [singleKey.metricId],
       bucket: bucketAlias,
       bucketIso: bucketSpec.iso,

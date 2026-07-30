@@ -19,8 +19,15 @@ const getStatsExecute = jest.fn<(args: any) => Promise<any>>();
 const generateDummyExecute = jest.fn<(args: any) => Promise<any>>();
 const listLogsExecute = jest.fn<(args: ListOpts) => Promise<ListLogsResult>>();
 const userId = "00000000-0000-0000-0000-000000000001";
+const orgId = "aaaaaaaa-0000-0000-0000-000000000001";
 const metricId = "11111111-1111-1111-1111-111111111111";
 const logId = "22222222-2222-2222-2222-222222222222";
+
+const authFields = {
+  user: { id: userId },
+  organizationId: orgId,
+  membership: { id: "mem-1", role: "owner", organizationId: orgId, userId },
+};
 
 const makeRes = () => {
   const res: any = {
@@ -75,7 +82,7 @@ describe("Metric log controller", () => {
 
   it("creates metric log through feature use case", async () => {
     const req: any = {
-      user: { id: userId },
+      ...authFields,
       body: { metricId, logValue: 10, type: "manual" },
     };
     const log = {
@@ -114,7 +121,7 @@ describe("Metric log controller", () => {
     };
     getLogExecute.mockResolvedValue(log as any);
     const req: any = {
-      user: { id: userId },
+      ...authFields,
       params: { id: logId },
       query: { metricId },
     };
@@ -131,7 +138,7 @@ describe("Metric log controller", () => {
 
   it("returns aggregated stats via feature", async () => {
     getStatsExecute.mockResolvedValue({ average: 0, min: 0, max: 0 } as any);
-    const req: any = { user: { id: userId }, query: {} };
+    const req: any = { ...authFields, query: {} };
 
     const res = makeRes();
     await getAggregatedStats(req, res, jest.fn());
@@ -145,7 +152,7 @@ describe("Metric log controller", () => {
 
   it("lists logs via feature query", async () => {
     const req: any = {
-      user: { id: userId },
+      ...authFields,
       query: {
         limit: 10,
         sort: "-createdAt",
@@ -173,7 +180,7 @@ describe("Metric log controller", () => {
     const jobId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
     generateDummyExecute.mockResolvedValue({ jobId } as any);
     const req: any = {
-      user: { id: userId },
+      ...authFields,
       params: { metricId },
       body: { count: 5 },
     };

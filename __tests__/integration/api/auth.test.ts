@@ -91,7 +91,7 @@ describe("Auth API", () => {
     expect(res.body.data.user.isPublicProfile).toBe(false);
   });
 
-  it("does not allow role escalation through profile updates", async () => {
+  it("ignores unknown fields in profile updates", async () => {
     const { token } = await createTestUser();
 
     const updateRes = await api
@@ -104,13 +104,7 @@ describe("Auth API", () => {
 
     expect(updateRes.status).toBe(200);
     expect(updateRes.body.status).toBe("success");
-    expect(updateRes.body.data.user.role).toBe("user");
-
-    const profileRes = await api
-      .get("/api/v1/auth/profile")
-      .set("Authorization", authHeader(token));
-    expect(profileRes.status).toBe(200);
-    expect(profileRes.body.data.role).toBe("user");
+    expect(updateRes.body.data.user.role).toBeUndefined();
   });
 
   it("logs out an authenticated user", async () => {

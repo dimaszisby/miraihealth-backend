@@ -2,6 +2,7 @@ import { OpenApiGeneratorV31 } from "@asteasolutions/zod-to-openapi";
 import type { ComponentsObject } from "openapi3-ts/oas31";
 import { z } from "zod";
 import { openApiDocument, registry } from "./openapi-config.js";
+import { APP_SHORT_NAME } from "@/config/app-name.js";
 import {
   LoginRequestSchema,
   LoginResponseSchema,
@@ -11,6 +12,8 @@ import {
   UpdateUserRequestSchema,
   ForgotPasswordRequestSchema,
   ResetPasswordRequestSchema,
+  RateLimitErrorSchema,
+  VerifyEmailRequestSchema,
   MetricCategorySchema,
   CreateMetricCategoryRequestSchema,
   UpdateMetricCategoryRequestSchema,
@@ -46,6 +49,12 @@ import {
   VisualizationQueryParamsSchema,
   DashboardVisualizationQueryParamsSchema,
   SuccessResponseSchema,
+  RefreshResponseSchema,
+  SwitchOrgRequestSchema,
+  CreateInviteRequestSchema,
+  AcceptInviteRequestSchema,
+  ChangeMemberRoleRequestSchema,
+  MemberListResponseSchema,
   successEnvelope,
 } from "./openapi-schemas.js";
 import {
@@ -204,13 +213,46 @@ registry.registerPath({
   path: "/auth/logout",
   tags: ["Auth"],
   summary: "Log out the current user",
-  security: [{ BearerAuth: [] }],
+  description:
+    "Revokes the refresh token family associated with the presented cookie or bearer token.",
   responses: {
     200: {
       description: "User logged out successfully",
       content: {
         "application/json": {
           schema: SuccessResponseSchema,
+        },
+      },
+    },
+    500: {
+      $ref: "#/components/responses/InternalServerError",
+    },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/auth/refresh",
+  tags: ["Auth"],
+  summary: "Rotate refresh token and get a new access token",
+  description:
+    `Reads the \`${APP_SHORT_NAME}_refresh\` HttpOnly cookie. ` +
+    "Rotates the refresh token (revokes old, issues new) and returns a fresh access token. " +
+    "If the presented token was already revoked, the entire token family is invalidated (reuse detection).",
+  request: {
+    cookies: z.object({
+      [`${APP_SHORT_NAME}_refresh`]: z.string().openapi({
+        description: "Opaque refresh token set by login",
+        example: "dGVzdC1yZWZyZXNoLXRva2Vu",
+      }),
+    }),
+  },
+  responses: {
+    200: {
+      description: "New access token issued; new refresh cookie set",
+      content: {
+        "application/json": {
+          schema: RefreshResponseSchema,
         },
       },
     },
@@ -258,7 +300,7 @@ registry.registerPath({
       description: "Rate limit exceeded for password reset requests",
       content: {
         "application/json": {
-          schema: SuccessResponseSchema,
+          schema: RateLimitErrorSchema,
         },
       },
     },
@@ -303,9 +345,348 @@ registry.registerPath({
       description: "Rate limit exceeded for password reset requests",
       content: {
         "application/json": {
+          schema: RateLimitErrorSchema,
+        },
+      },
+    },
+    500: {
+      $ref: "#/components/responses/InternalServerError",
+    },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/auth/verify-email",
+  tags: ["Auth"],
+  summary: "Verify email address with a token",
+  description:
+    "Accepts a single-use token from the verification email. Returns a generic " +
+    "400 for unknown, used, or expired tokens (anti-enumeration). No JWT required.",
+  request: {
+    body: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: VerifyEmailRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Email successfully verified",
+      content: {
+        "application/json": {
           schema: SuccessResponseSchema,
         },
       },
+    },
+    400: {
+      $ref: "#/components/responses/BadRequestError",
+    },
+    429: {
+      description: "Rate limit exceeded for email verification requests",
+      content: {
+        "application/json": {
+          schema: RateLimitErrorSchema,
+        },
+      },
+    },
+    500: {
+      $ref: "#/components/responses/InternalServerError",
+    },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/auth/resend-verification",
+  tags: ["Auth"],
+  summary: "Resend verification email",
+  security: [{ BearerAuth: [] }],
+  description:
+    "Always returns 200 regardless of current verification status (anti-enumeration). " +
+    "When the user is unverified, revokes any prior token and sends a fresh one. " +
+    "Rate-limited per user email and IP address.",
+  responses: {
+    200: {
+      description: "Generic acknowledgement",
+      content: {
+        "application/json": {
+          schema: SuccessResponseSchema,
+        },
+      },
+    },
+    401: {
+      $ref: "#/components/responses/UnauthorizedError",
+    },
+    429: {
+      description: "Rate limit exceeded for resend verification requests",
+      content: {
+        "application/json": {
+          schema: RateLimitErrorSchema,
+        },
+      },
+    },
+    500: {
+      $ref: "#/components/responses/InternalServerError",
+    },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/auth/switch-org",
+  tags: ["Auth"],
+  summary: "Switch active organization",
+  description:
+    "Switches the authenticated user's active organization context. " +
+    "Validates the user has an active membership in the target organization, " +
+    "then issues a new access token with the new `organizationId` claim and a fresh refresh token cookie.",
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: SwitchOrgRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Organization switched; new tokens issued",
+      content: {
+        "application/json": {
+          schema: RefreshResponseSchema,
+        },
+      },
+    },
+    400: {
+      $ref: "#/components/responses/BadRequestError",
+    },
+    401: {
+      $ref: "#/components/responses/UnauthorizedError",
+    },
+    403: {
+      $ref: "#/components/responses/ForbiddenError",
+    },
+    500: {
+      $ref: "#/components/responses/InternalServerError",
+    },
+  },
+});
+
+// Define paths for Organization Invites & Memberships
+registry.registerPath({
+  method: "post",
+  path: "/organizations/{id}/invites",
+  tags: ["Organizations"],
+  summary: "Invite a user to the organization",
+  description:
+    "Sends an invitation email with a single-use token. " +
+    "Only owners and admins can invite. Rejects if a pending invite already exists for the email.",
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: z.object({
+      id: z.string().uuid().openapi({
+        description: "Organization ID",
+        example: "123e4567-e89b-42d3-a456-426614174000",
+      }),
+    }),
+    body: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: CreateInviteRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      description: "Invitation sent successfully",
+      content: {
+        "application/json": {
+          schema: SuccessResponseSchema,
+        },
+      },
+    },
+    400: {
+      $ref: "#/components/responses/BadRequestError",
+    },
+    401: {
+      $ref: "#/components/responses/UnauthorizedError",
+    },
+    403: {
+      $ref: "#/components/responses/ForbiddenError",
+    },
+    409: {
+      $ref: "#/components/responses/ConflictError",
+    },
+    500: {
+      $ref: "#/components/responses/InternalServerError",
+    },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/organizations/{id}/members",
+  tags: ["Organizations"],
+  summary: "List organization members",
+  description:
+    "Returns all active memberships for the organization with user details. " +
+    "Any member of the organization can call this endpoint.",
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: z.object({
+      id: z.string().uuid().openapi({
+        description: "Organization ID",
+        example: "123e4567-e89b-42d3-a456-426614174000",
+      }),
+    }),
+  },
+  responses: {
+    200: {
+      description: "List of organization members",
+      content: {
+        "application/json": {
+          schema: MemberListResponseSchema,
+        },
+      },
+    },
+    401: {
+      $ref: "#/components/responses/UnauthorizedError",
+    },
+    403: {
+      $ref: "#/components/responses/ForbiddenError",
+    },
+    500: {
+      $ref: "#/components/responses/InternalServerError",
+    },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/invites/accept",
+  tags: ["Organizations"],
+  summary: "Accept an organization invite",
+  description:
+    "Accepts a pending invite using the raw token from the invitation email. " +
+    "Returns a generic 400 for invalid, expired, or already-accepted tokens (anti-enumeration).",
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: AcceptInviteRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Invitation accepted",
+      content: {
+        "application/json": {
+          schema: SuccessResponseSchema,
+        },
+      },
+    },
+    400: {
+      $ref: "#/components/responses/BadRequestError",
+    },
+    401: {
+      $ref: "#/components/responses/UnauthorizedError",
+    },
+    500: {
+      $ref: "#/components/responses/InternalServerError",
+    },
+  },
+});
+
+registry.registerPath({
+  method: "patch",
+  path: "/memberships/{id}",
+  tags: ["Organizations"],
+  summary: "Change a member's role",
+  description:
+    "Only organization owners can change roles. Cannot demote the last owner.",
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: GetByIdParamSchema,
+    body: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: ChangeMemberRoleRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Member role updated successfully",
+      content: {
+        "application/json": {
+          schema: SuccessResponseSchema,
+        },
+      },
+    },
+    400: {
+      $ref: "#/components/responses/BadRequestError",
+    },
+    401: {
+      $ref: "#/components/responses/UnauthorizedError",
+    },
+    403: {
+      $ref: "#/components/responses/ForbiddenError",
+    },
+    404: {
+      $ref: "#/components/responses/NotFoundError",
+    },
+    500: {
+      $ref: "#/components/responses/InternalServerError",
+    },
+  },
+});
+
+registry.registerPath({
+  method: "delete",
+  path: "/memberships/{id}",
+  tags: ["Organizations"],
+  summary: "Remove a member from the organization",
+  description:
+    "Only organization owners can remove members. Cannot remove yourself or the last owner.",
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: GetByIdParamSchema,
+  },
+  responses: {
+    200: {
+      description: "Member removed successfully",
+      content: {
+        "application/json": {
+          schema: SuccessResponseSchema,
+        },
+      },
+    },
+    400: {
+      $ref: "#/components/responses/BadRequestError",
+    },
+    401: {
+      $ref: "#/components/responses/UnauthorizedError",
+    },
+    403: {
+      $ref: "#/components/responses/ForbiddenError",
+    },
+    404: {
+      $ref: "#/components/responses/NotFoundError",
     },
     500: {
       $ref: "#/components/responses/InternalServerError",

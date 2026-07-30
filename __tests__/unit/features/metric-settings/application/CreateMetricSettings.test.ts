@@ -3,7 +3,7 @@ import AppError from "@/utils/AppError.js";
 import { CreateMetricSettings } from "@/features/metric-settings/application/use-cases/CreateMetricSettings.js";
 import { MetricSettingsRepository } from "@/features/metric-settings/domain/repositories/MetricSettingsRepository.js";
 import { CacheInvalidationPort } from "@/features/metric-settings/application/ports/CacheInvalidationPort.js";
-import { MetricAccessPort } from "@/features/metric-settings/application/ports/MetricAccessPort.js";
+import type { MetricAccessPort } from "@/features/public/metric/application/ports/MetricAccessPort.js";
 import { buildMetricSettings } from "../../../factories/metric-settings.js";
 
 type RepoMock = jest.Mocked<MetricSettingsRepository>;
@@ -38,6 +38,7 @@ describe("CreateMetricSettings", () => {
     await expect(
       sut.execute({
         userId: "",
+        organizationId: "org-1",
         metricId: "metric-1",
       }),
     ).rejects.toBeInstanceOf(AppError);
@@ -53,6 +54,7 @@ describe("CreateMetricSettings", () => {
     await expect(
       sut.execute({
         userId: "user-1",
+        organizationId: "org-1",
         metricId: "metric-1",
       }),
     ).rejects.toBeInstanceOf(AppError);
@@ -60,6 +62,7 @@ describe("CreateMetricSettings", () => {
     expect(repo.create).not.toHaveBeenCalled();
     expect(metricAccess.ensureMetricOwnership).toHaveBeenCalledWith(
       "user-1",
+      "org-1",
       "metric-1",
     );
   });
@@ -78,12 +81,14 @@ describe("CreateMetricSettings", () => {
 
     const result = await sut.execute({
       userId: "user-123",
+      organizationId: "org-1",
       metricId: "metric-99",
     });
 
     expect(result).toBe(created);
     expect(repo.create).toHaveBeenCalledWith({
       metricId: "metric-99",
+      organizationId: "org-1",
       isActive: true,
       goalEnabled: false,
       goalType: null,
@@ -109,6 +114,7 @@ describe("CreateMetricSettings", () => {
     );
     expect(metricAccess.ensureMetricOwnership).toHaveBeenCalledWith(
       "user-123",
+      "org-1",
       "metric-99",
     );
   });

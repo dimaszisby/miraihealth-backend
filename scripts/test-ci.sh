@@ -14,6 +14,9 @@ trap cleanup EXIT
 echo "[PROCESS] Resetting docker test environment..."
 $COMPOSE down -v
 
+echo "[PROCESS] Building app image..."
+$COMPOSE build app
+
 echo "[PROCESS] Starting test dependencies..."
 $COMPOSE up -d db redis
 

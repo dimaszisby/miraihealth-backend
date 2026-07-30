@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
 import { CreateMetricLog } from "@/features/metric-log/application/use-cases/CreateMetricLog.js";
 import { MetricLogRepository } from "@/features/metric-log/domain/repositories/MetricLogRepository.js";
-import { MetricAccessPort } from "@/features/metric-log/application/ports/MetricAccessPort.js";
+import type { MetricAccessPort } from "@/features/public/metric/application/ports/MetricAccessPort.js";
 import { CachePort } from "@/features/metric-log/application/ports/CachePort.js";
 import { MetricLog } from "@/features/metric-log/domain/entities/MetricLog.js";
 import AppError from "@/utils/AppError.js";
@@ -48,6 +48,7 @@ describe("CreateMetricLog use case", () => {
 
     const result = await sut.execute({
       userId: "user-1",
+      organizationId: "org-1",
       metricId: "metric-1",
       logValue: 10,
       type: "automatic",
@@ -55,6 +56,7 @@ describe("CreateMetricLog use case", () => {
 
     expect(access.ensureMetricOwnership).toHaveBeenCalledWith(
       "user-1",
+      "org-1",
       "metric-1",
     );
     expect(repo.create).toHaveBeenCalled();
@@ -69,6 +71,7 @@ describe("CreateMetricLog use case", () => {
     await expect(
       sut.execute({
         userId: "user-1",
+        organizationId: "org-1",
         metricId: "metric-1",
         logValue: 10,
       }),

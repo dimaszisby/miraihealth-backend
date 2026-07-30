@@ -8,6 +8,8 @@ import { buildMetricSettings } from "../../../factories/metric-settings.js";
 type RepoMock = jest.Mocked<MetricSettingsRepository>;
 type CacheMock = jest.Mocked<CacheInvalidationPort>;
 
+const TEST_ORG_ID = "org-test-id";
+
 const setup = () => {
   const repo: RepoMock = {
     create: jest.fn(),
@@ -29,9 +31,9 @@ const setup = () => {
 describe("DeleteMetricSettings", () => {
   it("throws when user id missing", async () => {
     const { sut } = setup();
-    await expect(sut.execute("", "settings-1")).rejects.toBeInstanceOf(
-      AppError,
-    );
+    await expect(
+      sut.execute("", TEST_ORG_ID, "settings-1"),
+    ).rejects.toBeInstanceOf(AppError);
   });
 
   it("throws when settings cannot be found", async () => {
@@ -39,7 +41,7 @@ describe("DeleteMetricSettings", () => {
     repo.findById.mockResolvedValue(null);
 
     await expect(
-      sut.execute("user-1", "settings-unknown"),
+      sut.execute("user-1", TEST_ORG_ID, "settings-unknown"),
     ).rejects.toBeInstanceOf(AppError);
     expect(repo.delete).not.toHaveBeenCalled();
   });
@@ -54,9 +56,9 @@ describe("DeleteMetricSettings", () => {
     repo.delete.mockResolvedValue();
     cache.invalidate.mockResolvedValue();
 
-    await sut.execute("user-9", "settings-8");
+    await sut.execute("user-9", TEST_ORG_ID, "settings-8");
 
-    expect(repo.delete).toHaveBeenCalledWith(entity);
+    expect(repo.delete).toHaveBeenCalledWith(TEST_ORG_ID, entity);
     expect(cache.invalidate).toHaveBeenCalledWith(
       "user-9",
       "metric-77",

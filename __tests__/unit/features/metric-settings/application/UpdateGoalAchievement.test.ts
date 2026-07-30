@@ -8,6 +8,8 @@ import { buildMetricSettings } from "../../../factories/metric-settings.js";
 type RepoMock = jest.Mocked<MetricSettingsRepository>;
 type CacheMock = jest.Mocked<CacheInvalidationPort>;
 
+const TEST_ORG_ID = "org-test-id";
+
 const setup = () => {
   const repo: RepoMock = {
     create: jest.fn(),
@@ -29,18 +31,18 @@ const setup = () => {
 describe("UpdateGoalAchievement", () => {
   it("requires authenticated user", async () => {
     const { sut } = setup();
-    await expect(sut.execute("", "settings-1")).rejects.toBeInstanceOf(
-      AppError,
-    );
+    await expect(
+      sut.execute("", TEST_ORG_ID, "settings-1"),
+    ).rejects.toBeInstanceOf(AppError);
   });
 
   it("throws when settings cannot be found", async () => {
     const { sut, repo } = setup();
     repo.findById.mockResolvedValue(null);
 
-    await expect(sut.execute("user-1", "settings-1")).rejects.toBeInstanceOf(
-      AppError,
-    );
+    await expect(
+      sut.execute("user-1", TEST_ORG_ID, "settings-1"),
+    ).rejects.toBeInstanceOf(AppError);
     expect(repo.save).not.toHaveBeenCalled();
   });
 
@@ -56,10 +58,10 @@ describe("UpdateGoalAchievement", () => {
     repo.save.mockResolvedValue(entity);
     cache.invalidate.mockResolvedValue();
 
-    const result = await sut.execute("user-2", "settings-12");
+    const result = await sut.execute("user-2", TEST_ORG_ID, "settings-12");
 
     expect(markSpy).toHaveBeenCalled();
-    expect(repo.save).toHaveBeenCalledWith(entity);
+    expect(repo.save).toHaveBeenCalledWith(TEST_ORG_ID, entity);
     expect(cache.invalidate).toHaveBeenCalledWith(
       "user-2",
       "metric-45",

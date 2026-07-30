@@ -1,5 +1,7 @@
 import AppError from "@/utils/AppError.js";
 import { UserRepository } from "../../domain/repositories/UserRepository.js";
+import { OrganizationRepository } from "../../domain/repositories/OrganizationRepository.js";
+import { MembershipRepository } from "../../domain/repositories/MembershipRepository.js";
 import { PasswordHasher } from "../ports/PasswordHasher.js";
 import { TokenProvider } from "../ports/TokenProvider.js";
 import { AuthUser } from "../../domain/entities/AuthUser.js";
@@ -20,6 +22,8 @@ export type AuthResult = {
 export class RegisterUser {
   constructor(
     private repo: UserRepository,
+    private orgRepo: OrganizationRepository,
+    private membershipRepo: MembershipRepository,
     private hasher: PasswordHasher,
     private tokenProvider: TokenProvider,
   ) {}
@@ -48,10 +52,24 @@ export class RegisterUser {
       isPublicProfile,
     });
 
+    const slugPrefix = username
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .slice(0, 91);
+    const slug = slugPrefix + "-" + user.id.slice(0, 8);
+    const org = await this.orgRepo.create({ name: username, slug });
+    await this.membershipRepo.create({
+      userId: user.id,
+      organizationId: org.id,
+      role: "owner",
+      status: "active",
+    });
+
     const token = this.tokenProvider.sign({
       id: user.id,
       email: user.email,
       username: user.username,
+      organizationId: org.id,
     });
 
     return { user, token };

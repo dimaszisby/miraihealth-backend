@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { models } from "@/infrastructure/db/models.js";
-import { MetricAccessPort } from "../ports/MetricAccessPort.js";
+import type { MetricAccessPort } from "@/features/public/metric/application/ports/MetricAccessPort.js";
 import { CachePort } from "../ports/CachePort.js";
 import type { MessageQueuePort } from "@/shared/application/ports/MessageQueuePort.js";
 import {
@@ -10,6 +10,7 @@ import {
 
 type Input = {
   userId: string;
+  organizationId: string;
   metricId: string;
   count: number;
 };
@@ -27,15 +28,20 @@ export class GenerateDummyMetricLogs {
     private queue: MessageQueuePort,
   ) {}
 
-  async execute({ userId, metricId, count }: Input): Promise<Output> {
-    await this.access.ensureMetricOwnership(userId, metricId);
+  async execute({
+    userId,
+    organizationId,
+    metricId,
+    count,
+  }: Input): Promise<Output> {
+    await this.access.ensureMetricOwnership(userId, organizationId, metricId);
 
     const jobId = randomUUID();
 
     if (this.queue.isEnabled()) {
       await this.queue.publish(
         EXCHANGES.JOBS,
-        { jobId, userId, metricId, count },
+        { jobId, userId, organizationId, metricId, count },
         {
           routingKey: ROUTING_KEYS.METRIC_LOG_GENERATE_DUMMY,
           messageId: jobId,
@@ -48,6 +54,7 @@ export class GenerateDummyMetricLogs {
     for (let i = 0; i < count; i++) {
       await models.MetricLog.create({
         metricId,
+        organizationId,
         logValue: Number((Math.random() * 100).toFixed(2)),
         loggedAt: new Date(
           Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000,

@@ -15,7 +15,7 @@ import {
 import {
   toDomainMetricLibrary,
   toExtendedMetricDomain,
-} from "@/utils/mappers/metric.mapper.js";
+} from "../mappers/MetricReadMapper.js";
 import {
   FindAttributeOptions,
   ProjectionAlias,
@@ -30,10 +30,19 @@ import type { Metric as MetricModel } from "../models/metric.sequelize.js";
 
 export class MetricReadRepoSequelize implements MetricReadRepository {
   async listMetrics(opts: ListOpts): Promise<ListMetricsResult> {
-    const { userId, limit, sort, q, filter, after, includeTotal } = opts;
+    const {
+      userId,
+      organizationId,
+      limit,
+      sort,
+      q,
+      filter,
+      after,
+      includeTotal,
+    } = opts;
     const { field, dir } = normalizeSort(sort);
     const cursor = after ? decodeCursor(after) : null;
-    const where = buildWhere(userId, q, filter);
+    const where = buildWhere(userId, organizationId, q, filter);
 
     const attributes = baseAttributesWithLogCount() as FindAttributeOptions;
     const order = buildOrder(field, dir);
@@ -111,6 +120,7 @@ export class MetricReadRepoSequelize implements MetricReadRepository {
 
   async findDetailedMetric({
     userId,
+    organizationId,
     metricId,
     includes = [],
     logsLimit = 20,
@@ -176,7 +186,7 @@ export class MetricReadRepoSequelize implements MetricReadRepository {
     }
 
     const metric = await models.Metric.findOne({
-      where: { id: metricId, userId },
+      where: { id: metricId, userId, organizationId },
       include: includeArr,
     });
 
@@ -236,11 +246,16 @@ function normalizeSort(sort: SortParam): {
 
 function buildWhere(
   userId: string,
+  organizationId: string,
   q?: string,
   filter?: { name?: string; categoryId?: string },
 ): WhereOptions {
   const like = (v: string) => ({ [Op.iLike]: `%${v}%` });
-  const and: Array<Record<string, unknown>> = [{ userId }, { deletedAt: null }];
+  const and: Array<Record<string, unknown>> = [
+    { userId },
+    { organizationId },
+    { deletedAt: null },
+  ];
 
   if (q) and.push({ name: like(q) });
   if (filter?.name) and.push({ name: like(filter.name) });

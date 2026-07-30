@@ -68,6 +68,7 @@ describe("CreateMetric use case", () => {
 
     const result = await sut.execute({
       userId: "user-1",
+      organizationId: "org-1",
       categoryId: "cat-1",
       originalMetricId: null,
       name: "Steps",
@@ -77,11 +78,16 @@ describe("CreateMetric use case", () => {
     });
 
     expect(result).toBe(metric);
-    expect(repo.existsByName).toHaveBeenCalledWith("user-1", "Steps");
-    expect(repo.categoryExists).toHaveBeenCalledWith("user-1", "cat-1");
+    expect(repo.existsByName).toHaveBeenCalledWith("user-1", "org-1", "Steps");
+    expect(repo.categoryExists).toHaveBeenCalledWith(
+      "user-1",
+      "org-1",
+      "cat-1",
+    );
     expect(repo.create).toHaveBeenCalledWith(
       {
         userId: "user-1",
+        organizationId: "org-1",
         categoryId: "cat-1",
         originalMetricId: null,
         name: "Steps",
@@ -91,7 +97,11 @@ describe("CreateMetric use case", () => {
       },
       fakeTx,
     );
-    expect(settings.createDefault).toHaveBeenCalledWith(metric.id, fakeTx);
+    expect(settings.createDefault).toHaveBeenCalledWith(
+      metric.id,
+      "org-1",
+      fakeTx,
+    );
     expect(cache.invalidateMetrics).toHaveBeenCalledWith("user-1", metric.id);
   });
 
@@ -104,6 +114,7 @@ describe("CreateMetric use case", () => {
     await expect(
       sut.execute({
         userId: "user-1",
+        organizationId: "org-1",
         name: "Steps",
         defaultUnit: "steps",
         isPublic: true,
@@ -123,6 +134,7 @@ describe("CreateMetric use case", () => {
     await expect(
       sut.execute({
         userId: "user-1",
+        organizationId: "org-1",
         categoryId: "cat-1",
         name: "Steps",
         defaultUnit: "steps",

@@ -26,7 +26,7 @@ export interface UserAttributesBase {
   isPublicProfile: boolean;
 
   /**
-   * @property {'user' | 'admin'} role - The role assigned to the user, determining their permissions.
+   * @property {Date | null} emailVerifiedAt - Timestamp when the user's email was verified. Null if unverified.
    */
-  role: "user" | "admin";
+  emailVerifiedAt?: Date | null;
 }

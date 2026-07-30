@@ -200,7 +200,7 @@ describe("Metric Log API", () => {
         .set("Authorization", authHeader(token))
         .send({ metricId: otherMetric.id, count: 3 });
 
-      expect(res.status).toBe(403);
+      expect(res.status).toBe(404);
     });
 
     it("rejects unauthenticated requests", async () => {

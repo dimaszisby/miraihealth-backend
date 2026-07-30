@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Lakira Backend API",
+    "title": "Lakira API",
     "version": "1.0.0",
-    "description": "API documentation for the Lakira Backend application."
+    "description": "API documentation for the Lakira application."
   },
   "servers": [
     {
@@ -245,6 +245,20 @@
         },
         "required": ["status", "message", "errors"]
       },
+      "RateLimitError": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "number",
+            "example": 429
+          },
+          "message": {
+            "type": "string",
+            "example": "Too many requests, please try again later."
+          }
+        },
+        "required": ["status", "message"]
+      },
       "SuccessResponse": {
         "type": "object",
         "properties": {
@@ -478,10 +492,11 @@
             "type": "boolean",
             "example": true
           },
-          "role": {
-            "type": "string",
-            "enum": ["user", "admin"],
-            "example": "user"
+          "emailVerifiedAt": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when email was verified, or null if unverified",
+            "example": null
           },
           "createdAt": {
             "type": "string",
@@ -499,7 +514,7 @@
           "username",
           "email",
           "isPublicProfile",
-          "role",
+          "emailVerifiedAt",
           "createdAt",
           "updatedAt"
         ]
@@ -582,6 +597,148 @@
           }
         ]
       },
+      "RefreshResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SuccessResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  }
+                },
+                "required": ["token"]
+              }
+            }
+          }
+        ]
+      },
+      "SwitchOrgRequest": {
+        "type": "object",
+        "properties": {
+          "organizationId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
+            "description": "Target organization ID to switch to",
+            "example": "123e4567-e89b-42d3-a456-426614174000"
+          }
+        },
+        "required": ["organizationId"]
+      },
+      "CreateInviteRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+            "example": "invitee@example.com"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["admin", "member"],
+            "example": "member"
+          }
+        },
+        "required": ["email", "role"]
+      },
+      "AcceptInviteRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "example": "dGVzdC1pbnZpdGUtdG9rZW4"
+          }
+        },
+        "required": ["token"]
+      },
+      "ChangeMemberRoleRequest": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": ["admin", "member"],
+            "example": "admin"
+          }
+        },
+        "required": ["role"]
+      },
+      "Member": {
+        "type": "object",
+        "properties": {
+          "membershipId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "userId": {
+            "$ref": "#/components/schemas/Uuid"
+          },
+          "username": {
+            "type": "string",
+            "example": "johndoe"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "john@example.com"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["owner", "admin", "member"],
+            "example": "member"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "invited", "removed"],
+            "example": "active"
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-01-15T09:30:00Z"
+          }
+        },
+        "required": [
+          "membershipId",
+          "userId",
+          "username",
+          "email",
+          "role",
+          "status",
+          "joinedAt"
+        ]
+      },
+      "MemberListResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SuccessResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "members": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Member"
+                    }
+                  }
+                },
+                "required": ["members"]
+              }
+            }
+          }
+        ]
+      },
       "RegisterRequest": {
         "type": "object",
         "properties": {
@@ -635,11 +792,6 @@
           "isPublicProfile": {
             "type": "boolean",
             "example": false
-          },
-          "role": {
-            "type": "string",
-            "enum": ["user", "admin"],
-            "example": "admin"
           }
         }
       },
@@ -675,6 +827,17 @@
           }
         },
         "required": ["token", "password", "passwordConfirmation"]
+      },
+      "VerifyEmailRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "example": "AbCdEf0123456789AbCdEf0123456789AbCdEf01"
+          }
+        },
+        "required": ["token"]
       },
       "MetricCategory": {
         "type": "object",
@@ -2393,11 +2556,7 @@
       "post": {
         "tags": ["Auth"],
         "summary": "Log out the current user",
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
+        "description": "Revokes the refresh token family associated with the presented cookie or bearer token.",
         "responses": {
           "200": {
             "description": "User logged out successfully",
@@ -2405,6 +2564,40 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Rotate refresh token and get a new access token",
+        "description": "Reads the `lakira_refresh` HttpOnly cookie. Rotates the refresh token (revokes old, issues new) and returns a fresh access token. If the presented token was already revoked, the entire token family is invalidated (reuse detection).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Opaque refresh token set by login",
+              "example": "dGVzdC1yZWZyZXNoLXRva2Vu"
+            },
+            "required": true,
+            "name": "lakira_refresh",
+            "in": "cookie"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "New access token issued; new refresh cookie set",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshResponse"
                 }
               }
             }
@@ -2452,7 +2645,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessResponse"
+                  "$ref": "#/components/schemas/RateLimitError"
                 }
               }
             }
@@ -2497,10 +2690,400 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "$ref": "#/components/schemas/RateLimitError"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/auth/verify-email": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Verify email address with a token",
+        "description": "Accepts a single-use token from the verification email. Returns a generic 400 for unknown, used, or expired tokens (anti-enumeration). No JWT required.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email successfully verified",
+            "content": {
+              "application/json": {
+                "schema": {
                   "$ref": "#/components/schemas/SuccessResponse"
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "429": {
+            "description": "Rate limit exceeded for email verification requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitError"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/auth/resend-verification": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Resend verification email",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "description": "Always returns 200 regardless of current verification status (anti-enumeration). When the user is unverified, revokes any prior token and sends a fresh one. Rate-limited per user email and IP address.",
+        "responses": {
+          "200": {
+            "description": "Generic acknowledgement",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "429": {
+            "description": "Rate limit exceeded for resend verification requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitError"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/auth/switch-org": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Switch active organization",
+        "description": "Switches the authenticated user's active organization context. Validates the user has an active membership in the target organization, then issues a new access token with the new `organizationId` claim and a fresh refresh token cookie.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwitchOrgRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Organization switched; new tokens issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/organizations/{id}/invites": {
+      "post": {
+        "tags": ["Organizations"],
+        "summary": "Invite a user to the organization",
+        "description": "Sends an invitation email with a single-use token. Only owners and admins can invite. Rejects if a pending invite already exists for the email.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization ID",
+              "example": "123e4567-e89b-42d3-a456-426614174000"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInviteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Invitation sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/organizations/{id}/members": {
+      "get": {
+        "tags": ["Organizations"],
+        "summary": "List organization members",
+        "description": "Returns all active memberships for the organization with user details. Any member of the organization can call this endpoint.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization ID",
+              "example": "123e4567-e89b-42d3-a456-426614174000"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of organization members",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/invites/accept": {
+      "post": {
+        "tags": ["Organizations"],
+        "summary": "Accept an organization invite",
+        "description": "Accepts a pending invite using the raw token from the invitation email. Returns a generic 400 for invalid, expired, or already-accepted tokens (anti-enumeration).",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptInviteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Invitation accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/memberships/{id}": {
+      "patch": {
+        "tags": ["Organizations"],
+        "summary": "Change a member's role",
+        "description": "Only organization owners can change roles. Cannot demote the last owner.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "A UUID identifier for the resource",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeMemberRoleRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Member role updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Organizations"],
+        "summary": "Remove a member from the organization",
+        "description": "Only organization owners can remove members. Cannot remove yourself or the last owner.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            },
+            "required": true,
+            "description": "A UUID identifier for the resource",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Member removed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"

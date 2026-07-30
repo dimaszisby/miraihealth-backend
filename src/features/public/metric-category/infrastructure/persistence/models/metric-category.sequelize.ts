@@ -14,14 +14,11 @@ export interface MetricCategoryAttributes extends MetricCategoryAttributesBase {
   // DB-specifics
   id: string;
   userId: string;
+  organizationId: string;
 
   // Timestamps managed by DB
   createdAt?: Date;
   updatedAt?: Date;
-
-  // Optional associated objects
-  // User?: User;
-  // Metrics?: Metric[];
 }
 
 // Define optional fields for Sequelize
@@ -36,6 +33,7 @@ export class MetricCategory
 {
   declare id: string;
   declare userId: string;
+  declare organizationId: string;
   declare name: string;
   declare color: string;
   declare icon: string;
@@ -63,6 +61,14 @@ export class MetricCategory
           allowNull: false,
           references: {
             model: "users",
+            key: "id",
+          },
+        },
+        organizationId: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          references: {
+            model: "organizations",
             key: "id",
           },
         },
@@ -103,6 +109,17 @@ export class MetricCategory
       foreignKey: { name: "userId", field: "user_id", allowNull: false },
       onDelete: "CASCADE",
     });
+
+    MetricCategory.belongsTo(models.Organization, {
+      as: "organization",
+      foreignKey: {
+        name: "organizationId",
+        field: "organization_id",
+        allowNull: false,
+      },
+      onDelete: "RESTRICT",
+    });
+
     MetricCategory.hasMany(models.Metric, {
       as: "metrics",
       foreignKey: { name: "categoryId", field: "category_id", allowNull: true },

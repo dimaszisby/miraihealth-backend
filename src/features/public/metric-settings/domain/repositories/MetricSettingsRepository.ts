@@ -2,6 +2,7 @@ import { MetricSettings } from "../entities/MetricSettings.js";
 
 export type CreateMetricSettingsDTO = {
   metricId: string;
+  organizationId: string;
   isActive: boolean;
   goalEnabled: boolean;
   goalType: "cumulative" | "incremental" | null;
@@ -22,10 +23,20 @@ export type CreateMetricSettingsDTO = {
 
 export interface MetricSettingsRepository {
   create(data: CreateMetricSettingsDTO): Promise<MetricSettings>;
-  findByMetricId(metricId: string): Promise<MetricSettings | null>;
-  findById(userId: string, settingsId: string): Promise<MetricSettings | null>;
-  save(settings: MetricSettings): Promise<MetricSettings>;
-  delete(settings: MetricSettings): Promise<void>;
+  findByMetricId(
+    organizationId: string,
+    metricId: string,
+  ): Promise<MetricSettings | null>;
+  findById(
+    userId: string,
+    organizationId: string,
+    settingsId: string,
+  ): Promise<MetricSettings | null>;
+  save(
+    organizationId: string,
+    settings: MetricSettings,
+  ): Promise<MetricSettings>;
+  delete(organizationId: string, settings: MetricSettings): Promise<void>;
   listByCursor(
     opts: ListMetricSettingsOptions,
   ): Promise<ListMetricSettingsResult>;
@@ -36,6 +47,7 @@ export type SortParam = SortField | `-${SortField}`;
 
 export type ListMetricSettingsOptions = {
   userId: string;
+  organizationId: string;
   limit: number;
   sort: SortParam;
   q?: string;

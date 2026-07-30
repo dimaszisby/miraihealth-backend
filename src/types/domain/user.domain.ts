@@ -30,12 +30,6 @@ export interface UserDomain {
   readonly email: string;
 
   /**
-   * @property {'user' | 'admin'} role - The assigned role determining user permissions.
-   * @readonly
-   */
-  readonly role: "user" | "admin";
-
-  /**
    * @property {boolean} isPublicProfile - Indicates if the user's profile is publicly visible.
    * @readonly
    */
@@ -58,4 +52,16 @@ export interface UserDomain {
    * @readonly
    */
   readonly deletedAt?: Date | null;
+
+  /**
+   * @property {Date | null} emailVerifiedAt - Timestamp when the user's email was verified. Null if unverified.
+   * @readonly
+   */
+  readonly emailVerifiedAt: Date | null;
+
+  /**
+   * @property {string} organizationId - The active organization for the current request.
+   * @readonly
+   */
+  readonly organizationId: string;
 }

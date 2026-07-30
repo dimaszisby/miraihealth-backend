@@ -47,6 +47,7 @@
     "migrate:staging": "NODE_ENV=staging dotenv -e .env.staging -- npx sequelize-cli db:migrate --config src/config/config.cjs",
     "migrate:staging:ci": "NODE_ENV=staging npx sequelize-cli db:migrate --config src/config/config.cjs",
     "migrate:production": "NODE_ENV=production dotenv -e .env.production -- npx sequelize-cli db:migrate --config src/config/config.cjs",
+    "migrate:production:ci": "NODE_ENV=production npx sequelize-cli db:migrate --config src/config/config.cjs",
     "migrate:undo": "npx dotenv -e .env.development -- sequelize-cli db:migrate:undo --config src/config/config.cjs",
     "migrate:development:undo": "NODE_ENV=development dotenv -e .env.development -- npx sequelize-cli db:migrate:undo --config src/config/config.cjs",
     "migrate:test:undo": "NODE_ENV=test dotenv -e .env.test -- npx sequelize-cli db:migrate:undo --config src/config/config.cjs",
@@ -80,10 +81,12 @@
   "description": "",
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.3.4",
+    "@sentry/node": "^10.51.0",
     "amqp-connection-manager": "^5.0.0",
     "amqplib": "^1.0.3",
     "bcrypt": "^6.0.0",
     "body-parser": "^1.20.4",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.22.1",
@@ -115,6 +118,7 @@
     "@tsconfig/node18": "^18.2.4",
     "@types/amqplib": "^0.10.8",
     "@types/bcrypt": "^5.0.2",
+    "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.17",
     "@types/dotenv": "^6.1.1",
     "@types/express": "^5.0.3",
@@ -148,5 +152,8 @@
     "tsx": "^4.19.2",
     "typescript": "^5.8.3",
     "wait-on": "^9.0.3"
+  },
+  "overrides": {
+    "multer": "^2.2.0"
   }
 }

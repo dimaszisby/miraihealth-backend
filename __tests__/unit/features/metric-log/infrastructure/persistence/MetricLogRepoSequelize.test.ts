@@ -3,6 +3,8 @@ import { MetricLogRepoSequelize } from "@/features/metric-log/infrastructure/per
 import { MetricLog } from "@/features/metric-log/domain/entities/MetricLog.js";
 import { models } from "@/infrastructure/db/models.js";
 
+const TEST_ORG_ID = "org-test-id";
+
 const makeInstance = () => {
   const row = {
     id: "log-1",
@@ -31,7 +33,11 @@ describe("MetricLogRepoSequelize", () => {
       .mockResolvedValue(1 as any);
     const repo = new MetricLogRepoSequelize();
 
-    const exists = await repo.existsAtTimestamp("metric-1", new Date());
+    const exists = await repo.existsAtTimestamp(
+      TEST_ORG_ID,
+      "metric-1",
+      new Date(),
+    );
 
     expect(exists).toBe(true);
     expect(countSpy).toHaveBeenCalled();
@@ -46,6 +52,7 @@ describe("MetricLogRepoSequelize", () => {
 
     const result = await repo.create({
       metricId: "metric-1",
+      organizationId: "org-1",
       logValue: 10,
       type: "manual",
       loggedAt: new Date(),
@@ -58,7 +65,9 @@ describe("MetricLogRepoSequelize", () => {
 
   it("saves updates", async () => {
     const instance = makeInstance();
-    jest.spyOn(models.MetricLog, "findByPk").mockResolvedValue(instance as any);
+    jest
+      .spyOn(models.MetricLog, "update")
+      .mockResolvedValue([1, [instance]] as any);
     const repo = new MetricLogRepoSequelize();
 
     const domain = MetricLog.fromProps({
@@ -71,7 +80,7 @@ describe("MetricLogRepoSequelize", () => {
       updatedAt: new Date(),
     });
 
-    const saved = await repo.save(domain);
+    const saved = await repo.save(TEST_ORG_ID, domain);
     expect(saved.metricId).toBe("metric-1");
   });
 });

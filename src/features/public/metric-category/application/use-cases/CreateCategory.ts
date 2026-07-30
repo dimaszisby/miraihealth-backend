@@ -3,7 +3,13 @@ import { MetricCategoryRepository } from "../../domain/repositories/MetricCatego
 import { CachePort } from "../ports/CachePort.js";
 import { METRIC_CATEGORY_CURSOR_NAMESPACE_ALL } from "../cache.constants.js";
 
-type Input = { userId: string; name: string; color?: string; icon?: string };
+type Input = {
+  userId: string;
+  organizationId: string;
+  name: string;
+  color?: string;
+  icon?: string;
+};
 
 export class CreateCategory {
   constructor(
@@ -11,11 +17,15 @@ export class CreateCategory {
     private cache: CachePort,
   ) {}
 
-  async execute({ userId, name, color, icon }: Input) {
-    if (await this.repo.existsByName(userId, name)) {
+  async execute({ userId, organizationId, name, color, icon }: Input) {
+    if (await this.repo.existsByName(userId, organizationId, name)) {
       throw new AppError("Category already exists", 409);
     }
-    const category = await this.repo.create(userId, { name, color, icon });
+    const category = await this.repo.create(userId, organizationId, {
+      name,
+      color,
+      icon,
+    });
     if (this.cache.isEnabled()) {
       await this.cache.delByPattern(
         `${METRIC_CATEGORY_CURSOR_NAMESPACE_ALL}:${userId}:*`,

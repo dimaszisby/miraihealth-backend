@@ -7,6 +7,7 @@ import {
   createUserRow,
   createMetricSettingsRow,
   truncateAllTables,
+  TEST_ORG_ID,
 } from "../../helpers/db-fixtures.js";
 
 const repo = new MetricReadRepoSequelize();
@@ -45,6 +46,7 @@ describe("MetricReadRepoSequelize (integration)", () => {
 
     const result = await repo.listMetrics({
       userId: user.id,
+      organizationId: TEST_ORG_ID,
       limit: 1,
       sort: "-createdAt",
       filter: { categoryId: category.id },
@@ -80,6 +82,7 @@ describe("MetricReadRepoSequelize (integration)", () => {
 
     const detailed = await repo.findDetailedMetric({
       userId: user.id,
+      organizationId: TEST_ORG_ID,
       metricId: metric.id,
       includes: ["category", "settings", "logs"],
       logsLimit: 5,
@@ -129,6 +132,7 @@ describe("MetricReadRepoSequelize (integration)", () => {
 
     const firstPage = await repo.listMetrics({
       userId: user.id,
+      organizationId: TEST_ORG_ID,
       limit: 2,
       sort: "-createdAt",
     });
@@ -137,6 +141,7 @@ describe("MetricReadRepoSequelize (integration)", () => {
 
     const secondPage = await repo.listMetrics({
       userId: user.id,
+      organizationId: TEST_ORG_ID,
       limit: 2,
       sort: "-createdAt",
       after: firstPage.nextCursor,
@@ -157,6 +162,7 @@ describe("MetricReadRepoSequelize (integration)", () => {
 
     const result = await repo.listMetrics({
       userId: user.id,
+      organizationId: TEST_ORG_ID,
       limit: 1,
       sort: "-createdAt",
       after: "invalid-cursor",
@@ -178,6 +184,7 @@ describe("MetricReadRepoSequelize (integration)", () => {
 
     const result = await repo.listMetrics({
       userId: user.id,
+      organizationId: TEST_ORG_ID,
       limit: 10,
       sort: "-createdAt",
       q: "press",
@@ -202,6 +209,7 @@ describe("MetricReadRepoSequelize (integration)", () => {
 
     const byName = await repo.listMetrics({
       userId: user.id,
+      organizationId: TEST_ORG_ID,
       limit: 10,
       sort: "name",
     });
@@ -209,6 +217,7 @@ describe("MetricReadRepoSequelize (integration)", () => {
 
     const byLogCount = await repo.listMetrics({
       userId: user.id,
+      organizationId: TEST_ORG_ID,
       limit: 10,
       sort: "-logCount",
     });
@@ -236,6 +245,7 @@ describe("MetricReadRepoSequelize (integration)", () => {
 
     const detailed = await repo.findDetailedMetric({
       userId: user.id,
+      organizationId: TEST_ORG_ID,
       metricId: metric.id,
       includes: ["logs"],
       logsLimit: 2,
@@ -259,6 +269,7 @@ describe("MetricReadRepoSequelize (integration)", () => {
 
     const result = await repo.listMetrics({
       userId: user.id,
+      organizationId: TEST_ORG_ID,
       limit: 10,
       sort: "-createdAt",
     });

@@ -1,4 +1,5 @@
 import AppError from "@/utils/AppError.js";
+import { env } from "@/config/envManager.js";
 import type { FillMode, VizResponse } from "../../domain/types.js";
 import {
   resolveBucket,
@@ -9,6 +10,7 @@ import type { VisualizationReadRepository } from "../ports/VisualizationReadRepo
 
 export type GetVisualizationInput = {
   userId: string;
+  organizationId: string;
   metricId: string;
   startISO: string;
   endISO: string;
@@ -17,7 +19,7 @@ export type GetVisualizationInput = {
   fill?: FillMode;
 };
 
-const MAX_BUCKETS = Number(process.env.VIZ_MAX_BUCKETS ?? 400);
+const MAX_BUCKETS = env.VIZ_MAX_BUCKETS;
 
 export class GetVisualization {
   constructor(private repo: VisualizationReadRepository) {}
@@ -28,6 +30,7 @@ export class GetVisualization {
 
     const result = await this.repo.fetchVisualization({
       userId: input.userId,
+      organizationId: input.organizationId,
       metricId: input.metricId,
       startISO: input.startISO,
       endISO: input.endISO,
