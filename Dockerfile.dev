@@ -1,11 +1,13 @@
-# Dockerfile.dev — local-only development image used by docker-compose.yml.
-# The production `Dockerfile` is a hardened multi-stage build (dumb-init,
-# USER node, no devDependencies). This image trades that hardening for a
-# faster local dev loop: it installs devDependencies, runs `npm run dev`
-# (tsx watch), and keeps source bind-mounted via docker-compose.
+# Dockerfile.dev — development image used by docker-compose.yml (local dev
+# loop) and docker-compose.test.yml (test:ci). The production `Dockerfile` is
+# a hardened multi-stage build (dumb-init, USER node, no devDependencies,
+# dist/ only) and cannot run migrations or Jest, which need src/ and
+# devDependencies. This image trades that hardening for full source +
+# devDependencies so both local dev (`npm run dev` via tsx watch, source
+# bind-mounted) and CI test runs work.
 #
-# Not used in CI/production. If you change the build flow, edit `Dockerfile`,
-# not this file.
+# Not used in production. If you change the production build flow, edit
+# `Dockerfile`, not this file.
 FROM node:20-alpine
 
 WORKDIR /app
