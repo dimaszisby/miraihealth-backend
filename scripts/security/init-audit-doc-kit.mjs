@@ -4,8 +4,11 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const ROOT = process.cwd();
-const TEMPLATE_DIR = path.join(ROOT, "docs/security/templates/audit-run");
-const AUDIT_DIR = path.join(ROOT, "docs/security/audit");
+const TEMPLATE_DIR = path.join(
+  ROOT,
+  "docs/reference/security/audit-run-template",
+);
+const AUDIT_DIR = path.join(ROOT, "docs/internal/audits/security");
 
 const TEMPLATE_MAP = [
   ["run-README.md", "README.md"],
@@ -110,7 +113,7 @@ const init = async () => {
   console.log(`[security:init] Initialized audit doc kit at ${targetDir}`);
   for (const [, outputName] of TEMPLATE_MAP) {
     console.log(
-      `- ${path.join("docs/security/audit", `audit-${date}`, outputName)}`,
+      `- ${path.join("docs/internal/audits/security", `audit-${date}`, outputName)}`,
     );
   }
 };

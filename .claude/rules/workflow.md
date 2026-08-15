@@ -57,11 +57,11 @@
 
 ## Task Management Process
 
-1. **Plan First**: Write plan to `docs/todos/YYYY-MM-DD-todo-<title>.md` with checkable items
+1. **Plan First**: Write plan to `docs/internal/todos/YYYY-MM-DD-todo-<title>.md` with checkable items
 2. **Verify Plan**: Check in before starting implementation
 3. **Track Progress**: Mark items complete as you go
 4. **Explain Changes**: High-level summary at each step
-5. **Document Results**: Add review section to the same `docs/todos/...` file
+5. **Document Results**: Add review section to the same `docs/internal/todos/...` file
 6. **Capture Lessons**: Update `.claude/lessons.md` after corrections
 
 ## Graphify Usage in Feature Implementation

@@ -9,18 +9,18 @@ paths:
 
 For any feature, infrastructure change, architectural decision, or initiative that spans more than one commit or introduces a new system concern, create a documentation kit under `docs/development/`.
 
-Follow the structure and templates defined in `docs/documentation/dev-documentation-guidelines.md` exactly.
+Follow the structure and templates defined in `docs/explanation/documentation-standards.md` exactly.
 
 ## Folder Placement
 
 Place the kit under the closest context folder inside `docs/development/`:
 
-| Context                         | Folder                                           |
-| ------------------------------- | ------------------------------------------------ |
-| New feature (domain slice)      | `docs/development/features/<feature-name>/`      |
-| Infrastructure / shared tooling | `docs/development/architecture/<topic>/`         |
-| Day-to-day dev notes, retros    | `docs/development/dev-log/`                      |
-| New context with no match       | Create a new subfolder under `docs/development/` |
+| Context                         | Folder                                               |
+| ------------------------------- | ---------------------------------------------------- |
+| New feature (domain slice)      | `docs/internal/initiatives/features/<feature-name>/` |
+| Infrastructure / shared tooling | `docs/internal/initiatives/<topic>/`                 |
+| Day-to-day dev notes, retros    | `docs/internal/dev-log/`                             |
+| New context with no match       | Create a new subfolder under `docs/development/`     |
 
 ## Kit Size by Scope
 
@@ -31,12 +31,12 @@ Place the kit under the closest context folder inside `docs/development/`:
 | Small infra change / quick sweep                  | Lean kit     | README + checklist + at least one `decisions.md` entry                       |
 | Single-commit fix                                 | Micro entry  | One ADR entry in the nearest `decisions.md` referencing the commit SHA       |
 
-## Mini/Ephemeral Work → `docs/todos/`
+## Mini/Ephemeral Work → `docs/internal/todos/`
 
 For mini-scoped tasks (one-off overhauls, small tooling fixes, session TODOs), use a single ephemeral file:
 
 ```
-docs/todos/YYYY-MM-DD-todo-<kebab-title>.md
+docs/internal/todos/YYYY-MM-DD-todo-<kebab-title>.md
 ```
 
 - Tracked in git but treated as user-controlled — may be deleted without a follow-up PR.
@@ -53,5 +53,5 @@ Before writing code, check:
 
 ## Reference
 
-- Guidelines + templates: `docs/documentation/dev-documentation-guidelines.md`
-- Example complete kit: `docs/tests/overhaul/` (referenced in guidelines as the gold standard)
+- Guidelines + templates: `docs/explanation/documentation-standards.md`
+- Example complete kit: `docs/internal/initiatives/tests-overhaul/` (referenced in guidelines as the gold standard)

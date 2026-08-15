@@ -10,7 +10,7 @@ import { getOpenApiDocumentation } from "../src/lib/openapi/openapi-docs.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const outputDir = path.join(__dirname, "../docs/openapi");
+const outputDir = path.join(__dirname, "../docs/reference/api");
 const outputFile = path.join(outputDir, "lakira-backend-openapi.json");
 
 async function generateOpenApiSpec() {

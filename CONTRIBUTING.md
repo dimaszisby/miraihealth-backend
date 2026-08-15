@@ -45,7 +45,7 @@ Run `npm run lint:fix && npm run format:write` before committing.
 
 ## Testing
 
-See `docs/tests/TESTING_STRATEGY.md` for the full approach.
+See `docs/explanation/testing-strategy.md` for the full approach.
 
 Quick reference:
 

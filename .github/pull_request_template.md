@@ -20,8 +20,8 @@
 
 - [ ] `npm run test:unit:security-framework`
 - [ ] `npm run security:delta:gate`
-- [ ] Updated security audit artifacts when required (`docs/security/audit/**`)
-- [ ] For production release PRs: followed `docs/security/guides/security-release-delta-sop.md`
+- [ ] Updated security audit artifacts when required (`docs/internal/audits/security/**`)
+- [ ] For production release PRs: followed `docs/how-to/security/release-delta-sop.md`
 
 ## Notes For Reviewers
 

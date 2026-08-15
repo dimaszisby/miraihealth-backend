@@ -31,15 +31,15 @@ Feature-Slice DDD with manual dependency injection. Entry point: `src/server.ts`
 
 ## Documentation
 
-- `docs/development/features/` — Per-feature doc kits (auth, metric, metric-log, etc.)
-- `docs/development/architecture/` — Infrastructure & architectural topic kits (jwt, rabbitmq, indexing, etc.)
-- `docs/development/dev-log/` — Dev notes, retros, one-off logs
-- `docs/todos/` — Ephemeral session TODOs (`YYYY-MM-DD-todo-<title>.md`); user-controlled, may be deleted
-- `docs/documentation/dev-documentation-guidelines.md` — Doc kit templates and sizing rules
+- `docs/internal/initiatives/features/` — Per-feature doc kits (auth, metric, metric-log, etc.)
+- `docs/internal/initiatives/` — Infrastructure & architectural topic kits (jwt, rabbitmq, indexing, etc.)
+- `docs/internal/dev-log/` — Dev notes, retros, one-off logs
+- `docs/internal/todos/` — Ephemeral session TODOs (`YYYY-MM-DD-todo-<title>.md`); user-controlled, may be deleted
+- `docs/explanation/documentation-standards.md` — Doc kit templates and sizing rules
 - `docs/documentation/architecture/` — Routes, DB schema
-- `docs/tests/TESTING_STRATEGY.md` — Testing approach
-- `docs/ci-cd/CI_CD_STRATEGY.md` — CI/CD pipeline details
-- `docs/openapi/` — Generated OpenAPI spec
+- `docs/explanation/testing-strategy.md` — Testing approach
+- `docs/reference/ci-pipeline/strategy.md` — CI/CD pipeline details
+- `docs/reference/api/` — Generated OpenAPI spec
 
 ## Task Defaults
 
