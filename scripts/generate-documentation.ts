@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 
 // const srcDir = path.join(__dirname, "../src");
 const typesDir = path.join(__dirname, "../src/types");
-const outputDir = path.join(__dirname, "../documents");
+const outputDir = path.join(__dirname, "../docs");
 const outputFile = path.join(outputDir, "backend-documentation.md");
 async function generateDocumentation() {
   // Create output directory if it doesn't exist

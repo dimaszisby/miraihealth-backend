@@ -30,13 +30,13 @@ Ask (or infer from context):
 
 ```bash
 # Find related docs
-find documents/ -name "*.md" | head -40
+find docs/ -name "*.md" | head -40
 
 # Check if a doc kit already exists for this topic
-ls documents/<domain>/<topic>/ 2>/dev/null
+ls docs/<domain>/<topic>/ 2>/dev/null
 
 # Scan for cross-references to update
-grep -r "<topic>" documents/ --include="*.md" -l
+grep -r "<topic>" docs/ --include="*.md" -l
 ```
 
 Never create a duplicate. If a doc exists, update it in place and log the change in `decisions.md`.
@@ -44,18 +44,18 @@ Never create a duplicate. If a doc exists, update it in place and log the change
 ## Step 3: Create the folder skeleton (if new kit)
 
 ```bash
-mkdir -p documents/<domain>/<topic>
-touch documents/<domain>/<topic>/{README.md,<topic>-plan.md,<topic>-checklist.md,decisions.md,incidents.md}
+mkdir -p docs/<domain>/<topic>
+touch docs/<domain>/<topic>/{README.md,<topic>-plan.md,<topic>-checklist.md,decisions.md,incidents.md}
 ```
 
 Placement rules:
 
-- Tests → `documents/tests/<topic>/`
-- CI/CD → `documents/ci-cd/<topic>/`
-- Architecture → `documents/documentation/architecture/`
-- Security → `documents/security/<topic>/`
-- Product → `documents/documentation/product/`
-- API → `documents/openapi/`
+- Tests → `docs/tests/<topic>/`
+- CI/CD → `docs/ci-cd/<topic>/`
+- Architecture → `docs/documentation/architecture/`
+- Security → `docs/security/<topic>/`
+- Product → `docs/documentation/product/`
+- API → `docs/openapi/`
 
 ## Step 4: Write each document
 
@@ -63,7 +63,7 @@ Placement rules:
 
 1. **Overview** — one paragraph: what this is, why it exists, who owns it
 2. **Scope / In-scope** — bullet list of what is and is not covered
-3. **Commands / API** — copy-pasteable commands; link to `documents/documentation/architecture/` or `openapi/` for API details
+3. **Commands / API** — copy-pasteable commands; link to `docs/documentation/architecture/` or `openapi/` for API details
 4. **Environment / Dependencies** — what must be running or installed
 5. **Verification** — how to confirm it works (commands, expected output)
 6. **References** — links to related docs, PRs, issues
@@ -111,19 +111,19 @@ Placement rules:
 ### API / OpenAPI reference
 
 - Run `npm run docs:openapi:generate` to regenerate the spec
-- Cross-reference `documents/documentation/architecture/lakira-backend-routes.md` for route inventory
+- Cross-reference `docs/documentation/architecture/lakira-backend-routes.md` for route inventory
 - Follow Zod schema naming from `src/features/<name>/api/schema.zod.ts`
 - Document: method, path, auth required, request body shape, response codes, example
 
-### Architecture docs (`documents/documentation/architecture/`)
+### Architecture docs (`docs/documentation/architecture/`)
 
 - `lakira-backend-routes.md` — one row per route: method | path | auth | feature | description
 - `lakira-backend-db-schema.md` — one section per table: columns, types, constraints, relations
 - `lakira-backend-types.md` — shared domain types and their invariants
 
-### Security docs (`documents/security/`)
+### Security docs (`docs/security/`)
 
-- Follow the audit format in `documents/security/audit/`; include control-matrix, threat-model, findings-log
+- Follow the audit format in `docs/security/audit/`; include control-matrix, threat-model, findings-log
 - New security changes go into `decisions.md` of the nearest audit folder; reference commit SHA
 
 ### Changelog entries
@@ -148,7 +148,7 @@ Format (keep-a-changelog style):
 
 ## Step 6: Cross-link and reference
 
-- Link liberally between related docs using repo-root-relative paths: `[link](documents/tests/overhaul/test-structure-plan.md)`
+- Link liberally between related docs using repo-root-relative paths: `[link](docs/tests/overhaul/test-structure-plan.md)`
 - After writing, grep for every file that mentions the topic and add a back-reference where missing
 - If the doc was created for a PR, add a one-line mention of the new doc in the PR description
 
@@ -168,7 +168,7 @@ Before reporting complete, verify each doc:
 
 List every file written or updated:
 
-**`documents/path/to/file.md`**
+**`docs/path/to/file.md`**
 
 - **Action**: Created | Updated | Deleted
 - **Sections added/changed**: brief list

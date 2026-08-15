@@ -4,14 +4,14 @@ import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { describe, it, expect, beforeAll, afterAll } from "@jest/globals";
 
 const ROOT = process.cwd();
-const AUDIT_ROOT = path.join(ROOT, "documents/security/audit");
-const TEMPLATE_ROOT = path.join(ROOT, "documents/security/templates/audit-run");
+const AUDIT_ROOT = path.join(ROOT, "docs/security/audit");
+const TEMPLATE_ROOT = path.join(ROOT, "docs/security/templates/audit-run");
 const TMP_ROOT = path.join(ROOT, "tmp/security/framework-tests");
 const INIT_SCRIPT = path.join(ROOT, "scripts/security/init-audit-doc-kit.mjs");
 const GATE_SCRIPT = path.join(ROOT, "scripts/security/evaluate-gate.mjs");
 const GATE_POLICY = path.join(
   ROOT,
-  "documents/security/framework/ci-gate-policy.json",
+  "docs/security/framework/ci-gate-policy.json",
 );
 
 const SAMPLE_AUDIT_DATE = "2099-12-31";

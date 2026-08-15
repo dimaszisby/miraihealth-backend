@@ -51,4 +51,4 @@ Always reference `ZodMessages` instead of inline error strings.
 - `extendZodWithOpenApi(z)` must be called before defining schemas
 - Chain `.openapi({ format, pattern, example })` on Zod schemas for OpenAPI metadata
 - UUID fields require both `.uuid()` and `.regex()` with explicit pattern for OpenAPI 3.1 compatibility
-- Generated spec: `documents/openapi/lakira-backend-openapi.json`
+- Generated spec: `docs/openapi/lakira-backend-openapi.json`

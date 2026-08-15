@@ -55,93 +55,93 @@ const featureConfigs: FeatureConfig[] = [
     title: "Analytics Feature – Code Dump",
     rootDir: "src/features/analytics",
     target:
-      "documents/documentation/code-for-export-reference/lakira-backend-analytics-feature-codes.md",
+      "docs/documentation/code-for-export-reference/lakira-backend-analytics-feature-codes.md",
   },
   {
     type: "feature",
     title: "Auth Feature – Code Dump",
     rootDir: "src/features/auth",
     target:
-      "documents/documentation/code-for-export-reference/lakira-backend-auth-feature-codes.md",
+      "docs/documentation/code-for-export-reference/lakira-backend-auth-feature-codes.md",
   },
   {
     type: "feature",
     title: "Metric Feature – Code Dump",
     rootDir: "src/features/metric",
     target:
-      "documents/documentation/code-for-export-reference/lakira-backend-metric-feature-codes.md",
+      "docs/documentation/code-for-export-reference/lakira-backend-metric-feature-codes.md",
   },
   {
     type: "feature",
     title: "Metric Category Feature – Code Dump",
     rootDir: "src/features/metric-category",
     target:
-      "documents/documentation/code-for-export-reference/lakira-backend-metric-category-feature-codes.md",
+      "docs/documentation/code-for-export-reference/lakira-backend-metric-category-feature-codes.md",
   },
   {
     type: "feature",
     title: "Metric Log Feature – Code Dump",
     rootDir: "src/features/metric-log",
     target:
-      "documents/documentation/code-for-export-reference/lakira-backend-metric-log-feature-codes.md",
+      "docs/documentation/code-for-export-reference/lakira-backend-metric-log-feature-codes.md",
   },
   {
     type: "feature",
     title: "Metric Settings Feature – Code Dump",
     rootDir: "src/features/metric-settings",
     target:
-      "documents/documentation/code-for-export-reference/lakira-backend-metric-settings-feature-codes.md",
+      "docs/documentation/code-for-export-reference/lakira-backend-metric-settings-feature-codes.md",
   },
 ];
 
 const docBundleConfigs: DocBundleConfig[] = [
   {
     type: "doc_bundle",
-    title: "documents/ci-cd Contents",
-    treeRoot: "documents/ci-cd",
+    title: "docs/ci-cd Contents",
+    treeRoot: "docs/ci-cd",
     treeLabel: "ci-cd",
     target:
-      "documents/documentation/code-for-export-reference/lakira-backend-documents-ci-cd-content.md",
+      "docs/documentation/code-for-export-reference/lakira-backend-documents-ci-cd-content.md",
     files: [
-      { path: "documents/ci-cd/CI_CD_STRATEGY.md", language: "markdown" },
+      { path: "docs/ci-cd/CI_CD_STRATEGY.md", language: "markdown" },
       {
-        path: "documents/ci-cd/backend/ENVIRONMENTS_MATRIX.md",
+        path: "docs/ci-cd/backend/ENVIRONMENTS_MATRIX.md",
         language: "markdown",
       },
       {
-        path: "documents/ci-cd/backend/GITHUB_ACTIONS_PIPELINE_CHECKLIST.md",
+        path: "docs/ci-cd/backend/GITHUB_ACTIONS_PIPELINE_CHECKLIST.md",
         language: "markdown",
       },
       {
-        path: "documents/ci-cd/backend/GITHUB_ACTIONS_PIPELINE_PLAN.md",
+        path: "docs/ci-cd/backend/GITHUB_ACTIONS_PIPELINE_PLAN.md",
         language: "markdown",
       },
       {
-        path: "documents/ci-cd/backend/GITHUB_ACTIONS_WORKFLOW_GUIDELINES.md",
+        path: "docs/ci-cd/backend/GITHUB_ACTIONS_WORKFLOW_GUIDELINES.md",
         language: "markdown",
       },
       {
-        path: "documents/ci-cd/backend/JENKINS_NOTES.md",
+        path: "docs/ci-cd/backend/JENKINS_NOTES.md",
         language: "markdown",
       },
       {
-        path: "documents/ci-cd/backend/README.md",
+        path: "docs/ci-cd/backend/README.md",
         language: "markdown",
       },
       {
-        path: "documents/ci-cd/frontend/ENVIRONMENTS_MATRIX.md",
+        path: "docs/ci-cd/frontend/ENVIRONMENTS_MATRIX.md",
         language: "markdown",
       },
       {
-        path: "documents/ci-cd/frontend/GITHUB_ACTIONS_PIPELINE_CHECKLIST.md",
+        path: "docs/ci-cd/frontend/GITHUB_ACTIONS_PIPELINE_CHECKLIST.md",
         language: "markdown",
       },
       {
-        path: "documents/ci-cd/frontend/GITHUB_ACTIONS_PIPELINE_PLAN.md",
+        path: "docs/ci-cd/frontend/GITHUB_ACTIONS_PIPELINE_PLAN.md",
         language: "markdown",
       },
       {
-        path: "documents/ci-cd/frontend/README.md",
+        path: "docs/ci-cd/frontend/README.md",
         language: "markdown",
       },
       {
@@ -156,10 +156,10 @@ const treeDocConfigs: TreeDocConfig[] = [
   {
     type: "tree",
     title: `Lakira Backend Project Structure (${generatedDateStamp})`,
-    target: `documents/documentation/code-for-export-reference/lakira-backend-project-structure-${generatedDateStamp}.md`,
+    target: `docs/documentation/code-for-export-reference/lakira-backend-project-structure-${generatedDateStamp}.md`,
     rootDir: ".",
     description:
-      "This catalog lists every file currently living in the repository workspace, including all material inside the `documents/` tree. Generated by walking the working tree and excluding only automated or framework-only internals (`node_modules`, `.git`, `.next`, `.turbo`, `.idea`, `.vscode`, `dist`, `coverage`, `logs`). That keeps the focus on user-authored assets.",
+      "This catalog lists every file currently living in the repository workspace, including all material inside the `docs/` tree. Generated by walking the working tree and excluding only automated or framework-only internals (`node_modules`, `.git`, `.next`, `.turbo`, `.idea`, `.vscode`, `dist`, `coverage`, `logs`). That keeps the focus on user-authored assets.",
     notes: [
       "Includes every file currently present in the working tree (tracked or not) so long as it is user-managed.",
       "Automatically omitted generated or dependency-heavy internals (`node_modules`, `.next`, `dist`, `coverage`, `logs`, tooling config folders) per the request.",
