@@ -63,7 +63,7 @@ When upstream fixes are unavailable, document compensating controls (feature fla
 
 - **Runtime-first:** Prioritize packages such as Express, Sequelize, JSON Web Token utilities, Redis/Postgres clients, and any middleware that processes request payloads.
 - **Dev/Test:** Tools like Jest, Newman, Prettier, ESLint are patched on a scheduled cadence unless the vulnerability leaks secrets or allows code execution during CI runs.
-- Document categorization in the relevant checklist/todo (e.g., `docs/internal/todos/2026-01-19-todo-github-actions-openapi.md` Section 5).
+- Document categorization in the relevant checklist/todo.
 
 ## Upgrade Cadence
 
@@ -78,7 +78,7 @@ When upstream fixes are unavailable, document compensating controls (feature fla
   - references advisories or changelog,
   - links to affected docs/checklists,
   - states test evidence.
-- If forced downgrades or patch forks are necessary, log a decision entry in `docs/internal/audits/security/security-audit-log-baseline-simple.md` (or a dedicated `decisions.md` once the dependency topic expands).
+- If forced downgrades or patch forks are necessary, log a decision entry in `docs/internal/audits/security/audit-2025-11-21/security-audit-log-baseline-simple.md` (or a dedicated `decisions.md` once the dependency topic expands).
 
 ## Exceptions
 

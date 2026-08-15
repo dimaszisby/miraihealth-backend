@@ -111,13 +111,12 @@ Placement rules:
 ### API / OpenAPI reference
 
 - Run `npm run docs:openapi:generate` to regenerate the spec
-- Cross-reference `docs/documentation/architecture/lakira-backend-routes.md` for route inventory
+- Cross-reference the generated OpenAPI spec (`docs/reference/api/`) for route inventory
 - Follow Zod schema naming from `src/features/<name>/api/schema.zod.ts`
 - Document: method, path, auth required, request body shape, response codes, example
 
 ### Architecture docs (`docs/documentation/architecture/`)
 
-- `lakira-backend-routes.md` — one row per route: method | path | auth | feature | description
 - `lakira-backend-db-schema.md` — one section per table: columns, types, constraints, relations
 - `lakira-backend-types.md` — shared domain types and their invariants
 

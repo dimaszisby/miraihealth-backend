@@ -35,7 +35,7 @@ When changing API behavior (route, params/query/body rules, response shape):
    - `npm run docs:openapi:check`
 5. Update canonical docs in the same PR when behavior changed:
    - `docs/explanation/product-requirements.md`
-   - `docs/documentation/architecture/lakira-backend-routes.md`
+   - the generated spec at `docs/reference/api/lakira-backend-openapi.json`
 
 ## 3. Conventions
 
@@ -62,5 +62,3 @@ This guide is implementation-focused for Lakira backend only.
 It is not a generic OpenAPI tutorial.
 
 For broader architecture/process planning, use:
-
-- `docs/reference/api/openapi-documentation-plan.md`

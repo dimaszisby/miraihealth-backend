@@ -31,7 +31,7 @@ cp .env.example .env
 docker compose up -d
 
 # 4. Run database migrations
-npm run migrate:dev
+npm run migrate:development
 
 # 5. Start the development server (port 5000)
 npm run dev
@@ -39,20 +39,20 @@ npm run dev
 
 ## Available Scripts
 
-| Script                          | Description                              |
-| ------------------------------- | ---------------------------------------- |
-| `npm run dev`                   | Start development server with hot-reload |
-| `npm test`                      | Run unit + integration tests             |
-| `npm run test:unit`             | Unit tests only                          |
-| `npm run test:integration`      | Integration tests (requires PostgreSQL)  |
-| `npm run test:e2e`              | End-to-end tests                         |
-| `npm run lint`                  | ESLint check                             |
-| `npm run lint:fix`              | ESLint autofix                           |
-| `npm run typecheck`             | TypeScript type check                    |
-| `npm run build`                 | Compile to `dist/`                       |
-| `npm run migrate:dev`           | Run pending migrations (development)     |
-| `npm run migrate:undo:dev`      | Undo last migration                      |
-| `npm run docs:openapi:generate` | Regenerate OpenAPI spec                  |
+| Script                             | Description                              |
+| ---------------------------------- | ---------------------------------------- |
+| `npm run dev`                      | Start development server with hot-reload |
+| `npm test`                         | Run unit + integration tests             |
+| `npm run test:unit`                | Unit tests only                          |
+| `npm run test:integration`         | Integration tests (requires PostgreSQL)  |
+| `npm run test:e2e`                 | End-to-end tests                         |
+| `npm run lint`                     | ESLint check                             |
+| `npm run lint:fix`                 | ESLint autofix                           |
+| `npm run typecheck`                | TypeScript type check                    |
+| `npm run build`                    | Compile to `dist/`                       |
+| `npm run migrate:development`      | Run pending migrations (development)     |
+| `npm run migrate:development:undo` | Undo last migration                      |
+| `npm run docs:openapi:generate`    | Regenerate OpenAPI spec                  |
 
 ## Project Structure
 

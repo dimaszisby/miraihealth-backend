@@ -34,6 +34,8 @@ verbatim from a clean clone.
 | Path                                                       | What                                                                       |
 | ---------------------------------------------------------- | -------------------------------------------------------------------------- |
 | [`api/`](./reference/api/)                                 | Generated OpenAPI 3.1 contract. **Do not hand-edit.**                      |
+| [`configuration.md`](./reference/configuration.md)         | Every environment variable, its type and default                           |
+| [`commands.md`](./reference/commands.md)                   | Every npm script worth running                                             |
 | [`database-schema.md`](./reference/database-schema.md)     | Tables, columns, constraints                                               |
 | [`environments.md`](./reference/environments.md)           | Environment/secret matrix                                                  |
 | [`ci-pipeline/`](./reference/ci-pipeline/)                 | Pipeline strategy, job model, workflow conventions                         |
