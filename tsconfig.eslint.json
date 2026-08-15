@@ -10,6 +10,7 @@
     "src/**/*",
     "scripts/**/*",
     "documents/**/*",
+    "tests/**/*",
     "__tests__/**/*",
     "tmp/**/*"
   ],

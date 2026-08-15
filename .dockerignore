@@ -8,6 +8,7 @@ build/
 .claude/
 documents/
 __tests__/
+tests/
 coverage/
 *.log
 .env

@@ -152,7 +152,7 @@ Always push fixes to the same branch; reruns are automatic once CI detects new c
    ```bash
    export SCHEMATHESIS_LOCAL_TOKEN=$(node -e 'const seed=require("./tmp/contract-seed.json"); if(!seed?.primaryUser?.token) process.exit(1); process.stdout.write(seed.primaryUser.token);')
    export SCHEMATHESIS_LOCAL_BASE_URL=${SCHEMATHESIS_LOCAL_BASE_URL:-http://localhost:4000/api/v1}
-   export SCHEMATHESIS_HOOKS=${SCHEMATHESIS_HOOKS:-documents.tests.contract_hooks.seeded_ids}
+   export SCHEMATHESIS_HOOKS=${SCHEMATHESIS_HOOKS:-tests.contract.hooks.seeded_ids}
    ```
    The hook module keeps Hypothesis pointing at seeded IDs; the npm scripts set this env var automatically, but export it when invoking `schemathesis run …` manually.
 4. **Run suites**

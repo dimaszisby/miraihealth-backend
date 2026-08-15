@@ -16,7 +16,7 @@ start the next phase until the current gate is green.
 - [x] Determine what actionlint actually creates. **Finding:** actionlint is not wired into
       `package.json` or any workflow — it is a purely manual local tool, and its release tarball
       extracts `actionlint`, `man/`, **and `docs/`** at the extraction root. The rule was added
-      2026-02-05 in `cfee189`. Since the collision is on the directory *name*, no anchored form
+      2026-02-05 in `cfee189`. Since the collision is on the directory _name_, no anchored form
       can keep it (`/docs/` would still swallow the new tree), so the rule was **removed** and
       replaced with a NOTE explaining why it must not be re-added. The adjacent `actionlint`,
       `actionlint_*.tar.gz`, `man/actionlint.1` rules are retained.
@@ -30,7 +30,7 @@ start the next phase until the current gate is green.
 .gitignore:100:docs	__tests__/integration/docs/swagger.test.ts
 ```
 
-It survived only because it was committed *before* the rule was added. Any **new** file added to
+It survived only because it was committed _before_ the rule was added. Any **new** file added to
 `__tests__/integration/docs/` would have been silently ignored. Fixed by the same change — this
 was worth doing independently of the docs migration.
 
@@ -48,49 +48,103 @@ git status --short                                                     # no unin
 
 ---
 
-## Phase 1 — Move executables out of the docs tree
+## Phase 1 — Move executables out of the docs tree ✅ DONE (2026-08-16)
 
 > Riskiest phase. Runs first and alone, while `documents/` is otherwise untouched, so any CI
 > failure is unambiguously attributable.
 
 ### 1a. Move the files
 
-- [ ] `git mv documents/tests/4-contract-tests/postman-newman/{collections,environments,scripts} tests/contract/postman-newman/`
-- [ ] `git mv documents/tests/4-contract-tests/schemathesis/{scripts,requirements.txt} tests/contract/schemathesis/`
-- [ ] `git mv documents/tests/contract_hooks/seeded_ids.py tests/contract/hooks/seeded_ids.py`
-- [ ] Leave all `*.md` prose behind for now — it moves in Phase 3.
+- [x] `git mv documents/tests/4-contract-tests/postman-newman/{collections,environments,scripts} tests/contract/postman-newman/`
+- [x] `git mv documents/tests/4-contract-tests/schemathesis/{scripts,requirements.txt} tests/contract/schemathesis/`
+- [x] `git mv documents/tests/contract_hooks/seeded_ids.py tests/contract/hooks/seeded_ids.py`
+- [x] Leave all `*.md` prose behind for now — it moves in Phase 3.
+- [x] Moved `schemathesis/reports/staging/.gitkeep` to the new location to preserve the
+      report-directory placeholder.
 
 ### 1b. Re-root the Python package chain
 
-- [ ] Create `tests/__init__.py`, `tests/contract/__init__.py`, `tests/contract/hooks/__init__.py`,
-      carrying over the explanatory docstrings from the originals.
-- [ ] `git rm documents/__init__.py documents/tests/__init__.py documents/tests/contract_hooks/__init__.py`
-- [ ] Update the `SCHEMATHESIS_HOOKS` default in `tests/contract/schemathesis/scripts/run-local.js:26`:
-      `documents.tests.contract_hooks.seeded_ids` → `tests.contract.hooks.seeded_ids`
-- [ ] Grep for any other occurrence of the dotted module path (CI/CD guide §7, `schemathesis.toml`,
-      workflow env blocks) and update each.
+- [x] Create `tests/__init__.py`, `tests/contract/__init__.py`, `tests/contract/hooks/__init__.py`.
+- [x] `git rm` the three old `__init__.py` markers.
+- [x] `SCHEMATHESIS_HOOKS` default → `tests.contract.hooks.seeded_ids`; `hookFilePath` re-pointed.
+- [x] Swept the dotted module path — one extra hit beyond the plan:
+      **`documents/ci-cd/CI_CD_DEVELOPER_SIMPLIFIED_GUIDE.md:155`** carried a copy-pasteable
+      `export SCHEMATHESIS_HOOKS=…` with the old module. Updated. (`schemathesis.toml` has no
+      path references; no workflow sets the var.)
 
 ### 1c. Update every consumer
 
-- [ ] `package.json:31,32,33,38` — four `test:contract:*` script paths.
-- [ ] `.github/workflows/backend-ci.yml:309` — pip `requirements.txt` path.
-- [ ] `.github/workflows/backend-ci.yml:353,359,432,482` — four artifact-upload report paths.
-- [ ] `.gitignore:93,94` — report directories → `tests/contract/**/reports/`.
-- [ ] `tsconfig.eslint.json:12` — add `tests/**/*` alongside (or in place of) `documents/**/*`.
-- [ ] `git rm --cached` the two committed generated reports
-      (`postman-newman/reports/staging/newman-analytics-staging.{html,xml}`) — they are build
-      artifacts that predate the ignore rule.
+- [x] `package.json:31,32,33,38` · `backend-ci.yml:309,353,359,432,482` · `.gitignore:93,94`
+- [x] `tsconfig.eslint.json` — added `tests/**/*` so ESLint still covers the moved JS.
+- [x] Removed the two committed generated Newman reports.
+- [x] **Not in the plan:** `.dockerignore` excluded `documents/` and `__tests__/` but not
+      `tests/`, so the moved assets would have entered the Docker build context. Added `tests/`.
+- [x] **Not in the plan:** internal path math. Both script families compute `repoRoot` by
+      counting parent levels, and the depth changed from 5 to 4: - logger import `../../../../../scripts/logger.js` → `../../../../scripts/logger.js` (×4 files) - `run-contract-local.js` `repoRoot`: 4 parents → 3 - schemathesis `repoRoot`: `../../../../..` → `../../../..`; `schemathesisDir` rebuilt - pip-install path in two error messages
+      `specPath` still points at `documents/openapi/` — correct until Phase 3.
 
-**Gate**
+### Deviation — `tsconfig.json`, not `tsconfig.eslint.json`
 
-```bash
-npm run lint && npm run typecheck && npm run format:check
-npm run test:contract:local
-npm run test:contract:schemathesis:local     # must load the hook, not pass vacuously
-```
+`tsconfig.json:51` already listed `"tests/**/*"` in `include`, a **no-op while no top-level
+`tests/` existed**. The move populated it, and with `checkJs: true` + `strict` the four plain
+Node scripts produced 29 type errors — they were never type-checked under `documents/`. Added
+`"tests/contract/**/*.js"` to `exclude` to preserve prior behavior rather than annotate the
+scripts (out of scope).
 
-- [ ] Confirm the Schemathesis run reports a **comparable finding/case count to before** — a
-      silently-unloaded hook module produces a suspiciously fast, empty run.
+**Gate — results**
+
+| Check                                  | Result                                                                         |
+| -------------------------------------- | ------------------------------------------------------------------------------ |
+| `npm run lint`                         | ✅ 0 (needed one `lint:fix` pass for Prettier width)                           |
+| `npm run typecheck`                    | ✅ 0                                                                           |
+| `npm run format:check`                 | ✅ 0                                                                           |
+| `npm run test:unit`                    | ✅ **84 suites / 497 tests** — matches the pre-move audit baseline exactly     |
+| `npm run test:unit:security-framework` | ✅ 1 suite / 8 tests                                                           |
+| Stale-path sweep (non-`.md`)           | ✅ zero hits for `4-contract-tests` / `contract_hooks`                         |
+| Python module resolves                 | ✅ `tests.contract.hooks.seeded_ids` **FOUND**; old path `ModuleNotFoundError` |
+| JS `repoRoot` + asset paths            | ✅ all resolve to repo root; all assets present                                |
+| Script smoke-load                      | ✅ all 4 load and fail at env validation, not on import/path                   |
+| `run-local.js` spec check              | ✅ passes `fs.access(specPath)`, reaches the health check                      |
+
+### Full contract gate — run locally against real infra (Colima/Docker)
+
+The CI `contract_local` job was mirrored end to end: `docker compose up db redis` → `build` →
+`docs:openapi:generate` → `db:migrate:test` (26 migrations) → `start:test` on :4000 → both suites.
+
+| Check                                      | Result                                                                                                                                                                                        |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs:openapi:check` (drift gate)          | ✅ 0 — generator still writes where CI diffs                                                                                                                                                  |
+| `npm run test:contract:local` (Newman)     | ✅ **5/5 collections, 60 assertions, 0 failures**                                                                                                                                             |
+| Newman reports written                     | ✅ 10 files under `tests/contract/postman-newman/reports/local/`                                                                                                                              |
+| `npm run test:contract:schemathesis:local` | ✅ 0 — 38/43 operations selected, **32 generated / 32 passed**                                                                                                                                |
+| Schemathesis reports written               | ✅ JUNIT + HAR under `tests/contract/schemathesis/reports/local/`                                                                                                                             |
+| **Hook actually executed**                 | ✅ 5 `[schemathesis-hook]` lines from `_debug_case_path` (via `SCHEMATHESIS_HOOK_DEBUG=1`) covering `/auth/register`, `/auth/login`, `/metric-categories`, `/metric-logs`, `/metric-settings` |
+| **Negative control**                       | ✅ forcing `SCHEMATHESIS_HOOKS=documents.tests.contract_hooks.seeded_ids` → **exit 1, `ModuleNotFoundError`**                                                                                 |
+
+The negative control is the important one: it proves Schemathesis **fails loudly** on a bad hook
+module rather than passing vacuously — so the green run above genuinely loaded the relocated hook.
+This fully satisfies the "comparable finding count" gate, which was written before we knew a
+cleaner check existed.
+
+### Two more issues found only by running it
+
+- **`__pycache__` was never gitignored.** Importing the hook generates it; previously it landed in
+  `documents/tests/contract_hooks/__pycache__/`, now in `tests/`. Never committed only by luck.
+  Added `__pycache__/` and `*.py[cod]` to `.gitignore`. Pre-existing gap, exposed by this phase.
+- **`PORT` mismatch.** `.env.test.example` ships `PORT=8002`, but the contract scripts default to
+  `http://localhost:4000` and `backend-ci.yml:250` sets `PORT: 4000` at job level. A developer
+  following the example alone gets a server the contract suite cannot reach. Not changed here
+  (pre-existing, outside Phase 1) — **logged as a follow-up**.
+
+### Local environment notes (no repo changes)
+
+All gitignored: `.env`, `.env.test` (from the examples; without them every unit suite fails on a
+missing `JWT_SECRET`), `.venv-schemathesis` (Python 3.12 — local `python3` is 3.9.6, CI uses 3.11).
+
+`npm run db:migrate:test` **fails on Node 26** — `.sequelizerc` uses `require()` in a
+`"type": "module"` repo, which only works on the mandated Node 20 (`.nvmrc`). Worked around
+locally with `--options-path /dev/null --migrations-path src/migrations`. CI is unaffected (Node
+20), but anyone on newer Node hits this. **Logged as a follow-up.**
 
 **Commit boundary: Phases 0–1.**
 
@@ -368,3 +422,16 @@ Surfaced during the audit; each deserves its own ticket:
 - [ ] `/api/v1/admin/_ping` is served but unregistered in the OpenAPI spec.
 - [ ] `documents/todos/2026-06-04-*.md` carries an unchecked "2026-07-02 review" item, now ~6 weeks
       overdue.
+
+Surfaced while running the Phase 1 gate on real infrastructure:
+
+- [ ] **`.sequelizerc` breaks on Node > 20.** It uses `require()` while `package.json` sets
+      `"type": "module"`, so `npm run db:migrate:test` dies with
+      `ReferenceError: require is not defined in ES module scope` on Node 22+/26. CI is fine
+      (Node 20), but any contributor on a newer runtime is blocked. Fix: rename to
+      `.sequelizerc.cjs`, or convert it to ESM.
+- [ ] **`PORT` mismatch between the example env and the contract suite.**
+      `.env.test.example` ships `PORT=8002`; the contract scripts default to
+      `http://localhost:4000/api/v1` and `backend-ci.yml:250` sets `PORT: 4000`. Following the
+      example alone produces a server the contract tests cannot reach. Fix: set `PORT=4000` in
+      `.env.test.example`, or make the scripts read `PORT`.
