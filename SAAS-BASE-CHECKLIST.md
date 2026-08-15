@@ -1,10 +1,10 @@
 # SaaS Base Checklist
 
 **Audit date:** 2026-05-24 (independent gone-gold review)
-**Full audit:** [`documents/development/architecture/saas-readiness/audit-2026-05-24-independent.md`](documents/development/architecture/saas-readiness/audit-2026-05-24-independent.md)
-**Closeout summary:** [`documents/development/architecture/saas-readiness/FINAL-AUDIT-SUMMARY.md`](documents/development/architecture/saas-readiness/FINAL-AUDIT-SUMMARY.md)
-**Kit overview:** [`documents/development/architecture/saas-readiness/README.md`](documents/development/architecture/saas-readiness/README.md)
-**Verdict authority:** ADR-008 in [`decisions.md`](documents/development/architecture/saas-readiness/decisions.md)
+**Full audit:** [`docs/development/architecture/saas-readiness/audit-2026-05-24-independent.md`](docs/development/architecture/saas-readiness/audit-2026-05-24-independent.md)
+**Closeout summary:** [`docs/development/architecture/saas-readiness/FINAL-AUDIT-SUMMARY.md`](docs/development/architecture/saas-readiness/FINAL-AUDIT-SUMMARY.md)
+**Kit overview:** [`docs/development/architecture/saas-readiness/README.md`](docs/development/architecture/saas-readiness/README.md)
+**Verdict authority:** ADR-008 in [`decisions.md`](docs/development/architecture/saas-readiness/decisions.md)
 
 ## Verdict
 
@@ -23,7 +23,7 @@
 
 ## Fork-ready exit criteria
 
-A repo is fork-ready only when **all four** hold (see ADR-001 in [`decisions.md`](documents/development/architecture/saas-readiness/decisions.md)):
+A repo is fork-ready only when **all four** hold (see ADR-001 in [`decisions.md`](docs/development/architecture/saas-readiness/decisions.md)):
 
 | #   | Criterion                                                                                                                       | Status (2026-05-24)                       |
 | --- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
@@ -81,7 +81,7 @@ than the 2026-05-20 self-audit (52 / 9 / 4) — see ADR-008.
 5. **C5 · Observability (P2)** — Sentry `init()` has no `beforeSend` PII scrubber.
 6. **C6 · Security (P2)** — `SENSITIVE_KEY_PATTERN` is suffix-anchored; misses `authorization`/`cookie`/`bearer` (latent).
 
-Full evidence (file:line) is in the [dated audit](documents/development/architecture/saas-readiness/audit-2026-05-24-independent.md); fix-status tracking is in [`FINAL-AUDIT-SUMMARY.md` § 4](documents/development/architecture/saas-readiness/FINAL-AUDIT-SUMMARY.md).
+Full evidence (file:line) is in the [dated audit](docs/development/architecture/saas-readiness/audit-2026-05-24-independent.md); fix-status tracking is in [`FINAL-AUDIT-SUMMARY.md` § 4](docs/development/architecture/saas-readiness/FINAL-AUDIT-SUMMARY.md).
 
 ## What's already strong (✅ highlights)
 
@@ -98,4 +98,4 @@ Full evidence (file:line) is in the [dated audit](documents/development/architec
 npm run typecheck && npm run lint && npm run format:check && npm test && npm run security:delta:check && npm run docs:openapi:generate
 ```
 
-Then write the result to a new file `documents/development/architecture/saas-readiness/audit-YYYY-MM-DD.md` (do not overwrite a prior audit) and update this checklist to point at it. See the kit [`README.md`](documents/development/architecture/saas-readiness/README.md) for the full re-audit recipe. When caveats C1–C6 close, produce a fresh dated audit and re-state the verdict as **GOLD** per ADR-008.
+Then write the result to a new file `docs/development/architecture/saas-readiness/audit-YYYY-MM-DD.md` (do not overwrite a prior audit) and update this checklist to point at it. See the kit [`README.md`](docs/development/architecture/saas-readiness/README.md) for the full re-audit recipe. When caveats C1–C6 close, produce a fresh dated audit and re-state the verdict as **GOLD** per ADR-008.

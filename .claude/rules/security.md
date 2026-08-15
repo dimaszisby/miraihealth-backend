@@ -36,5 +36,5 @@ Applied in order on every request:
 - `npm run test:unit:security-framework` — framework validation tests
 - `npm run security:delta:check` — dependency vulnerability delta analysis
 - `npm run security:gate:evaluate` — soft gate (uploads artifacts, doesn't block)
-- Security audit docs: `documents/security/`
-- Release SOP: `documents/security/guides/security-release-delta-sop.md`
+- Security audit docs: `docs/security/`
+- Release SOP: `docs/security/guides/security-release-delta-sop.md`

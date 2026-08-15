@@ -59,7 +59,7 @@
     "migrate:staging:undo:all": "NODE_ENV=staging dotenv -e .env.staging -- npx sequelize-cli db:migrate:undo:all --config src/config/config.cjs",
     "migrate:production:undo:all": "NODE_ENV=production dotenv -e .env.production -- npx sequelize-cli db:migrate:undo:all --config src/config/config.cjs",
     "docs:openapi:generate": "NODE_ENV=development tsx ./scripts/generate-openapi.ts && tsx ./scripts/normalize-openapi.ts",
-    "docs:openapi:check": "npm run docs:openapi:generate && git diff --exit-code documents/openapi/lakira-backend-openapi.json",
+    "docs:openapi:check": "npm run docs:openapi:generate && git diff --exit-code docs/openapi/lakira-backend-openapi.json",
     "security:audit:init": "node scripts/security/init-audit-doc-kit.mjs",
     "security:delta:check": "node scripts/security/security-delta-check.mjs",
     "security:gate:evaluate": "node scripts/security/evaluate-gate.mjs",

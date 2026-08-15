@@ -6,7 +6,7 @@ build/
 .vscode/
 .venv-schemathesis/
 .claude/
-documents/
+docs/
 __tests__/
 tests/
 coverage/

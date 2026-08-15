@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Security Audit Pipeline
 
-Run the security checks defined in `documents/security/guides/security-release-delta-sop.md`.
+Run the security checks defined in `docs/security/guides/security-release-delta-sop.md`.
 
 ## Steps
 
@@ -54,9 +54,9 @@ Run the security checks defined in `documents/security/guides/security-release-d
 
 5. **If blocked**, advise:
    - Remediate findings and re-run
-   - If temporary exception needed: follow `documents/security/framework/security-exceptions-policy.md`
+   - If temporary exception needed: follow `docs/security/framework/security-exceptions-policy.md`
 
-6. **For production releases**, remind the user to update audit docs in `documents/security/audit/`:
+6. **For production releases**, remind the user to update audit docs in `docs/security/audit/`:
    - `audit-checklist.md`
    - `findings-log.md`
    - `remediation-plan.md`

@@ -42,7 +42,7 @@ Updated after any correction per `.claude/rules/workflow.md`.
 ## [2026-04-22] Never compact or reformat security audit docs — they are schema-validated
 
 **Mistake**: Security audit documents (`findings-log.md`, `portfolio-summary.md`, `index.md`, etc.) were manually condensed to reduce token count. This stripped required table columns (`finding_id`, `title`, `domain`, `severity`, etc.) and section headers, breaking the `security-framework.validation.test.ts` CI gate.
-**Rule**: Never reformat, condense, or restructure files under `documents/security/audit/`. Their column names, section headers, and table structure are enforced by automated tests.
+**Rule**: Never reformat, condense, or restructure files under `docs/security/audit/`. Their column names, section headers, and table structure are enforced by automated tests.
 **Why**: `security-framework.validation.test.ts` validates the schema of live audit docs — required columns, traceability links, portfolio section headers, and index folder references. Any structural change that doesn't match the framework schema fails CI.
 
 ## [2026-04-22] Always add an example to OpenAPI path params that use zUUID

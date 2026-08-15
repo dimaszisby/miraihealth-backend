@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const outputFile = path.join(
   __dirname,
-  "../documents/openapi/lakira-backend-openapi.json",
+  "../docs/openapi/lakira-backend-openapi.json",
 );
 
 async function normalizeOpenApiSpec() {
