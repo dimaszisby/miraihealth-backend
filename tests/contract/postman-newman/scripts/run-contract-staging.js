@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import fs from "node:fs/promises";
 import newman from "newman";
-import logger from "../../../../../scripts/logger.js";
+import logger from "../../../../scripts/logger.js";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const postmanDir = path.resolve(scriptDir, "..");

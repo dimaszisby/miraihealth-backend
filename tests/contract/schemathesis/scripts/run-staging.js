@@ -4,15 +4,14 @@ import { fileURLToPath } from "node:url";
 import fs from "node:fs/promises";
 import fsSync from "node:fs";
 import { spawn } from "node:child_process";
-import logger from "../../../../../scripts/logger.js";
+import logger from "../../../../scripts/logger.js";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(scriptDir, "../../../../..");
+const repoRoot = path.resolve(scriptDir, "../../../..");
 const schemathesisDir = path.join(
   repoRoot,
-  "documents",
   "tests",
-  "4-contract-tests",
+  "contract",
   "schemathesis",
 );
 const specPath = path.join(
@@ -151,7 +150,7 @@ async function main() {
   } catch (error) {
     if (error.code === "ENOENT") {
       logger.error(
-        `[schemathesis:staging] Unable to find "${cli}". Install Schemathesis via "pip install -r documents/tests/4-contract-tests/schemathesis/requirements.txt" or point SCHEMATHESIS_CLI to the binary.`,
+        `[schemathesis:staging] Unable to find "${cli}". Install Schemathesis via "pip install -r tests/contract/schemathesis/requirements.txt" or point SCHEMATHESIS_CLI to the binary.`,
       );
     } else {
       logger.error("[schemathesis:staging] Schemathesis run failed", error);

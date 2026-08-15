@@ -4,11 +4,11 @@ import { fileURLToPath } from "node:url";
 import fs from "node:fs/promises";
 import { spawn } from "node:child_process";
 import newman from "newman";
-import logger from "../../../../../scripts/logger.js";
+import logger from "../../../../scripts/logger.js";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const postmanDir = path.resolve(scriptDir, "..");
-const repoRoot = path.resolve(postmanDir, "..", "..", "..", "..");
+const repoRoot = path.resolve(postmanDir, "..", "..", "..");
 
 const collections = [
   {

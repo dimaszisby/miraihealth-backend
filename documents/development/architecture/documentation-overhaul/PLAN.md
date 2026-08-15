@@ -9,25 +9,25 @@
 
 ## 1. Context & Goals
 
-`documents/` holds **289 files / 26,265 lines**, organized by *artifact type* (plans,
-checklists, tickets, audits, reviews) rather than by *reader purpose*. A newcomer cannot tell
+`documents/` holds **289 files / 26,265 lines**, organized by _artifact type_ (plans,
+checklists, tickets, audits, reviews) rather than by _reader purpose_. A newcomer cannot tell
 which document answers their question, and correct documents sit beside months-stale ones with
 no signal distinguishing them.
 
 ### Evidence gathered during the audit
 
-| Finding | Verified how |
-| --- | --- |
-| **~22% link rot** — 30 of 138 unique internal doc-path references point at files that do not exist | Swept every `documents/…` reference in the tree and tested each target |
-| The first file `documents/README.md` tells readers *and agents* to open — `documents/LLM_CONTEXT.md` — has never existed | Absent from the working tree and from git history |
-| **The reference layer is actively wrong.** `lakira-backend-db-schema.md` documents 5 tables and `enum_users_role`; the real schema has 12+ tables and `users.role` was **dropped** | `src/migrations/20260516000001-drop-users-role-column.cjs` |
-| `lakira-backend-routes.md` documents **zero** organization routes; the API serves six | `src/features/shared/auth/infrastructure/http/organization.router.ts` |
-| The **generated** OpenAPI spec, by contrast, is accurate — 43 documented operations vs 44 route registrations — and CI-gated against drift | `npm run docs:openapi:check`, `backend-ci.yml:60` |
-| **52 ADRs across 19 files, all numbered from `ADR-001` per kit** — `ADR-001` collides ~12 times | Heading sweep across every `decisions.md` |
-| **Docs that lie about shipped work:** `feature-audience-restructure` reads "Planning — awaiting approval", 0/99 boxes checked, ADR dates left as literal `YYYY-MM-DD` | `src/features/public/` and `src/features/shared/` are live |
-| **Essentially no diagrams** — one mermaid block in the whole tree, in an archived 2025 code-review file | Content sweep for ```` ```mermaid ```` and C4 terminology |
-| **Executable code lives under the docs tree** — 4 Node scripts wired to npm, 5 Postman collections, a pip `requirements.txt`, and a 819-line Python hook module | `package.json:31-38`, `backend-ci.yml:309` |
-| Two generated Newman reports are **committed** despite `.gitignore` covering that directory | `git ls-files` (once tracked, `.gitignore` no longer applies) |
+| Finding                                                                                                                                                                            | Verified how                                                           |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **~22% link rot** — 30 of 138 unique internal doc-path references point at files that do not exist                                                                                 | Swept every `documents/…` reference in the tree and tested each target |
+| The first file `documents/README.md` tells readers _and agents_ to open — `documents/LLM_CONTEXT.md` — has never existed                                                           | Absent from the working tree and from git history                      |
+| **The reference layer is actively wrong.** `lakira-backend-db-schema.md` documents 5 tables and `enum_users_role`; the real schema has 12+ tables and `users.role` was **dropped** | `src/migrations/20260516000001-drop-users-role-column.cjs`             |
+| `lakira-backend-routes.md` documents **zero** organization routes; the API serves six                                                                                              | `src/features/shared/auth/infrastructure/http/organization.router.ts`  |
+| The **generated** OpenAPI spec, by contrast, is accurate — 43 documented operations vs 44 route registrations — and CI-gated against drift                                         | `npm run docs:openapi:check`, `backend-ci.yml:60`                      |
+| **52 ADRs across 19 files, all numbered from `ADR-001` per kit** — `ADR-001` collides ~12 times                                                                                    | Heading sweep across every `decisions.md`                              |
+| **Docs that lie about shipped work:** `feature-audience-restructure` reads "Planning — awaiting approval", 0/99 boxes checked, ADR dates left as literal `YYYY-MM-DD`              | `src/features/public/` and `src/features/shared/` are live             |
+| **Essentially no diagrams** — one mermaid block in the whole tree, in an archived 2025 code-review file                                                                            | Content sweep for ` ```mermaid ` and C4 terminology                    |
+| **Executable code lives under the docs tree** — 4 Node scripts wired to npm, 5 Postman collections, a pip `requirements.txt`, and a 819-line Python hook module                    | `package.json:31-38`, `backend-ci.yml:309`                             |
+| Two generated Newman reports are **committed** despite `.gitignore` covering that directory                                                                                        | `git ls-files` (once tracked, `.gitignore` no longer applies)          |
 
 ### Root cause of the two architecture trees
 
@@ -41,7 +41,7 @@ Both were followed. **Restructuring without fixing this guarantees the split rea
 ### Goals
 
 1. Organize by reader purpose (Diátaxis), so the question determines the folder.
-2. Make the shipped tree portable — a fork gets documentation about *the template*, not about
+2. Make the shipped tree portable — a fork gets documentation about _the template_, not about
    Lakira's history.
 3. Prefer generated over hand-written wherever a generator already exists and is CI-gated.
 4. Give ADRs one global namespace in the standard Nygard form.
@@ -156,7 +156,7 @@ That material is roughly **200 of the 289 files** here. Forcing it into a quadra
 the taxonomy; deleting it would destroy real evidence, including the currently-open security
 findings.
 
-So `internal/` sits *beside* the four quadrants, not inside them, and the existing
+So `internal/` sits _beside_ the four quadrants, not inside them, and the existing
 `scripts/bootstrap-fork.sh` deletes it during a fork. The four quadrants are the template;
 `internal/` is Lakira's history.
 
@@ -188,8 +188,8 @@ are Lakira's evidence and go to `internal/audits/security/`.
 
 The 52 entries already carry Nygard's fields (Context / Decision / Status / Options considered /
 Consequences / Links), so the work is splitting and renumbering, not rewriting. But not all 52
-are architecture decisions — entries like *"Phase order and kit scaffolding for SaaS-readiness
-remediation"* are project-management decisions. Those stay in their kit under `internal/`.
+are architecture decisions — entries like _"Phase order and kit scaffolding for SaaS-readiness
+remediation"_ are project-management decisions. Those stay in their kit under `internal/`.
 
 - **~30 promoted** to `docs/explanation/decisions/adr-NNNN-<slug>.md`, one file each,
   globally numbered, chronologically ordered, statuses carried over **verbatim**.
@@ -210,16 +210,16 @@ genuine backend→frontend contract and becomes `docs/reference/frontend-handoff
 
 ### What gets deleted outright
 
-| Path | Lines | Why |
-| --- | --- | --- |
-| `documentation/architecture/lakira-backend-types.md` | 2,065 | Copy-pasted `src/types/` source |
-| `code-review/archive/metric-feature-codes-ARCHIVED-20251208.md` | 1,206 | Raw source-tree dump for an LLM paste |
-| `code-review/archive/metric-category-feature-codes-ARCHIVED-20251208.md` | 1,675 | Same |
-| `documentation/architecture/lakira-backend-routes.md` | 390 | Superseded by the generated spec |
-| `tests/…/postman-newman/reports/staging/*.{html,xml}` | — | Committed generated artifacts |
-| `documents/__init__.py`, `documents/tests/__init__.py` | — | Python package markers; move with the hooks |
-| `scripts/generate-documentation.ts` | — | Writes a file that doesn't exist; no npm script calls it |
-| `scripts/generate-export-reference.ts` | — | ~22 hardcoded paths targeting a gitignored, absent directory |
+| Path                                                                     | Lines | Why                                                          |
+| ------------------------------------------------------------------------ | ----- | ------------------------------------------------------------ |
+| `documentation/architecture/lakira-backend-types.md`                     | 2,065 | Copy-pasted `src/types/` source                              |
+| `code-review/archive/metric-feature-codes-ARCHIVED-20251208.md`          | 1,206 | Raw source-tree dump for an LLM paste                        |
+| `code-review/archive/metric-category-feature-codes-ARCHIVED-20251208.md` | 1,675 | Same                                                         |
+| `documentation/architecture/lakira-backend-routes.md`                    | 390   | Superseded by the generated spec                             |
+| `tests/…/postman-newman/reports/staging/*.{html,xml}`                    | —     | Committed generated artifacts                                |
+| `documents/__init__.py`, `documents/tests/__init__.py`                   | —     | Python package markers; move with the hooks                  |
+| `scripts/generate-documentation.ts`                                      | —     | Writes a file that doesn't exist; no npm script calls it     |
+| `scripts/generate-export-reference.ts`                                   | —     | ~22 hardcoded paths targeting a gitignored, absent directory |
 
 That is **5,336 lines removed** before any reorganization.
 
@@ -264,23 +264,23 @@ agents recreate the split.
 
 **Hardcoded paths — mechanical, but each verified individually:**
 
-| File | Lines | What |
-| --- | --- | --- |
-| `package.json` | 31, 32, 33, 38 | Contract-test script paths |
-| `package.json` | 62 | OpenAPI drift-check diff target |
-| `scripts/generate-openapi.ts` | 13 | Hardcoded output directory |
-| `scripts/normalize-openapi.ts` | 11 | Hardcoded spec path |
-| `scripts/security/evaluate-gate.mjs` | 10 | Gate policy default |
-| `scripts/security/init-audit-doc-kit.mjs` | 7, 8, 113 | Template + audit roots |
-| `.github/workflows/backend-ci.yml` | 101, 309, 353, 359, 432, 482 | Gate policy, pip requirements, 4 artifact paths |
-| `.github/workflows/backend-prd-drift-warning.yml` | 70, 75, 96 | PRD + OpenAPI drift paths |
-| `.github/CODEOWNERS` | 3 | `documents/security/**` ownership |
-| `.github/pull_request_template.md` | 23, 24 | Audit + SOP links every PR author sees |
-| `.gitignore` | 93, 94, 97, 100 | Report paths, export-reference, **the `docs` pattern** |
-| `.gitattributes` | 1 | `documents/openapi/*.json text eol=lf` |
-| `.dockerignore` | 9 | `documents/` build-context exclusion |
-| `tsconfig.eslint.json` | 12 | `documents/**/*` include (for the JS scripts within) |
-| `.claude/hooks/protect-files.sh` | 62 | Write-guard on the generated spec |
+| File                                              | Lines                        | What                                                   |
+| ------------------------------------------------- | ---------------------------- | ------------------------------------------------------ |
+| `package.json`                                    | 31, 32, 33, 38               | Contract-test script paths                             |
+| `package.json`                                    | 62                           | OpenAPI drift-check diff target                        |
+| `scripts/generate-openapi.ts`                     | 13                           | Hardcoded output directory                             |
+| `scripts/normalize-openapi.ts`                    | 11                           | Hardcoded spec path                                    |
+| `scripts/security/evaluate-gate.mjs`              | 10                           | Gate policy default                                    |
+| `scripts/security/init-audit-doc-kit.mjs`         | 7, 8, 113                    | Template + audit roots                                 |
+| `.github/workflows/backend-ci.yml`                | 101, 309, 353, 359, 432, 482 | Gate policy, pip requirements, 4 artifact paths        |
+| `.github/workflows/backend-prd-drift-warning.yml` | 70, 75, 96                   | PRD + OpenAPI drift paths                              |
+| `.github/CODEOWNERS`                              | 3                            | `documents/security/**` ownership                      |
+| `.github/pull_request_template.md`                | 23, 24                       | Audit + SOP links every PR author sees                 |
+| `.gitignore`                                      | 93, 94, 97, 100              | Report paths, export-reference, **the `docs` pattern** |
+| `.gitattributes`                                  | 1                            | `documents/openapi/*.json text eol=lf`                 |
+| `.dockerignore`                                   | 9                            | `documents/` build-context exclusion                   |
+| `tsconfig.eslint.json`                            | 12                           | `documents/**/*` include (for the JS scripts within)   |
+| `.claude/hooks/protect-files.sh`                  | 62                           | Write-guard on the generated spec                      |
 
 **Prose and rules rewritten:** `CLAUDE.md` (Documentation §) · `README.md` · `CONTRIBUTING.md:48` ·
 `SAAS-BASE-CHECKLIST.md` (7 links) · `.claude/rules/documentation.md` ·
@@ -297,18 +297,18 @@ agents recreate the split.
 Ordered so the repository is never left broken between phases. See
 [CHECKLIST.md](./CHECKLIST.md) for the executable steps.
 
-| Phase | What | Revertable alone |
-| --- | --- | --- |
-| 0 | Unblock: anchor `.gitignore` `docs` pattern | yes |
-| 1 | Move executables to `tests/contract/`, re-root Python hooks | yes |
-| 2 | `git mv documents/ docs/`, sweep all path references | yes |
-| 3 | Reshape into Diátaxis quadrants + `internal/` | yes |
-| 4 | Prune: delete source dumps, artifacts, dead scripts | yes |
-| 5 | Rewrite reference: schema, API pointer, configuration, commands | yes |
-| 6 | Build the ADR registry (triage → split → renumber → index) | yes |
-| 7 | Author new content: C4 diagrams, tutorials | yes |
-| 8 | Realign `CLAUDE.md`, `.claude/rules/*`, `doc-writer.md` | yes |
-| 9 | Fork-proof: prune step + security-test tolerance | yes |
+| Phase | What                                                            | Revertable alone |
+| ----- | --------------------------------------------------------------- | ---------------- |
+| 0     | Unblock: anchor `.gitignore` `docs` pattern                     | yes              |
+| 1     | Move executables to `tests/contract/`, re-root Python hooks     | yes              |
+| 2     | `git mv documents/ docs/`, sweep all path references            | yes              |
+| 3     | Reshape into Diátaxis quadrants + `internal/`                   | yes              |
+| 4     | Prune: delete source dumps, artifacts, dead scripts             | yes              |
+| 5     | Rewrite reference: schema, API pointer, configuration, commands | yes              |
+| 6     | Build the ADR registry (triage → split → renumber → index)      | yes              |
+| 7     | Author new content: C4 diagrams, tutorials                      | yes              |
+| 8     | Realign `CLAUDE.md`, `.claude/rules/*`, `doc-writer.md`         | yes              |
+| 9     | Fork-proof: prune step + security-test tolerance                | yes              |
 
 **Phase 1 is the riskiest and runs first, alone,** while the docs tree is still untouched — so a
 contract-test or CI failure is unambiguously attributable.
@@ -319,14 +319,14 @@ Suggested commit boundaries: 0–1 · 2 · 3–4 · 5–6 · 7 · 8–9.
 
 ## 7. Risks
 
-| Risk | Mitigation |
-| --- | --- |
-| A missed hardcoded path fails only in CI, not locally | Phase 2 ends with a repo-wide grep for `documents/` returning zero hits outside `internal/archive/`; push a branch and watch `backend-ci.yml` |
-| Python hook re-root silently no-ops, and Schemathesis passes vacuously | Assert the hook actually loads — compare finding counts before and after; a vacuous run reports suspiciously fast |
-| `git mv` history loss on the rename | Use `git mv` throughout, never delete-and-recreate; verify with `git log --follow` on a sample file |
-| The fork prune leaves a red test suite | Phase 9 includes a real fork dry-run into a temp directory, ending in `npm test` |
-| ADR renumbering breaks ~20 existing cross-references | Every promoted ADR leaves a stub at its old location pointing to the new number |
-| The open P0s get buried by the reorganization | `internal/audits/saas-readiness/` keeps its `FINAL-AUDIT-SUMMARY.md` at the top of the kit, and its ADRs enter the registry as **Proposed** — see §8 |
+| Risk                                                                   | Mitigation                                                                                                                                           |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A missed hardcoded path fails only in CI, not locally                  | Phase 2 ends with a repo-wide grep for `documents/` returning zero hits outside `internal/archive/`; push a branch and watch `backend-ci.yml`        |
+| Python hook re-root silently no-ops, and Schemathesis passes vacuously | Assert the hook actually loads — compare finding counts before and after; a vacuous run reports suspiciously fast                                    |
+| `git mv` history loss on the rename                                    | Use `git mv` throughout, never delete-and-recreate; verify with `git log --follow` on a sample file                                                  |
+| The fork prune leaves a red test suite                                 | Phase 9 includes a real fork dry-run into a temp directory, ending in `npm test`                                                                     |
+| ADR renumbering breaks ~20 existing cross-references                   | Every promoted ADR leaves a stub at its old location pointing to the new number                                                                      |
+| The open P0s get buried by the reorganization                          | `internal/audits/saas-readiness/` keeps its `FINAL-AUDIT-SUMMARY.md` at the top of the kit, and its ADRs enter the registry as **Proposed** — see §8 |
 
 ---
 
@@ -357,5 +357,5 @@ Fixing these is out of scope here and should be tracked as separate work.
 - `scripts/bootstrap-fork.sh --name tmp-app` yields a repo with no `internal/` tree **and a green
   `npm test`**.
 - `backend-ci.yml` passes end to end, including the artifact-upload steps referencing moved paths.
-- `.claude/rules/documentation.md` and `.claude/agents/doc-writer.md` state the *same* placement
+- `.claude/rules/documentation.md` and `.claude/agents/doc-writer.md` state the _same_ placement
   rule, so the next doc an agent writes lands in the right quadrant.
