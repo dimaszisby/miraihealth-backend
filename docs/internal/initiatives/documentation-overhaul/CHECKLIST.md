@@ -311,28 +311,73 @@ Contract suites were re-run because `specPath` moved again, to
 
 ---
 
-## Phase 5 — Rewrite the reference layer
+## Phase 5 — Rewrite the reference layer ✅ DONE (2026-08-16)
 
-- [ ] `reference/database-schema.md` — rewrite from `src/migrations/` (26 migrations). Must cover
-      all current tables including `organizations`, `memberships`, `organization_invites`,
-      `refresh_tokens`, `email_verification_tokens`, `processed_messages`. Remove `enum_users_role`
-      (dropped in `20260516000001-drop-users-role-column.cjs`). Stamp "as of migration `<latest id>`".
-- [ ] `reference/api/README.md` — new: Swagger UI at `/api/v1/docs`, raw spec at
-      `/api/v1/docs/openapi.json`, regeneration command, and a "do not hand-edit" note matching
-      `protect-files.sh`.
-- [ ] `reference/configuration.md` — new: env var table from `.env.example` + `src/config/envManager.ts`,
-      noting the `SENSITIVE_KEY_PATTERN` redaction behavior.
-- [ ] `reference/commands.md` — new: promote `.claude/rules/commands.md` content; make the rule file
-      a pointer so there is one source.
-- [ ] Note the undocumented `/api/v1/admin/_ping` route — either register it in
-      `src/lib/openapi/openapi-docs.ts` or record why it is intentionally absent.
+- [x] `reference/database-schema.md` — rewritten from a **freshly migrated live database**, not
+      from reading migration files. 13 tables, all FK on-delete behaviour, unique/partial indexes,
+      enums, and the tenancy model.
+- [x] `reference/configuration.md` — all **65** environment variables, extracted by parsing the
+      Zod schema in `src/config/zodEnv.ts` rather than transcribed by hand.
+- [x] `reference/commands.md` — every npm script worth running, each verified to exist.
+- [x] `reference/api/README.md` — spec pointer, the do-not-hand-edit rule, coverage, known gaps.
+- [x] `/api/v1/admin/_ping` recorded as an OpenAPI gap (served, guarded, never registered).
+- [x] Dead references cleaned out of the shipped tree.
 
-**Gate**
+### The README's quick start was broken
 
-```bash
-# every table named in database-schema.md exists in a migration, and vice versa
-npm run migrate:dev && psql -c '\dt'   # cross-check against the doc
+`npm run migrate:dev` — **step 4 of the repository README** — does not exist:
+
 ```
+$ npm run migrate:dev
+npm error Missing script: "migrate:dev"
+```
+
+The real names are `migrate:development` and `migrate:development:undo`. The wrong ones were
+also in `.claude/rules/commands.md` and `.claude/skills/new-migration/SKILL.md`, so both humans
+and agents were being handed a command that fails. Fixed in all four places.
+
+**Root cause is duplication.** `.claude/rules/commands.md` held a second hand-maintained copy of
+the command list, and copies drift. It is now a pointer to `docs/reference/commands.md` plus the
+four gate commands, with a note not to reintroduce a copy. A parser now checks every
+`npm run …` in the reference docs against `package.json`.
+
+> Renaming needs care: `migrate:dev` is a **prefix** of `migrate:development`, so a second `sed`
+> pass rewrote its own output into `migrate:developmentelopment:undo`. Order substitutions
+> longest-first, or verify after.
+
+### Findings from introspecting the live schema
+
+Neither breaks anything today; both are logged as follow-ups.
+
+1. **Duplicate foreign keys.** `metrics`, `metric_logs`, `metric_settings`, and
+   `metric_categories` each carry _two_ identical `organization_id` constraints
+   (`…_fkey` and `…_fkey1`) — almost certainly `20260510000005` and `20260510000006` both adding
+   one. Doubles FK-check work on every write.
+2. **Orphaned enum types.** `enum_users_role` survives though its column was dropped in
+   `20260516000001`; `enum_metric_log_type` lingers beside the live `enum_metric_logs_type`.
+
+### `APP_NAME` is not in the Zod schema
+
+`src/config/app-name.ts` reads `process.env.APP_NAME` directly because `logger.ts` imports it
+before `envManager` initialises, and routing it through the validated env would deadlock the
+bootstrap. Deliberate, commented at the source, and now documented — it is the one variable that
+escapes validation.
+
+**Gate — results**
+
+| Check                                  | Result                                                                                   |
+| -------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `lint` / `typecheck` / `format:check`  | ✅ 0                                                                                     |
+| `test:unit`                            | ✅ 84 suites / 497 tests                                                                 |
+| `docs:openapi:check`                   | ✅ 0                                                                                     |
+| Every `npm run` in the new docs exists | ✅ verified against `package.json`                                                       |
+| Broken links **in the shipped tree**   | ✅ **0** (3 remaining are template placeholders and the `/api/v1/docs/openapi.json` URL) |
+
+Schema and config content were verified against the running system: the tables, columns,
+constraints, and indexes were read out of a live migrated database, and the variable table was
+generated from the schema that validates it.
+
+**Commit boundary: Phase 5.**
 
 ---
 
@@ -472,6 +517,12 @@ Surfaced while running the Phase 1 gate on real infrastructure:
       `ReferenceError: require is not defined in ES module scope` on Node 22+/26. CI is fine
       (Node 20), but any contributor on a newer runtime is blocked. Fix: rename to
       `.sequelizerc.cjs`, or convert it to ESM.
+- [ ] **Duplicate `organization_id` foreign keys** on `metrics`, `metric_logs`,
+      `metric_settings`, `metric_categories` — two identical RESTRICT constraints each
+      (`…_fkey` and `…_fkey1`), from `20260510000005` and `20260510000006` both adding one.
+      A migration should drop the duplicates.
+- [ ] **Orphaned enum types**: `enum_users_role` (column dropped in `20260516000001`) and
+      `enum_metric_log_type` (superseded by `enum_metric_logs_type`).
 - [ ] **`PORT` mismatch between the example env and the contract suite.**
       `.env.test.example` ships `PORT=8002`; the contract scripts default to
       `http://localhost:4000/api/v1` and `backend-ci.yml:250` sets `PORT: 4000`. Following the
