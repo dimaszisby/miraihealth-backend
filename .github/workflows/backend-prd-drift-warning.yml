@@ -72,7 +72,7 @@ jobs:
             fi
 
             if [[ "$file" == "src/server.ts" ]] ||
-               [[ "$file" == "docs/openapi/lakira-backend-openapi.json" ]] ||
+               [[ "$file" == "docs/reference/api/lakira-backend-openapi.json" ]] ||
                [[ "$file" == src/migrations/* ]] ||
                [[ "$file" == src/lib/openapi/* ]]; then
               CONTRACT_CHANGED=true

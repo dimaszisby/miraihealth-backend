@@ -1,71 +1,78 @@
-# Documents Directory Guide
+# Documentation
 
-This README explains how to use and maintain the `docs/` tree.
+Organised by [Diátaxis](https://diataxis.fr/): what you need depends on what you are doing.
 
-Audience:
+| I want to…            | Go to                            | Example                                    |
+| --------------------- | -------------------------------- | ------------------------------------------ |
+| **learn** by doing    | [`tutorials/`](./tutorials/)     | Get the API running for the first time     |
+| **accomplish a task** | [`how-to/`](./how-to/)           | Regenerate the OpenAPI spec                |
+| **look something up** | [`reference/`](./reference/)     | Which env vars exist; what the schema is   |
+| **understand why**    | [`explanation/`](./explanation/) | Why feature-slice DDD; what an ADR decided |
 
-- Developers onboarding to Lakira backend
-- Reviewers and maintainers
-- LLM/Agents that need deterministic navigation and update rules
+Two rules keep this tree honest:
 
-## Quick Start
+1. **A document belongs to exactly one quadrant.** If it teaches _and_ specifies, split it.
+2. **Generated files are never hand-edited.** `reference/api/lakira-backend-openapi.json` is
+   produced from Zod schemas and drift-gated in CI; edit `src/lib/openapi/**` instead.
 
-If you are new, read these first:
+---
 
-1. `docs/documentation/product/lakira-backend-prd.md`
-2. `docs/documentation/architecture/lakira-backend-routes.md`
-3. `docs/documentation/architecture/lakira-backend-db-schema.md`
-4. `docs/tests/TESTING_STRATEGY.md`
-5. `docs/ci-cd/CI_CD_STRATEGY.md`
+## Tutorials — learning-oriented
 
-## Top-Level Directory Map
+Start here if you are new. Tutorials are followed start to finish and are expected to work
+verbatim from a clean clone.
 
-| Path                  | Purpose                                         | Typical Contents                                                                | Update When                                                       |
-| --------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `docs/ci-cd/`         | CI/CD strategy and pipeline operations          | GitHub Actions plans, env matrices, backend/frontend CI docs                    | Pipeline, branch gates, env contracts, or deployment flow changes |
-| `docs/code-review/`   | Historical and active code-review outputs       | Review plans, recommendations, archived review artifacts                        | Formal review cycles or post-review archival                      |
-| `docs/development/`   | Engineering design and implementation planning  | Architecture plans, migration tracks, feature documentation templates, dev logs | Architecture changes, refactors, or feature-level design updates  |
-| `docs/docker/`        | Local/CI container workflow docs                | Postgres Docker guide, Docker test runner plans                                 | Docker compose/runtime/test environment changes                   |
-| `docs/documentation/` | Product and architecture reference docs         | PRDs, backend route docs, DB schema docs, OpenAPI/Zod docs                      | API/domain contract changes, product scope changes                |
-| `docs/incidents/`     | Incident history and postmortem-style records   | Dated incident reports and index README                                         | Test/prod incident happens or incident index changes              |
-| `docs/openapi/`       | Generated API contract artifacts and planning   | `lakira-backend-openapi.json`, OpenAPI planning docs                            | Endpoint/schema changes affecting contract                        |
-| `docs/security/`      | Security framework, audits, and policy guidance | Audit runs, templates, dependency policy, security guides                       | Security audits, control updates, or policy/process changes       |
-| `docs/tests/`         | Test strategy and testing program docs          | Static/unit/integration/contract test plans, checklists, tool guidance          | Test architecture/process/coverage-gate changes                   |
-| `docs/todos/`         | Actionable dated backlog notes                  | Time-stamped TODO docs for specific maintenance items                           | New technical debt/tasks are tracked or resolved                  |
+## How-to guides — task-oriented
 
-## Update Rules (For Devs and Agents)
+- [`development/`](./how-to/development/) — regenerate the OpenAPI spec, run Postgres in Docker
+- [`testing/`](./how-to/testing/) — run the test suites
+- [`ci-cd/`](./how-to/ci-cd/) — the daily pipeline playbook
+- [`security/`](./how-to/security/) — run an audit, the release delta SOP, the branch model
 
-1. Update the nearest source-of-truth doc, not only a planning doc.
-2. Prefer editing existing docs over creating duplicates.
-3. Keep file names date-prefixed for logs/incidents/todos when chronology matters (`YYYY-MM-DD-*`).
-4. When API behavior changes, update all three together:
-   - `docs/documentation/architecture/lakira-backend-routes.md`
-   - `docs/openapi/lakira-backend-openapi.json`
-   - relevant PRD in `docs/documentation/product/`
-5. Treat `archive/` folders as historical unless explicitly asked to revise them.
-6. If you add a new major folder under `docs/`, update this README in the same change.
+## Reference — information-oriented
 
-## Recommended Navigation by Task
+| Path                                                       | What                                                                       |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------- |
+| [`api/`](./reference/api/)                                 | Generated OpenAPI 3.1 contract. **Do not hand-edit.**                      |
+| [`database-schema.md`](./reference/database-schema.md)     | Tables, columns, constraints                                               |
+| [`environments.md`](./reference/environments.md)           | Environment/secret matrix                                                  |
+| [`ci-pipeline/`](./reference/ci-pipeline/)                 | Pipeline strategy, job model, workflow conventions                         |
+| [`security/`](./reference/security/)                       | Control catalogue (ASVS/SSDF), risk model, gate policy, audit-run template |
+| [`branch-protection.md`](./reference/branch-protection.md) | Branch ruleset                                                             |
+| [`frontend-handoff.md`](./reference/frontend-handoff.md)   | Backend→frontend CI/CD contract                                            |
 
-- Understand product scope: `docs/documentation/product/`
-- Understand current API contracts: `docs/documentation/architecture/` + `docs/openapi/`
-- Understand test gates: `docs/tests/`
-- Understand release/deploy flow: `docs/ci-cd/`
-- Understand security posture: `docs/security/`
-- Investigate prior failures: `docs/incidents/`
-- Review historical engineering decisions: `docs/development/` and `docs/code-review/`
+## Explanation — understanding-oriented
 
-## Notes for LLM/Agents
+- [`architecture/`](./explanation/architecture/) — feature-slice DDD, persistence, shared middleware
+- [`testing-strategy.md`](./explanation/testing-strategy.md) — the four-layer pyramid and its gates
+- [`product-requirements.md`](./explanation/product-requirements.md) — as-built product scope
+- [`documentation-standards.md`](./explanation/documentation-standards.md) — how these docs are organised
 
-- Start from normative docs before plans/checklists.
-- Prefer backend docs over frontend docs in this repository unless task explicitly targets frontend.
-- Do not infer production behavior from TODO/plan docs without checking architecture/product docs.
-- When creating new docs, add clear ownership and timestamps when appropriate.
-- Default context pack for API/product tasks:
-  - `docs/documentation/product/lakira-backend-prd.md`
-  - `docs/documentation/architecture/lakira-backend-routes.md`
-  - `docs/documentation/architecture/lakira-backend-db-schema.md`
-  - `docs/openapi/lakira-backend-openapi.json`
-- Exclude high-volume reference dumps by default unless explicitly requested:
-  - `docs/documentation/code-for-export-reference/**`
-  - `docs/development/architecture/feature-vertical-slice-migration/logs/**`
+---
+
+## `internal/` — not part of the template
+
+[`internal/`](./internal/) holds this project's working material: doc kits, audit runs,
+incidents, dev logs, todos, and archive. **`scripts/bootstrap-fork.sh` deletes it on fork**, so a
+fresh fork inherits documentation about the template rather than Lakira's history.
+
+> `internal/audits/saas-readiness/` tracks **unresolved** risk, including two open P0s as of
+> `audit-2026-06-05.md`. It is current business, not history.
+
+## Where new documentation goes
+
+Pick by the reader's purpose, not by the artifact's shape:
+
+| The document…                                     | Goes to                                     |
+| ------------------------------------------------- | ------------------------------------------- |
+| teaches a newcomer a skill                        | `tutorials/`                                |
+| gets an experienced reader through one task       | `how-to/<area>/`                            |
+| is looked up, not read                            | `reference/`                                |
+| explains a decision or a concept                  | `explanation/`                              |
+| records an architectural decision                 | `explanation/decisions/` (one ADR per file) |
+| tracks a piece of work — plan, checklist, tracker | `internal/initiatives/<topic>/`             |
+| is a dated one-off note                           | `internal/todos/` or `internal/dev-log/`    |
+
+The full rule, including kit sizing, lives in
+[`explanation/documentation-standards.md`](./explanation/documentation-standards.md) and is
+mirrored for agents in `.claude/rules/documentation.md`.

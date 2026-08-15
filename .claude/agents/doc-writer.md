@@ -55,7 +55,7 @@ Placement rules:
 - Architecture → `docs/documentation/architecture/`
 - Security → `docs/security/<topic>/`
 - Product → `docs/documentation/product/`
-- API → `docs/openapi/`
+- API → `docs/reference/api/`
 
 ## Step 4: Write each document
 
@@ -123,7 +123,7 @@ Placement rules:
 
 ### Security docs (`docs/security/`)
 
-- Follow the audit format in `docs/security/audit/`; include control-matrix, threat-model, findings-log
+- Follow the audit format in `docs/internal/audits/security/`; include control-matrix, threat-model, findings-log
 - New security changes go into `decisions.md` of the nearest audit folder; reference commit SHA
 
 ### Changelog entries
@@ -148,7 +148,7 @@ Format (keep-a-changelog style):
 
 ## Step 6: Cross-link and reference
 
-- Link liberally between related docs using repo-root-relative paths: `[link](docs/tests/overhaul/test-structure-plan.md)`
+- Link liberally between related docs using repo-root-relative paths: `[link](docs/internal/initiatives/tests-overhaul/test-structure-plan.md)`
 - After writing, grep for every file that mentions the topic and add a back-reference where missing
 - If the doc was created for a PR, add a one-line mention of the new doc in the PR description
 

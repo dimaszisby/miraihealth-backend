@@ -17,7 +17,8 @@ const schemathesisDir = path.join(
 const specPath = path.join(
   repoRoot,
   "docs",
-  "openapi",
+  "reference",
+  "api",
   "lakira-backend-openapi.json",
 );
 const seedPath = path.join(repoRoot, "tmp", "contract-seed.json");

@@ -97,8 +97,6 @@ __pycache__/
 tests/contract/schemathesis/reports/
 tests/contract/postman-newman/reports/
 
-# local/export reference (untracked)
-docs/documentation/code-for-export-reference/
 
 # local actionlint artifacts (downloaded binaries / archives)
 # NOTE: the actionlint release tarball also extracts a `docs/` folder. Do not add a
