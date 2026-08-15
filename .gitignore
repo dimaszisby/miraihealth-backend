@@ -96,10 +96,11 @@ documents/tests/4-contract-tests/postman-newman/reports/
 # local/export reference (untracked)
 documents/documentation/code-for-export-reference/
 
-# actionlint docs
-docs
-
 # local actionlint artifacts (downloaded binaries / archives)
+# NOTE: the actionlint release tarball also extracts a `docs/` folder. Do not add a
+# `docs` ignore rule for it — that pattern is unanchored and would swallow the
+# repository's own `docs/` tree and `__tests__/integration/docs/`. Extract actionlint
+# outside the repo root instead.
 actionlint
 actionlint_*.tar.gz
 man/actionlint.1
