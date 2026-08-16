@@ -2,7 +2,7 @@
 
 - Timestamp: 2025-12-14T18:13:00+07:00
 - Owners: Platform ENG (feature-slice migration pod)
-- Checklist Link: [Consistency Checklist v2](../reviews/2025-12-14/lakira-be-feature-slice-migration-consistency-checklist-v2.md)
+- Checklist Link: [Consistency Checklist v2](../../internal/initiatives/feature-vertical-slice-migration/reviews/2025-12-14/lakira-be-feature-slice-migration-consistency-checklist-v2.md)
 
 ## Purpose
 
@@ -21,11 +21,11 @@ This note captures the non-negotiable boundaries every feature slice must honor 
 
 ## Enforcement Workflow
 
-1. During development, run the [consistency checklist](../reviews/2025-12-14/lakira-be-feature-slice-migration-consistency-checklist-v2.md) tickets sequentially. Each ticket requires evidence (files touched, commands run, grep proof when relevant).
+1. During development, run the [consistency checklist](../../internal/initiatives/feature-vertical-slice-migration/reviews/2025-12-14/lakira-be-feature-slice-migration-consistency-checklist-v2.md) tickets sequentially. Each ticket requires evidence (files touched, commands run, grep proof when relevant).
 2. During PR reviews, copy/paste the relevant guardrail ID (e.g., “D1 violation”) so the author can map the feedback back to this doc.
 3. When we need to change or add a guardrail, update this file first, then reference it from the plan/checklist to keep the historical record intact.
 
 ## Related Documents
 
 - [Shared Middleware + Cache Spec](./shared-middleware.md)
-- [Consistency Plan v2](../reviews/2025-12-14/lakira-be-feature-slice-migration-consistency-plan-v2.md)
+- [Consistency Plan v2](../../internal/initiatives/feature-vertical-slice-migration/reviews/2025-12-14/lakira-be-feature-slice-migration-consistency-plan-v2.md)

@@ -53,4 +53,4 @@ All cursor/list caches across feature slices must use the shared helper at `src/
 
 ### Related Docs
 
-- [Feature Boundary Rules](./feature-boundary-rules.md)
+- [Feature Boundary Rules](./feature-slice-ddd.md)

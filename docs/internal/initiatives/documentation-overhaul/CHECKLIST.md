@@ -381,29 +381,64 @@ generated from the schema that validates it.
 
 ---
 
-## Phase 6 — Build the ADR registry
+## Phase 6 — Build the ADR registry ✅ DONE (2026-08-16)
 
-- [ ] Triage all 52 entries across the 19 `decisions.md` files into **architecture** (promote) vs
-      **process/scheduling** (leave in the kit). Expect roughly 30 promotions.
-- [ ] Assign global numbers by original decision date so the registry reads chronologically.
-- [ ] Split each promoted entry into `docs/explanation/decisions/adr-NNNN-<slug>.md` using the
-      Nygard template. Bodies already carry Context / Decision / Status / Options considered /
-      Consequences / Links — **preserve statuses verbatim**.
-- [ ] ADR-009, ADR-010, ADR-011 (saas-readiness) enter as **Proposed**. They are not implemented;
-      the cache-key P0 is still live in `VisualizationCacheRedis.ts`.
-- [ ] Backfill the placeholder `YYYY-MM-DD` dates in `feature-audience-restructure/decisions.md`
-      from git history, and correct that kit's status — the work shipped, the doc says "Planning".
-- [ ] Leave `ADR-SEC-*` entries with their audit runs under `internal/audits/security/`.
-- [ ] Leave a one-line stub at each promoted entry's original location pointing at its new number,
-      so existing cross-references keep resolving.
-- [ ] Write `docs/explanation/decisions/README.md` — index table: № · title · status · date · supersedes.
+**52 entries triaged → 37 promoted** to `docs/explanation/decisions/`, one per file, globally
+numbered and ordered by decision date. 22 Accepted, 15 Proposed.
 
-**Gate**
+- [x] Triaged all 52 across 19 kit-local logs into _architecture_ (promote) vs
+      _project-management_ (leave in the kit).
+- [x] Split, renumbered `adr-0001`…`adr-0037`, converted bold-label bodies to Nygard headings
+      (`## Context` / `## Decision` / `## Options considered` / `## Consequences` / `## Links`).
+- [x] Statuses preserved. ADR-0035/0036/0037 (the 2026-06-05 findings) remain **Proposed** —
+      they are not implemented, and ADR-0035's cache-key P0 is still live in the code.
+- [x] Every promoted entry leaves a resolving stub at its original location, so existing
+      cross-references still land somewhere useful.
+- [x] `decisions/README.md` — index table plus how to read a record and how to add one.
+- [x] `ADR-SEC-*` (6 entries) left with their audit runs — they are scoped to a run, not to the
+      architecture.
 
-- [ ] No ADR number appears twice in `docs/explanation/decisions/`.
-- [ ] Every `Superseded` entry names its successor; every promoted entry has a resolving stub.
+### What "architecture decision" was taken to mean
 
-**Commit boundary: Phases 5–6.**
+Promoted if it constrains how the system is built and would still matter to someone who never
+saw the initiative: token hashing, FK cascade behaviour, port boundaries, queue topology, module
+layout, cache-key scoping.
+
+Left in the kit if it only coordinates the work: audit cadence, phase ordering, which cheap sweep
+to run first, whether to accept a "gold with caveats" verdict, formatting-tool choice. Fifteen
+entries, all still readable in place — they are not lost, just not architecture.
+
+### Corrections made along the way
+
+- **`feature-audience-restructure` had five ADRs dated literally `YYYY-MM-DD`** and marked
+  Proposed. Git shows the kit and the implementing PR (#33) both landed **2026-05-01**. Dates
+  backfilled, status corrected to Accepted, and each record carries a note saying so.
+- **That kit's README claimed "Planning — awaiting approval"** while `src/features/public/` and
+  `src/features/shared/` had been live for months and three later kits cited them as fact.
+  Rewritten to state it shipped, with a pointer that the code, not the unticked checklist, is the
+  record. Also notes that ADR-0013's `admin/` bucket is still unused.
+- **Two status vocabularies.** The observability kit used `Implemented`, which is not one of
+  Nygard's states. Normalised to `Accepted` with the original wording preserved in a note.
+- **Two body formats.** The static-checks kit wrote `- **Context:**` as list items rather than
+  block labels, so the first pass left three records without headings. Caught by the structural
+  gate, not by eye.
+
+**Gate — results**
+
+| Check                                               | Result                                                         |
+| --------------------------------------------------- | -------------------------------------------------------------- |
+| No ADR number appears twice                         | ✅ 37 files, 0 duplicates                                      |
+| Every promoted entry has a resolving stub           | ✅ 37 stubs, 0 broken                                          |
+| Every record has Status + Date + Origin             | ✅                                                             |
+| Every record has Context/Decision/Consequences      | ✅                                                             |
+| No leftover bold labels that should be headings     | ✅                                                             |
+| Relative links in `explanation/` resolve            | ✅ 0 broken (excluding template placeholders in fenced blocks) |
+| `lint` / `typecheck` / `format:check` / `test:unit` | ✅ 0 · 497 tests                                               |
+
+Phase 3 fallout also cleaned up here: `feature-slice-ddd.md` and `shared-middleware.md` still
+carried relative links into the kit they were lifted out of.
+
+**Commit boundary: Phase 6.**
 
 ---
 
