@@ -1,55 +1,94 @@
-# Dev Documentation Guidelines
+# Documentation standards
 
-Create a predictable, portfolio-grade document kit for every major engineering topic (tests, CI, infra, migrations, etc.). Each kit lives inside `docs/<domain>/<topic>/` (e.g., `docs/internal/initiatives/tests-1-static-checks/`) and mirrors the structure completed under `docs/internal/initiatives/tests-overhaul/`.
+How `docs/` is organised, and where a new document goes.
 
-## Purpose & Scope
+## The organising principle
 
-- Provide a reusable pattern so contributors know **which document answers which question**.
-- Capture the lifecycle of a topic: context → plan → execution → decisions/incidents → retro references.
-- Keep artifacts under version control with Markdown + checklists for traceability and code-review friendliness.
+Documents are filed by **what the reader is doing**, not by what the artifact is called. That is
+[Diátaxis](https://diataxis.fr/), and it gives four shipped quadrants:
 
-## Core Principles
+| Quadrant            | The reader is…                     |
+| ------------------- | ---------------------------------- |
+| `docs/tutorials/`   | learning by doing, start to finish |
+| `docs/how-to/`      | accomplishing one specific task    |
+| `docs/reference/`   | looking something up               |
+| `docs/explanation/` | trying to understand why           |
 
-1. **Docs-as-code:** store in repo, reviewed via PR, keep diffs small and frequent.
-2. **Single source:** each topic owns its README/plan/checklist/ticket; avoid duplicating content across domains—link instead.
-3. **Traceability:** every decision or incident references the relevant test suite, CI job, or script and vice versa.
-4. **Audience-aware:** begin with a brief purpose + owners + entrypoints; assume readers are engineers joining mid-stream.
-5. **Industry-standard sections:** reuse headings such as “Context & Goals”, “Acceptance Criteria”, “Risks”, “Rollback”, mirroring mature RFC/ADR formats.
+The failure mode this prevents is the one that produced this tree's predecessor: filing by
+artifact type (`plans/`, `checklists/`, `audits/`) puts a stale migration plan beside a current
+API reference with nothing to distinguish them.
 
-## Document Kit (per topic)
+Two rules keep it honest:
 
-| Doc                                         | Purpose                                     | Required Sections                                                                          |
-| ------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `README.md`                                 | High-level orientation + quickstart         | Overview, Scope/In-scope, Commands/API, Environment/Dependencies, Verification, References |
-| `<topic>-plan.md`                           | Strategy & sequencing                       | Context & Goals, Phases/Milestones, Success Metrics, Risks & Trade-offs, Open Questions    |
-| `<topic>-checklist.md`                      | Execution tracker                           | Phase headers, checkbox tasks, status notes, date/owner when completed                     |
-| `<topic>-ticket.md`                         | Work package summary (like an internal RFC) | Summary, Background, Acceptance Criteria, Out of Scope, Stakeholders, Dependencies         |
-| `decisions.md` (ADR style)                  | Key architectural/process decisions         | Date, Status, Context, Decision, Options Considered, Consequences, Links                   |
-| `incidents.md` (optional)                   | Issues/conflicts during rollout             | Timestamp, Impact, Root Cause, Mitigation, Follow-up actions                               |
-| `metrics-tracker.md` or `phaseX-tracker.md` | Quantitative progress                       | Table of targets, owner, status, next action (e.g., coverage %, lint time)                 |
+1. **One quadrant per document.** A page that both teaches and specifies should be split. The
+   most common mistake is a "guide" that is really a reference with a tutorial bolted on.
+2. **Generated files are never hand-edited.** `docs/reference/api/lakira-backend-openapi.json` is
+   produced from Zod schemas and drift-gated in CI.
 
-> If a doc is not yet applicable (e.g., no incidents), create the file with a heading + “_No entries yet_” placeholder to signal intent.
+The full placement table lives in `.claude/rules/documentation.md` and is mirrored verbatim in
+`.claude/agents/doc-writer.md`. **Those two must stay identical** — they once disagreed about
+where architecture docs belonged, both were followed, and the result was two parallel
+architecture trees.
 
-## Right-Sizing the Kit
+## `internal/` is not a quadrant
 
-- **Full kit (README + plan + checklist + ticket + decisions + incidents + metrics):** use for initiatives that span multiple weeks, affect CI/process, or require stakeholder sign-off.
-- **Standard kit (README + combined plan/ticket + checklist + decisions):** suitable for medium efforts (≈2–5 working days). Merge plan + ticket into `topic-plan.md` but retain headings.
-- **Lean kit (README + checklist + decision snippet):** for quick infrastructure sweeps (<2 days). Still log at least one ADR/decision entry explaining the change.
-- **Micro entries:** even for single-commit fixes, drop a short note in `decisions.md` or `incidents.md` referencing the commit so future you can trace why the change happened.
+Diátaxis describes documentation _of a system_. It says nothing about **working material** —
+plans, checklists, tickets, progress trackers, audit runs — which is most of what a real project
+accumulates.
 
-## File Naming & Placement
+That material lives under `docs/internal/`, beside the quadrants rather than inside them, and
+`scripts/bootstrap-fork.sh` deletes it on fork. A fork inherits documentation about the template,
+not this project's history.
 
-- Use kebab-case with clear prefixes (e.g., `test-structure-plan.md`) so CLI/glob searches group related files alphabetically.
-- Place the kit under the closest domain folder: tests (`docs/tests`), architecture (`docs/internal/initiatives`), CI (`docs/ci-cd`), etc.
-- If a topic spans multiple domains, host primary docs where the owning team lives and link out to supporting folders (e.g., CI doc referencing `docs/internal/initiatives/tests-1-static-checks/`).
-- Reference paths relative to repo root in cross-links for portability (`[link](docs/internal/initiatives/tests-overhaul/test-structure-plan.md)`).
+## Doc kits, for working material only
+
+Inside `docs/internal/initiatives/<topic>/`, an initiative gets a kit. Size it to the work:
+
+| Scope                                             | Kit          | Contents                                                                     |
+| ------------------------------------------------- | ------------ | ---------------------------------------------------------------------------- |
+| Large initiative (multi-week, affects CI/process) | Full kit     | README + plan + checklist + ticket + decisions + incidents + metrics-tracker |
+| Medium effort (2–5 working days)                  | Standard kit | README + plan/ticket (merged) + checklist + decisions                        |
+| Small infra change / quick sweep                  | Lean kit     | README + checklist + at least one `decisions.md` entry                       |
+| Single-commit fix                                 | Micro entry  | One entry in the nearest `decisions.md` referencing the commit SHA           |
+
+A document in one of the four shipped quadrants is a **single file**. Do not scaffold a kit
+around it.
+
+### Keep checklists honest
+
+An unticked box means outstanding work. If the work shipped, tick it — a kit that reads
+"Planning — awaiting approval" while the code has been live for months is worse than no kit,
+because it actively misleads. This happened here: the audience-restructure kit sat at 0/99 with
+`YYYY-MM-DD` placeholder dates while `src/features/public/` had been in production for months.
+
+## Architectural decisions
+
+A kit's `decisions.md` is a working log. Decisions that constrain how the system is built get
+**promoted** to `docs/explanation/decisions/` as numbered records, one per file, in Nygard format —
+with a pointer left behind in the kit.
+
+Promote if it would still matter to someone who never saw the initiative: token hashing, FK
+cascade behaviour, port boundaries, queue topology, module layout. Leave in the kit if it only
+coordinates the work: phase order, audit cadence, which sweep to run first.
+
+Statuses are `Proposed` / `Accepted` / `Superseded`, and a record is **immutable** — supersede it
+with a new one rather than editing it. `Proposed` means written down and _not implemented_.
+
+See `docs/explanation/decisions/README.md` for the format and the next free number.
+
+## Naming and cross-links
+
+- kebab-case filenames; date-prefix anything chronological (`YYYY-MM-DD-*`).
+- Cross-link with **repo-root-relative** paths, so a link survives the file being moved.
+- Relative links (`../foo.md`) are fine within a kit, but they break the moment a file is lifted
+  out of it — which is how the architecture references broke during this restructure.
 
 ## Workflow for New Topics
 
 1. **Create folder skeleton**
    ```bash
-   mkdir -p docs/<domain>/<topic>
-   touch docs/<domain>/<topic>/{README.md,<topic>-plan.md,<topic>-checklist.md,<topic>-ticket.md,decisions.md,incidents.md}
+   mkdir -p docs/internal/initiatives/<topic>
+   touch docs/internal/initiatives/<topic>/{README.md,<topic>-plan.md,<topic>-checklist.md,<topic>-ticket.md,decisions.md,incidents.md}
    ```
 2. **Populate README first** so teammates know why the folder exists.
 3. **Draft the plan** (phases, dependencies, guardrails). Reuse content blocks from `docs/internal/initiatives/tests-overhaul/test-structure-plan.md`.
@@ -173,18 +212,27 @@ Use the snippets below as copy/paste starters.
 - …
 ```
 
-### Decision Log Entry
+### Decision record (promoted to the registry)
 
 ```md
-## ADR-001 — <Decision Title> (Accepted YYYY-MM-DD)
+# ADR-00NN — <Decision title>
 
-**Context:** …
+- **Status:** Proposed | Accepted | Superseded
+- **Date:** YYYY-MM-DD
+- **Related:** Supersedes / superseded by ADR-00NN
+- **Origin:** `ADR-00N` in the <topic> kit — [`<topic>`](../../internal/initiatives/<topic>/decisions.md)
 
-**Decision:** …
+---
 
-**Options considered:** …
+## Context
 
-**Consequences:** …
+## Decision
+
+## Options considered
+
+## Consequences
+
+## Links
 ```
 
 ### Incident Log Entry

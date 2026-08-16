@@ -31,15 +31,25 @@ Feature-Slice DDD with manual dependency injection. Entry point: `src/server.ts`
 
 ## Documentation
 
-- `docs/internal/initiatives/features/` — Per-feature doc kits (auth, metric, metric-log, etc.)
-- `docs/internal/initiatives/` — Infrastructure & architectural topic kits (jwt, rabbitmq, indexing, etc.)
-- `docs/internal/dev-log/` — Dev notes, retros, one-off logs
-- `docs/internal/todos/` — Ephemeral session TODOs (`YYYY-MM-DD-todo-<title>.md`); user-controlled, may be deleted
-- `docs/explanation/documentation-standards.md` — Doc kit templates and sizing rules
-- `docs/documentation/architecture/` — Routes, DB schema
-- `docs/explanation/testing-strategy.md` — Testing approach
-- `docs/reference/ci-pipeline/strategy.md` — CI/CD pipeline details
-- `docs/reference/api/` — Generated OpenAPI spec
+`docs/` is organised by reader purpose (Diátaxis). **Placement rules: `.claude/rules/documentation.md`** —
+consult it before creating any document.
+
+|                     |                                                                                          |
+| ------------------- | ---------------------------------------------------------------------------------------- |
+| `docs/tutorials/`   | Learning — getting started, first feature slice, fork & rebrand                          |
+| `docs/how-to/`      | Task recipes — development, testing, ci-cd, security                                     |
+| `docs/reference/`   | Lookup — API spec, DB schema, configuration, commands, CI, security controls             |
+| `docs/explanation/` | Understanding — C4 architecture, **ADR registry**, testing strategy, product scope       |
+| `docs/internal/`    | Working material — doc kits, audit runs, incidents, todos, archive. **Deleted on fork.** |
+
+Frequently needed:
+
+- `docs/reference/commands.md` — canonical npm scripts (do not keep a second copy elsewhere)
+- `docs/reference/configuration.md` — all 65 env vars
+- `docs/explanation/decisions/` — 37 ADRs, one per file; check **Status** before trusting one
+- `docs/reference/api/lakira-backend-openapi.json` — generated, CI-drift-gated, never hand-edited
+
+`docs/internal/audits/saas-readiness/` tracks **open** P0s — current risk, not history.
 
 ## Task Defaults
 

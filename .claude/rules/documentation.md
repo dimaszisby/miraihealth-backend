@@ -5,53 +5,75 @@ paths:
 
 # Documentation Conventions
 
-## Rule: Every Significant Development Gets a Doc Kit
+`docs/` is organised by **what the reader is doing**, not by what the artifact is called.
+Four Diátaxis quadrants ship with the template; `internal/` holds this project's working material
+and is deleted on fork.
 
-For any feature, infrastructure change, architectural decision, or initiative that spans more than one commit or introduces a new system concern, create a documentation kit under `docs/development/`.
+<!-- PLACEMENT-TABLE:START — must stay byte-identical to .claude/agents/doc-writer.md -->
 
-Follow the structure and templates defined in `docs/explanation/documentation-standards.md` exactly.
+## Where a document goes
 
-## Folder Placement
+Ask what the reader is doing, then place it. Never place by artifact name.
 
-Place the kit under the closest context folder inside `docs/development/`:
+| The document…                                        | Goes to                                          |
+| ---------------------------------------------------- | ------------------------------------------------ |
+| teaches a newcomer a skill, followed start to finish | `docs/tutorials/`                                |
+| gets an experienced reader through one task          | `docs/how-to/<area>/`                            |
+| is looked up, not read through                       | `docs/reference/`                                |
+| explains a concept, a trade-off, or why something is | `docs/explanation/`                              |
+| records an architectural decision                    | `docs/explanation/decisions/adr-NNNN-<slug>.md`  |
+| tracks a piece of work — plan, checklist, tracker    | `docs/internal/initiatives/<topic>/`             |
+| is a dated one-off note or session TODO              | `docs/internal/todos/`, `docs/internal/dev-log/` |
+| is an audit run                                      | `docs/internal/audits/<program>/`                |
+| is a postmortem                                      | `docs/internal/incidents/`                       |
 
-| Context                         | Folder                                               |
-| ------------------------------- | ---------------------------------------------------- |
-| New feature (domain slice)      | `docs/internal/initiatives/features/<feature-name>/` |
-| Infrastructure / shared tooling | `docs/internal/initiatives/<topic>/`                 |
-| Day-to-day dev notes, retros    | `docs/internal/dev-log/`                             |
-| New context with no match       | Create a new subfolder under `docs/development/`     |
+Two rules keep the tree honest:
 
-## Kit Size by Scope
+1. **One quadrant per document.** If it both teaches and specifies, split it.
+2. **Generated files are never hand-edited.** `docs/reference/api/lakira-backend-openapi.json`
+   comes from Zod schemas and is drift-gated in CI — edit `src/lib/openapi/**` instead.
+
+If a document does not obviously fit, it is usually working material: put it under
+`docs/internal/` rather than inventing a new top-level folder.
+
+<!-- PLACEMENT-TABLE:END -->
+
+## Working material still uses doc kits
+
+Anything under `docs/internal/initiatives/<topic>/` follows the kit pattern. Size it to the work:
 
 | Scope                                             | Kit          | Contents                                                                     |
 | ------------------------------------------------- | ------------ | ---------------------------------------------------------------------------- |
 | Large initiative (multi-week, affects CI/process) | Full kit     | README + plan + checklist + ticket + decisions + incidents + metrics-tracker |
 | Medium effort (2–5 working days)                  | Standard kit | README + plan/ticket (merged) + checklist + decisions                        |
 | Small infra change / quick sweep                  | Lean kit     | README + checklist + at least one `decisions.md` entry                       |
-| Single-commit fix                                 | Micro entry  | One ADR entry in the nearest `decisions.md` referencing the commit SHA       |
+| Single-commit fix                                 | Micro entry  | One entry in the nearest `decisions.md` referencing the commit SHA           |
 
-## Mini/Ephemeral Work → `docs/internal/todos/`
+Ephemeral work skips the kit entirely: one file at
+`docs/internal/todos/YYYY-MM-DD-todo-<kebab-title>.md`, tracked in git but user-controlled and
+deletable without a follow-up PR. Promote it to a kit if it grows into an initiative.
 
-For mini-scoped tasks (one-off overhauls, small tooling fixes, session TODOs), use a single ephemeral file:
+## Architectural decisions
 
-```
-docs/internal/todos/YYYY-MM-DD-todo-<kebab-title>.md
-```
+A kit's `decisions.md` is a **working log**. A decision that constrains how the system is
+built — and would still matter to someone who never saw the initiative — is promoted to
+`docs/explanation/decisions/` as its own numbered record, with a pointer left behind.
 
-- Tracked in git but treated as user-controlled — may be deleted without a follow-up PR.
-- Not expected to follow the full doc kit structure.
-- If a todo grows into a real initiative, promote it to a proper kit under `docs/development/`.
+Decisions that only coordinate the work (phase order, audit cadence, which sweep to run first)
+stay in the kit. See `docs/explanation/decisions/README.md` for the format and the next free
+number.
 
-## When Starting Any Non-Trivial Task
+For migrations: log an entry for every schema change, referencing the migration filename.
 
-Before writing code, check:
+## Before writing anything
 
-1. Does a doc kit already exist for this topic? If yes, update it.
-2. If not, create the folder and at minimum a `README.md` and `decisions.md`.
-3. For migrations specifically: drop an ADR entry in `decisions.md` for every schema change, referencing the migration filename.
+1. Does a document already cover this? Update it. Never create a second copy — duplicated
+   content drifts, and the drift is silent. (`.claude/rules/commands.md` documented a
+   `migrate:dev` script that never existed, for exactly this reason.)
+2. Check the placement table above before choosing a folder.
+3. If you add a top-level folder under `docs/`, update `docs/README.md` in the same change.
 
 ## Reference
 
-- Guidelines + templates: `docs/explanation/documentation-standards.md`
-- Example complete kit: `docs/internal/initiatives/tests-overhaul/` (referenced in guidelines as the gold standard)
+- Conventions and templates: `docs/explanation/documentation-standards.md`
+- The map readers see: `docs/README.md`

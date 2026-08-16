@@ -503,47 +503,128 @@ Fixed one straggler from Phase 3 while checking: the CI/CD playbook still linked
 
 ---
 
-## Phase 8 — Realign the rules
+## Phase 8 — Realign the rules ✅ DONE (2026-08-16)
 
-- [ ] Rewrite `.claude/rules/documentation.md`: frontmatter `paths: ["docs/**"]`, and a placement
-      table keyed on **Diátaxis quadrant**, not artifact type.
-- [ ] Rewrite the placement rules in `.claude/agents/doc-writer.md` to match **exactly**. This is
-      the contradiction that produced the two architecture trees — the two files must agree.
-- [ ] Update `CLAUDE.md` §Documentation to the new tree.
-- [ ] Rewrite `docs/explanation/documentation-standards.md`: keep the doc-kit pattern for
-      `internal/initiatives/`, and add the Diátaxis rule for the shipped quadrants.
-- [ ] Point `.claude/rules/commands.md` at `docs/reference/commands.md`.
-- [ ] Update `.claude/rules/{security,validation,workflow}.md` and both `SKILL.md` files.
+The restructure only holds if the instructions agents follow describe the new tree. Both files
+that route new documentation were stale, and — more importantly — they contradicted each other.
 
-**Gate**
+- [x] `.claude/rules/documentation.md` rewritten: Diátaxis-keyed placement table, kit pattern
+      scoped to `internal/initiatives/` only, ADR promotion rule.
+- [x] `.claude/agents/doc-writer.md` rewritten to carry **the same table, byte-identical**,
+      fenced by `<!-- PLACEMENT-TABLE:START/END -->` markers so drift is detectable.
+- [x] `CLAUDE.md` § Documentation replaced with a quadrant table and a pointer to the rules file.
+- [x] `docs/explanation/documentation-standards.md` reframed: Diátaxis first, doc kits second,
+      plus the ADR-promotion rule and the new record template.
+- [x] `.claude/rules/security.md` split into framework (`reference/security/`) vs runs
+      (`internal/audits/security/`).
+- [x] `.claude/rules/commands.md` was already made a pointer in Phase 5.
 
-- [ ] The placement tables in `.claude/rules/documentation.md` and `.claude/agents/doc-writer.md`
-      are byte-comparable — same destinations for the same inputs.
+### The root cause, fixed
+
+`.claude/rules/documentation.md` sent architecture docs to `docs/development/architecture/`;
+`.claude/agents/doc-writer.md` sent them to `docs/documentation/architecture/`. Both were live
+agent instructions, both were obeyed, and the result was the two parallel architecture trees this
+overhaul existed to merge. Restructuring without reconciling them would have rebuilt the split
+within a few features.
+
+The shared block is now delimited by HTML comments in both files, and the gate compares them
+byte-for-byte. Editing one without the other is a detectable error rather than a silent one.
+
+Both files also still routed to `docs/tests/<topic>/`, `docs/ci-cd/<topic>/`,
+`docs/documentation/product/`, and `docs/security/<topic>/` — four folders that no longer exist.
+
+### Lessons folded into the guidance
+
+The rules now carry the specific failures this overhaul uncovered, as rules rather than anecdotes:
+
+- **Never keep a second copy of content** — `.claude/rules/commands.md` held a duplicate command
+  list and drifted into documenting a `migrate:dev` script that never existed.
+- **Keep checklists honest** — the audience-restructure kit read 0/99 with `YYYY-MM-DD`
+  placeholders while the code had shipped months earlier.
+- **Cross-link repo-root-relative** — relative links break the moment a file is lifted out of its
+  kit, which is exactly how the architecture references broke in Phase 3.
+- **Never reformat `internal/audits/security/**`\*\* — schema-validated by a Jest suite.
+- **Render Mermaid before committing** — a bracket count is not a parse.
+
+**Gate — results**
+
+| Check                                                        | Result                                                   |
+| ------------------------------------------------------------ | -------------------------------------------------------- |
+| Placement tables byte-identical                              | ✅ 1,824 chars, exact match                              |
+| Concrete `docs/` paths in `.claude/**` + `CLAUDE.md` resolve | ✅ 50 checked, 0 missing (2 prose placeholders excluded) |
+| `lint` / `typecheck` / `format:check`                        | ✅ 0                                                     |
+| `test:unit`                                                  | ✅ 84 suites / 497 tests                                 |
+| `docs:openapi:check`                                         | ✅ 0                                                     |
+
+**Commit boundary: Phase 8 (or fold into 8–9).**
 
 ---
 
-## Phase 9 — Fork-proofing
+## Phase 9 — Fork-proofing ✅ DONE (2026-08-16)
 
-- [ ] Add a prune step to `scripts/bootstrap-fork.sh`: remove `docs/internal/` by default, with a
-      `--keep-internal` escape hatch. Report what was removed.
-- [ ] Make `__tests__/unit/security/security-framework.validation.test.ts` treat a missing or empty
-      `AUDIT_ROOT` as a **pass**, while still validating `TEMPLATE_ROOT`. Without this, a fresh fork
-      has a red test suite.
-- [ ] Make `scripts/security/init-audit-doc-kit.mjs` create the audit directory when absent.
-- [ ] Update `README.md` §Forking to mention the docs prune.
+- [x] `scripts/bootstrap-fork.sh` removes `docs/internal/` by default, with `--keep-internal` to
+      opt out. Reports the file count and warns that the upstream SaaS-readiness audit went with it.
+- [x] `security-framework.validation.test.ts` survives a pruned tree.
+- [x] `README.md` § Forking documents the prune and links the full tutorial.
+- [x] `scripts/security/init-audit-doc-kit.mjs` — **no change needed**; it already used
+      `fs.mkdir(..., { recursive: true })`, which creates the audit root from nothing. Verified in
+      the dry-run rather than assumed.
+- [x] Fixed: the fork script's own closing instructions said `npm run migrate:dev` — the script
+      that never existed. Third place this had propagated.
 
-**Gate — full fork dry-run**
+### The test fix is a split, not a skip
 
-```bash
-git clone . /tmp/fork-dryrun && cd /tmp/fork-dryrun
+Guarding the whole suite would have cost a fork its **template** validation, which ships and is
+exactly what a forker depends on. `schema conformance` asserted on both the shipped templates and
+this project's `audit-2026-02-18` run in one test, so it was split:
+
+| Test                                             | In a fork  |
+| ------------------------------------------------ | ---------- |
+| init script creates every required artifact      | ✅ runs    |
+| shipped templates have required sections/columns | ✅ runs    |
+| 3 × gate-policy evaluation                       | ✅ runs    |
+| current audit run matches template columns       | ⏭ skipped |
+| finding traceability                             | ⏭ skipped |
+| audit index continuity                           | ⏭ skipped |
+| portfolio sanitization                           | ⏭ skipped |
+
+Only assertions about _this project's history_ skip. The framework is still proven.
+
+### Fork dry-run — the gate that matters
+
+Ran against a clean copy with the Phase 8–9 changes applied:
+
+```
+docs/internal before          224 files
 ./scripts/bootstrap-fork.sh --name tmp-app
-test ! -d docs/internal && echo "internal pruned"
-npm ci && npm run typecheck && npm run test:unit    # must be GREEN
+  → Renaming 'lakira-backend' → 'tmp-app' (short: lakira → tmp-app)
+  → Removed docs/internal (224 files of upstream working material)
+docs/internal after           GONE
+shipped docs                  94 files
 ```
 
-**Commit boundary: Phases 8–9.**
+| Check in the fork                      | Result                                                                                   |
+| -------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `npm ci`                               | ✅ 0                                                                                     |
+| `npm run test:unit`                    | ✅ **494 passed, 4 skipped, 0 failed**                                                   |
+| `npm run test:unit:security-framework` | ✅ 5 passed, 4 skipped                                                                   |
+| `lint` / `typecheck` / `format:check`  | ✅ 0                                                                                     |
+| Branding applied                       | ✅ `"name": "tmp-app"`, zero `lakira` hits in `package.json` / `docker-compose.test.yml` |
+| `FORKED-FROM.md`                       | ✅ written                                                                               |
 
----
+**A fresh fork's test suite is green on first run.** Before this phase it would have been red —
+the security suite walked an audit root the prune deletes.
+
+Two notes from the dry-run:
+
+- The security test leaves empty `docs/internal/audits/security/` directories behind after
+  running `init` (its `afterAll` removes the sample audit dir, not the parents). Zero files, and
+  git does not track empty directories, so it is invisible in a repo.
+- My first attempt failed for a reason that was **my** fault, not the fork's: an rsync
+  `--exclude '.env.*'` also matched the tracked `.env.example` and `.env.test.example`. Worth
+  recording because the failure looked exactly like a fork bug — 84 suites red on missing env.
+
+**Commit boundary: Phases 8–9.**
 
 ## Final verification
 

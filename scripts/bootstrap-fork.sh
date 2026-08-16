@@ -3,6 +3,7 @@
 #
 # Usage:
 #   ./scripts/bootstrap-fork.sh --name my-app
+#   ./scripts/bootstrap-fork.sh --name my-app --keep-internal
 #
 # What it does:
 #   1. Replaces "lakira-backend" with <new-name> in package.json,
@@ -11,7 +12,8 @@
 #      in queue-topology references, DB names, and CI DB refs.
 #   3. Rotates JWT_SECRET in .env.development.
 #   4. Sets APP_NAME=<new-name> in .env.development.
-#   5. Drops FORKED-FROM.md with the upstream commit SHA.
+#   5. Removes docs/internal/ (upstream working material); --keep-internal opts out.
+#   6. Drops FORKED-FROM.md with the upstream commit SHA.
 #
 # The script is idempotent: running it twice with the same name is a no-op.
 
@@ -21,15 +23,20 @@ set -euo pipefail
 # Parse arguments
 # ---------------------------------------------------------------------------
 NEW_NAME=""
+KEEP_INTERNAL=false
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --name)
       NEW_NAME="$2"
       shift 2
       ;;
+    --keep-internal)
+      KEEP_INTERNAL=true
+      shift
+      ;;
     *)
       echo "Unknown argument: $1" >&2
-      echo "Usage: $0 --name <new-app-name>" >&2
+      echo "Usage: $0 --name <new-app-name> [--keep-internal]" >&2
       exit 1
       ;;
   esac
@@ -37,7 +44,7 @@ done
 
 if [[ -z "$NEW_NAME" ]]; then
   echo "Error: --name is required." >&2
-  echo "Usage: $0 --name <new-app-name>" >&2
+  echo "Usage: $0 --name <new-app-name> [--keep-internal]" >&2
   exit 1
 fi
 
@@ -160,7 +167,27 @@ if [[ -f "$ENV_DEV" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# 5. Drop FORKED-FROM.md
+# 5. Prune internal documentation
+#
+# docs/internal/ is the upstream project's working material — doc kits, audit
+# runs, incidents, dev-log, todos, archive. A fork should inherit documentation
+# about the template (the four Diataxis quadrants), not someone else's history.
+# ---------------------------------------------------------------------------
+INTERNAL_DOCS="$REPO_ROOT/docs/internal"
+if [[ "$KEEP_INTERNAL" == "true" ]]; then
+  echo "Keeping docs/internal (--keep-internal)."
+elif [[ -d "$INTERNAL_DOCS" ]]; then
+  INTERNAL_FILE_COUNT=$(find "$INTERNAL_DOCS" -type f | wc -l | tr -d " ")
+  rm -rf "$INTERNAL_DOCS"
+  echo "Removed docs/internal ($INTERNAL_FILE_COUNT files of upstream working material)."
+  echo "  Note: that tree held the upstream SaaS-readiness audit. Re-run your own"
+  echo "  assessment before production - see docs/how-to/security/."
+else
+  echo "docs/internal already absent - nothing to prune."
+fi
+
+# ---------------------------------------------------------------------------
+# 6. Drop FORKED-FROM.md
 # ---------------------------------------------------------------------------
 UPSTREAM_SHA=$(git -C "$REPO_ROOT" rev-parse HEAD 2>/dev/null || echo "unknown")
 cat > "$REPO_ROOT/FORKED-FROM.md" <<EOF
@@ -178,5 +205,5 @@ echo ""
 echo "Done! Next steps:"
 echo "  1. Run: npm install"
 echo "  2. Copy .env.example to .env and fill in secrets"
-echo "  3. Run: npm run migrate:dev"
+echo "  3. Run: npm run migrate:development"
 echo "  4. Run: npm test"

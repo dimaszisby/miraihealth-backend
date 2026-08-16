@@ -26,36 +26,58 @@ Ask (or infer from context):
 | < 2 days, infra sweep                       | Lean kit: README + checklist + one ADR entry                                   |
 | Single-commit fix                           | Micro entry in `decisions.md` or `incidents.md` with commit SHA                |
 
+<!-- PLACEMENT-TABLE:START — must stay byte-identical to .claude/agents/doc-writer.md -->
+
+## Where a document goes
+
+Ask what the reader is doing, then place it. Never place by artifact name.
+
+| The document…                                        | Goes to                                          |
+| ---------------------------------------------------- | ------------------------------------------------ |
+| teaches a newcomer a skill, followed start to finish | `docs/tutorials/`                                |
+| gets an experienced reader through one task          | `docs/how-to/<area>/`                            |
+| is looked up, not read through                       | `docs/reference/`                                |
+| explains a concept, a trade-off, or why something is | `docs/explanation/`                              |
+| records an architectural decision                    | `docs/explanation/decisions/adr-NNNN-<slug>.md`  |
+| tracks a piece of work — plan, checklist, tracker    | `docs/internal/initiatives/<topic>/`             |
+| is a dated one-off note or session TODO              | `docs/internal/todos/`, `docs/internal/dev-log/` |
+| is an audit run                                      | `docs/internal/audits/<program>/`                |
+| is a postmortem                                      | `docs/internal/incidents/`                       |
+
+Two rules keep the tree honest:
+
+1. **One quadrant per document.** If it both teaches and specifies, split it.
+2. **Generated files are never hand-edited.** `docs/reference/api/lakira-backend-openapi.json`
+   comes from Zod schemas and is drift-gated in CI — edit `src/lib/openapi/**` instead.
+
+If a document does not obviously fit, it is usually working material: put it under
+`docs/internal/` rather than inventing a new top-level folder.
+
+<!-- PLACEMENT-TABLE:END -->
+
 ## Step 2: Locate existing docs
 
 ```bash
-# Find related docs
-find docs/ -name "*.md" | head -40
+# Does something already cover this?
+grep -rl "<topic>" docs/ --include="*.md"
 
-# Check if a doc kit already exists for this topic
-ls docs/<domain>/<topic>/ 2>/dev/null
-
-# Scan for cross-references to update
-grep -r "<topic>" docs/ --include="*.md" -l
+# Existing kit for this topic?
+ls docs/internal/initiatives/<topic>/ 2>/dev/null
 ```
 
-Never create a duplicate. If a doc exists, update it in place and log the change in `decisions.md`.
+**Never create a duplicate.** Update in place. Two copies of the same content drift, and the
+drift is silent — `.claude/rules/commands.md` documented a `migrate:dev` script that never
+existed because it held a second copy of the command list.
 
-## Step 3: Create the folder skeleton (if new kit)
+## Step 3: Create the skeleton (working material only)
+
+Only `docs/internal/initiatives/<topic>/` uses the kit shape. A document in one of the four
+shipped quadrants is a single file — do not scaffold a kit around it.
 
 ```bash
-mkdir -p docs/<domain>/<topic>
-touch docs/<domain>/<topic>/{README.md,<topic>-plan.md,<topic>-checklist.md,decisions.md,incidents.md}
+mkdir -p docs/internal/initiatives/<topic>
+touch docs/internal/initiatives/<topic>/{README.md,<topic>-plan.md,<topic>-checklist.md,decisions.md}
 ```
-
-Placement rules:
-
-- Tests → `docs/tests/<topic>/`
-- CI/CD → `docs/ci-cd/<topic>/`
-- Architecture → `docs/documentation/architecture/`
-- Security → `docs/security/<topic>/`
-- Product → `docs/documentation/product/`
-- API → `docs/reference/api/`
 
 ## Step 4: Write each document
 
@@ -63,7 +85,7 @@ Placement rules:
 
 1. **Overview** — one paragraph: what this is, why it exists, who owns it
 2. **Scope / In-scope** — bullet list of what is and is not covered
-3. **Commands / API** — copy-pasteable commands; link to `docs/documentation/architecture/` or `openapi/` for API details
+3. **Commands / API** — copy-pasteable commands; link to `docs/reference/commands.md` or `docs/reference/api/` for API details
 4. **Environment / Dependencies** — what must be running or installed
 5. **Verification** — how to confirm it works (commands, expected output)
 6. **References** — links to related docs, PRs, issues
@@ -115,15 +137,20 @@ Placement rules:
 - Follow Zod schema naming from `src/features/<name>/api/schema.zod.ts`
 - Document: method, path, auth required, request body shape, response codes, example
 
-### Architecture docs (`docs/documentation/architecture/`)
+### Architecture docs (`docs/explanation/architecture/`)
 
-- `lakira-backend-db-schema.md` — one section per table: columns, types, constraints, relations
-- `lakira-backend-types.md` — shared domain types and their invariants
+- C4 diagrams are Mermaid in Markdown; render them before committing (`mermaid-cli`), do not trust
+  a bracket count
+- `docs/reference/database-schema.md` is the schema of record — regenerate it by introspecting a
+  migrated database, not by reading migration files
 
-### Security docs (`docs/security/`)
+### Security docs
 
-- Follow the audit format in `docs/internal/audits/security/`; include control-matrix, threat-model, findings-log
-- New security changes go into `decisions.md` of the nearest audit folder; reference commit SHA
+- Framework, control catalogue, gate policy, and the run template: `docs/reference/security/`
+- Dated audit runs: `docs/internal/audits/security/` — scaffold with `npm run security:audit:init`
+- **Never reformat or condense files under `docs/internal/audits/security/`.** Their columns and
+  section headers are schema-validated by `security-framework.validation.test.ts`
+- Security decisions go into `decisions.md` of the nearest audit run, referencing the commit SHA
 
 ### Changelog entries
 
