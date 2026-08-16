@@ -656,26 +656,26 @@ Surfaced during the audit; each deserves its own ticket:
       lack `organizationId`; `DISABLE_RATE_LIMITING` has no production guard.
 - [ ] `security/audit/audit-2026-05-18/` is still marked "Planned" — three months past its scheduled
       execution date, with the next quarterly cycle now due.
-- [ ] `express-openapi-validator` is a declared dependency with zero imports anywhere in `src/`.
-- [ ] `/api/v1/admin/_ping` is served but unregistered in the OpenAPI spec.
+- [x] ~~`express-openapi-validator` is a declared dependency with zero imports~~ — removed, along
+      with the now-obsolete `multer` override it existed to patch.
+- [x] ~~`/api/v1/admin/_ping` is served but unregistered~~ — registered under a new `Admin` tag,
+      deliberately outside the contract-test tag set.
 - [ ] `docs/internal/todos/2026-06-04-*.md` carries an unchecked "2026-07-02 review" item, now ~6 weeks
       overdue.
 
 Surfaced while running the Phase 1 gate on real infrastructure:
 
-- [ ] **`.sequelizerc` breaks on Node > 20.** It uses `require()` while `package.json` sets
-      `"type": "module"`, so `npm run db:migrate:test` dies with
-      `ReferenceError: require is not defined in ES module scope` on Node 22+/26. CI is fine
-      (Node 20), but any contributor on a newer runtime is blocked. Fix: rename to
-      `.sequelizerc.cjs`, or convert it to ESM.
-- [ ] **Duplicate `organization_id` foreign keys** on `metrics`, `metric_logs`,
-      `metric_settings`, `metric_categories` — two identical RESTRICT constraints each
-      (`…_fkey` and `…_fkey1`), from `20260510000005` and `20260510000006` both adding one.
-      A migration should drop the duplicates.
-- [ ] **Orphaned enum types**: `enum_users_role` (column dropped in `20260516000001`) and
-      `enum_metric_log_type` (superseded by `enum_metric_logs_type`).
-- [ ] **`PORT` mismatch between the example env and the contract suite.**
-      `.env.test.example` ships `PORT=8002`; the contract scripts default to
-      `http://localhost:4000/api/v1` and `backend-ci.yml:250` sets `PORT: 4000`. Following the
-      example alone produces a server the contract tests cannot reach. Fix: set `PORT=4000` in
-      `.env.test.example`, or make the scripts read `PORT`.
+- [x] ~~**`.sequelizerc` breaks on Node > 20.**~~ — deleted. sequelize-cli only reads the exact
+      filename `.sequelizerc` (a `.cjs` rename is ignored), so the 18 npm scripts and
+      `scripts/db-migrate-test.mjs` now pass `--migrations-path src/migrations` explicitly.
+      Verified: `npm run db:migrate:test` exits 0 on Node 26.
+- [x] ~~**Duplicate `organization_id` foreign keys**~~ — dropped by migration
+      `20260816000001`. Verified against a live database: 4 duplicates removed, all 8 legitimate
+      org FKs intact, rollback restores the prior state exactly.
+- [x] ~~**Orphaned enum types**~~ — dropped in the same migration (2 removed).
+- [x] ~~**`DISABLE_RATE_LIMITING` missing from the example env**~~ — found while running the
+      integration suite for this PR. `backend-ci.yml` sets it at job level in all three jobs, but
+      `.env.test.example` never had it, so a developer following the example got 3 password-reset
+      tests failing on 429s that were an artefact of the limiter. Added, with the reason inline.
+- [x] ~~**`PORT` mismatch**~~ — `.env.test.example` now ships `PORT=4000`, matching the contract
+      scripts and `backend-ci.yml`. The CI/CD playbook's inverted escape-hatch note was corrected.

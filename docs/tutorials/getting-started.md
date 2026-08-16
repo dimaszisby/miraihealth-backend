@@ -7,9 +7,8 @@ live in [`../explanation/`](../explanation/); alternatives live in [`../how-to/`
 
 ## Before you start
 
-- **Node 20.** Not 22, not 24. `.sequelizerc` uses CommonJS `require()` inside an ESM package,
-  which only resolves on Node 20 — migrations fail on newer runtimes with
-  `ReferenceError: require is not defined in ES module scope`.
+- **Node 20** — what `.nvmrc` pins and what CI runs. Newer versions work for the steps below,
+  but 20 is the only version the full pipeline is verified against.
   ```bash
   nvm use          # reads .nvmrc
   node --version   # expect v20.x
@@ -171,9 +170,6 @@ which is why the documentation cannot drift from the validation.
 
 **`Missing script: "migrate:dev"`** — the script is `migrate:development`. Older docs had this
 wrong.
-
-**`ReferenceError: require is not defined in ES module scope`** on migrate — you are not on
-Node 20. `nvm use`.
 
 **`ZodError: JWT_SECRET Required`** — there is no `.env` at all; step 2 was skipped. If you copied
 `.env.example` but skipped generating a secret the app still boots, on the shipped placeholder —

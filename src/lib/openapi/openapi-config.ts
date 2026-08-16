@@ -55,6 +55,11 @@ export const openApiDocument = {
       name: "Analytics",
       description: "Visualization and dashboard analytics endpoints",
     },
+    {
+      name: "Admin",
+      description:
+        "Organization admin/owner surface. Excluded from the default contract-test tag set — these routes require an elevated role the seeded fixtures do not hold.",
+    },
   ],
   components: {
     securitySchemes: {

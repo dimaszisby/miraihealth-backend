@@ -140,7 +140,7 @@ Always push fixes to the same branch; reruns are automatic once CI detects new c
 
    (Alternatively, point `SCHEMATHESIS_CLI` to an existing global binary.)
 
-   > Shortcut: run `npm run contract:local:full` to execute every step below automatically (build → migrate → seed → start backend → Newman → Schemathesis → cleanup). Server logs are written to `tmp/backend-contract.log`. Use `CONTRACT_LOCAL_PORT=8002 npm run contract:local:full` if you need to match the default port from `.env.test`; otherwise the helper runs on port 4000 (CI parity). The helper automatically prefers `.venv-schemathesis/bin/schemathesis` (or any binary pointed to by `SCHEMATHESIS_CLI`), so install the Python virtualenv once using the commands above.
+   > Shortcut: run `npm run contract:local:full` to execute every step below automatically (build → migrate → seed → start backend → Newman → Schemathesis → cleanup). Server logs are written to `tmp/backend-contract.log`. The helper runs on port 4000, matching `.env.test.example` and CI; override with `CONTRACT_LOCAL_PORT`. The helper automatically prefers `.venv-schemathesis/bin/schemathesis` (or any binary pointed to by `SCHEMATHESIS_CLI`), so install the Python virtualenv once using the commands above.
 
 1. **Prep the backend**
    - Run `npm run db:migrate:test`.
