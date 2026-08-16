@@ -39,6 +39,10 @@
     {
       "name": "Analytics",
       "description": "Visualization and dashboard analytics endpoints"
+    },
+    {
+      "name": "Admin",
+      "description": "Organization admin/owner surface. Excluded from the default contract-test tag set — these routes require an elevated role the seeded fixtures do not hold."
     }
   ],
   "components": {
@@ -5156,6 +5160,47 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/admin/_ping": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Admin liveness probe",
+        "description": "Confirms the caller holds an admin or owner role in the active organization. Guarded by `authMiddleware` + `requireOrgRole('admin', 'owner')`.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Caller is an admin or owner of the active organization",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["ok"]
+                    },
+                    "scope": {
+                      "type": "string",
+                      "enum": ["admin"]
+                    }
+                  },
+                  "required": ["status", "scope"]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
           }
         }
       }

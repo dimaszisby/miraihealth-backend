@@ -1699,6 +1699,35 @@ registry.registerPath({
   },
 });
 
+registry.registerPath({
+  method: "get",
+  path: "/admin/_ping",
+  tags: ["Admin"],
+  summary: "Admin liveness probe",
+  description:
+    "Confirms the caller holds an admin or owner role in the active organization. Guarded by `authMiddleware` + `requireOrgRole('admin', 'owner')`.",
+  security: [{ BearerAuth: [] }],
+  responses: {
+    200: {
+      description: "Caller is an admin or owner of the active organization",
+      content: {
+        "application/json": {
+          schema: z.object({
+            status: z.literal("ok"),
+            scope: z.literal("admin"),
+          }),
+        },
+      },
+    },
+    401: {
+      $ref: "#/components/responses/UnauthorizedError",
+    },
+    403: {
+      $ref: "#/components/responses/ForbiddenError",
+    },
+  },
+});
+
 export const getOpenApiDocumentation = () => {
   const generator = new OpenApiGeneratorV31(registry.definitions);
   // Generate a full OpenAPI document from the registry, seeded with the base config.

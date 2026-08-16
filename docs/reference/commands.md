@@ -1,7 +1,8 @@
 # Commands
 
-Every script below is verified against `package.json`. Node 20 (`.nvmrc`) is required —
-`.sequelizerc` uses CommonJS `require()` in an ESM package, which only resolves on Node 20.
+Every script below is verified against `package.json`. Node 20 (`.nvmrc`) is the supported
+version and what CI runs; migrations also work on newer runtimes since sequelize-cli paths are
+passed explicitly rather than through a `.sequelizerc`.
 
 ## Daily loop
 

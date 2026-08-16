@@ -38,17 +38,18 @@ Full workflow: [`../../how-to/development/regenerate-the-openapi-spec.md`](../..
 
 ## Coverage
 
-**43 documented operations** across `Auth`, `Metric Categories`, `Metrics`, `Metric Logs`,
+**44 documented operations** across `Auth`, `Metric Categories`, `Metrics`, `Metric Logs`,
 `Metric Settings`, `Trends`, and `Analytics`, plus the organization surface (invites, members,
 memberships).
 
-Three routes are served but intentionally absent from the spec:
+Two routes are served but intentionally absent from the spec, and one is documented but excluded
+from fuzzing:
 
-| Route                     | Why                                                                                                                                                                                 |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/v1/health`      | liveness probe, not part of the API contract                                                                                                                                        |
-| `GET /api/v1/ready`       | readiness probe — pings Postgres and Redis                                                                                                                                          |
-| `GET /api/v1/admin/_ping` | **gap.** Guarded by `authMiddleware` + `requireOrgRole("admin","owner")` but never registered via `registry.registerPath`, so it is undocumented rather than deliberately excluded. |
+| Route                     | Why                                                                                                                                                                    |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/health`      | liveness probe, not part of the API contract                                                                                                                           |
+| `GET /api/v1/ready`       | readiness probe — pings Postgres and Redis                                                                                                                             |
+| `GET /api/v1/admin/_ping` | documented under the `Admin` tag, which is **excluded from the contract-test tag set** — the seeded fixtures hold no admin role, so fuzzing it would only produce 403s |
 
 ## Known gaps
 
@@ -56,9 +57,9 @@ Three routes are served but intentionally absent from the spec:
   `4xx`/`5xx` bodies are largely absent, and the global error handler can emit shapes the spec
   does not describe. Tracked as caveat C3 in
   [`../../internal/audits/saas-readiness/`](../../internal/audits/saas-readiness/).
-- `express-openapi-validator` is a declared dependency with **zero imports**. Request validation
-  is done by Zod middleware, not by the spec at runtime. The spec is generated _from_ the
-  validators; it does not enforce anything itself.
+- Request validation is done by **Zod middleware**, not by the spec at runtime. The spec is
+  generated _from_ the validators; it does not enforce anything itself. (`express-openapi-validator`
+  was a declared dependency with zero imports and has been removed.)
 
 ## Contract testing
 
