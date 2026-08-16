@@ -442,27 +442,62 @@ carried relative links into the kit they were lifted out of.
 
 ---
 
-## Phase 7 — Author new content
+## Phase 7 — Author new content ✅ DONE (2026-08-16)
 
-- [ ] `explanation/architecture/c4-context.md` — L1 mermaid: users, the API, and external systems.
-- [ ] `explanation/architecture/c4-containers.md` — L2 mermaid: `src/server.ts` API, `src/worker.ts`
-      consumer, Postgres, Redis, RabbitMQ, mail provider.
-- [ ] `explanation/architecture/c4-components-auth.md` — L3 mermaid for `src/features/shared/auth/`,
-      including Organization / Membership / OrganizationInvite and the `TokenProvider` port.
-- [ ] `explanation/architecture/README.md` — index tying the three levels together.
-- [ ] `tutorials/getting-started.md` — clone → `docker compose up -d` → migrate → `npm run dev` →
-      register → authenticated request. Every command copy-pasteable and actually run once.
-- [ ] `tutorials/your-first-feature-slice.md` — walk one slice end to end against a real example
-      (`src/features/public/metric-category/` is the smallest complete one).
-- [ ] `tutorials/fork-and-rebrand.md` — from `README.md` §Forking + the forkability kit.
-- [ ] `docs/README.md` — the Diátaxis map and single "start here".
+- [x] `explanation/architecture/c4-context.md` — L1: users, the API, six external systems.
+- [x] `explanation/architecture/c4-containers.md` — L2: API server + job worker, plus a
+      middleware-order diagram for the request path.
+- [x] `explanation/architecture/c4-components-auth.md` — L3: the auth slice's four layers and the
+      port/adapter seams.
+- [x] `explanation/architecture/README.md` — ties the three levels together.
+- [x] `tutorials/getting-started.md` — clone → running API → authenticated request with data.
+- [x] `tutorials/your-first-feature-slice.md` — read `metric-category` end to end, then add an
+      endpoint.
+- [x] `tutorials/fork-and-rebrand.md` — what `bootstrap-fork.sh` changes and what it cannot.
+- [x] `tutorials/README.md` — ordered index.
 
-Use mermaid throughout — it renders natively on GitHub with no toolchain.
+### The tutorial was executed, not drafted
 
-**Gate**
+Every request in `getting-started.md` was run against a live server, which is the only reason it
+is correct. Two payloads I would have written from the route signature are wrong:
 
-- [ ] Run every command in `getting-started.md` from a clean clone. It must work verbatim.
-- [ ] All mermaid blocks render (check the GitHub preview on the pushed branch).
+- `POST /auth/register` **requires `passwordConfirmation`**. Without it:
+  `{"status":"fail","errors":[{"field":"passwordConfirmation","message":"Required"}]}`
+- `POST /metric-logs` **requires `type`** (`manual` | `automatic`). Without it:
+  `{"field":"body.type","message":"Invalid log type"}`
+
+Both failures are now shown in the tutorial rather than hidden, because they are exactly what a
+reader will hit.
+
+Also corrected from the source: `.env.example` ships `JWT_SECRET=replace-with-a-long-random-secret`,
+not an empty value — so the app _does_ boot without editing it. The tutorial says so, and says why
+that is not good enough beyond the tutorial.
+
+Registering was confirmed to auto-create a personal organization and return a token whose payload
+carries `organizationId` — the multi-tenancy model, visible in the very first response.
+
+### Diagrams were rendered, not eyeballed
+
+All four Mermaid blocks were extracted and compiled with `@mermaid-js/mermaid-cli`; each produced
+a real SVG (24–38 KB). A balanced-bracket check is not evidence that a diagram parses.
+
+The L3 diagram shows the _intended_ persistence grouping, and says so: `shared/auth` is still flat
+while `metric-category` is nested, which is precisely the drift
+[ADR-0037](../../../explanation/decisions/adr-0037-resolve-canonical-ddd-layout-disagreement.md)
+proposes to fix. Verified in the tree, not assumed.
+
+**Gate — results**
+
+| Check                                 | Result                               |
+| ------------------------------------- | ------------------------------------ |
+| Every `getting-started.md` request    | ✅ executed against a live server    |
+| Mermaid diagrams                      | ✅ 4/4 render to SVG via mermaid-cli |
+| Relative links in the shipped tree    | ✅ **0 broken** of 170               |
+| `lint` / `typecheck` / `format:check` | ✅ 0                                 |
+| `test:unit`                           | ✅ 84 suites / 497 tests             |
+
+Fixed one straggler from Phase 3 while checking: the CI/CD playbook still linked
+`../security/DEPENDENCY_POLICY.md`.
 
 **Commit boundary: Phase 7.**
 
