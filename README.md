@@ -110,9 +110,14 @@ The script:
 - Derives a short name (`my-app` → removes `-backend` / `-api` suffix) for queue topology and DB name prefixes.
 - Rotates `JWT_SECRET` in `.env.development` via `openssl rand -hex 32`.
 - Sets `APP_NAME=my-app` in `.env.development`.
+- **Removes `docs/internal/`** — the upstream project's working material (doc kits, audit runs,
+  incidents, todos). Your fork keeps the four Diátaxis quadrants, which document the template.
+  Pass `--keep-internal` to retain it.
 - Drops a `FORKED-FROM.md` at the repo root recording the upstream commit SHA.
 
 Runtime branding (API title, email copy, log service name, queue names) is controlled by the `APP_NAME` environment variable — set it in your `.env` file. See `.env.example` for the full list.
+
+Full walkthrough, including what the script _cannot_ reach: [`docs/tutorials/fork-and-rebrand.md`](docs/tutorials/fork-and-rebrand.md).
 
 ## License
 
