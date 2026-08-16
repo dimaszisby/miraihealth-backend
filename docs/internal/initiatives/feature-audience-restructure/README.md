@@ -4,7 +4,11 @@
 
 - **Purpose**: Restructure `src/features/` from a flat layout into an audience-scoped tree (`public/`, `admin/`, `shared/`) so that user-facing modules, internal/ops modules, and cross-cutting modules are visibly separated. This is foundational work for the future SaaS split between end-user and admin/ops surfaces.
 - **DRI**: @dimaszisby (single-developer)
-- **Status**: Planning — awaiting approval before Phase 0 begins.
+- **Status**: **Shipped 2026-05-01** in PR #33. `src/features/public/` and `src/features/shared/`
+  are live, and later kits (jwt, multi-tenancy, saas-readiness) cite those paths as fact.
+  The checklist below was never ticked off — treat the code, not the checkboxes, as the record.
+  The `admin/` bucket from ADR-0013 is still unused; the only admin surface is
+  `/api/v1/admin/_ping`, mounted directly in `src/server.ts`.
 
 ## Scope
 

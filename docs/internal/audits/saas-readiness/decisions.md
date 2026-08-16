@@ -60,81 +60,13 @@ Cadence: re-audit on demand (whenever a P0 closes, or before publishing the repo
 
 ---
 
-## ADR-003 — Where the canonical DDD layout lives (Proposed 2026-05-01)
+## ADR-003 — Where the canonical DDD layout lives
 
-**Context:** Audit gap [P1-10.1] documents drift across feature slices: `metric` lacks `dto.ts`, `metric-settings` has both `infrastructure/mappers/` and `infrastructure/persistence/`, `metric-log` uses `infrastructure/access/` instead of `infrastructure/providers/`, `analytics` uses `validators.ts` instead of `schema.zod.ts`. The `auth` feature is the canonical reference per `.claude/rules/architecture.md`.
+Promoted to the architecture decision registry as **[ADR-0011](../../../explanation/decisions/adr-0011-where-the-canonical-ddd-layout-lives.md)**. That file is authoritative; this entry is a pointer.
 
-**Decision (proposed):** The auth slice is the reference. All other slices migrate to match its layout:
+## ADR-004 — Multi-tenancy direction for the SaaS base
 
-```
-features/{name}/
-  domain/
-    entities/
-    repositories/
-    [services/]              # only when domain logic does not fit on an entity
-    [value-objects/]         # only when invariants are non-trivial
-  application/
-    use-cases/
-    queries/
-    ports/
-  infrastructure/
-    http/                    # router.ts, controller.ts, dto.ts, schema.zod.ts
-    persistence/
-      models/
-      repositories/
-      mappers/
-    providers/               # port adapters that are not the persistence repo
-  feature.ts
-  index.ts
-```
-
-**Status:** Accepted (2026-05-17). The architecture-test (`__tests__/unit/architecture.test.ts`) has been added as part of the drift-cleanup phase to enforce the standard going forward.
-
-**Options considered:**
-
-- _Match the most recent feature (`metric-category`)._ Rejected: it is the only slice with VOs and a domain service, which most slices do not need.
-- _Codify two layouts (simple/complex) and tag each slice._ Rejected: adds cognitive load; the canonical layout already accommodates both via the bracketed-optional dirs.
-
-**Consequences:**
-
-- Migration effort across `metric`, `metric-log`, `metric-settings`, `metric-category`, `analytics`. M-effort overall.
-- One ESLint rule (or unit test) becomes the source of truth.
-- Forkers see one canonical pattern.
-
-**Links:**
-
-- `audit-2026-05-01.md` § [P1-10.1]
-- `.claude/rules/architecture.md`
-- `src/features/shared/auth/` (reference)
-
----
-
-## ADR-004 — Multi-tenancy direction for the SaaS base (Proposed 2026-05-01)
-
-**Context:** Audit gap [P0-3.1] / [P0-9.1]: zero matches for `tenant`, `workspace`, `organization_id` across `src/`. Every domain row uses `user_id` as the boundary. SaaS bases generally need a higher unit of isolation so a single user can be in multiple billing units. Retrofitting after launch requires backfilling every domain table.
-
-**Decision (proposed):** Introduce `Organization` + `Membership(userId, organizationId, role)` and add `organizationId` to all current and future domain tables. `req.organizationId` is derived in `authMiddleware` from the active membership. Forks that genuinely need single-tenant-per-user can ship with `Organization` rows that 1:1 mirror users — but the column exists.
-
-**Status:** Accepted (2026-05-10). User confirmed the Organization + Membership approach is the right direction for a forkable SaaS base.
-
-**Options considered:**
-
-- _(a) Personal-only, single-tenant-per-user, document explicitly._ Rejected for a fork-base because most forks need at least workspaces.
-- _(b) Organization + Membership now (this decision)._ Selected.
-- _(c) Schema-per-tenant or DB-per-tenant._ Rejected: overkill for a base; isolated by row is sufficient and simpler.
-
-**Consequences:**
-
-- Migration: add `organization_id UUID NOT NULL` to `metrics`, `metric_categories`, `metric_settings`, `metric_logs`, plus a backfill from `users`.
-- Auth flow grows: invite, accept, switch-org.
-- Authorization gains a per-membership role enum (`owner | admin | member`), replacing the current `users.role` enum.
-
-**Links:**
-
-- `audit-2026-05-01.md` § [P0-3.1], [P0-9.1], [P1-1.3]
-- `src/features/shared/auth/infrastructure/persistence/models/user.sequelize.ts:65-69`
-
----
+Promoted to the architecture decision registry as **[ADR-0012](../../../explanation/decisions/adr-0012-multi-tenancy-direction-for-the-saas-base.md)**. That file is authoritative; this entry is a pointer.
 
 ## ADR-005 — Phase order and kit scaffolding for SaaS-readiness remediation (Accepted 2026-05-02)
 
@@ -200,39 +132,9 @@ The PR title is `chore: cheap-P0 sweep (LICENSE, README, .env.example, trust-pro
 
 ---
 
-## ADR-007 — CORS_ORIGIN accepts a comma-separated allowlist (Accepted 2026-05-22)
+## ADR-007 — CORS_ORIGIN accepts a comma-separated allowlist
 
-**Context:** Audit gap P2-4.5 in `audit-2026-05-20.md`: `CORS_ORIGIN` was a single `string`, so a deployment could only whitelist one origin. Multi-surface SaaS bases (app + admin + marketing) need more than one. This was the last ⚠️ item keeping Category 4 (Security) below the 80% threshold from ADR-001 exit criterion #3 — closing it flips Cat 4 to ≥80% ✅ and the ADR-001 fork-ready verdict from FAIL → PASS.
-
-**Decision:** Keep the env var name `CORS_ORIGIN`. Parse its value in `src/config/zodEnv.ts` as a comma-separated list, trimming whitespace and dropping empty entries, transforming the schema output type from `string | undefined` to `string[] | undefined`. In `src/server.ts`, pass the parsed array directly to `cors({ origin })` — the `cors` lib natively matches against `string[]` and echoes the matched origin back per request. When the list is empty/undefined, fall back to `["http://localhost:3000"]`. Env read uses `loadEnvOrExit()` at the use site per `.claude/rules/environment.md`.
-
-**Options considered:**
-
-- _Introduce `CORS_ORIGINS` (plural) and deprecate the singular._ Rejected: a breaking env-var rename for every existing deployment to gain nothing — comma-separated parsing covers the single-origin case identically.
-- _Use an `origin` callback function instead of an array._ Rejected: the `cors` lib's native array handling already does case-sensitive exact matching and per-request echoing; a hand-written callback would duplicate that logic with more code and no behavior change.
-
-**Backwards compatibility:** A single-origin value (e.g., `CORS_ORIGIN=https://app.example.com`) still parses cleanly — it produces a 1-element array. No existing deployment needs to change its env to keep working.
-
-**Consequences:**
-
-- Closes P2-4.5 → Cat 4 reaches the ≥80% ✅ bar → ADR-001 exit criterion #3 passes → repo is fork-ready by the strict reading of ADR-001.
-- `CORS_ORIGIN` schema output type changes from `string | undefined` to `string[] | undefined`. The only consumer is `src/server.ts`; no other call sites read it.
-- `.env.example` updated to demonstrate the multi-origin form.
-
-**Future tuning (non-blocking, deferred):** Surfaced during code review of this ADR; not required to close P2-4.5, captured here so the next person touching CORS doesn't re-discover them.
-
-- `__tests__/integration/middleware/cors.test.ts` — add a one-line comment inside `buildAppWithCors()` explaining the `withTestEnv` → `resetEnvCacheForTesting()` → `loadEnvOrExit()` cache cycle, so future readers don't wonder why a mini-app is rebuilt per test instead of importing the main `app`.
-- `.env.example` — optionally show the single-origin form alongside the multi-origin example for discoverability, e.g. a commented `# CORS_ORIGIN=https://app.example.com` line above the active multi-origin one.
-
-**Links:**
-
-- `audit-2026-05-20.md` § P2-4.5
-- `decisions.md` § ADR-001 (the fork-ready gate this closes)
-- `src/config/zodEnv.ts` (CORS_ORIGIN schema)
-- `src/server.ts` (cors() wiring)
-- `__tests__/integration/middleware/cors.test.ts` (allowed / disallowed / single-origin / whitespace coverage)
-
----
+Promoted to the architecture decision registry as **[ADR-0034](../../../explanation/decisions/adr-0034-cors-origin-allowlist.md)**. That file is authoritative; this entry is a pointer.
 
 ## ADR-008 — Accept "GOLD WITH CAVEATS" as the gone-gold verdict (Accepted 2026-05-24)
 
@@ -262,101 +164,14 @@ The PR title is `chore: cheap-P0 sweep (LICENSE, README, .env.example, trust-pro
 
 ---
 
-## ADR-009 — Tenant scoping is required on every cache key (Proposed 2026-06-05)
+## ADR-009 — Tenant scoping is required on every cache key
 
-**Context:** The 2026-06-05 re-audit (`audit-2026-06-05.md` §6.1 N1/N2) found that the visualization cache layer keys both single-metric (`viz:${userId}:${metricId}:${bucketIso}:${hash}`) and dashboard (`vizdash:${userId}:${bucketIso}:${hash}`) entries by `userId` only, even though `organizationId` is present on the port type and threaded into the read repository. This is a latent cross-tenant disclosure bug because users can belong to multiple organizations: a cache hit can return another org's data after a `switch-org`. The same shape exists structurally in `MetricCacheRedis`, `MetricLogCacheRedis`, and `buildCursorCacheKey` (`src/shared/cache/keys.ts:32–51`), where `organizationId` is an optional `segments` entry rather than a required parameter. Prior audits verified DB-layer org scoping but never inspected the cache layer.
+Promoted to the architecture decision registry as **[ADR-0035](../../../explanation/decisions/adr-0035-tenant-scoped-cache-keys.md)**. That file is authoritative; this entry is a pointer.
 
-**Decision:** Every Redis (or other shared) cache key generated by code in this repo MUST include `organizationId` as a mandatory segment in both the visible key prefix and the hashed raw string. The mechanism:
+## ADR-010 — Production-unsafe env switches must be refused at schema layer
 
-1. `buildCursorCacheKey` and all feature-specific cache-key helpers take `organizationId` as a **required positional parameter** — never as an optional bag.
-2. Invalidation port signatures (`VisualizationInvalidationPort`, `CacheInvalidationPort`, etc.) require `organizationId` in `invalidateByX(...)` methods so SCAN patterns can target a single org.
-3. An architecture test (extension of `__tests__/unit/architecture.test.ts`, see ADR-011 for the broader arch-test rework) asserts that no cache key template string contains `${userId}` without a sibling `${organizationId}` in the same template.
+Promoted to the architecture decision registry as **[ADR-0036](../../../explanation/decisions/adr-0036-refuse-production-unsafe-env-switches.md)**. That file is authoritative; this entry is a pointer.
 
-**Options considered:**
+## ADR-011 — Resolve the canonical-DDD-layout disagreement
 
-- _Soft convention + code review._ Rejected: this is exactly what failed for `viz`/`vizdash` keys — the convention existed but had no enforcement, and three prior audits missed the gap.
-- _Hash org into a per-org namespace prefix (`org:{id}/...`) for all Redis keys._ Considered. Cleaner long-term but requires reworking every invalidator's SCAN pattern in one shot. Defer behind ADR-009 minimum bar; revisit when Phase 6 cache port consolidation lands.
-- _Encrypt cache values with per-org keys._ Rejected for this iteration: large lift; the key-shape fix is enough to close the disclosure path. Encryption is a defense-in-depth option for a later phase.
-
-**Consequences:**
-
-- N1/N2 patch (visualization) is the canonical reference implementation. All other cache keys migrate to match.
-- Arch test gains teeth (intersects with C4 / ADR-011).
-- `MetricLogCacheRedis.invalidate()` signature changes — touches every caller. Mechanical refactor.
-- Once enforced, this is the kind of rule that's invisible in the happy path but catches the next class of cross-tenant cache bug at CI time.
-
-**Links:**
-
-- `audit-2026-06-05.md` §6.1 (N1, N2), §6.2 (N3)
-- `src/features/public/analytics/infrastructure/cache/VisualizationCacheRedis.ts:52–69`
-- `src/features/public/analytics/infrastructure/cache/VisualizationInvalidationAdapter.ts:6–26`
-- `src/shared/cache/keys.ts:32–51`
-
----
-
-## ADR-010 — Production-unsafe env switches must be refused at schema layer (Proposed 2026-06-05)
-
-**Context:** The 2026-06-05 re-audit (`audit-2026-06-05.md` §6.2 F1) flagged that `DISABLE_RATE_LIMITING` (a global killswitch for every rate limiter — global, user, analytics, switch-org, password-reset, email-verify) is parsed as a plain boolean with `.default("false")` at `src/config/zodEnv.ts:188–191`. There is **no validation that rejects `true` when `NODE_ENV=production`**. The rule is documented as "test/fuzzing only" in `.claude/rules/security.md`, but the rules-as-convention enforcement is purely advisory: a misconfigured production deploy (fat-finger, CI copying a test `.env`, a forker who didn't clean their `.env`) silently disables every rate limiter, and the only signal is a single `logger.info` line at process start (`src/shared/middleware/rate-limiter.ts:10`) that log monitoring may miss.
-
-**Decision:** Any environment variable whose `true` value would weaken a production security control MUST refuse that combination at the Zod schema layer via `.superRefine()`, causing `loadEnvOrExit()` to fail fast at process start. The minimum enforcement set for this codebase:
-
-| Env var                  | Refused-in-production combination                                        |
-| ------------------------ | ------------------------------------------------------------------------ |
-| `DISABLE_RATE_LIMITING`  | `true` when `NODE_ENV=production`                                        |
-| `ALLOW_TEST_HTTP_SERVER` | `true` when `NODE_ENV=production`                                        |
-| `RABBITMQ_USER`          | `"guest"` when `NODE_ENV=production` and `RABBITMQ_ENABLED`              |
-| `RABBITMQ_PASSWORD`      | `"guest"` when `NODE_ENV=production` and `RABBITMQ_ENABLED`              |
-| `SWAGGER_REQUIRE_AUTH`   | `false` when `NODE_ENV=production` (already conventionally true; codify) |
-
-**Options considered:**
-
-- _Documentation-only enforcement (status quo)._ Rejected — this audit caught a real instance; "documented as test-only" is not a safety property.
-- _Runtime assertion in the consuming module (e.g., `rate-limiter.ts`)._ Considered. The schema layer is preferred because it short-circuits the boot sequence consistently with `loadEnvOrExit()`'s fail-fast contract; runtime guards run later and can be bypassed by code that bypasses the singleton.
-- _Whitelist approach (every env switch must be explicitly safe-in-prod)._ Considered. Overkill at this scale; the named-bad list is more maintainable. Re-visit if the env schema doubles in size.
-
-**Consequences:**
-
-- Process refuses to start in `NODE_ENV=production` if any of the listed combinations are set. Failure surface is the startup logger error message, which is monitored.
-- Test envs continue to work unchanged — only `NODE_ENV=production` triggers the refusal.
-- Future security-relevant switches added to `zodEnv.ts` MUST be considered against this rule (a comment in the schema referencing this ADR will be added).
-
-**Links:**
-
-- `audit-2026-06-05.md` §6.2 (F1), §6.3 (F3)
-- `src/config/zodEnv.ts:188–191` (the unguarded `DISABLE_RATE_LIMITING`)
-- `src/config/zodEnv.ts:193–196` (`ALLOW_TEST_HTTP_SERVER`)
-- `src/config/zodEnv.ts:215–216` (RabbitMQ guest defaults)
-- `.claude/rules/security.md` (which will reference this ADR)
-
----
-
-## ADR-011 — Resolve the canonical-DDD-layout disagreement (Proposed 2026-06-05)
-
-**Context:** ADR-003 (Proposed 2026-05-01) mandates the layout `infrastructure/persistence/{models, repositories, mappers}/` and names `shared/auth` as the **reference slice**. The 2026-06-05 re-audit (`audit-2026-06-05.md` §5) found that the reference slice does **not** match the prescribed layout: `src/features/shared/auth/infrastructure/persistence/` is **flat** — seven `*RepositorySequelize.ts` files at the top level with only `models/` nested. Meanwhile, non-reference slices (`metric`, `metric-log`) match the ADR's nested layout. `.claude/rules/architecture.md` documents the nested layout as canonical, deepening the disagreement. The 2026-05-24 audit acknowledged this only obliquely via C4 (the arch test does not detect it).
-
-**Decision:** Pin the **nested layout** (`infrastructure/persistence/{models, repositories, mappers}/`) as canonical for all slices, including `shared/auth`. Migrate `shared/auth/infrastructure/persistence/` to the nested shape in a dedicated cleanup PR. Update `.claude/rules/architecture.md`'s code block to match and reference this ADR. Strengthen `__tests__/unit/architecture.test.ts` (closing C4) to assert the nested layout exists in every feature slice.
-
-Choosing nested over flat is motivated by:
-
-1. The architecture rule already documents nested.
-2. Non-reference slices already match nested, so the migration cost is lower (one slice moves, not five).
-3. The `mappers/` and `repositories/` subdirs scale better when a slice grows beyond ~3 entities.
-
-**Options considered:**
-
-- _Flatten everything to match `shared/auth`._ Rejected: four slices migrate vs. one, and the rules doc must change anyway. Higher cost, same outcome.
-- _Allow either layout (leave ADR-003 deliberately ambiguous)._ Rejected: ambiguity is what produced the drift. The arch test (ADR-011 follow-on) needs a single shape to assert.
-- _Defer until C4 closes._ Deferred is what the 05-24 audit effectively did. The disagreement is small but real and easy to fix now.
-
-**Consequences:**
-
-- `shared/auth/infrastructure/persistence/` is restructured into `{models, repositories, mappers}/`. Mechanical change; no behavior delta.
-- ADR-003 is amended (in-place) to flip from Proposed → **Accepted (revised 2026-06-05)** with this ADR as the supersession marker. The "reference slice = auth" wording is retained because `auth/feature.ts`, use-case organization, and port placement remain reference-grade; only the persistence layout is realigned.
-- C4 closure becomes simpler — the arch test now has one shape to enforce.
-
-**Links:**
-
-- `audit-2026-06-05.md` §5 (the contradiction surfaced explicitly)
-- `decisions.md` § ADR-003 (the original Proposed decision being revised)
-- `.claude/rules/architecture.md`
-- `__tests__/unit/architecture.test.ts:39–118` (the test that must be strengthened)
+Promoted to the architecture decision registry as **[ADR-0037](../../../explanation/decisions/adr-0037-resolve-canonical-ddd-layout-disagreement.md)**. That file is authoritative; this entry is a pointer.
