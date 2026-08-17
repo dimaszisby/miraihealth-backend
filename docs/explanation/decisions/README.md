@@ -3,7 +3,7 @@
 One decision per file, numbered globally and ordered by the date the decision was made.
 Format: [Nygard ADR](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions).
 
-**37 records.** 22 accepted, 15 proposed.
+**41 records.** 22 accepted, 19 proposed.
 
 ## Reading these
 
@@ -17,10 +17,14 @@ Format: [Nygard ADR](https://cognitect.com/blog/2011/11/15/documenting-architect
 
 ## Where the other decisions went
 
-Of 52 entries across 19 kit-local logs, 37 were genuine architecture decisions and are
-listed below. The rest stayed in their kit because they are project-management decisions — audit
-cadence, phase ordering, which sweep to run first — and mean nothing outside the initiative that
-made them. Security audit runs keep their own `ADR-SEC-*` series, scoped to the run.
+Of 52 entries across 19 kit-local logs, 37 were genuine architecture decisions and became
+ADR-0001 through ADR-0037. The rest stayed in their kit because they are project-management
+decisions — audit cadence, phase ordering, which sweep to run first — and mean nothing outside the
+initiative that made them. Security audit runs keep their own `ADR-SEC-*` series, scoped to the run.
+
+Records from ADR-0038 onward were written directly here rather than promoted from a kit log. The
+twelve-factor audit, for instance, produced four decisions and no `decisions.md` — all four
+constrain how the system is built, so none of them belonged in a kit.
 
 ## Records
 
@@ -63,6 +67,10 @@ made them. Security audit runs keep their own `ADR-SEC-*` series, scoped to the 
 | [ADR-0035](./adr-0035-tenant-scoped-cache-keys.md)                               | Tenant scoping is required on every cache key                          | **Proposed** | 2026-06-05 | saas-readiness       |
 | [ADR-0036](./adr-0036-refuse-production-unsafe-env-switches.md)                  | Production-unsafe env switches must be refused at schema layer         | **Proposed** | 2026-06-05 | saas-readiness       |
 | [ADR-0037](./adr-0037-resolve-canonical-ddd-layout-disagreement.md)              | Resolve the canonical-DDD-layout disagreement                          | **Proposed** | 2026-06-05 | saas-readiness       |
+| [ADR-0038](./adr-0038-observability-stack-as-attached-backing-service.md)        | Observability stack attaches as a backing service, not a bundle        | **Proposed** | 2026-08-17 | twelve-factor        |
+| [ADR-0039](./adr-0039-release-identity-and-immutable-artifacts.md)               | Every deploy carries a release identity; the built artefact ships      | **Proposed** | 2026-08-17 | twelve-factor        |
+| [ADR-0040](./adr-0040-worker-process-deployment-topology.md)                     | The worker is a first-class process type with its own deployment       | **Proposed** | 2026-08-17 | twelve-factor        |
+| [ADR-0041](./adr-0041-logs-as-event-streams-on-stdout.md)                        | Logs are an event stream on stdout; the app manages no log files       | **Proposed** | 2026-08-17 | twelve-factor        |
 
 ## Adding one
 
