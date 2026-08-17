@@ -20,6 +20,7 @@ Nothing here describes how the system works today. For that, use the four Diáta
 | `initiatives/`           | Doc kits for individual pieces of work — plan, checklist, ticket, decisions, trackers. One folder per initiative. |
 | `audits/saas-readiness/` | The SaaS-base readiness audit series and its roadmap.                                                             |
 | `audits/security/`       | Dated security audit runs, scaffolded from `../reference/security/audit-run-template/`.                           |
+| `audits/twelve-factor/`  | Twelve-Factor App compliance runs. Source-first; owns ADR-0038 through ADR-0041.                                  |
 | `incidents/`             | Postmortem-style records of past failures.                                                                        |
 | `dev-log/`               | Dated single-session engineering notes.                                                                           |
 | `todos/`                 | Ephemeral `YYYY-MM-DD-todo-*.md` notes. User-controlled; may be deleted without a follow-up PR.                   |

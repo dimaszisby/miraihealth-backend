@@ -1,6 +1,14 @@
 # C4 Level 2 — Containers
 
-Inside the backend: two deployable processes sharing one codebase and one database.
+Inside the backend: two process types sharing one codebase and one database — but only one of them
+is currently deployed anywhere.
+
+> ⚠️ **The job worker has no deployment.** `src/worker.ts` is fully implemented and has npm scripts,
+> but there is no Compose service, no Dockerfile `CMD` variant, no CI job, and no Render service that
+> runs it. The diagram below shows it dashed for that reason. See
+> [ADR-0040](../decisions/adr-0040-worker-process-deployment-topology.md) and
+> [`audit-2026-08-17.md`](../../internal/audits/twelve-factor/audit-2026-08-17.md) § Factor VIII.
+> Remove this note and the dashed styling in the PR that adds the service.
 
 ```mermaid
 graph TB
@@ -9,7 +17,7 @@ graph TB
     subgraph sys ["Lakira Backend"]
         direction TB
         api["<b>API server</b><br/><code>src/server.ts</code><br/><small>Express · port 5000<br/>npm start</small>"]
-        worker["<b>Job worker</b><br/><code>src/worker.ts</code><br/><small>RabbitMQ consumer<br/>npm run worker</small>"]
+        worker["<b>Job worker</b><br/><code>src/worker.ts</code><br/><small>RabbitMQ consumer<br/>not deployed — ADR-0040</small>"]
     end
 
     pg[("PostgreSQL<br/><small>Sequelize · 13 tables</small>")]
@@ -29,21 +37,24 @@ graph TB
     worker -->|"invalidate cache"| redis
 
     classDef proc fill:#1f6feb,stroke:#1a4f8a,color:#fff
+    classDef undeployed fill:#1f6feb,stroke:#f0883e,stroke-width:2px,stroke-dasharray:5 3,color:#fff
     classDef store fill:#6e7781,stroke:#4a5058,color:#fff
-    class api,worker proc
+    class api proc
+    class worker undeployed
     class pg,redis,mq,mail,web store
     style sys fill:none,stroke:#1f6feb,stroke-dasharray:4 4
 ```
 
 ## The two processes
 
-|             | API server         | Job worker                        |
-| ----------- | ------------------ | --------------------------------- |
-| Entry point | `src/server.ts`    | `src/worker.ts`                   |
-| Start       | `npm start`        | `npm run worker`                  |
-| Handles     | every HTTP request | queue messages only               |
-| Scales on   | request volume     | queue depth                       |
-| Required?   | yes                | only with `RABBITMQ_ENABLED=true` |
+|             | API server         | Job worker                             |
+| ----------- | ------------------ | -------------------------------------- |
+| Entry point | `src/server.ts`    | `src/worker.ts`                        |
+| Start       | `npm start`        | `npm run worker`                       |
+| Deployed?   | yes — Render       | **no** — no service runs it (ADR-0040) |
+| Handles     | every HTTP request | queue messages only                    |
+| Scales on   | request volume     | queue depth — once deployed            |
+| Required?   | yes                | only with `RABBITMQ_ENABLED=true`      |
 
 They share the same `src/`, the same models, and the same database. The worker exists so that
 slow or fire-and-forget work does not occupy a request thread — today that is dummy metric-log
