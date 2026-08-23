@@ -58,7 +58,12 @@ export class UpdateMetricSettings {
     settings.updateDetails(update);
 
     const saved = await this.repo.save(organizationId, settings);
-    await this.cache.invalidate(userId, settings.metricId, settings.id);
+    await this.cache.invalidate(
+      userId,
+      organizationId,
+      settings.metricId,
+      settings.id,
+    );
     return saved;
   }
 }

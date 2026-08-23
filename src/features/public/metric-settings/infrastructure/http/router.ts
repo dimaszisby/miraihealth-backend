@@ -31,7 +31,7 @@ import { requireJsonObjectBody } from "@/shared/middleware/require-json-object.j
 //   `metricSettings:${req.user?.id}:${req.query.metricId || "all"}`;
 
 const metricSettingCacheKey = (req: AuthRequest) =>
-  `metricSetting:${req.user?.id}:${req.params.id}`;
+  `metricSetting:${req.user?.organizationId}:${req.user?.id}:${req.params.id}`;
 
 const firstNonEmpty = (...vals: unknown[]) =>
   vals.find((v) => typeof v === "string" && v.trim().length > 0) as
@@ -70,8 +70,8 @@ const metricSettingsCursorCacheKey = (req: AuthRequest) => {
     feature: METRIC_SETTINGS_CURSOR_FEATURE,
     version: METRIC_SETTINGS_CURSOR_VERSION,
     userId: req.user?.id,
+    organizationId: req.user?.organizationId,
     segments: [
-      ["org", req.user?.organizationId],
       ["l", limit],
       ["s", sort],
       ["fm", metricId],

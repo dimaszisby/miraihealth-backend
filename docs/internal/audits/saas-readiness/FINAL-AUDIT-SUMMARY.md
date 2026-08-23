@@ -1,6 +1,9 @@
 # SaaS Readiness — Final Audit Summary (Gone-Gold Closeout)
 
-**Status:** ⚠️ **GOLD WITH CAVEATS — DOWNGRADED PENDING N1+N2+F1** (per `audit-2026-06-05.md`).
+**Status:** ⚠️ **GOLD WITH CAVEATS** — the N1+N2+F1 downgrade is **lifted as of 2026-08-23**.
+N1, N2, N3 and F1 all landed together (tenant-scoped cache keys per ADR-0035, production-unsafe
+env refusal per ADR-0036, both now Accepted). The original C1–C6 caveats remain open-unchanged.
+Historical context follows.
 The 2026-06-05 re-audit confirmed the 05-24 baseline holds (zero source code drift between
 audits) but surfaced two **NEW P0** (cache-layer cross-tenant scoping) and one **NEW HIGH**
 (`DISABLE_RATE_LIMITING` has no production guard) findings that all three prior audits missed.
@@ -208,18 +211,18 @@ findings are exactly the kind a clean GOLD restatement should refuse to ignore.
 
 ### Newly surfaced findings (full details in `audit-2026-06-05.md` §6)
 
-| ID               | Pri    | Summary                                                                                                                                    | Effort | ADR          |
-| ---------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------ | ------ | ------------ |
-| N1               | **P0** | `viz`/`vizdash` Redis cache keys scoped by `userId` only — cross-org cache disclosure                                                      | ≤1h    | ADR-009      |
-| N2               | **P0** | `VisualizationInvalidationAdapter` missing `organizationId` parameter                                                                      | ≤1h    | ADR-009      |
-| F1               | **HI** | `DISABLE_RATE_LIMITING` has no `NODE_ENV=production` schema guard                                                                          | ≤30m   | ADR-010      |
-| N3               | P1     | Cache-key tenant-scoping bug is systemic (metric / metric-log / cursor helpers)                                                            | ≤1d    | ADR-009      |
-| N4               | P1     | No `x-request-id` propagation across RabbitMQ; consumer outside ALS                                                                        | ≤1d    | —            |
-| N5               | P1     | OpenAPI omits `/metrics/dummy` and `/metric-categories/dummy` (mounted in code, missing from spec)                                         | ≤1d    | —            |
-| ADR-003 reopened | P1     | Auth-flat vs metric-nested persistence layout disagreement (see §6 below; new ADR-011)                                                     | ≤1d    | ADR-011      |
-| N6–N11           | P2     | Queue per-org tenancy, APM gap, Sequelize pool defaults, Redis client topology, stats N+1, JOIN drop                                       | varies | —            |
-| F2–F5            | P2     | `SENTRY_DSN` redaction gap, RabbitMQ `guest:guest` default, `/metric-logs/stats` unbounded range, `MetricSettings.create()` trust boundary | varies | ADR-010 (F3) |
-| F6, F7 + minor   | P3     | CORS normalization, `sameSite` doc gap, `x-request-id` validation, sample-rate clamp                                                       | varies | —            |
+| ID               | Pri                              | Summary                                                                                                                                    | Effort | ADR          |
+| ---------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------ | ------------ |
+| N1               | ~~**P0**~~ **CLOSED 2026-08-23** | `viz`/`vizdash` Redis cache keys scoped by `userId` only — cross-org cache disclosure                                                      | ≤1h    | ADR-009      |
+| N2               | ~~**P0**~~ **CLOSED 2026-08-23** | `VisualizationInvalidationAdapter` missing `organizationId` parameter                                                                      | ≤1h    | ADR-009      |
+| F1               | ~~**HI**~~ **CLOSED 2026-08-23** | `DISABLE_RATE_LIMITING` has no `NODE_ENV=production` schema guard                                                                          | ≤30m   | ADR-010      |
+| N3               | ~~P1~~ **CLOSED 2026-08-23**     | Cache-key tenant-scoping bug is systemic (metric / metric-log / cursor helpers)                                                            | ≤1d    | ADR-009      |
+| N4               | P1                               | No `x-request-id` propagation across RabbitMQ; consumer outside ALS                                                                        | ≤1d    | —            |
+| N5               | P1                               | OpenAPI omits `/metrics/dummy` and `/metric-categories/dummy` (mounted in code, missing from spec)                                         | ≤1d    | —            |
+| ADR-003 reopened | P1                               | Auth-flat vs metric-nested persistence layout disagreement (see §6 below; new ADR-011)                                                     | ≤1d    | ADR-011      |
+| N6–N11           | P2                               | Queue per-org tenancy, APM gap, Sequelize pool defaults, Redis client topology, stats N+1, JOIN drop                                       | varies | —            |
+| F2–F5            | P2                               | `SENTRY_DSN` redaction gap, RabbitMQ `guest:guest` default, `/metric-logs/stats` unbounded range, `MetricSettings.create()` trust boundary | varies | ADR-010 (F3) |
+| F6, F7 + minor   | P3                               | CORS normalization, `sameSite` doc gap, `x-request-id` validation, sample-rate clamp                                                       | varies | —            |
 
 ### 2026-06-05 contradiction with prior audits — surfaced explicitly
 

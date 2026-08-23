@@ -68,7 +68,12 @@ export class UpdateMetricLog {
 
     const saved = await this.repo.save(organizationId, log);
     if (this.cache.isEnabled()) {
-      await this.cache.invalidate(userId, saved.metricId, saved.id);
+      await this.cache.invalidate(
+        userId,
+        organizationId,
+        saved.metricId,
+        saved.id,
+      );
     }
     return saved;
   }

@@ -32,6 +32,7 @@ describe("shared/cache/keys", () => {
         feature: "metrics:list",
         version: 4,
         userId: "user-1",
+        organizationId: "org-1",
         segments: [
           ["cursor", "  abc  "],
           ["filter", null],
@@ -40,7 +41,7 @@ describe("shared/cache/keys", () => {
       });
 
       expect(key).toBe(
-        "cursor:metrics:list:v4:user-1:cursor:abc:filter:_:page:2",
+        "cursor:metrics:list:v4:user-1:org:org-1:cursor:abc:filter:_:page:2",
       );
     });
 
@@ -48,6 +49,7 @@ describe("shared/cache/keys", () => {
       const key = buildCursorCacheKey({
         feature: "analytics",
         userId: "",
+        organizationId: "",
         segments: [
           ["empty", ""],
           ["boolTrue", true],
@@ -64,6 +66,7 @@ describe("shared/cache/keys", () => {
         [
           "cursor:analytics:v1",
           "_", // userId
+          "org:_",
           "empty:_",
           "boolTrue:1",
           "boolFalse:0",
@@ -80,10 +83,11 @@ describe("shared/cache/keys", () => {
       const key = buildCursorCacheKey({
         feature: "metrics",
         version: undefined,
+        organizationId: undefined,
         segments: [],
       });
 
-      expect(key).toBe("cursor:metrics:v1:_");
+      expect(key).toBe("cursor:metrics:v1:_:org:_");
     });
   });
 });

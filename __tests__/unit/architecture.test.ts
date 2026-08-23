@@ -102,6 +102,48 @@ describe("Architecture enforcement", () => {
     }
   });
 
+  // ADR-0035: cache keys are a tenant boundary and must be scoped by organization,
+  // independently of the repository layer's WHERE clauses. A soft convention already
+  // failed here once — the viz/vizdash keys were user-only through three audits — so
+  // this rule gives it teeth at CI time.
+  describe("cache keys are tenant-scoped", () => {
+    const SRC_ROOT = path.resolve(__dirname, "../../src");
+    const USER_REF = /\$\{[^}]*\b(?:userId|user\?\.id|user\.id)\b[^}]*\}/;
+    const ORG_REF = /organizationId|\borg\b/;
+
+    const isCacheKeyFile = (file: string, content: string): boolean =>
+      file.includes(`${path.sep}cache${path.sep}`) ||
+      content.includes("cacheMiddleware") ||
+      content.includes("buildCursorCacheKey");
+
+    const cacheFiles = getAllTsFiles(SRC_ROOT).filter((file) =>
+      isCacheKeyFile(file, fs.readFileSync(file, "utf-8")),
+    );
+
+    it("finds cache-key files to check", () => {
+      expect(cacheFiles.length).toBeGreaterThan(0);
+    });
+
+    for (const file of cacheFiles) {
+      const relPath = path.relative(SRC_ROOT, file);
+      it(`${relPath} scopes every user-keyed cache template by organization`, () => {
+        const content = fs
+          .readFileSync(file, "utf-8")
+          // strip comments — a commented-out key generator is not a live cache key
+          .replace(/\/\*[\s\S]*?\*\//g, "")
+          .replace(/^\s*\/\/.*$/gm, "");
+        const templates = content.match(/`[^`]*`/g) ?? [];
+
+        const offenders = templates.filter(
+          (tpl) =>
+            tpl.includes(":") && USER_REF.test(tpl) && !ORG_REF.test(tpl),
+        );
+
+        expect(offenders).toEqual([]);
+      });
+    }
+  });
+
   describe("legacy mappers directory does not exist", () => {
     it("src/utils/mappers/ does not exist", () => {
       const mappersDir = path.resolve(__dirname, "../../src/utils/mappers");

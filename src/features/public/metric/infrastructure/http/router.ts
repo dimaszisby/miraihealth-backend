@@ -30,8 +30,10 @@ import { requireJsonObjectBody } from "@/shared/middleware/require-json-object.j
 const asString = (value: unknown): string | undefined =>
   typeof value === "string" ? value : undefined;
 
-const METRIC_CURSOR_FEATURE = "metrics";
-const METRIC_CURSOR_VERSION = 2;
+import {
+  METRIC_CURSOR_FEATURE,
+  METRIC_CURSOR_VERSION,
+} from "../../application/cache.constants.js";
 
 const metricsCursorCacheKey = (req: AuthRequest) => {
   const limit = Number(asString(req.query.limit) ?? 20);
@@ -46,8 +48,8 @@ const metricsCursorCacheKey = (req: AuthRequest) => {
     feature: METRIC_CURSOR_FEATURE,
     version: METRIC_CURSOR_VERSION,
     userId: req.user?.id,
+    organizationId: req.user?.organizationId,
     segments: [
-      ["org", req.user?.organizationId],
       ["l", limit],
       ["s", sort],
       ["q", search],
@@ -80,7 +82,7 @@ const metricCacheKey = (req: AuthRequest) => {
     if (!includeNormalized) includeNormalized = "flat";
   }
 
-  return `metric:${req.user?.id}:${req.params.id}:inc:${includeNormalized}:ll:${logsLimit}`;
+  return `metric:${req.user?.organizationId}:${req.user?.id}:${req.params.id}:inc:${includeNormalized}:ll:${logsLimit}`;
 };
 
 export const createMetricRouter = () => {

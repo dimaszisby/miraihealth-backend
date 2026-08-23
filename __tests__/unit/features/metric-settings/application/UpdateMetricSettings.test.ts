@@ -100,6 +100,7 @@ describe("UpdateMetricSettings", () => {
     expect(repo.save).toHaveBeenCalledWith(TEST_ORG_ID, entity);
     expect(cache.invalidate).toHaveBeenCalledWith(
       "user-1",
+      TEST_ORG_ID,
       "metric-9",
       "settings-5",
     );

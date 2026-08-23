@@ -64,6 +64,7 @@ describe("UpdateGoalAchievement", () => {
     expect(repo.save).toHaveBeenCalledWith(TEST_ORG_ID, entity);
     expect(cache.invalidate).toHaveBeenCalledWith(
       "user-2",
+      TEST_ORG_ID,
       "metric-45",
       "settings-12",
     );

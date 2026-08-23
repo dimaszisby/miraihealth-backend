@@ -60,7 +60,12 @@ describe("CreateMetricLog use case", () => {
       "metric-1",
     );
     expect(repo.create).toHaveBeenCalled();
-    expect(cache.invalidate).toHaveBeenCalledWith("user-1", "metric-1", log.id);
+    expect(cache.invalidate).toHaveBeenCalledWith(
+      "user-1",
+      "org-1",
+      "metric-1",
+      log.id,
+    );
     expect(result).toBe(log);
   });
 

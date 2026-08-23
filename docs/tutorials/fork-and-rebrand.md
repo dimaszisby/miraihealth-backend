@@ -78,13 +78,15 @@ docs/explanation/product-requirements.md
 `docs/internal/audits/saas-readiness/` is the honest assessment of this template, and as of
 `audit-2026-06-05.md` it carries **two open P0s and one open HIGH**:
 
-- Cache keys are scoped by `userId` but not `organizationId`
-  ([ADR-0035](../explanation/decisions/adr-0035-tenant-scoped-cache-keys.md)) — a cross-tenant
-  disclosure risk if you run multi-tenant.
-- `DISABLE_RATE_LIMITING` has no production guard
-  ([ADR-0036](../explanation/decisions/adr-0036-refuse-production-unsafe-env-switches.md)).
+Both of the caveats that used to sit here are now **closed**:
 
-Both are small fixes. Neither is fixed for you.
+- Cache keys are scoped by `organizationId` as well as `userId`
+  ([ADR-0035](../explanation/decisions/adr-0035-tenant-scoped-cache-keys.md)), and an
+  architecture test fails CI if a new cache key omits the organization segment.
+- Production-unsafe env switches — `DISABLE_RATE_LIMITING`, `ALLOW_TEST_HTTP_SERVER`,
+  `SWAGGER_REQUIRE_AUTH=false`, and default `guest` RabbitMQ credentials — are refused at
+  startup when `NODE_ENV=production`
+  ([ADR-0036](../explanation/decisions/adr-0036-refuse-production-unsafe-env-switches.md)).
 
 ## 6. Prune the internal docs
 

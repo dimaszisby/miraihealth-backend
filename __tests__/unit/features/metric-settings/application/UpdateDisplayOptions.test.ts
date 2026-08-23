@@ -84,6 +84,7 @@ describe("UpdateDisplayOptions", () => {
     expect(repo.save).toHaveBeenCalledWith(TEST_ORG_ID, entity);
     expect(cache.invalidate).toHaveBeenCalledWith(
       "user-5",
+      TEST_ORG_ID,
       "metric-55",
       "settings-20",
     );

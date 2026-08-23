@@ -44,8 +44,8 @@ const categoriesCacheKey = (req: AuthRequest) => {
     feature: METRIC_CATEGORY_CURSOR_FEATURE,
     version: METRIC_CATEGORY_CURSOR_VERSION,
     userId: req.user?.id,
+    organizationId: req.user?.organizationId,
     segments: [
-      ["org", req.user?.organizationId],
       ["l", Number(limitParam ?? 20)],
       ["s", sortParam ?? "-createdAt"],
       ["q", qParam ?? ""],
@@ -57,7 +57,7 @@ const categoriesCacheKey = (req: AuthRequest) => {
 };
 
 const categoryCacheKey = (req: AuthRequest) =>
-  `category:${req.user?.id}:${req.params.id}`;
+  `category:${req.user?.organizationId}:${req.user?.id}:${req.params.id}`;
 
 export const createMetricCategoryRouter = () => {
   const router = Router();

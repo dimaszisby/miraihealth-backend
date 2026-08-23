@@ -60,7 +60,7 @@ export class CreateMetricLog {
     });
 
     if (this.cache.isEnabled()) {
-      await this.cache.invalidate(userId, metricId, log.id);
+      await this.cache.invalidate(userId, organizationId, metricId, log.id);
     }
 
     return log;

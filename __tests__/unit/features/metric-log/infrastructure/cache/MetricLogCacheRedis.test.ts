@@ -54,47 +54,52 @@ describe("MetricLogCacheRedis", () => {
   it("short-circuits when redis is closed", async () => {
     redisClient.isOpen = false;
 
-    await cache.invalidate("user-1", "metric-2");
+    await cache.invalidate("user-1", "org-1", "metric-2");
 
     expect(invalidateCacheByPattern).not.toHaveBeenCalled();
     expect(vizInvalidator.invalidateByMetric).not.toHaveBeenCalled();
   });
 
   it("invalidates all metric log scopes and linked visualizations", async () => {
-    await cache.invalidate("user-1", "metric-2", "log-3");
+    await cache.invalidate("user-1", "org-1", "metric-2", "log-3");
 
     expect(invalidateCacheByPattern).toHaveBeenCalledWith(
-      "logs:user-1:metric-2:*",
-    );
-    expect(invalidateCacheByPattern).toHaveBeenCalledWith("logs:user-1:all:*");
-    expect(invalidateCacheByPattern).toHaveBeenCalledWith(
-      `${ALL_CURSOR_NS}:user-1:*fm:metric-2*`,
+      `${ALL_CURSOR_NS}:user-1:org:org-1:*fm:metric-2*`,
     );
     expect(invalidateCacheByPattern).toHaveBeenCalledWith(
-      `${ALL_CURSOR_NS}:user-1:*`,
+      `${ALL_CURSOR_NS}:user-1:org:org-1:*`,
     );
-    expect(invalidateCache).toHaveBeenCalledWith("logStats:user-1:metric-2");
-    expect(invalidateCache).toHaveBeenCalledWith("logStats:user-1");
-    expect(invalidateCache).toHaveBeenCalledWith("log:user-1:log-3");
+    expect(invalidateCache).toHaveBeenCalledWith(
+      "logStats:org-1:user-1:metric-2",
+    );
+    expect(invalidateCache).toHaveBeenCalledWith("logStats:org-1:user-1:all");
+    expect(invalidateCache).toHaveBeenCalledWith("log:org-1:user-1:log-3");
     expect(vizInvalidator.invalidateByMetric).toHaveBeenCalledWith(
       "user-1",
+      "org-1",
       "metric-2",
     );
     expect(logCacheInvalidation).toHaveBeenCalledWith("metric-log-cache", {
       userId: "user-1",
+      organizationId: "org-1",
       metricId: "metric-2",
       logId: "log-3",
     });
   });
 
   it("omits logId invalidation when not provided", async () => {
-    await cache.invalidate("user-9", "metric-7");
+    await cache.invalidate("user-9", "org-9", "metric-7");
 
-    expect(invalidateCache).toHaveBeenCalledWith("logStats:user-9:metric-7");
-    expect(invalidateCache).toHaveBeenCalledWith("logStats:user-9");
-    expect(invalidateCache).not.toHaveBeenCalledWith("log:user-9:metric-7");
+    expect(invalidateCache).toHaveBeenCalledWith(
+      "logStats:org-9:user-9:metric-7",
+    );
+    expect(invalidateCache).toHaveBeenCalledWith("logStats:org-9:user-9:all");
+    expect(invalidateCache).not.toHaveBeenCalledWith(
+      "log:org-9:user-9:metric-7",
+    );
     expect(logCacheInvalidation).toHaveBeenCalledWith("metric-log-cache", {
       userId: "user-9",
+      organizationId: "org-9",
       metricId: "metric-7",
       logId: "-",
     });
@@ -104,11 +109,18 @@ describe("MetricLogCacheRedis", () => {
     const err = new Error("redis down");
     invalidateCacheByPattern.mockRejectedValueOnce(err);
 
-    await expect(cache.invalidate("user-a", "metric-b")).rejects.toThrow(err);
+    await expect(
+      cache.invalidate("user-a", "org-a", "metric-b"),
+    ).rejects.toThrow(err);
     expect(logCacheInvalidationError).toHaveBeenCalledWith(
       "metric-log-cache",
       err,
-      { userId: "user-a", metricId: "metric-b", logId: "-" },
+      {
+        userId: "user-a",
+        organizationId: "org-a",
+        metricId: "metric-b",
+        logId: "-",
+      },
     );
   });
 });

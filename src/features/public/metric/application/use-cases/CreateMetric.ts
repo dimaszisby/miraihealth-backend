@@ -52,7 +52,11 @@ export class CreateMetric {
       await this.settings.createDefault(metric.id, input.organizationId, t);
 
       if (this.cache.isEnabled()) {
-        await this.cache.invalidateMetrics(metric.userId, metric.id);
+        await this.cache.invalidateMetrics(
+          metric.userId,
+          input.organizationId,
+          metric.id,
+        );
       }
 
       return metric;

@@ -1,6 +1,6 @@
 # ADR-0035 — Tenant scoping is required on every cache key
 
-- **Status:** Proposed
+- **Status:** Accepted (2026-08-23)
 - **Date:** 2026-06-05
 - **Related:** Open finding — see `docs/internal/audits/saas-readiness/audit-2026-06-05.md`.
 - **Origin:** `ADR-009` in the SaaS readiness audit kit — [`saas-readiness`](../../internal/audits/saas-readiness/decisions.md)

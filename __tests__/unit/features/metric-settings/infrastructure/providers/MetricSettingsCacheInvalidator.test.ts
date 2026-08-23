@@ -23,7 +23,7 @@ describe("MetricSettingsCacheInvalidator", () => {
       .spyOn(redis, "invalidateCache")
       .mockResolvedValue();
 
-    await sut.invalidate("user-1", "metric-1", "settings-1");
+    await sut.invalidate("user-1", "org-1", "metric-1", "settings-1");
     expect(invalidateSpy).not.toHaveBeenCalled();
   });
 
@@ -40,18 +40,21 @@ describe("MetricSettingsCacheInvalidator", () => {
       .spyOn(cacheLogging, "logCacheInvalidationError")
       .mockImplementation(() => undefined);
 
-    await sut.invalidate("user-1", "metric-1", "settings-1");
+    await sut.invalidate("user-1", "org-1", "metric-1", "settings-1");
 
-    expect(keySpy).toHaveBeenCalledTimes(3);
-    expect(keySpy).toHaveBeenNthCalledWith(1, "metricSettings:user-1");
-    expect(patternSpy).toHaveBeenCalledWith("metricSettings:user-1:*");
-    expect(keySpy).toHaveBeenNthCalledWith(2, "metricSettings:user-1:metric-1");
+    expect(keySpy).toHaveBeenCalledTimes(2);
+    expect(patternSpy).toHaveBeenCalledWith("metricSettings:org-1:user-1:*");
     expect(keySpy).toHaveBeenNthCalledWith(
-      3,
-      "metricSetting:user-1:settings-1",
+      1,
+      "metricSettings:org-1:user-1:metric-1",
+    );
+    expect(keySpy).toHaveBeenNthCalledWith(
+      2,
+      "metricSetting:org-1:user-1:settings-1",
     );
     expect(logSpy).toHaveBeenCalledWith("metric-settings-cache", {
       userId: "user-1",
+      organizationId: "org-1",
       metricId: "metric-1",
       settingsId: "settings-1",
     });

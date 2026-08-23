@@ -88,7 +88,11 @@ describe("GenerateDummyMetricLogs use case", () => {
       const result = await sut.execute(INPUT);
 
       expect(models.MetricLog.create).toHaveBeenCalledTimes(INPUT.count);
-      expect(cache.invalidate).toHaveBeenCalledWith("user-1", "metric-1");
+      expect(cache.invalidate).toHaveBeenCalledWith(
+        "user-1",
+        "org-1",
+        "metric-1",
+      );
       expect(queue.publish).not.toHaveBeenCalled();
       expect(typeof result.jobId).toBe("string");
     });

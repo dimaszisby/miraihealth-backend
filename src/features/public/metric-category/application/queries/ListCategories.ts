@@ -19,8 +19,8 @@ export class ListCategories {
       feature: METRIC_CATEGORY_CURSOR_FEATURE,
       version: METRIC_CATEGORY_CURSOR_VERSION,
       userId: q.userId,
+      organizationId: q.organizationId,
       segments: [
-        ["org", q.organizationId],
         ["l", q.limit],
         ["s", q.sort],
         ["q", q.q ?? ""],

@@ -75,7 +75,7 @@ export class UpdateMetric {
     const saved = await this.repo.save(organizationId, metric);
 
     if (this.cache.isEnabled() && metric.id) {
-      await this.cache.invalidateMetrics(userId, metric.id);
+      await this.cache.invalidateMetrics(userId, organizationId, metric.id);
     }
 
     return saved;

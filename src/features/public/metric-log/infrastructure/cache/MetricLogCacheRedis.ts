@@ -27,38 +27,43 @@ export class MetricLogCacheRedis implements CachePort {
 
   async invalidate(
     userId: string,
+    organizationId: string,
     metricId: string,
     logId?: string,
   ): Promise<void> {
     if (!this.isEnabled()) return;
 
     try {
-      await invalidateCacheByPattern(`logs:${userId}:${metricId}:*`);
-      await invalidateCacheByPattern(`logs:${userId}:all:*`);
       await invalidateCacheByPattern(
-        `${METRIC_LOG_CURSOR_NAMESPACE_ALL}:${userId}:*fm:${metricId}*`,
+        `${METRIC_LOG_CURSOR_NAMESPACE_ALL}:${userId}:org:${organizationId}:*fm:${metricId}*`,
       );
       await invalidateCacheByPattern(
-        `${METRIC_LOG_CURSOR_NAMESPACE_ALL}:${userId}:*`,
+        `${METRIC_LOG_CURSOR_NAMESPACE_ALL}:${userId}:org:${organizationId}:*`,
       );
 
-      await invalidateCache(`logStats:${userId}:${metricId}`);
-      await invalidateCache(`logStats:${userId}`);
+      await invalidateCache(`logStats:${organizationId}:${userId}:${metricId}`);
+      await invalidateCache(`logStats:${organizationId}:${userId}:all`);
 
-      await this.visualizationInvalidation.invalidateByMetric(userId, metricId);
+      await this.visualizationInvalidation.invalidateByMetric(
+        userId,
+        organizationId,
+        metricId,
+      );
 
       if (logId) {
-        await invalidateCache(`log:${userId}:${logId}`);
+        await invalidateCache(`log:${organizationId}:${userId}:${logId}`);
       }
 
       logCacheInvalidation("metric-log-cache", {
         userId,
+        organizationId,
         metricId,
         logId: logId ?? "-",
       });
     } catch (error) {
       logCacheInvalidationError("metric-log-cache", error, {
         userId,
+        organizationId,
         metricId,
         logId: logId ?? "-",
       });

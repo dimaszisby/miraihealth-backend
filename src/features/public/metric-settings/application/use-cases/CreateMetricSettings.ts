@@ -57,7 +57,7 @@ export class CreateMetricSettings {
       },
     });
 
-    await this.cache.invalidate(userId, metricId, created.id);
+    await this.cache.invalidate(userId, organizationId, metricId, created.id);
     return created;
   }
 }

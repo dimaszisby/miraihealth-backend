@@ -265,8 +265,8 @@ describe("metric router", () => {
       feature: "metrics",
       version: 2,
       userId: "user-99",
+      organizationId: "org-1",
       segments: [
-        ["org", "org-1"],
         ["l", 50],
         ["s", "createdAt"],
         ["q", "search"],
@@ -286,13 +286,13 @@ describe("metric router", () => {
     ) => string;
 
     const req: any = {
-      user: { id: "user-1" },
+      user: { id: "user-1", organizationId: "org-1" },
       params: { id: "metric-1" },
       query: { include: "logs,settings,unknown", logsLimit: "15" },
     };
 
     expect(detailBuilder(req)).toBe(
-      "metric:user-1:metric-1:inc:logs,settings:ll:15",
+      "metric:org-1:user-1:metric-1:inc:logs,settings:ll:15",
     );
   });
 });

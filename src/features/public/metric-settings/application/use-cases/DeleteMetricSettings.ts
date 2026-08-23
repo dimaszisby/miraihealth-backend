@@ -22,6 +22,11 @@ export class DeleteMetricSettings {
     if (!settings) throw new AppError("Metric Settings not found", 404);
 
     await this.repo.delete(organizationId, settings);
-    await this.cache.invalidate(userId, settings.metricId, settings.id);
+    await this.cache.invalidate(
+      userId,
+      organizationId,
+      settings.metricId,
+      settings.id,
+    );
   }
 }
