@@ -27,6 +27,16 @@ npm ci
 cp .env.example .env
 ```
 
+One file, `.env`, drives local development: `docker compose` reads it, the `migrate:*` scripts read
+it, and `scripts/bootstrap-fork.sh` writes to it. That is not a style preference — Docker Compose's
+`${VAR}` interpolation only ever reads `.env` (or the shell), never a service's `env_file`, and the
+database Compose creates is built from those values. Splitting config across a second file lets the
+app's credentials and the database it connects to drift apart.
+
+The values in `.env.example` are chosen so a verbatim copy works: `DB_USER`, `DB_PASSWORD` and
+`DB_NAME` are what Compose passes to Postgres as `POSTGRES_USER` / `POSTGRES_PASSWORD` /
+`POSTGRES_DB`, and the `*_DATABASE_URL` entries match them.
+
 `JWT_SECRET` is the only variable with no default. `.env.example` ships the placeholder
 `replace-with-a-long-random-secret`, which boots but is not a secret. Generate a real one:
 
@@ -174,6 +184,25 @@ wrong.
 **`ZodError: JWT_SECRET Required`** — there is no `.env` at all; step 2 was skipped. If you copied
 `.env.example` but skipped generating a secret the app still boots, on the shipped placeholder —
 fine for this tutorial, not for anything else.
+
+**`env file .env not found`** — step 2 was skipped; `docker compose` reads `.env` for both the app's
+environment and the database credentials it creates.
+
+**`password authentication failed`** — your `.env` credentials no longer match the database in the
+volume. Compose creates the database once, from the values present the first time it starts, so
+editing `DB_USER`/`DB_PASSWORD`/`DB_NAME` afterwards requires recreating it:
+`docker compose down -v && docker compose up -d`.
+
+**`database files are incompatible with server`** — your `db_data_volume` was created by an older
+Postgres. The images moved to `postgres:18` (matching production) on 2026-08-23, and Postgres will
+not open a data directory written by a different major. Recreate the volumes once:
+
+```bash
+docker compose down -v && docker compose up -d
+npm run migrate:development
+```
+
+This deletes local development data only.
 
 **Postgres connection refused** — `docker compose ps` and wait for `(healthy)`.
 
