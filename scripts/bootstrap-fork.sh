@@ -11,7 +11,7 @@
 #   2. Replaces "lakira" with the derived short name (strip -backend suffix)
 #      in queue-topology references, DB names, and CI DB refs.
 #   3. Rotates JWT_SECRET in .env (creating it from .env.example if needed).
-#   4. Sets APP_NAME=<new-name> in .env.
+#   4. Sets APP_NAME=<new-name> in .env, and creates .env.test from its template.
 #   5. Removes docs/internal/ (upstream working material); --keep-internal opts out.
 #   6. Drops FORKED-FROM.md with the upstream commit SHA.
 #
@@ -167,6 +167,19 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# 3b. Create .env.test from its template
+#
+# The closing instructions below tell the user to run `npm test`, which cannot
+# work without this file — it is gitignored and absent on a fresh clone, and
+# nothing else in the repo creates it (SAAS-BASE-CHECKLIST C1).
+# ---------------------------------------------------------------------------
+ENV_TEST_FILE="$REPO_ROOT/.env.test"
+if [[ ! -f "$ENV_TEST_FILE" && -f "$REPO_ROOT/.env.test.example" ]]; then
+  cp "$REPO_ROOT/.env.test.example" "$ENV_TEST_FILE"
+  echo "Created .env.test from .env.test.example"
+fi
+
+# ---------------------------------------------------------------------------
 # 4. Set APP_NAME in .env
 # ---------------------------------------------------------------------------
 if [[ -f "$ENV_FILE" ]]; then
@@ -216,6 +229,9 @@ echo "FORKED-FROM.md created."
 echo ""
 echo "Done! Next steps:"
 echo "  1. Run: npm install"
-echo "  2. Copy .env.example to .env and fill in secrets"
+echo "  2. Start services: docker compose up -d"
 echo "  3. Run: npm run migrate:development"
 echo "  4. Run: npm test"
+echo ""
+echo "This script already created .env and .env.test from their templates and"
+echo "rotated JWT_SECRET. Review .env before pointing it at anything real."

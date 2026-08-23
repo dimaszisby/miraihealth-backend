@@ -25,7 +25,11 @@ npm ci
 
 ```bash
 cp .env.example .env
+cp .env.test.example .env.test
 ```
+
+`.env.test` is only needed for `npm test`; the second copy is here so the tutorial and the test
+suites work from the same starting point. Both files are gitignored.
 
 One file, `.env`, drives local development: `docker compose` reads it, the `migrate:*` scripts read
 it, and `scripts/bootstrap-fork.sh` writes to it. That is not a style preference — Docker Compose's

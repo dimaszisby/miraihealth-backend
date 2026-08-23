@@ -74,7 +74,7 @@ than the 2026-05-20 self-audit (52 / 9 / 4) — see ADR-008.
 
 ## Open caveats — path to clean GOLD (each ≤1 day)
 
-1. ~~**C1 · Forkability (P1)**~~ — **CLOSED 2026-08-23.** `bootstrap-fork.sh` now targets `.env`, creating it from `.env.example` when absent, so the `JWT_SECRET` rotation and `APP_NAME` rewrite actually run on a fresh clone instead of silently no-opping. `.env.example` was also corrected so a verbatim copy produces a working database. The `.env.test` half of this finding is unchanged.
+1. ~~**C1 · Forkability (P1)**~~ — **CLOSED 2026-08-23.** `bootstrap-fork.sh` now targets `.env`, creating it from `.env.example` when absent, so the `JWT_SECRET` rotation and `APP_NAME` rewrite actually run on a fresh clone instead of silently no-opping. `.env.example` was also corrected so a verbatim copy produces a working database. `bootstrap-fork.sh` now also creates `.env.test` from its template, and both files are documented in getting-started and the testing how-to, so its printed `npm test` step works out of the box.
 2. **C3 · API Contracts (P1)** — global error handler emits three shapes (incl. an undocumented `"fail"` status), bypassing `errorResponse()` and violating `api-design.md`; OpenAPI documents no 4xx/5xx schema (only 429).
 3. **C4 · Architecture (P1)** — the architecture test enforces only 3 narrow checks (no negative cases); real app→infra ORM writes, `AppError` in domain entities, and cross-feature deep imports pass green.
 4. **C2 · Forkability (P2)** — `app-name.ts` defaults to `"lakira-backend"`; combined with C1 a fresh fork brands its runtime as "lakira-backend".

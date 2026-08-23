@@ -91,7 +91,7 @@ Surfaced by `audit-2026-06-05.md`. Same priority/effort convention as the baseli
 | F1      | ~~P1~~ **CLOSED 2026-08-23** | Security         | ≤30m   | `DISABLE_RATE_LIMITING` has no `NODE_ENV=production` schema guard — silent killswitch in prod                          | ADR-010         |
 | N3      | ~~P1~~ **CLOSED 2026-08-23** | Multi-tenancy    | ≤1d    | Cache-key scoping pattern systemic — `buildCursorCacheKey` + `MetricCacheRedis` + `MetricLogCacheRedis`                | ADR-009         |
 | N4      | P1                           | Observability    | ≤1d    | RabbitMQ messages don't propagate `x-request-id`; consumer not wrapped in ALS                                          | —               |
-| N5      | P1                           | API contracts    | ≤1d    | OpenAPI spec omits `/metrics/dummy` and `/metric-categories/dummy` (mounted in code, missing from spec)                | —               |
+| N5      | ~~P1~~ **CLOSED 2026-08-24** | API contracts    | ≤1d    | OpenAPI spec omits `/metrics/dummy` and `/metric-categories/dummy` (mounted in code, missing from spec)                | —               |
 | ADR-011 | P1                           | Architecture     | ≤1d    | Resolve auth-flat vs metric-nested persistence layout disagreement; migrate auth to nested                             | ADR-011         |
 | N6      | P2                           | Scaling          | ≤1w    | One RabbitMQ queue serves all orgs; no per-org routing or publisher-side budget                                        | —               |
 | N7      | P2                           | Observability    | ≤1d    | No APM / OpenTelemetry beyond Sentry sampling (overlaps deferred P2-5.4)                                               | —               |

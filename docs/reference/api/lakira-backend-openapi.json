@@ -1433,6 +1433,34 @@
           "count": 50
         }
       },
+      "GenerateDummyMetricsRequest": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "default": 50
+          }
+        },
+        "example": {
+          "count": 50
+        }
+      },
+      "GenerateDummyMetricCategoriesRequest": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "default": 5
+          }
+        },
+        "example": {
+          "count": 5
+        }
+      },
       "GenerateDummyMetricLogsResponse": {
         "type": "object",
         "properties": {
@@ -4291,9 +4319,129 @@
         }
       }
     },
+    "/metrics/dummy": {
+      "post": {
+        "tags": ["Dummy Data"],
+        "summary": "Generate dummy metrics",
+        "description": "Creates `count` randomly generated metrics for the authenticated user in their active organization and returns them. Inserts synchronously — unlike the metric-logs generator, this does not enqueue work. Only available when `ENABLE_DUMMY_ENDPOINTS=true`.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateDummyMetricsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Dummy metrics created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Metric"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/metric-categories/dummy": {
+      "post": {
+        "tags": ["Dummy Data"],
+        "summary": "Generate dummy metric categories",
+        "description": "Creates `count` randomly generated categories for the authenticated user in their active organization and returns them. Inserts synchronously. Only available when `ENABLE_DUMMY_ENDPOINTS=true`.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateDummyMetricCategoriesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Dummy categories created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/MetricCategory"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/metric-logs/{metricId}/dummy": {
       "post": {
-        "tags": ["Metric Logs"],
+        "tags": ["Dummy Data"],
         "summary": "Enqueue dummy metric log generation",
         "description": "Accepts a generation job and returns immediately with a `jobId`. When `RABBITMQ_ENABLED=true` the inserts are processed asynchronously by the worker; otherwise the logs are inserted synchronously before the response is returned. Only available when `ENABLE_DUMMY_ENDPOINTS=true`.",
         "security": [

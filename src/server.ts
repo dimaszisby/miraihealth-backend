@@ -72,7 +72,7 @@ if (env.SENTRY_DSN) {
  *  5. Start the server based on config/prompt
  */
 
-const skipDbBootstrap = process.env.SKIP_DB_LIFECYCLE === "true";
+const skipDbBootstrap = env.SKIP_DB_LIFECYCLE;
 const initialDbBootstrap = async () => {
   if (!skipDbBootstrap) {
     loadModels();
