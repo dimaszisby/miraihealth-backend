@@ -20,6 +20,9 @@ const PRODUCTION_BASE: Record<string, string> = {
   SWAGGER_REQUIRE_AUTH: "true",
   DISABLE_RATE_LIMITING: "false",
   ALLOW_TEST_HTTP_SERVER: "false",
+  // npm run test:unit exports SKIP_DB_LIFECYCLE=true, and it is refused in production —
+  // without this every case would trip on the ambient value instead of the rule under test.
+  SKIP_DB_LIFECYCLE: "false",
 };
 
 const inProduction = (overrides: Record<string, string>) =>
@@ -90,6 +93,20 @@ describe("zodEnv production-unsafe switch refusal (ADR-0036)", () => {
     await expect(
       withTestEnv(noop, {
         overrides: { NODE_ENV: "test", LOG_LEVEL: "silly" },
+      }),
+    ).resolves.toBeUndefined();
+  });
+
+  it("refuses SKIP_DB_LIFECYCLE in production", async () => {
+    await expect(
+      inProduction({ SKIP_DB_LIFECYCLE: "true" }),
+    ).rejects.toMatchObject(refusalFor("SKIP_DB_LIFECYCLE"));
+  });
+
+  it("allows SKIP_DB_LIFECYCLE outside production — jest.setup relies on it", async () => {
+    await expect(
+      withTestEnv(noop, {
+        overrides: { NODE_ENV: "test", SKIP_DB_LIFECYCLE: "true" },
       }),
     ).resolves.toBeUndefined();
   });

@@ -34,6 +34,8 @@ import {
   MetricLogCursorQueryParamsSchema,
   GenerateDummyMetricLogsRequestSchema,
   GenerateDummyMetricLogsResponseSchema,
+  GenerateDummyMetricsRequestSchema,
+  GenerateDummyMetricCategoriesRequestSchema,
   MetricDisplayOptionsSchema,
   MetricSettingsSchema,
   CreateMetricSettingsRequestSchema,
@@ -1297,8 +1299,81 @@ registry.registerPath({
 
 registry.registerPath({
   method: "post",
+  path: "/metrics/dummy",
+  tags: ["Dummy Data"],
+  summary: "Generate dummy metrics",
+  description:
+    "Creates `count` randomly generated metrics for the authenticated user in their active " +
+    "organization and returns them. Inserts synchronously — unlike the metric-logs generator, " +
+    "this does not enqueue work. Only available when `ENABLE_DUMMY_ENDPOINTS=true`.",
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: GenerateDummyMetricsRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      description: "Dummy metrics created",
+      content: {
+        "application/json": {
+          schema: successEnvelope(z.array(MetricSchema)),
+        },
+      },
+    },
+    400: { $ref: "#/components/responses/BadRequestError" },
+    401: { $ref: "#/components/responses/UnauthorizedError" },
+    429: { $ref: "#/components/responses/TooManyRequestsError" },
+    500: { $ref: "#/components/responses/InternalServerError" },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/metric-categories/dummy",
+  tags: ["Dummy Data"],
+  summary: "Generate dummy metric categories",
+  description:
+    "Creates `count` randomly generated categories for the authenticated user in their active " +
+    "organization and returns them. Inserts synchronously. Only available when " +
+    "`ENABLE_DUMMY_ENDPOINTS=true`.",
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: GenerateDummyMetricCategoriesRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      description: "Dummy categories created",
+      content: {
+        "application/json": {
+          schema: successEnvelope(z.array(MetricCategorySchema)),
+        },
+      },
+    },
+    400: { $ref: "#/components/responses/BadRequestError" },
+    401: { $ref: "#/components/responses/UnauthorizedError" },
+    429: { $ref: "#/components/responses/TooManyRequestsError" },
+    500: { $ref: "#/components/responses/InternalServerError" },
+  },
+});
+
+registry.registerPath({
+  method: "post",
   path: "/metric-logs/{metricId}/dummy",
-  tags: ["Metric Logs"],
+  // Tagged "Dummy Data" rather than "Metric Logs" so the Schemathesis tag selection in
+  // tests/contract/schemathesis/scripts/run-local.js does not fuzz a data generator that
+  // accepts count up to 1000 against the same database the newman fixtures rely on.
+  tags: ["Dummy Data"],
   summary: "Enqueue dummy metric log generation",
   description:
     "Accepts a generation job and returns immediately with a `jobId`. " +

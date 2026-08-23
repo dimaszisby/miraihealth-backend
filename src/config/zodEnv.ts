@@ -211,6 +211,15 @@ const envSchema = z
       .transform((val) => val === "true")
       .default("false"),
 
+    // Skips the database bootstrap at startup. Test-only: jest.setup.ts and the
+    // contract runners set it so suites do not pay for a DB lifecycle they mock.
+    // Previously read straight off process.env in server.ts, which kept it out of
+    // the fail-fast contract entirely (twelve-factor TF-6).
+    SKIP_DB_LIFECYCLE: z
+      .string()
+      .transform((val) => val === "true")
+      .default("false"),
+
     // RabbitMQ
     RABBITMQ_URL: z.string().optional(),
     RABBITMQ_ENABLED: z
@@ -405,6 +414,13 @@ const envSchema = z
       refuse(
         "SWAGGER_REQUIRE_AUTH",
         "SWAGGER_REQUIRE_AUTH cannot be false when NODE_ENV=production — it would expose the API docs unauthenticated.",
+      );
+    }
+
+    if (data.SKIP_DB_LIFECYCLE) {
+      refuse(
+        "SKIP_DB_LIFECYCLE",
+        "SKIP_DB_LIFECYCLE cannot be true when NODE_ENV=production — the app would start without its database bootstrap.",
       );
     }
 

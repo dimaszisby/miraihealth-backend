@@ -4,8 +4,12 @@ import {
   metricBody,
   metricBodyPartial,
   metricDetailQuery,
+  generateDummyMetricsBody,
 } from "@/features/metric/infrastructure/http/schema.zod.js";
-import { metricCategoryBody } from "@/features/metric-category/infrastructure/http/schema.zod.js";
+import {
+  metricCategoryBody,
+  createMetricCategoryDummyBody,
+} from "@/features/metric-category/infrastructure/http/schema.zod.js";
 import {
   settingsBody,
   settingsBodyPartial,
@@ -849,6 +853,24 @@ export const GenerateDummyMetricLogsRequestSchema = registerSchema(
   generateDummyMetricLogsBody.openapi({
     example: {
       count: 50,
+    },
+  }),
+);
+
+export const GenerateDummyMetricsRequestSchema = registerSchema(
+  "GenerateDummyMetricsRequest",
+  generateDummyMetricsBody.openapi({
+    example: {
+      count: 50,
+    },
+  }),
+);
+
+export const GenerateDummyMetricCategoriesRequestSchema = registerSchema(
+  "GenerateDummyMetricCategoriesRequest",
+  createMetricCategoryDummyBody.openapi({
+    example: {
+      count: 5,
     },
   }),
 );

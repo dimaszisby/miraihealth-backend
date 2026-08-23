@@ -54,6 +54,7 @@ the per-environment URL is selected by `NODE_ENV`.
 | `DB_USER` / `DB_PASSWORD` / `DB_NAME`                                                                 | string  | optional                                     |
 | `DB_LOGGING`                                                                                          | boolean | `false`                                      |
 | `LOG_LEVEL`                                                                                           | enum    | `http` in production, else `debug`           |
+| `SKIP_DB_LIFECYCLE`                                                                                   | boolean | `false`                                      |
 | `DB_SSL_REJECT_UNAUTHORIZED`                                                                          | boolean | `true` in production, else `false`           |
 
 > `LOG_LEVEL` is one of `error`, `warn`, `info`, `http`, `verbose`, `debug`, `silly`; each level

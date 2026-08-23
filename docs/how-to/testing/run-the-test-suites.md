@@ -5,6 +5,16 @@
 
 This folder documents the Lakira backend testing pyramid and the execution rules used in local runs and CI.
 
+## Before you run anything
+
+`npm test` reads `.env.test`, which is gitignored and absent on a fresh clone:
+
+```bash
+cp .env.test.example .env.test
+```
+
+`scripts/bootstrap-fork.sh` creates it for you; a plain clone does not.
+
 ## Canonical Start Points
 
 1. `docs/explanation/testing-strategy.md`
