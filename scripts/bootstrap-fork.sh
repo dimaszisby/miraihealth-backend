@@ -10,8 +10,8 @@
 #      package-lock.json, docker-compose.test.yml, CI workflows, and scripts.
 #   2. Replaces "lakira" with the derived short name (strip -backend suffix)
 #      in queue-topology references, DB names, and CI DB refs.
-#   3. Rotates JWT_SECRET in .env.development.
-#   4. Sets APP_NAME=<new-name> in .env.development.
+#   3. Rotates JWT_SECRET in .env (creating it from .env.example if needed).
+#   4. Sets APP_NAME=<new-name> in .env.
 #   5. Removes docs/internal/ (upstream working material); --keep-internal opts out.
 #   6. Drops FORKED-FROM.md with the upstream commit SHA.
 #
@@ -145,25 +145,37 @@ for f in "${FILES_SHORT[@]}"; do
 done
 
 # ---------------------------------------------------------------------------
-# 3. Rotate JWT_SECRET in .env.development (if it exists)
+# 3. Rotate JWT_SECRET in .env
+#
+# Creates .env from .env.example when absent. Previously this targeted
+# .env.development and was guarded on that file existing, so on a fresh clone
+# both this step and step 4 silently did nothing and the fork kept the
+# template's JWT secret (SAAS-BASE-CHECKLIST C1).
 # ---------------------------------------------------------------------------
-ENV_DEV="$REPO_ROOT/.env.development"
-if [[ -f "$ENV_DEV" ]]; then
+ENV_FILE="$REPO_ROOT/.env"
+if [[ ! -f "$ENV_FILE" && -f "$REPO_ROOT/.env.example" ]]; then
+  cp "$REPO_ROOT/.env.example" "$ENV_FILE"
+  echo "Created .env from .env.example"
+fi
+
+if [[ -f "$ENV_FILE" ]]; then
   NEW_SECRET=$(openssl rand -hex 32)
-  do_sed "s|^JWT_SECRET=.*|JWT_SECRET=$NEW_SECRET|" "$ENV_DEV"
-  echo "JWT_SECRET rotated in .env.development"
+  do_sed "s|^JWT_SECRET=.*|JWT_SECRET=$NEW_SECRET|" "$ENV_FILE"
+  echo "JWT_SECRET rotated in .env"
+else
+  echo "WARNING: no .env and no .env.example — JWT_SECRET not rotated" >&2
 fi
 
 # ---------------------------------------------------------------------------
-# 4. Set APP_NAME in .env.development
+# 4. Set APP_NAME in .env
 # ---------------------------------------------------------------------------
-if [[ -f "$ENV_DEV" ]]; then
-  if grep -q "^APP_NAME=" "$ENV_DEV"; then
-    do_sed "s|^APP_NAME=.*|APP_NAME=$NEW_NAME|" "$ENV_DEV"
+if [[ -f "$ENV_FILE" ]]; then
+  if grep -q "^APP_NAME=" "$ENV_FILE"; then
+    do_sed "s|^APP_NAME=.*|APP_NAME=$NEW_NAME|" "$ENV_FILE"
   else
-    echo "APP_NAME=$NEW_NAME" >> "$ENV_DEV"
+    echo "APP_NAME=$NEW_NAME" >> "$ENV_FILE"
   fi
-  echo "APP_NAME set to '$NEW_NAME' in .env.development"
+  echo "APP_NAME set to '$NEW_NAME' in .env"
 fi
 
 # ---------------------------------------------------------------------------

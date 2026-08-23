@@ -55,6 +55,7 @@ Related secret names:
   - URL: `http://localhost:4000`
   - Port: `4000`
 - **Database (Postgres):**
+  - Image: `postgres:18` (see the note below — same major everywhere)
   - Host: `localhost`
   - Port: `5432`
   - DB name: `lakira_local`
@@ -87,13 +88,31 @@ Seeding / fixture notes:
 - **Backend runtime:**
   - Runs inside the `contract_local` job using `npm run start:test` on `http://localhost:4000`.
 - **Postgres service (CI):**
-  - Image: `postgres:15`
+  - Image: `postgres:18`
   - Host (from runner steps): `localhost` (GitHub Actions maps the service port to 127.0.0.1)
   - Hostname inside another container job: `postgres`
   - Port: `5432`
   - DB name: `lakira_ci`
   - User: `postgres`
   - Password: `${{ secrets.POSTGRES_PASSWORD_TEST }}`
+
+> **Postgres version is pinned to the same major everywhere: `postgres:18`.** Render's managed
+> Postgres runs 18, so dev Compose, `docker-compose.test.yml` (which inherits the base image), and
+> the CI services all match it. Before 2026-08-23 these were 17 / 17 / 15 respectively — the gate
+> that decides whether a change merges ran two majors behind production.
+>
+> The images are deliberately **not** the `-alpine` variant. Alpine is musl-based and Render is
+> glibc, and Postgres takes text collation from the OS locale, so the two order text differently:
+>
+> ```text
+> musl  : Apricot, Banana, apple, banana, cherry   <- codepoint order
+> glibc : apple, Apricot, banana, Banana, cherry   <- dictionary order
+> ```
+>
+> The API exposes `?sort=name` on a text column and cursor pagination keys on that ordering, so a
+> musl/glibc split would return different pages in CI than in production. Redis keeps `-alpine`
+> (`redis:7-alpine`) — it has no collation semantics, so only the pin consistency matters.
+
 - **Redis service (CI):**
   - Image: `redis:7`
   - Host: `localhost` (use `redis` only if the job itself runs inside a container)

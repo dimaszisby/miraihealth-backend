@@ -1,6 +1,10 @@
 services:
   db: # PostgreSQL database service
-    image: postgres:17-alpine # Use a stable, actively maintained PostgreSQL version
+    # Deliberately NOT -alpine: alpine is musl, Render's managed Postgres is glibc, and
+    # Postgres takes text collation from the OS locale. A musl/glibc split changes ORDER BY
+    # on text columns (the API exposes ?sort=name) and btree index ordering. Keep this major
+    # in step with production and with .github/workflows/backend-ci.yml.
+    image: postgres:18
     container_name: postgres_db
     restart: always # Restart the container automatically if it fails
     environment: # Set environment variables from .env file
@@ -8,7 +12,10 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     volumes: # Persist data across container restarts
-      - db_data:/var/lib/postgresql/data
+      # PG18+ stores data in major-version subdirectories and expects a single mount at
+      # /var/lib/postgresql, not /var/lib/postgresql/data — mounting the old path makes it
+      # refuse to start ("unused mount/volume"). See docker-library/postgres#1259.
+      - db_data:/var/lib/postgresql
       - ./docker/db/init:/docker-entrypoint-initdb.d # Initialize database with scripts
     ports: # Expose the standard PostgreSQL port
       - "5432:5432"
@@ -31,7 +38,7 @@ services:
         max-file: "3"
 
   redis: # Redis service
-    image: redis:alpine # Use a lightweight Alpine-based Redis image
+    image: redis:7-alpine # Pinned to match backend-ci.yml; no collation semantics here
     container_name: redis_cache
     restart: always # Restart the container automatically if it fails
     environment: # Set environment variables from .env file
@@ -83,10 +90,23 @@ services:
       dockerfile: Dockerfile.dev
     container_name: node_app
     restart: always # Restart the container automatically if it fails
-    env_file: # Load environment variables from .env.development
-      - .env.development
+    # `.env` and not `.env.development`: Compose's ${VAR} interpolation (used for the db
+    # service's credentials above) reads only `.env` or the shell — never a service's
+    # env_file. Using one file keeps the app's config and the database Compose creates
+    # from drifting apart.
+    env_file:
+      - .env
     environment: # Set environment variables
       NODE_ENV: development # Run in development mode
+      # `environment:` takes precedence over `env_file:`, which is what makes one shared
+      # .env workable: the file holds host-facing values (127.0.0.1) for commands you run
+      # on your machine — migrations, npm run dev — and these override the handful that
+      # must instead resolve to Compose service names inside the container network.
+      PORT: 5000
+      DB_HOST: db
+      DEVELOPMENT_DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      REDIS_HOST: redis
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASSWORD:-guest}@rabbitmq:5672
     depends_on: # Ensure dependencies are running before starting the app
       db:
         condition: service_healthy
@@ -95,7 +115,8 @@ services:
       rabbitmq:
         condition: service_healthy
     ports: # Expose the application port
-      - "8001:8001" # Map host port 8001 to container port 8001
+      # Host 8001 -> container 5000. Host 5000 collides with AirPlay Receiver on macOS.
+      - "8001:5000"
     networks: # Connect to the backend network
       - backend
     logging: # Configure logging to stdout

@@ -25,6 +25,7 @@ REST API backend for Lakira, a personal metrics tracking platform. Built with Ex
 npm install
 
 # 2. Copy environment template and fill in values
+#    docker compose, the migrate scripts and bootstrap-fork.sh all read this one file
 cp .env.example .env
 
 # 3. Start infrastructure services
@@ -108,8 +109,8 @@ The script:
 
 - Replaces `lakira-backend` → `my-app` in `package.json`, `package-lock.json`, `docker-compose.test.yml`, and CI workflow files.
 - Derives a short name (`my-app` → removes `-backend` / `-api` suffix) for queue topology and DB name prefixes.
-- Rotates `JWT_SECRET` in `.env.development` via `openssl rand -hex 32`.
-- Sets `APP_NAME=my-app` in `.env.development`.
+- Rotates `JWT_SECRET` in `.env` via `openssl rand -hex 32`.
+- Sets `APP_NAME=my-app` in `.env`.
 - **Removes `docs/internal/`** — the upstream project's working material (doc kits, audit runs,
   incidents, todos). Your fork keeps the four Diátaxis quadrants, which document the template.
   Pass `--keep-internal` to retain it.

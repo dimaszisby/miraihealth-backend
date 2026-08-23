@@ -8,7 +8,14 @@ on:
       - main
       - dev
       - staging
+      # Every working-branch prefix the team uses. Without these, a fix/ or chore/ branch
+      # gets no CI until a PR is opened — the pull_request trigger below is the real gate,
+      # but there is no early signal. concurrency (below) cancels superseded pushes.
       - "feature/**"
+      - "fix/**"
+      - "chore/**"
+      - "docs/**"
+      - "refactor/**"
   pull_request:
     branches:
       - main
@@ -119,7 +126,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:15
+        image: postgres:18
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD_TEST }}
@@ -133,7 +140,7 @@ jobs:
           --health-retries=5
 
       redis:
-        image: redis:7
+        image: redis:7-alpine
         ports:
           - 6379:6379
         options: >-
@@ -214,7 +221,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:15
+        image: postgres:18
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD_TEST }}
@@ -228,7 +235,7 @@ jobs:
           --health-retries=5
 
       redis:
-        image: redis:7
+        image: redis:7-alpine
         ports:
           - 6379:6379
         options: >-

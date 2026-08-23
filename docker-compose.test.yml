@@ -7,7 +7,10 @@ services:
       POSTGRES_USER: lakira_user
       POSTGRES_PASSWORD: lakira_password
     volumes:
-      - db_test_data:/var/lib/postgresql/data
+      # PG18+ stores data in major-version subdirectories and expects a single mount at
+      # /var/lib/postgresql, not /var/lib/postgresql/data — mounting the old path makes it
+      # refuse to start ("unused mount/volume"). See docker-library/postgres#1259.
+      - db_test_data:/var/lib/postgresql
       - ./docker/db/init:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
