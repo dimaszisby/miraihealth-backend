@@ -20,7 +20,10 @@ Adds the four observability primitives the audit identified as missing: request-
 **Out of scope:**
 
 - Prometheus / OpenTelemetry (P2-5.4).
-- Log shipping to Datadog/Loggly/CloudWatch (out of scope; Winston file transports stay).
+- Log shipping to Datadog/Loggly/CloudWatch (out of scope). ~~Winston file transports stay.~~
+  **Superseded 2026-08-23 by [ADR-0041](../../../explanation/decisions/adr-0041-logs-as-event-streams-on-stdout.md):**
+  the file transports are removed and the app writes to stdout only. Shipping remains out of scope —
+  collection is the platform's responsibility.
 - APM tracing.
 
 ## Commands & Tooling

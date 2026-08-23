@@ -19,7 +19,7 @@ Goal: every production log line carries a `requestId`, no sensitive value reache
 1. Create `src/config/sensitive-keys.ts` exporting `SENSITIVE_KEY_PATTERN = /(password|secret|token|key|certificate|url)$/i`.
 2. Update `src/config/envManager.ts` to import from there (removing the local copy).
 3. Add `redactSensitive` Winston format in `src/utils/logger.ts`. Walks the log info object recursively; for any key matching `SENSITIVE_KEY_PATTERN`, replace its value with `"***REDACTED***"`. Bail at depth 5 to avoid pathological recursion.
-4. Insert it in the format chain BEFORE `format.json()` so the redacted shape is what hits stdout / file transports.
+4. Insert it in the format chain BEFORE `format.json()` so the redacted shape is what hits stdout. (File transports were removed by ADR-0041; stdout is the only sink.)
 5. Unit test: pass `{ password: "p", token: "t", email: "e" }` to the redactor; assert `password` and `token` are masked, `email` is not.
 
 ### Phase 1 — Request-ID middleware (closes P0-5.1)

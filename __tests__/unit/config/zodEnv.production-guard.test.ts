@@ -80,6 +80,20 @@ describe("zodEnv production-unsafe switch refusal (ADR-0036)", () => {
     ).resolves.toBeUndefined();
   });
 
+  it('refuses LOG_LEVEL="silly" in production', async () => {
+    await expect(inProduction({ LOG_LEVEL: "silly" })).rejects.toMatchObject(
+      refusalFor("LOG_LEVEL"),
+    );
+  });
+
+  it("allows debug-level logging outside production", async () => {
+    await expect(
+      withTestEnv(noop, {
+        overrides: { NODE_ENV: "test", LOG_LEVEL: "silly" },
+      }),
+    ).resolves.toBeUndefined();
+  });
+
   it("catches a capitalized NODE_ENV, which a raw process.env check would miss", async () => {
     await expect(
       withTestEnv(noop, {

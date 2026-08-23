@@ -81,6 +81,17 @@ const envSchema = z
       .transform((val) => parseInt(val, 10))
       .default("5432"),
     DB_LOGGING: z.string().default("false"), // Allows enabling/disabling logging
+
+    // Winston log level. Declared here as the fail-fast contract and the documentation;
+    // src/utils/logger.ts re-reads process.env.LOG_LEVEL directly because it loads before
+    // envManager is initialised (see app-name.ts:1-3). Default follows the house pattern of
+    // a NODE_ENV-dependent default. Production defaults to "http" rather than "info" so the
+    // ADR-0041 access-log lines (winston npm level 3) are included; at "info" (2) they are
+    // silently dropped. Note DB_LOGGING routes SQL through logger.debug, so it only
+    // produces output when this is "debug" or lower.
+    LOG_LEVEL: z
+      .enum(["error", "warn", "info", "http", "verbose", "debug", "silly"])
+      .default(process.env.NODE_ENV === "production" ? "http" : "debug"),
     DB_SSL_REJECT_UNAUTHORIZED: z
       .string()
       .transform((val) => val.toLowerCase() !== "false")
@@ -394,6 +405,13 @@ const envSchema = z
       refuse(
         "SWAGGER_REQUIRE_AUTH",
         "SWAGGER_REQUIRE_AUTH cannot be false when NODE_ENV=production — it would expose the API docs unauthenticated.",
+      );
+    }
+
+    if (data.LOG_LEVEL === "silly") {
+      refuse(
+        "LOG_LEVEL",
+        'LOG_LEVEL cannot be "silly" when NODE_ENV=production — it is a firehose and would bury real signal in the log stream.',
       );
     }
 

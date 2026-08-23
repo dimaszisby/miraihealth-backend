@@ -1,6 +1,6 @@
 # ADR-0041 — Logs are an event stream on stdout; the app does not manage log files
 
-- **Status:** Proposed
+- **Status:** Accepted (2026-08-23)
 - **Date:** 2026-08-17
 - **Related:** Reverses the "Winston file transports stay" scoping decision recorded in
   [`docs/internal/initiatives/observability/README.md`](../../internal/initiatives/observability/README.md).

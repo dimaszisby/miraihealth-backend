@@ -48,7 +48,18 @@ const startWorker = async (): Promise<void> => {
   logger.info("[WORKER] Ready. Waiting for messages.");
 };
 
-const shutdown = async (signal: string): Promise<void> => {
+/** See the note on `flushLogs` in server.ts — same reasoning, same bound. */
+const flushLogs = (timeoutMs = 2000): Promise<void> =>
+  new Promise((resolve) => {
+    const bail = setTimeout(resolve, timeoutMs);
+    logger.once("finish", () => {
+      clearTimeout(bail);
+      resolve();
+    });
+    logger.end();
+  });
+
+const shutdown = async (signal: string, exitCode = 0): Promise<void> => {
   logger.info(`[WORKER] Received ${signal}, shutting down...`);
   try {
     await Promise.all(workers.map((w) => w.close()));
@@ -59,12 +70,13 @@ const shutdown = async (signal: string): Promise<void> => {
 
     await sequelize.close();
     logger.info("[WORKER] Database disconnected.");
-
-    process.exit(0);
   } catch (error) {
     logger.error("[WORKER] Error during shutdown:", error);
-    process.exitCode = 1;
+    exitCode = exitCode || 1;
   }
+
+  await flushLogs();
+  process.exit(exitCode);
 };
 
 ["SIGTERM", "SIGINT"].forEach((signal) =>
@@ -73,15 +85,16 @@ const shutdown = async (signal: string): Promise<void> => {
 
 process.on("uncaughtException", (error) => {
   logger.error("[WORKER] Uncaught exception:", error);
-  shutdown("uncaughtException");
+  void shutdown("uncaughtException", 1);
 });
 
 process.on("unhandledRejection", (reason) => {
   logger.error("[WORKER] Unhandled rejection:", reason);
-  shutdown("unhandledRejection");
+  void shutdown("unhandledRejection", 1);
 });
 
-startWorker().catch((error) => {
+startWorker().catch(async (error) => {
   logger.error("[WORKER] Failed to start:", error);
+  await flushLogs();
   process.exit(1);
 });

@@ -43,8 +43,8 @@ npx sequelize-cli db:migrate:status
 # Check Redis
 redis-cli ping
 
-# View recent logs
-cat logs/*.log | tail -50
+# View recent logs (the app writes to stdout only — there are no log files)
+docker compose logs --tail=50 app
 
 # Check TypeScript errors
 npm run typecheck 2>&1 | head -30
