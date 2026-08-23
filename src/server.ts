@@ -42,6 +42,7 @@ import { authMiddleware } from "./features/shared/auth/infrastructure/http/authM
 import { requireOrgRole } from "./features/shared/auth/infrastructure/http/assertHasOrgRole.js";
 import { disallowTraceMethod } from "@/shared/middleware/method-guard.js";
 import { requestIdMiddleware } from "@/shared/middleware/request-id.js";
+import { accessLogMiddleware } from "@/shared/middleware/access-log.js";
 import * as Sentry from "@sentry/node";
 
 const visualizationInvalidationAdapter =
@@ -107,6 +108,10 @@ app.use(cookieParser());
 
 // Request-ID — propagate x-request-id through AsyncLocalStorage so every log line is correlated
 app.use(requestIdMiddleware);
+
+// HTTP access logging — after requestIdMiddleware so each line carries the same
+// requestId as the application logs for that request (ADR-0041).
+app.use(accessLogMiddleware);
 
 // Security Enhancements
 app.use(helmet()); // Secure HTTP headers
@@ -260,7 +265,23 @@ const startServer = async () => {
  * - Close Express server
  * - Log shutdown
  */
-const shutdown = async (signal: string) => {
+/**
+ * Winston writes asynchronously and `process.exit()` does not flush pending stream
+ * writes, so without this the line describing a crash can be lost — precisely the
+ * incident case ADR-0041 exists to serve. Bounded, so a wedged stdout cannot hang
+ * shutdown indefinitely.
+ */
+const flushLogs = (timeoutMs = 2000): Promise<void> =>
+  new Promise((resolve) => {
+    const bail = setTimeout(resolve, timeoutMs);
+    logger.once("finish", () => {
+      clearTimeout(bail);
+      resolve();
+    });
+    logger.end();
+  });
+
+const shutdown = async (signal: string, exitCode = 0) => {
   logger.info(`\n[SERVER] Received ${signal}, initiating shutdown...`);
 
   try {
@@ -284,11 +305,13 @@ const shutdown = async (signal: string) => {
     }
 
     logger.info("[SERVER] Cleanup completed. Exiting.");
-    process.exit(0);
   } catch (error) {
     logger.error("[SERVER] during shutdown:", error);
-    process.exitCode = 1;
+    exitCode = exitCode || 1;
   }
+
+  await flushLogs();
+  process.exit(exitCode);
 };
 
 // Handle termination signals
@@ -299,7 +322,7 @@ const shutdown = async (signal: string) => {
 // Handle uncaught exceptions and promise rejections
 process.on("uncaughtException", (error) => {
   logger.error("[SERVER ERROR] Uncaught Exception:", error);
-  shutdown("Uncaught Exception");
+  void shutdown("Uncaught Exception", 1);
 });
 
 process.on("unhandledRejection", (reason, promise) => {
@@ -309,7 +332,7 @@ process.on("unhandledRejection", (reason, promise) => {
     "reason:",
     reason,
   );
-  shutdown("Unhandled Rejection");
+  void shutdown("Unhandled Rejection", 1);
 });
 
 startServer();

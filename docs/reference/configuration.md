@@ -53,7 +53,18 @@ the per-environment URL is selected by `NODE_ENV`.
 | `DB_PORT`                                                                                             | number  | `5432`                                       |
 | `DB_USER` / `DB_PASSWORD` / `DB_NAME`                                                                 | string  | optional                                     |
 | `DB_LOGGING`                                                                                          | boolean | `false`                                      |
+| `LOG_LEVEL`                                                                                           | enum    | `http` in production, else `debug`           |
 | `DB_SSL_REJECT_UNAUTHORIZED`                                                                          | boolean | `true` in production, else `false`           |
+
+> `LOG_LEVEL` is one of `error`, `warn`, `info`, `http`, `verbose`, `debug`, `silly`; each level
+> includes the ones above it. Production defaults to `http` rather than `info` so the HTTP
+> access-log lines are included — at `info` they would be silently dropped. `silly` is **refused**
+> in production (ADR-0036). `DB_LOGGING=true` routes SQL through `logger.debug`, so it only
+> produces output when `LOG_LEVEL` is `debug` or lower.
+>
+> Logs go to **stdout only**; the app writes no log files (ADR-0041). Access-log lines carry the
+> request path with the query string stripped — redaction covers log metadata, not URL strings.
+> See [`../how-to/development/read-application-logs.md`](../how-to/development/read-application-logs.md).
 
 > `DB_HOST` defaulting to `db` in test targets the Docker Compose service name. Running tests on
 > the host instead requires `DB_HOST=127.0.0.1`.

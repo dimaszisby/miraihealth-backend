@@ -27,5 +27,8 @@
 ## Logging
 
 - Use Winston logger (`src/utils/logger.ts`) in application code
+- Logs go to **stdout only** — the app creates and retains no log files (ADR-0041). Collection is
+  the platform's job. `LOG_LEVEL` controls verbosity; see
+  `docs/how-to/development/read-application-logs.md`
 - `console.log` with `[DB PROCESS]`/`[DB ERROR]` prefix is acceptable only in migration files
 - ESLint warns on bare `console.log` usage outside migrations/tests/scripts
