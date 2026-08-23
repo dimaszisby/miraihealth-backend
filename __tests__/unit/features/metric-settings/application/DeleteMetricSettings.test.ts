@@ -61,6 +61,7 @@ describe("DeleteMetricSettings", () => {
     expect(repo.delete).toHaveBeenCalledWith(TEST_ORG_ID, entity);
     expect(cache.invalidate).toHaveBeenCalledWith(
       "user-9",
+      TEST_ORG_ID,
       "metric-77",
       "settings-8",
     );

@@ -35,7 +35,7 @@ export class GenerateDummyMetrics {
     }
 
     if (this.cache.isEnabled()) {
-      await this.cache.invalidateMetrics(userId);
+      await this.cache.invalidateMetrics(userId, organizationId);
     }
 
     return dummyMetrics;

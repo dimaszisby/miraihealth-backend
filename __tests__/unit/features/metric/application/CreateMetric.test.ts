@@ -102,7 +102,11 @@ describe("CreateMetric use case", () => {
       "org-1",
       fakeTx,
     );
-    expect(cache.invalidateMetrics).toHaveBeenCalledWith("user-1", metric.id);
+    expect(cache.invalidateMetrics).toHaveBeenCalledWith(
+      "user-1",
+      "org-1",
+      metric.id,
+    );
   });
 
   it("throws when name already exists", async () => {

@@ -109,6 +109,7 @@ describe("CreateMetricSettings", () => {
 
     expect(cache.invalidate).toHaveBeenCalledWith(
       "user-123",
+      "org-1",
       "metric-99",
       "settings-123",
     );

@@ -45,10 +45,12 @@ const asStringOrNumber = (value: unknown): string | undefined => {
 };
 
 const logCacheKey = (req: AuthRequest) =>
-  `log:${req.user?.id}:${req.params.id}`;
+  `log:${req.user?.organizationId}:${req.user?.id}:${req.params.id}`;
 
-const METRIC_LOG_CURSOR_FEATURE = "metric-logs.js";
-const METRIC_LOG_CURSOR_VERSION = 3;
+import {
+  METRIC_LOG_CURSOR_FEATURE,
+  METRIC_LOG_CURSOR_VERSION,
+} from "../../application/cache.constants.js";
 
 const logsCursorCacheKey = (req: AuthRequest) => {
   const q = req.query;
@@ -81,8 +83,8 @@ const logsCursorCacheKey = (req: AuthRequest) => {
     feature: METRIC_LOG_CURSOR_FEATURE,
     version: METRIC_LOG_CURSOR_VERSION,
     userId: req.user?.id,
+    organizationId: req.user?.organizationId,
     segments: [
-      ["org", req.user?.organizationId],
       ["l", limit],
       ["s", sort],
       ["q", search],
@@ -99,7 +101,7 @@ const logsCursorCacheKey = (req: AuthRequest) => {
 
 const logStatsCacheKey = (req: AuthRequest) => {
   const metricId = req.params.metricId || req.query.metricId;
-  return `logStats:${req.user?.id}:${metricId || "all"}`;
+  return `logStats:${req.user?.organizationId}:${req.user?.id}:${metricId || "all"}`;
 };
 
 export const createMetricLogRouter = () => {

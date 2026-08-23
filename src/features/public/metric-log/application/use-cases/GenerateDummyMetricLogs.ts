@@ -64,7 +64,7 @@ export class GenerateDummyMetricLogs {
     }
 
     if (this.cache.isEnabled()) {
-      await this.cache.invalidate(userId, metricId);
+      await this.cache.invalidate(userId, organizationId, metricId);
     }
 
     return { jobId };

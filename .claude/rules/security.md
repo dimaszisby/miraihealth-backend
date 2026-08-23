@@ -16,7 +16,8 @@ Applied in order on every request:
 - **User**: 50 req / 15 min (user ID or IP fallback)
 - **Analytics**: 30 req / 1 min (user ID or IP fallback)
 - Store: Redis in production, in-memory fallback in dev/test
-- `DISABLE_RATE_LIMITING=true` disables all limiters (test/fuzzing only)
+- `DISABLE_RATE_LIMITING=true` disables all limiters (test/fuzzing only). Startup refuses it
+  when `NODE_ENV=production` — see ADR-0036 for the full refused set.
 
 ## Authentication Flow
 

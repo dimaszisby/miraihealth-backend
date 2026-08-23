@@ -35,7 +35,7 @@ describe("AnalyticsVisualizationInvalidationAdapter", () => {
   it("skips invalidation when redis is not open", async () => {
     redisClient.isOpen = false;
 
-    await adapter.invalidateByMetric("user-1", "metric-9");
+    await adapter.invalidateByMetric("user-1", "org-1", "metric-9");
 
     expect(scanIteratorMock).not.toHaveBeenCalled();
     expect(delMock).not.toHaveBeenCalled();
@@ -43,25 +43,28 @@ describe("AnalyticsVisualizationInvalidationAdapter", () => {
 
   it("scans singular and dashboard namespaces and deletes each key", async () => {
     scanIteratorMock
-      .mockReturnValueOnce(makeIterator(["viz:user-1:metric-9:detail"]))
+      .mockReturnValueOnce(makeIterator(["viz:org-1:user-1:metric-9:detail"]))
       .mockReturnValueOnce(
-        makeIterator(["vizdash:user-1:default", "vizdash:user-1:summary"]),
+        makeIterator([
+          "vizdash:org-1:user-1:default",
+          "vizdash:org-1:user-1:summary",
+        ]),
       );
 
-    await adapter.invalidateByMetric("user-1", "metric-9");
+    await adapter.invalidateByMetric("user-1", "org-1", "metric-9");
 
     expect(scanIteratorMock).toHaveBeenNthCalledWith(1, {
-      MATCH: "viz:user-1:metric-9:*",
+      MATCH: "viz:org-1:user-1:metric-9:*",
       COUNT: 200,
     });
     expect(scanIteratorMock).toHaveBeenNthCalledWith(2, {
-      MATCH: "vizdash:user-1:*",
+      MATCH: "vizdash:org-1:user-1:*",
       COUNT: 200,
     });
 
     expect(delMock).toHaveBeenCalledTimes(3);
-    expect(delMock).toHaveBeenCalledWith("viz:user-1:metric-9:detail");
-    expect(delMock).toHaveBeenCalledWith("vizdash:user-1:default");
-    expect(delMock).toHaveBeenCalledWith("vizdash:user-1:summary");
+    expect(delMock).toHaveBeenCalledWith("viz:org-1:user-1:metric-9:detail");
+    expect(delMock).toHaveBeenCalledWith("vizdash:org-1:user-1:default");
+    expect(delMock).toHaveBeenCalledWith("vizdash:org-1:user-1:summary");
   });
 });

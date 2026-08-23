@@ -109,7 +109,7 @@ describeRedis("Analytics API – Redis cache coverage", () => {
 
     expect(firstViz.status).toBe(200);
     expect(firstViz.body.data.meta.metricId).toBe(metric.id);
-    const vizKeys = await listKeys(`viz:${auth.user.id}:${metric.id}:*`);
+    const vizKeys = await listKeys(`viz:*:${auth.user.id}:${metric.id}:*`);
     expect(vizKeys.length).toBeGreaterThan(0);
 
     const dash = await api
@@ -117,7 +117,7 @@ describeRedis("Analytics API – Redis cache coverage", () => {
       .set("Authorization", authHeader(auth.token))
       .query(query);
     expect(dash.status).toBe(200);
-    const dashKeys = await listKeys(`vizdash:${auth.user.id}:*`);
+    const dashKeys = await listKeys(`vizdash:*:${auth.user.id}:*`);
     expect(dashKeys.length).toBeGreaterThan(0);
 
     await createMetricLog(auth.token, metric.id, {
@@ -125,10 +125,10 @@ describeRedis("Analytics API – Redis cache coverage", () => {
       loggedAt: "2025-05-02T00:00:00.000Z",
     });
 
-    expect(await listKeys(`viz:${auth.user.id}:${metric.id}:*`)).toHaveLength(
+    expect(await listKeys(`viz:*:${auth.user.id}:${metric.id}:*`)).toHaveLength(
       0,
     );
-    expect(await listKeys(`vizdash:${auth.user.id}:*`)).toHaveLength(0);
+    expect(await listKeys(`vizdash:*:${auth.user.id}:*`)).toHaveLength(0);
 
     const refreshed = await api
       .get(`/api/v1/analytics/metrics/${metric.id}`)
@@ -144,7 +144,9 @@ describeRedis("Analytics API – Redis cache coverage", () => {
       (point: { value: number }) => point.value,
     );
     expect(metricValues).toEqual(expect.arrayContaining([12, 27]));
-    const refreshedKeys = await listKeys(`viz:${auth.user.id}:${metric.id}:*`);
+    const refreshedKeys = await listKeys(
+      `viz:*:${auth.user.id}:${metric.id}:*`,
+    );
     expect(refreshedKeys.length).toBeGreaterThan(0);
   });
 });

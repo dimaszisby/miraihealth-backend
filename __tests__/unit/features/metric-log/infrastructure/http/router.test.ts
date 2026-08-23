@@ -288,11 +288,11 @@ describe("metric log router", () => {
 
     const key = cursorBuilder(req);
     expect(buildCursorCacheKeyMock).toHaveBeenCalledWith({
-      feature: "metric-logs.js",
+      feature: "metric-logs",
       version: 3,
       userId: "user-123",
+      organizationId: "org-1",
       segments: [
-        ["org", "org-1"],
         ["l", 10],
         ["s", "createdAt"],
         ["q", "progress"],
@@ -315,8 +315,11 @@ describe("metric log router", () => {
       req: any,
     ) => string;
 
-    const req: any = { user: { id: "user-1" }, params: { id: "log-9" } };
-    expect(detailBuilder(req)).toBe("log:user-1:log-9");
+    const req: any = {
+      user: { id: "user-1", organizationId: "org-1" },
+      params: { id: "log-9" },
+    };
+    expect(detailBuilder(req)).toBe("log:org-1:user-1:log-9");
   });
 
   it("builds stats cache keys for metric scope", () => {
@@ -326,7 +329,10 @@ describe("metric log router", () => {
     ) => string;
 
     expect(
-      statsKeyFn({ user: { id: "user-2" }, params: { metricId: "metric-3" } }),
-    ).toBe("logStats:user-2:metric-3");
+      statsKeyFn({
+        user: { id: "user-2", organizationId: "org-2" },
+        params: { metricId: "metric-3" },
+      }),
+    ).toBe("logStats:org-2:user-2:metric-3");
   });
 });

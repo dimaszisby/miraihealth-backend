@@ -49,22 +49,25 @@ export class VisualizationCacheRedis implements VisualizationCachePort {
   }
 }
 
+// organizationId is a mandatory segment in both the visible prefix and the hashed
+// raw string — see ADR-0035. Cache keys are a tenant boundary that must be enforced
+// independently of the repository layer's WHERE clauses.
 function vizKey(input: SingleVizCacheKey) {
-  const raw = `${input.userId}|${input.metricId}|${input.bucketIso}|${input.startISO}|${input.endISO}|${input.tz}|${input.fill}`;
+  const raw = `${input.organizationId}|${input.userId}|${input.metricId}|${input.bucketIso}|${input.startISO}|${input.endISO}|${input.tz}|${input.fill}`;
   const hash = crypto
     .createHash("sha1")
     .update(raw)
     .digest("base64url")
     .slice(0, 16);
-  return `viz:${input.userId}:${input.metricId}:${input.bucketIso}:${hash}`;
+  return `viz:${input.organizationId}:${input.userId}:${input.metricId}:${input.bucketIso}:${hash}`;
 }
 
 function vizDashKey(input: DashboardVizCacheKey) {
-  const raw = `${input.userId}|${input.metricIds.join(",")}|${input.bucketIso}|${input.startISO}|${input.endISO}|${input.tz}|${input.fill}|${input.versionCursor ?? ""}`;
+  const raw = `${input.organizationId}|${input.userId}|${input.metricIds.join(",")}|${input.bucketIso}|${input.startISO}|${input.endISO}|${input.tz}|${input.fill}|${input.versionCursor ?? ""}`;
   const hash = crypto
     .createHash("sha1")
     .update(raw)
     .digest("base64url")
     .slice(0, 16);
-  return `vizdash:${input.userId}:${input.bucketIso}:${hash}`;
+  return `vizdash:${input.organizationId}:${input.userId}:${input.bucketIso}:${hash}`;
 }

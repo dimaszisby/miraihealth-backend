@@ -84,29 +84,29 @@ These items in `audit-2026-05-01.md` are not blocking and have no kit yet. Open 
 
 Surfaced by `audit-2026-06-05.md`. Same priority/effort convention as the baseline gaps; cross-linked to the ADRs they trigger.
 
-| ID      | Pri | Area             | Effort | Summary                                                                                                                | Owning ADR      |
-| ------- | --- | ---------------- | ------ | ---------------------------------------------------------------------------------------------------------------------- | --------------- |
-| N1      | P0  | Multi-tenancy    | ≤1h    | `viz`/`vizdash` Redis cache keys scoped by `userId` only — cross-org disclosure on cache hit                           | ADR-009         |
-| N2      | P0  | Multi-tenancy    | ≤1h    | `VisualizationInvalidationAdapter` signature missing `organizationId` — invalidation breaks after N1 fix               | ADR-009         |
-| F1      | P1  | Security         | ≤30m   | `DISABLE_RATE_LIMITING` has no `NODE_ENV=production` schema guard — silent killswitch in prod                          | ADR-010         |
-| N3      | P1  | Multi-tenancy    | ≤1d    | Cache-key scoping pattern systemic — `buildCursorCacheKey` + `MetricCacheRedis` + `MetricLogCacheRedis`                | ADR-009         |
-| N4      | P1  | Observability    | ≤1d    | RabbitMQ messages don't propagate `x-request-id`; consumer not wrapped in ALS                                          | —               |
-| N5      | P1  | API contracts    | ≤1d    | OpenAPI spec omits `/metrics/dummy` and `/metric-categories/dummy` (mounted in code, missing from spec)                | —               |
-| ADR-011 | P1  | Architecture     | ≤1d    | Resolve auth-flat vs metric-nested persistence layout disagreement; migrate auth to nested                             | ADR-011         |
-| N6      | P2  | Scaling          | ≤1w    | One RabbitMQ queue serves all orgs; no per-org routing or publisher-side budget                                        | —               |
-| N7      | P2  | Observability    | ≤1d    | No APM / OpenTelemetry beyond Sentry sampling (overlaps deferred P2-5.4)                                               | —               |
-| N8      | P2  | Scaling          | ≤1h    | Sequelize default pool `max: 5`; no env-tunables                                                                       | —               |
-| N9      | P2  | Scaling          | ≤1d    | Single shared Redis client; SCAN-heavy invalidation blocks every other op                                              | —               |
-| N10     | P2  | Performance      | ≤1h    | `MetricLogStatsRepoSequelize.computeStats` aggregates in JS instead of SQL `AVG/MIN/MAX`                               | —               |
-| N11     | P2  | Performance      | ≤1h    | `MetricLogQueryRepoSequelize.listLogs` redundant JOIN for org isolation when `metric_logs.organization_id` is NOT NULL | —               |
-| F2      | P2  | Secrets          | 5m     | `SENTRY_DSN` not matched by `SENSITIVE_KEY_PATTERN` (latent leak)                                                      | (related to C6) |
-| F3      | P2  | Security         | 30m    | RabbitMQ defaults `guest:guest` with no prod guard                                                                     | ADR-010         |
-| F4      | P2  | Abuse / DoS      | 2–3h   | `/metric-logs/stats` accepts unbounded date range; `findAll` full-table fetch + JS reduce                              | —               |
-| F5      | P2  | Multi-tenancy    | 30m    | `MetricSettingsRepositorySequelize.create()` does not defensively re-validate metric→org binding                       | —               |
-| F6      | P3  | DX               | 15m    | CORS allowlist not normalized (case, trailing slash); breaks legitimate requests                                       | —               |
-| F7      | P3  | Auth / DX        | 15m    | Refresh cookie `sameSite: "strict"` doc gap may push forkers to weaken to `"none"`                                     | —               |
-| —       | P3  | Observability    | 15m    | `x-request-id` header trusted unbounded (no UUID validation / length cap)                                              | —               |
-| —       | P3  | Config hardening | 5m     | `SENTRY_TRACES_SAMPLE_RATE` not clamped to `[0,1]` at schema layer                                                     | —               |
+| ID      | Pri                          | Area             | Effort | Summary                                                                                                                | Owning ADR      |
+| ------- | ---------------------------- | ---------------- | ------ | ---------------------------------------------------------------------------------------------------------------------- | --------------- |
+| N1      | ~~P0~~ **CLOSED 2026-08-23** | Multi-tenancy    | ≤1h    | `viz`/`vizdash` Redis cache keys scoped by `userId` only — cross-org disclosure on cache hit                           | ADR-009         |
+| N2      | ~~P0~~ **CLOSED 2026-08-23** | Multi-tenancy    | ≤1h    | `VisualizationInvalidationAdapter` signature missing `organizationId` — invalidation breaks after N1 fix               | ADR-009         |
+| F1      | ~~P1~~ **CLOSED 2026-08-23** | Security         | ≤30m   | `DISABLE_RATE_LIMITING` has no `NODE_ENV=production` schema guard — silent killswitch in prod                          | ADR-010         |
+| N3      | ~~P1~~ **CLOSED 2026-08-23** | Multi-tenancy    | ≤1d    | Cache-key scoping pattern systemic — `buildCursorCacheKey` + `MetricCacheRedis` + `MetricLogCacheRedis`                | ADR-009         |
+| N4      | P1                           | Observability    | ≤1d    | RabbitMQ messages don't propagate `x-request-id`; consumer not wrapped in ALS                                          | —               |
+| N5      | P1                           | API contracts    | ≤1d    | OpenAPI spec omits `/metrics/dummy` and `/metric-categories/dummy` (mounted in code, missing from spec)                | —               |
+| ADR-011 | P1                           | Architecture     | ≤1d    | Resolve auth-flat vs metric-nested persistence layout disagreement; migrate auth to nested                             | ADR-011         |
+| N6      | P2                           | Scaling          | ≤1w    | One RabbitMQ queue serves all orgs; no per-org routing or publisher-side budget                                        | —               |
+| N7      | P2                           | Observability    | ≤1d    | No APM / OpenTelemetry beyond Sentry sampling (overlaps deferred P2-5.4)                                               | —               |
+| N8      | P2                           | Scaling          | ≤1h    | Sequelize default pool `max: 5`; no env-tunables                                                                       | —               |
+| N9      | P2                           | Scaling          | ≤1d    | Single shared Redis client; SCAN-heavy invalidation blocks every other op                                              | —               |
+| N10     | P2                           | Performance      | ≤1h    | `MetricLogStatsRepoSequelize.computeStats` aggregates in JS instead of SQL `AVG/MIN/MAX`                               | —               |
+| N11     | P2                           | Performance      | ≤1h    | `MetricLogQueryRepoSequelize.listLogs` redundant JOIN for org isolation when `metric_logs.organization_id` is NOT NULL | —               |
+| F2      | P2                           | Secrets          | 5m     | `SENTRY_DSN` not matched by `SENSITIVE_KEY_PATTERN` (latent leak)                                                      | (related to C6) |
+| F3      | P2                           | Security         | 30m    | RabbitMQ defaults `guest:guest` with no prod guard                                                                     | ADR-010         |
+| F4      | P2                           | Abuse / DoS      | 2–3h   | `/metric-logs/stats` accepts unbounded date range; `findAll` full-table fetch + JS reduce                              | —               |
+| F5      | P2                           | Multi-tenancy    | 30m    | `MetricSettingsRepositorySequelize.create()` does not defensively re-validate metric→org binding                       | —               |
+| F6      | P3                           | DX               | 15m    | CORS allowlist not normalized (case, trailing slash); breaks legitimate requests                                       | —               |
+| F7      | P3                           | Auth / DX        | 15m    | Refresh cookie `sameSite: "strict"` doc gap may push forkers to weaken to `"none"`                                     | —               |
+| —       | P3                           | Observability    | 15m    | `x-request-id` header trusted unbounded (no UUID validation / length cap)                                              | —               |
+| —       | P3                           | Config hardening | 5m     | `SENTRY_TRACES_SAMPLE_RATE` not clamped to `[0,1]` at schema layer                                                     | —               |
 
 **Recommended execution order for the 2026-06-05 batch:**
 

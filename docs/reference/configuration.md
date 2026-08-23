@@ -102,8 +102,12 @@ Disabled by default; the app substitutes a no-op queue so nothing else has to ch
 | `DISABLE_RATE_LIMITING`                   | boolean | `false` |                  |
 
 > ⚠️ `DISABLE_RATE_LIMITING=true` turns off **every** limiter. It exists for test and fuzzing
-> runs. There is currently no guard preventing it in production — tracked as an open HIGH finding
-> in [`../internal/audits/saas-readiness/`](../internal/audits/saas-readiness/).
+> runs. Startup **refuses** it when `NODE_ENV=production`, along with the other
+> production-unsafe switches listed in
+> [ADR-0036](../explanation/decisions/adr-0036-refuse-production-unsafe-env-switches.md):
+> `ALLOW_TEST_HTTP_SERVER=true`, `SWAGGER_REQUIRE_AUTH=false`, and default `guest`
+> RabbitMQ credentials when `RABBITMQ_ENABLED=true`. The process exits before binding a
+> listener and logs a structured `[ENV_ERROR]` line naming the offending variable.
 
 ## Email
 

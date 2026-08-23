@@ -258,8 +258,8 @@ describe("metric settings router", () => {
       feature: "metric-settings",
       version: 2,
       userId: "user-1",
+      organizationId: "org-1",
       segments: [
-        ["org", "org-1"],
         ["l", 50],
         ["s", "createdAt"],
         ["fm", "metric-42"],
@@ -281,11 +281,11 @@ describe("metric settings router", () => {
     ) => string;
 
     const req: any = {
-      user: { id: "user-A" },
+      user: { id: "user-A", organizationId: "org-A" },
       params: { id: "settings-9" },
     };
 
     const key = detailKeyFn(req);
-    expect(key).toBe("metricSetting:user-A:settings-9");
+    expect(key).toBe("metricSetting:org-A:user-A:settings-9");
   });
 });

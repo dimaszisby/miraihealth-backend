@@ -21,7 +21,7 @@ export class DeleteMetricLog {
 
     await this.repo.delete(organizationId, log);
     if (this.cache.isEnabled()) {
-      await this.cache.invalidate(userId, log.metricId, log.id);
+      await this.cache.invalidate(userId, organizationId, log.metricId, log.id);
     }
     return log;
   }
