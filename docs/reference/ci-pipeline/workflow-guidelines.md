@@ -260,7 +260,7 @@ These complement your own tests and keep the portfolio aligned with real-world e
 Upload key artifacts to simplify debugging:
 
 - Jest reports (optional),
-- Newman contract test reports (JUnit + HTML),
+- Newman contract test reports (JUnit XML),
 - Any custom logs if needed.
 
 Example for Newman (local):
@@ -270,8 +270,7 @@ Example for Newman (local):
   uses: actions/upload-artifact@v4
   with:
     name: newman-contract-local
-    path: docs/internal/initiatives/tests-4-contract-tests/postman-newman/reports/local
-    retention-days: 14
+    path: tests/contract/postman-newman/reports/local
 ```
 
 You can mirror this pattern for staging contract tests (`newman-contract-staging`).
@@ -283,7 +282,11 @@ When a job fails:
 1. **Read the job logs** in GitHub Actions UI:
    - Identify if the failure is in install, migrations, tests, or contract suite.
 2. **If contract tests fail**:
-   - Download the Newman HTML report,
+   - Read the failing assertion in the job log — the `cli` reporter prints it inline,
+   - For detail, download the `newman-contract-local` artifact and open the JUnit XML
+     (`<collection>.xml`); each `<failure>` carries the assertion name and the diff.
+     Note the artifact step has no `if: always()`, so it only uploads on green runs —
+     the job log is the reliable source on failure,
    - Compare actual vs expected status codes / payloads,
    - Decide whether the bug is in:
      - Backend implementation,

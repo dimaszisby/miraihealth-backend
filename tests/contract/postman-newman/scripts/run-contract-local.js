@@ -146,10 +146,9 @@ async function main() {
     await runNewman({
       collection: collectionPath,
       environment: JSON.parse(JSON.stringify(baseEnvironment)),
-      reporters: ["cli", "junit", "htmlextra"],
+      reporters: ["cli", "junit"],
       reporter: {
         junit: { export: path.join(reportDir, `${collection.id}.xml`) },
-        htmlextra: { export: path.join(reportDir, `${collection.id}.html`) },
       },
     });
   }

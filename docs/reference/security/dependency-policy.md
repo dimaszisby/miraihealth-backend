@@ -80,6 +80,29 @@ When upstream fixes are unavailable, document compensating controls (feature fla
   - states test evidence.
 - If forced downgrades or patch forks are necessary, log a decision entry in `docs/internal/audits/security/audit-2025-11-21/security-audit-log-baseline-simple.md` (or a dedicated `decisions.md` once the dependency topic expands).
 
+## Transitive Overrides
+
+Some advisories live in a transitive package whose parent pins an outdated version and has no
+newer release. `npm audit fix` cannot resolve these, and `npm audit fix --force` "fixes" them by
+proposing a **downgrade of the top-level package** — which is destructive (see the warning under
+Exceptions).
+
+For these, use an `overrides` block in `package.json` to pin the vulnerable leaf to its patched
+version, leaving the parent's version untouched.
+
+Rules for adding an override:
+
+1. **Same major only.** A patch or minor bump within the major the parent already depends on.
+   Crossing a major is not an override decision — it is a dependency upgrade, with its own testing.
+2. **Verify the consuming code path.** Confirm what the parent actually uses the package for, and
+   whether our code reaches it. Record the finding in the PR.
+3. **Never pin below the latest safe version.** An exact pin that is lower than what another
+   dependency already resolves will _downgrade_ that dependency and can introduce new advisories.
+   Check the full advisory range, not just the one you are fixing.
+4. **Re-run the full suite.** Overrides force a version past a declared constraint, so
+   `npm test` plus `npm run test:contract:local` are required evidence.
+5. **Prefer removal.** If the parent is itself unnecessary, drop it instead of overriding it.
+
 ## Exceptions
 
 - When upstream fixes are not available:
@@ -95,7 +118,9 @@ When upstream fixes are unavailable, document compensating controls (feature fla
 
 ---
 
-## Current Audit Snapshot (2026-01-19)
+## Superseded Snapshot (2026-01-19)
+
+> Superseded by the 2026-08-23 snapshot below. Retained as a record of what was true then.
 
 ### Runtime Findings (Resolved 2026-01-19)
 
@@ -116,3 +141,47 @@ When upstream fixes are unavailable, document compensating controls (feature fla
 
 - These dev-only alerts do **not** ship to production builds, but we keep them documented with owners so we can react once upstream fixes exist.
 - Junior devs should reference this table before running `npm audit`; do **not** run `npm audit fix --force` (per policy) because it would downgrade or break the toolchain.
+
+## Current Audit Snapshot (2026-08-23)
+
+Full `npm audit`: **9 moderate, 0 critical, 0 high, 0 low** (from 25: 1 critical, 12 high,
+11 moderate, 1 low).
+`npm audit --production`: **2 moderate, 0 high/critical** — the value the CI gate evaluates.
+
+### What changed
+
+The `newman` contract-test chain carried 1 critical and 11 of the 12 highs. `newman@6.2.2` and
+`newman-reporter-htmlextra@1.23.1` were both already the latest published releases, so no upgrade
+existed. Resolved by pinning the patched transitive leaves via `overrides` (see Transitive
+Overrides above) and removing the reporter:
+
+| Override                | Reason                                                                                                                                                                                                                                      |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `handlebars` 4.7.9      | Cleared the **critical** (AST type confusion, `>=4.0.0 <=4.7.8`). Reachable via **two** paths — `newman-reporter-htmlextra` _and_ `newman` → `postman-runtime`. Used only by `postman-runtime`'s `pm.visualizer`, which no collection uses. |
+| `lodash` 4.18.1         | High — code injection via `_.template`.                                                                                                                                                                                                     |
+| `underscore` 1.13.8     | High — unbounded recursion; also clears `httpntlm`.                                                                                                                                                                                         |
+| `node-forge` 1.4.0      | High — ASN.1 unbounded recursion.                                                                                                                                                                                                           |
+| `flatted` 3.4.4         | High — unbounded recursion in `parse()`; also clears `uvm`.                                                                                                                                                                                 |
+| `js-yaml` 3.15.1        | High — quadratic CPU in `!!omap` resolution.                                                                                                                                                                                                |
+| `brace-expansion` 2.1.4 | High — DoS via unbounded intermediate arrays.                                                                                                                                                                                               |
+| `ip-address` 10.5.0     | High — leading-zero octets decoded as decimal.                                                                                                                                                                                              |
+| `qs` 6.15.3             | Moderate — `qs.stringify` DoS (`>=6.11.1 <=6.15.1`). **Must be 6.15.2+**: an earlier pin downgrades `express`/`body-parser`, which already resolve a safe version, and re-introduces the advisory in **production**.                        |
+| `jose` 4.15.5           | Moderate — resource exhaustion.                                                                                                                                                                                                             |
+| `esbuild` 0.28.2        | Low — arbitrary file read via dev server.                                                                                                                                                                                                   |
+
+`newman-reporter-htmlextra` was removed outright: no CI step consumed its HTML output, and it
+pulled in the `@budibase/handlebars-helpers` subtree. `tests/contract/postman-newman/scripts/run-contract-local.js`
+now reports via the built-in `cli` + `junit` reporters only.
+
+### Remaining 9 (all moderate, all dev-surface except two)
+
+Every remaining finding has a single root: **`uuid` < 11.1.1** (missing buffer bounds check in
+`v3`/`v5`/`v6` when `buf` is provided). It surfaces as `uuid` plus the packages that depend on it —
+`sequelize`, `jest-junit`, `serialised-error`, `postman-collection`, `postman-request`,
+`postman-runtime`, `postman-sandbox`, `newman`.
+
+**Deliberately not overridden.** The fix requires `uuid@>=11.1.1`, but `sequelize@6` — a
+**production** dependency — resolves `uuid@8.3.2`. Forcing 8 → 11 crosses three majors on the ORM
+to fix a bounds check in code paths we do not call (`src/` imports `uuid` nowhere; Sequelize uses
+only `uuid.v1`/`uuid.v4`). Per rule 1 under Transitive Overrides this is a dependency upgrade
+decision, not an override. Revisit when Sequelize bumps its own constraint.
