@@ -81,8 +81,16 @@ the per-environment URL is selected by `NODE_ENV`.
 | `REDIS_REQUIRED`           | boolean | `false` in test, else `true`                    |
 | `ENABLE_REDIS_INTEGRATION` | boolean | `false`                                         |
 
-With `REDIS_REQUIRED=false` the app degrades gracefully: caching is skipped and rate limiting
-falls back to an in-memory store.
+`REDIS_REQUIRED=true` means "the app cannot serve correctly without Redis", **not** "exit on the
+first error". A lost connection is retried with backoff for about **30 seconds** (35 attempts,
+`min(retries * 50, 2000)` ms apart); only if that budget is exhausted does the process log the
+reason and exit `1`, so the platform restarts it. A Redis restart or a cold start reconnects
+without dropping the process.
+
+With `REDIS_REQUIRED=false` the app degrades instead: it logs and continues after the same retry
+budget, caching is skipped, and rate limiting falls back to an **in-memory, per-instance** store —
+which is weaker than it sounds in a multi-instance deployment, so treat `false` as a temporary
+measure rather than a setting.
 
 ## RabbitMQ
 

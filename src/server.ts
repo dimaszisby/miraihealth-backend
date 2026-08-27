@@ -8,7 +8,7 @@ import cookieParser from "cookie-parser";
 import http from "http";
 import swaggerUi from "swagger-ui-express";
 import { getOpenApiDocumentation } from "./lib/openapi/openapi-docs.js";
-import logger from "@/utils/logger.js";
+import logger, { flushLogs } from "@/utils/logger.js";
 import { APP_NAME } from "@/config/app-name.js";
 
 // Routes
@@ -265,22 +265,6 @@ const startServer = async () => {
  * - Close Express server
  * - Log shutdown
  */
-/**
- * Winston writes asynchronously and `process.exit()` does not flush pending stream
- * writes, so without this the line describing a crash can be lost — precisely the
- * incident case ADR-0041 exists to serve. Bounded, so a wedged stdout cannot hang
- * shutdown indefinitely.
- */
-const flushLogs = (timeoutMs = 2000): Promise<void> =>
-  new Promise((resolve) => {
-    const bail = setTimeout(resolve, timeoutMs);
-    logger.once("finish", () => {
-      clearTimeout(bail);
-      resolve();
-    });
-    logger.end();
-  });
-
 const shutdown = async (signal: string, exitCode = 0) => {
   logger.info(`\n[SERVER] Received ${signal}, initiating shutdown...`);
 

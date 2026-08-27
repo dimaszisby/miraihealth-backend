@@ -137,6 +137,17 @@ logger there would be a circular init failure. Secret values in the snapshot are
 drain, then exit **non-zero**. If a container restarts and you want to know why, that final line is
 on the stream immediately before the restart.
 
+A third exit works the same way: with `REDIS_REQUIRED=true`, losing Redis for longer than the
+reconnect budget (~30s) logs
+
+```
+[REDIS] Giving up: Redis is required and unreachable after the retry budget. Exiting.
+```
+
+and exits `1`. Reconnect attempts appear as `[REDIS] Reconnecting to Redis...` warnings before it,
+so the stream shows how long the outage ran. A short blip reconnects and produces no exit — if you
+see `Reconnecting` followed by `Connected`, nothing died.
+
 ## Related
 
 - [ADR-0041](../../explanation/decisions/adr-0041-logs-as-event-streams-on-stdout.md) — the decision

@@ -50,3 +50,23 @@ Updated after any correction per `.claude/rules/workflow.md`.
 **Mistake**: The `{metricId}` path parameter on the dummy endpoint was registered with only `format: uuid`, no example. Schemathesis generated UUIDs that pass `.uuid()` but fail the strict RFC 4122 variant-1 regex in `zUUID` (`[89abAB]` required in group 4), causing 400s in contract tests.
 **Rule**: Any path parameter validated by `zUUID` (or any other strict regex rule) must include a concrete `.openapi({ example: "..." })` value in `openapi-docs.ts`. Use the same known-good UUID pattern used elsewhere (`55555555-eeee-4eee-8eee-000000000005`).
 **Why**: Schemathesis uses the OpenAPI spec to generate test inputs. Without an example, it generates its own UUIDs from the `format: uuid` hint — these are structurally valid but not guaranteed to satisfy stricter application-level regex patterns.
+
+## [2026-08-23] A dependency timeout at startup is a client-config suspect before it is a platform suspect
+
+**Mistake**: A Render staging deploy died repeatedly on `Connection timeout` from `@redis/client`.
+After confirming the URL, region, and instance status were all correct, I concluded the cause was
+Render free-tier instances lacking private-network access to Key Value — a platform-policy theory I
+could not test. The actual cause was local to the code: the first connect takes ~15s on a cold
+instance, past node-redis's 5s default `connectTimeout`, and `redis-client.ts` calls
+`process.exit(1)` from the `error` event handler, killing the process before `reconnectStrategy`
+could retry into the success that was seconds away. Proven the moment `REDIS_REQUIRED=false` let the
+process survive: `[REDIS] Connected to Redis` appeared 15s after boot.
+**Rule**: When a service dies at startup on a dependency, exhaust the client's own configuration —
+connect timeouts, retry strategy, and whether error handlers kill the process before retries run —
+before advancing any theory about platform networking. Prefer the diagnostic that produces
+evidence over the hypothesis that cannot be tested: connecting to the external CloudAMQP URL from
+the local machine settled the RabbitMQ question in one command (`403 ACCESS-REFUSED`, stale
+credentials), while the untestable Redis theory sent the investigation sideways.
+**Why**: `process.exit(1)` inside an `error` handler makes a recoverable, transient failure look
+exactly like a hard network block — the retry that would have disproved the theory never runs, so
+the logs contain no evidence against it.
