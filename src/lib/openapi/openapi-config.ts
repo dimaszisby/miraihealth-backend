@@ -165,6 +165,26 @@ export const openApiDocument = {
           },
         },
       },
+      // The rate limiters emit `status` as a number (429), while every response
+      // component above documents it as a string ("fail"/"error"). This documents
+      // what the code actually returns; the divergence is tracked as caveat C3.
+      TooManyRequestsError: {
+        description: "Rate limit exceeded",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                status: { type: "number", example: 429 },
+                message: {
+                  type: "string",
+                  example: "Too many requests, please try again later.",
+                },
+              },
+            },
+          },
+        },
+      },
     },
   },
 };
