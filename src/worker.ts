@@ -1,5 +1,5 @@
 import { env } from "./config/envManager.js";
-import logger from "./utils/logger.js";
+import logger, { flushLogs } from "./utils/logger.js";
 import {
   connectRabbitMQ,
   disconnectRabbitMQ,
@@ -47,17 +47,6 @@ const startWorker = async (): Promise<void> => {
 
   logger.info("[WORKER] Ready. Waiting for messages.");
 };
-
-/** See the note on `flushLogs` in server.ts — same reasoning, same bound. */
-const flushLogs = (timeoutMs = 2000): Promise<void> =>
-  new Promise((resolve) => {
-    const bail = setTimeout(resolve, timeoutMs);
-    logger.once("finish", () => {
-      clearTimeout(bail);
-      resolve();
-    });
-    logger.end();
-  });
 
 const shutdown = async (signal: string, exitCode = 0): Promise<void> => {
   logger.info(`[WORKER] Received ${signal}, shutting down...`);

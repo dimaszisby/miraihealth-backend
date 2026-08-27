@@ -127,4 +127,23 @@ const logger: Logger = createLogger({
   exitOnError: false,
 });
 
+/**
+ * Winston writes asynchronously and `process.exit()` does not flush pending stream
+ * writes, so without this the line describing a crash can be lost — precisely the
+ * incident case ADR-0041 exists to serve. Bounded, so a wedged stdout cannot hang
+ * shutdown indefinitely.
+ *
+ * Lives here rather than in each caller because three separate exit paths need it:
+ * server.ts, worker.ts, and redis-client.ts.
+ */
+export const flushLogs = (timeoutMs = 2000): Promise<void> =>
+  new Promise((resolve) => {
+    const bail = setTimeout(resolve, timeoutMs);
+    logger.once("finish", () => {
+      clearTimeout(bail);
+      resolve();
+    });
+    logger.end();
+  });
+
 export default logger;
