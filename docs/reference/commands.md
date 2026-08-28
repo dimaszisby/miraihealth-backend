@@ -23,12 +23,12 @@ npm run dev                     # tsx watch, port 5000
 
 Run these before pushing; CI runs the same four.
 
-| Command                      | Does                                  |
-| ---------------------------- | ------------------------------------- |
-| `npm run lint`               | ESLint (`lint:fix` to autofix)        |
-| `npm run typecheck`          | `tsc --noEmit`                        |
-| `npm run format:check`       | Prettier (`format:write` to fix)      |
-| `npm run docs:openapi:check` | Regenerate the spec and fail on drift |
+| Command                      | Does                                    |
+| ---------------------------- | --------------------------------------- |
+| `npm run lint`               | ESLint (`lint:fix` to autofix)          |
+| `npm run typecheck`          | `tsc --noEmit`                          |
+| `npm run format:check`       | Prettier (`format:write` to fix)        |
+| `npm run docs:openapi:check` | Regenerate, validate, and fail on drift |
 
 ## Tests
 
@@ -104,9 +104,10 @@ Scripts are named after the **full** environment (`development`, not `dev`):
 
 ## Documentation
 
-| Command                         | Does                                                |
-| ------------------------------- | --------------------------------------------------- |
-| `npm run docs:openapi:generate` | Regenerate and normalise the OpenAPI spec           |
-| `npm run docs:openapi:check`    | Regenerate and fail if the result differs from HEAD |
+| Command                         | Does                                                   |
+| ------------------------------- | ------------------------------------------------------ |
+| `npm run docs:openapi:generate` | Regenerate, normalise, and validate the OpenAPI spec   |
+| `npm run docs:openapi:validate` | Validate the spec on disk without regenerating it      |
+| `npm run docs:openapi:check`    | Regenerate, validate, and fail if it differs from HEAD |
 
 The spec is a build artifact — see [`api/README.md`](./api/README.md).
