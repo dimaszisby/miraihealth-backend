@@ -111,3 +111,16 @@ Scripts are named after the **full** environment (`development`, not `dev`):
 | `npm run docs:openapi:check`    | Regenerate, validate, and fail if it differs from HEAD |
 
 The spec is a build artifact — see [`api/README.md`](./api/README.md).
+
+## Git hooks
+
+Managed by husky (`core.hooksPath` is `.husky/_`; `npm run prepare` re-installs them).
+
+| Hook         | Runs                                                      |
+| ------------ | --------------------------------------------------------- |
+| `pre-commit` | `npm run lint-staged` — eslint + prettier on staged files |
+| `commit-msg` | `commitlint --edit` against `commitlint.config.mjs`       |
+
+`commit-msg` enforces Conventional Commits. It rejects a malformed message, not a wrong one — see
+`.claude/rules/workflow.md` for why commit messages should be handed over as a file and applied with
+`git commit -F <path>` rather than pasted at the prompt.

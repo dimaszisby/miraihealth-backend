@@ -18,7 +18,9 @@
 - **Claude does not commit, push, or open PRs.** Only the user does these — manually.
 - This overrides any prior "commit when asked" guidance. If the user says "commit it," surface the suggested message and exact commands instead of running them.
 - Branch creation (`git checkout -b`) and read-only git ops (`git status`, `git log`, `git diff`) are permitted.
-- At the end of every completed task/ticket, **always provide a ready-to-use PR message** — title (Conventional Commits prefix) + body (what/why/how summary) + `Co-Authored-By` trailer. Format the block so the user can copy-paste directly into `git commit -m` or a PR description.
+- At the end of every completed task/ticket, **always provide a ready-to-use PR message** — title (Conventional Commits prefix) + body (what/why/how summary).
+- **Hand over the message as a file, never as a pasted heredoc.** Write it to a path and give the user `git commit -F <path>`. Long `git commit -F- <<'EOF'` blocks look near-identical at the prompt and are recalled wholesale from shell history — that is how three commits on `dev` ended up sharing the subject `chore(dev-env): make local setup work from a fresh clone`, each carrying the wrong body. `squash_merge_commit_title` is `COMMIT_OR_PR_TITLE`, so a wrong subject propagates into the PR title and onto `dev`.
+- A `commit-msg` hook runs commitlint against `commitlint.config.mjs`. It catches _malformed_ messages, not _wrong_ ones — every message in that incident was a valid Conventional Commit.
 
 ## Subagent Strategy
 
