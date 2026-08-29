@@ -116,10 +116,10 @@ The spec is a build artifact — see [`api/README.md`](./api/README.md).
 
 Managed by husky (`core.hooksPath` is `.husky/_`; `npm run prepare` re-installs them).
 
-| Hook         | Runs                                                      |
-| ------------ | --------------------------------------------------------- |
-| `pre-commit` | `npm run lint-staged` — eslint + prettier on staged files |
-| `commit-msg` | `commitlint --edit` against `commitlint.config.mjs`       |
+| Hook         | Runs                                                                          |
+| ------------ | ----------------------------------------------------------------------------- |
+| `pre-commit` | Rejects staged `.env*` files (except `*.example`), then `npm run lint-staged` |
+| `commit-msg` | `commitlint --edit` against `commitlint.config.mjs`                           |
 
 `commit-msg` enforces Conventional Commits. It rejects a malformed message, not a wrong one — see
 `.claude/rules/workflow.md` for why commit messages should be handed over as a file and applied with
