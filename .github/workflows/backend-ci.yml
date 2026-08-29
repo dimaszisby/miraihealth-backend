@@ -404,8 +404,8 @@ jobs:
           fi                                                                                                                               
           curl -X POST "$RENDER_STAGING_DEPLOY_HOOK_URL"
 
-  contract_staging:
-    name: Contract Tests (Staging Backend)
+  smoke_staging:
+    name: Smoke Tests (Staging Backend)
     runs-on: ubuntu-latest
     needs: deploy_staging
     if: github.ref == 'refs/heads/staging'
@@ -427,16 +427,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run contract tests (staging)
+      # Fixture-free by design: the contract suite this replaces required twelve
+      # environment variables (CI supplied one), and one of them was an auth token that
+      # cannot outlive a 900s TTL. The smoke suite needs only a base URL, and waits for
+      # the deploy to become reachable before asserting — deploy_staging fires the Render
+      # hook and returns immediately, so this job can start mid-rollout.
+      - name: Run smoke tests (staging)
         env:
-          STAGING_BASE_URL: ${{ secrets.STAGING_BASE_URL }}
-        run: npm run test:contract:staging
-
-      - name: Upload Newman contract reports (staging)
-        uses: actions/upload-artifact@v4
-        with:
-          name: newman-contract-staging
-          path: tests/contract/postman-newman/reports/staging
+          SMOKE_BASE_URL: ${{ secrets.STAGING_BASE_URL }}
+        run: npm run test:smoke
 
   deploy_production:
     name: Deploy Backend to Production
@@ -448,11 +447,15 @@ jobs:
     # NOTE: RENDER_PRODUCTION_DEPLOY_HOOK_URL must be configured in GitHub repo secrets
     # before this job is usable. Without it, the deploy step will fail fast.
     #
-    # Gate model: contract_staging runs only on `refs/heads/staging`, so this job
-    # cannot list it under `needs:`. Instead we re-run the staging contract suite
-    # against STAGING_BASE_URL as a pre-deploy probe — if staging is unhealthy or
-    # the commit being promoted to main has drifted from what staging validated,
-    # the production deploy aborts before migrations run.
+    # Gate model: smoke_staging runs only on `refs/heads/staging`, so this job cannot
+    # list it under `needs:`. Instead we re-run the smoke suite against
+    # STAGING_BASE_URL as a pre-deploy probe — if staging is unhealthy, the production
+    # deploy aborts before migrations run.
+    #
+    # Note the bound on what this proves: the app exposes no build identity, so the
+    # probe cannot tell whether staging is running the commit being promoted or an
+    # older one. It gates on staging being HEALTHY, not on staging having validated
+    # this commit. ADR-0039 (release identity) is what would close that gap.
     env:
       RENDER_PRODUCTION_DEPLOY_HOOK_URL: ${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK_URL }}
       PRODUCTION_HEALTH_URL: ${{ secrets.PRODUCTION_HEALTH_URL }}
@@ -473,20 +476,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify staging is healthy (contract test gate)
+      - name: Verify staging is healthy (smoke gate)
+        env:
+          SMOKE_BASE_URL: ${{ secrets.STAGING_BASE_URL }}
         run: |
-          if [ -z "$STAGING_BASE_URL" ]; then
+          if [ -z "$SMOKE_BASE_URL" ]; then
             echo "STAGING_BASE_URL secret is not configured — cannot gate production deploy on staging health."
             exit 1
           fi
-          npm run test:contract:staging
-
-      - name: Upload pre-deploy contract reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: newman-contract-pre-production
-          path: tests/contract/postman-newman/reports/staging
+          npm run test:smoke
 
       - name: Build
         run: npm run build

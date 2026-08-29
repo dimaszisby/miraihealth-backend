@@ -28,6 +28,7 @@
     "test:integration:coverage": "JEST_JUNIT_OUTPUT_NAME=integration.xml NODE_ENV=test jest --runInBand --selectProjects integration --coverage",
     "test:coverage": "npm run test:unit:coverage && npm run test:integration:coverage",
     "integration:local": "npm run db:migrate:test && npm run test:integration",
+    "test:smoke": "node ./tests/smoke/run-smoke.mjs",
     "test:contract:local": "node tests/contract/postman-newman/scripts/run-contract-local.js",
     "test:contract:staging": "node tests/contract/postman-newman/scripts/run-contract-staging.js",
     "test:contract:schemathesis:local": "node tests/contract/schemathesis/scripts/run-local.js",

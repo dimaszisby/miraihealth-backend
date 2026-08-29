@@ -66,6 +66,7 @@ it; the `test:contract:*` scripts assume a server is already up.
 | `npm run contract:local:gate`              | Profile used as the CI gate                              |
 | `npm run contract:local:full`              | Full fuzzing profile                                     |
 | `npm run test:contract:local`              | Postman/Newman only, against a running server            |
+| `npm run test:smoke`                       | Smoke-test a deployed environment (`SMOKE_BASE_URL`)     |
 | `npm run test:contract:schemathesis:local` | Schemathesis only, against a running server              |
 | `npm run seed:contract-tests`              | Write deterministic fixtures to `tmp/contract-seed.json` |
 

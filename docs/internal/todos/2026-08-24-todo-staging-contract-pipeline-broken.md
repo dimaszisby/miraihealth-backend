@@ -1,8 +1,8 @@
 # Todo — the staging contract pipeline cannot pass
 
-- **Status:** Investigated, not started
+- **Status:** Complete (2026-08-29) — resolved by replacing the staging contract job with a fixture-free smoke suite, not by building seeding
 - **Created:** 2026-08-24
-- **Owner:** unassigned
+- **Owner:** dimaszisby
 - **Prepared for:** a planning session; this is a research handoff, not a plan
 
 `contract_staging` fails before it issues a single HTTP request, and would have failed the same way
@@ -130,3 +130,31 @@ sed -n '47,68p'  tests/contract/postman-newman/scripts/run-contract-staging.js
 grep -n "seed" .github/workflows/backend-ci.yml        # only :323, inside contract_local
 grep -n "ACCESS_TOKEN_TTL_SEC" .env.example            # 900
 ```
+
+---
+
+## Resolution (2026-08-29)
+
+Fixed by **removing the requirement**, not satisfying it. `tests/smoke/run-smoke.mjs` replaces the
+staging contract run in both places that used it: the renamed `smoke_staging` job and
+`deploy_production`'s pre-deploy gate. It needs only a base URL, so all three blockers in the
+findings above stop applying rather than being worked around — no twelve variables, no stored token
+fighting a 900s TTL, no seeding of a shared database.
+
+This followed this document's own recommendation to decide newman's future first. Newman retirement
+is agreed as the next piece of work; building seeding for collections about to be retired would have
+been wasted.
+
+**Also fixed:** `deploy_staging` fires the Render hook and returns immediately, so the next job could
+start mid-rollout. The smoke suite polls until reachable before asserting, which is what
+`STAGING_HEALTH_URL` — declared in that job's `env` and never used — was presumably meant for.
+
+**Deliberately still open:**
+
+- `run-contract-staging.js`, the `test:contract:staging` npm script, and the staging Postman
+  environment are now **uninvoked but present**. They are deleted by the newman retirement, together
+  with the collections; removing them here would leave a half-deleted feature across two PRs.
+- The suite proves staging is _healthy_, not that the _new deploy_ is live — see the todo for this
+  change for why, and what ADR-0039 would add.
+- `deploy_production` still has no post-deploy verification of production itself, though
+  `PRODUCTION_HEALTH_URL` exists as a secret.
