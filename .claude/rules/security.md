@@ -28,6 +28,10 @@ Applied in order on every request:
 
 ## Sensitive Data Handling
 
+- A `pre-commit` hook refuses any staged `.env*` path other than `*.example`. It inspects the
+  **staged set**, so it holds however the files were added. Bypass with `git commit --no-verify`
+  only when the file genuinely belongs in the repo.
+
 - Env vars matching `/(password|secret|token|key|certificate|url)$/i` are masked as `***REDACTED***` in logs
 - Never log passwords, tokens, or PII
 - Passwords hashed with bcrypt via `PasswordHasher` port
