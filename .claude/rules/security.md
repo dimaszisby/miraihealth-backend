@@ -40,7 +40,10 @@ Applied in order on every request:
 
 - `npm run test:unit:security-framework` — framework validation tests
 - `npm run security:delta:check` — dependency vulnerability delta analysis
-- `npm run security:gate:evaluate` — soft gate (uploads artifacts, doesn't block)
+- `npm run security:gate:evaluate` — evaluates the gate policy. "Soft" means only
+  Critical/High findings trip it, **not** that it is non-blocking: the `Security Delta
+Checks` job re-raises a failed gate (`exit 1`), and `Unit & Integration Tests` +
+  `contract_local` both depend on that job, so a tripped gate stops the pipeline.
 - Security framework + gate policy: `docs/reference/security/`
 - Dated audit runs: `docs/internal/audits/security/`
 - Release SOP: `docs/how-to/security/release-delta-sop.md`
