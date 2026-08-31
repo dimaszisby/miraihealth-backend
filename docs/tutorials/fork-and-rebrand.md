@@ -62,7 +62,7 @@ The parts worth keeping regardless of what you are building:
 | `src/shared/middleware/`    | Rate limiting, error handling, request-ID correlation, method guard                                                  |
 | `src/config/`               | Zod-validated environment loading                                                                                    |
 | `docs/reference/security/`  | ASVS/SSDF-mapped audit framework, gate policy, run template                                                          |
-| `tests/contract/`           | Newman + Schemathesis harnesses                                                                                      |
+| `tests/contract/`           | Schemathesis harness                                                                                                 |
 | `.github/workflows/`        | The full pipeline                                                                                                    |
 
 The parts to replace with your own domain:

@@ -144,3 +144,95 @@ npm run test:contract:schemathesis:local   # expect 37/46 selected, all passing
 
 The Schemathesis run is the load-bearing check. If it passes without `tmp/contract-seed.json` having
 been produced by newman, the seeding was successfully decoupled.
+
+---
+
+## Review — completed 2026-08-31
+
+Branch `chore/retire-newman` off `dev` @ `5b31068`.
+
+### Corrections to this brief, measured rather than assumed
+
+**`flatted` is not newman-exclusive.** `eslint → file-entry-cache → flat-cache → flatted` also
+consumes it. Newman-only overrides were `node-forge`, `ip-address`, `jose` — **3, not 4**.
+
+**The "up to 8 at best" ceiling was in fact reached.** All five shared overrides came out too:
+every other consumer resolves the same patched version once newman is not holding the tree down
+(`ts-jest` → handlebars 4.7.9, `pg-hstore` → underscore 1.13.8, `flat-cache` → flatted 3.4.4,
+`sequelize`/`hpp`/`wait-on` → lodash 4.18.1, `express`/`body-parser` → qs 6.15.3). Proven by
+removing all eight, reinstalling, and re-auditing — no finding returned. **`overrides`: 11 → 3.**
+
+**Audit: 9 → 3 moderate**, 0 critical/high/low. Six of the nine were reachable only through
+newman. `npm audit --production` unchanged at 2 moderate — no production movement either way.
+
+### The trap was worse than described, and is handled
+
+Beyond the token step, `tests/contract/hooks/seeded_ids.py:44` loads `tmp/contract-seed.json` at
+module import and `_load_seed()` swallows every error, returning `{}`. A missing seed would not
+raise — it would silently no-op every ID injection and degrade Schemathesis into mass 404s.
+`contract_local` now runs `npm run seed:contract-tests` as an explicit step between migrations
+and server start, matching `run-contract-local-full.mjs`.
+
+Verified by deleting `tmp/contract-seed.json`, seeding explicitly with newman entirely absent, and
+running the CI-equivalent Schemathesis invocation: **37 of 46 operations selected, 31 generated,
+31 passed, exit 0.** The count held.
+
+### Migrated — 13 `it()` blocks, not 9–12 plus 6
+
+`__tests__/integration/api/analytics-caching.test.ts` (new, 7): ETag + Cache-Control on the
+dashboard; `If-None-Match` → 304 on both endpoints; ETag on single-metric; invalid-bucket 400;
+unknown-metric 404; dashboard item shape (`metricId`, `category_name`, `series[]`).
+
+Six one-liners added to existing suites — the GET-verb 401s and by-id 404s were genuinely
+missing, because every existing 401 in those files was on a **POST**: `metric.test.ts` (GET 401,
+create-without-name 400, unknown-id 404), `metric-log.test.ts` (GET 401, unknown-id 404),
+`metric-settings.test.ts` (GET 401). The **auth** collection needed nothing — `auth.test.ts`
+already covered all five of its requests, more strictly.
+
+Two things the collections got away with and Jest does not: the dashboard-shape assertion
+self-skipped via `pm.skip()` when `items` was empty, so it never ran on an unseeded DB — the Jest
+version builds a category + display-enabled metric and asserts `category_name` equals the created
+category. And the migrated tests use an **absolute** range; `last=30d` is anchored to the current
+bucket, so a conditional request could straddle a boundary and never match its own ETag.
+
+### A defect found while migrating
+
+`controller.ts:47-48` returns 304 **before** setting the ETag, so `GET /analytics/metrics/:id`
+sends a 304 with no validator (RFC 9110 requires one) and no `Cache-Control` at all. The dashboard
+handler gets this right. Not fixed here — landing a behaviour change alongside a dependency
+removal would give a red pipeline two candidate causes. The test asserts current behaviour and
+points at `2026-08-31-todo-analytics-304-etag.md`.
+
+### Verification
+
+```
+lint / typecheck / format:check / docs:openapi:check   all 0
+npm test                unit 540 passed (86 suites); integration 180 passed, 5 skipped
+                        (+13 — exactly the migrated cases)
+security:delta:gate     passed=true blocking=0 backlogWarnings=0, 2 medium
+npm audit               3 moderate, 0 critical/high/low   (was 9)
+npm audit --production  2 moderate                        (unchanged)
+seed + schemathesis     37/46 selected, 31/31 passed, exit 0, newman absent
+```
+
+**One pre-existing failure surfaced, out of scope.** The `gate` profile (not the one CI runs)
+fails on `POST /auth/refresh` returning an undocumented **400** — the spec documents 200/401/500.
+This branch changes no `src/` file and no spec, `docs:openapi:check` reports no drift, and `dev`
+documents the same three responses, so the gap predates this work. CI's default profile is
+`quick`, which does not reach it — which is why `dev` is green.
+
+### A trap of my own worth recording
+
+The first attempt removed `package-lock.json` and reinstalled from scratch. That re-resolved the
+**entire** tree, bumping prettier 3.8.1 → 3.9.6 and breaking `format:check` on 11 files unrelated
+to this work. Restoring the lockfile from `dev` and letting `npm install` make a minimal update
+gave the same audit result with a pure-removal diff (10 insertions, 1235 deletions). When the
+goal is removing a dependency, never regenerate the lockfile — let npm prune.
+
+### Left undone deliberately
+
+The metric-log cursor-cache `.js`-suffix bug and dead invalidation patterns cited above as rot
+evidence are untouched; they were evidence for the decision, not scope. `docs/internal/` dated
+todos and audit runs were not rewritten — they are records tied to specific commits. The
+`postman-newman` doc kit is marked **superseded** with a banner rather than deleted, and the two
+live reference docs that linked into it now point at current guidance.

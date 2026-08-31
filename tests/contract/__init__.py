@@ -1,3 +1,3 @@
 """
-Namespace package for contract-test tooling (Postman/Newman + Schemathesis).
+Namespace package for contract-test tooling (Schemathesis).
 """

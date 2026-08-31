@@ -1,7 +1,17 @@
 # Postman/Newman Contract Guide
 
-**Status:** Active
-**Last updated:** 2026-04-13
+**Status:** Superseded — the suite this kit documents no longer exists
+**Last updated:** 2026-08-31
+
+> **Newman was retired on 2026-08-31.** The five collections, both runner scripts, both
+> environment files, and the `newman` devDependency are gone; `tests/contract/postman-newman/`
+> no longer exists. The unique assertions were migrated into `__tests__/integration/api/`
+> (chiefly `analytics-caching.test.ts`), and Schemathesis remains the contract suite in
+> `contract_local`. See `docs/internal/todos/2026-08-31-todo-retire-newman.md` for the
+> decision and `docs/reference/ci-pipeline/workflow-guidelines.md` for current CI guidance.
+>
+> This kit is kept as the design record for a system that ran for months. Nothing in it
+> describes the pipeline as it stands today — do not follow its commands.
 
 This folder contains curated contract suites executed by Newman for deterministic API checks.
 

@@ -17,9 +17,9 @@ The main CI pipeline is `.github/workflows/backend-ci.yml` with this job depende
 checks (lint, format, typecheck, openapi)
     → security_delta (framework tests, delta check, gate evaluation)
         → tests (build, migrate, unit + integration tests with coverage)
-            → contract_local (Newman + Schemathesis against local server)
+            → contract_local (seed + Schemathesis against local server)
                 → deploy_staging (only on staging branch)
-                    → contract_staging (tests against live staging)
+                    → smoke_staging (smoke suite against live staging)
 ```
 
 Other workflows:
@@ -66,8 +66,9 @@ Other workflows:
 
    **`contract_local` job failures**:
    - Server didn't start: check health endpoint, port conflicts
-   - Newman tests: API contract violations
    - Schemathesis: OpenAPI spec inconsistencies, fuzzing failures
+   - Missing `tmp/contract-seed.json`: the token step fails loudly, but the seeded-ID hook
+     fails silently — check the run reports 37 of 46 operations selected
 
 4. **Check environment differences** between local and CI:
    - CI uses PostgreSQL 15 (local may differ)

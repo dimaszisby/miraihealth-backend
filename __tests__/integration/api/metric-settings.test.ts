@@ -178,6 +178,13 @@ describe("Metric Settings API", () => {
     expect(res.body.status).toBe("fail");
   });
 
+  it("blocks unauthenticated settings listing", async () => {
+    const res = await api.get("/api/v1/metric-settings").query({ limit: 10 });
+
+    expect(res.status).toBe(401);
+    expect(res.body.status).toBe("fail");
+  });
+
   it("validates payload combinations", async () => {
     const res = await api
       .post("/api/v1/metric-settings")

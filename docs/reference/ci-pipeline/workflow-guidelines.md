@@ -32,7 +32,7 @@ These guidelines define **how to design, write, and maintain** GitHub Actions wo
    - No credentials or tokens may be hard-coded in workflows.
 
 5. **Observability**
-   - Upload key reports (Jest, Newman) as artifacts.
+   - Upload key reports (Jest, Schemathesis) as artifacts.
    - When running coverage jobs, rename/persist per-suite folders (e.g., `coverage/jest-unit`, `coverage/jest-integration`) before uploading so they are not overwritten.
    - Configure timeouts and clear failure points.
 
@@ -260,20 +260,18 @@ These complement your own tests and keep the portfolio aligned with real-world e
 Upload key artifacts to simplify debugging:
 
 - Jest reports (optional),
-- Newman contract test reports (JUnit XML),
+- Schemathesis contract test reports (JUnit XML + HAR),
 - Any custom logs if needed.
 
-Example for Newman (local):
+Example for Schemathesis (local):
 
 ```yaml
-- name: Upload Newman reports (local)
+- name: Upload Schemathesis reports (local)
   uses: actions/upload-artifact@v4
   with:
-    name: newman-contract-local
-    path: tests/contract/postman-newman/reports/local
+    name: schemathesis-contract-local
+    path: tests/contract/schemathesis/reports/local
 ```
-
-You can mirror this pattern for staging contract tests (`newman-contract-staging`).
 
 ### 7.2 Failure Triage Flow
 
@@ -282,16 +280,17 @@ When a job fails:
 1. **Read the job logs** in GitHub Actions UI:
    - Identify if the failure is in install, migrations, tests, or contract suite.
 2. **If contract tests fail**:
-   - Read the failing assertion in the job log — the `cli` reporter prints it inline,
-   - For detail, download the `newman-contract-local` artifact and open the JUnit XML
-     (`<collection>.xml`); each `<failure>` carries the assertion name and the diff.
-     Note the artifact step has no `if: always()`, so it only uploads on green runs —
-     the job log is the reliable source on failure,
-   - Compare actual vs expected status codes / payloads,
+   - Read the failing check in the job log — Schemathesis prints the failing case,
+     the received vs documented status codes, and a `curl` line that reproduces it,
+   - For detail, download the `schemathesis-contract-local` artifact and open the JUnit
+     XML or the HAR. Note the artifact step has no `if: always()`, so it only uploads on
+     green runs — the job log is the reliable source on failure,
+   - Check the run header: it must report **37 of 46 operations selected**. A lower count
+     usually means `tmp/contract-seed.json` is missing, which the seeded-ID hook absorbs
+     silently rather than erroring,
    - Decide whether the bug is in:
      - Backend implementation,
-     - OpenAPI spec,
-     - Postman collection.
+     - OpenAPI spec (an undocumented status code is a spec bug, not a test bug).
 3. **If DB connectivity fails**:
    - Check Postgres/Redis service logs,
    - Ensure `DATABASE_URL` and `REDIS_URL` match your app’s configuration.
@@ -457,8 +456,8 @@ jobs:
           }
           wait_with_logs npx wait-on tcp:4000 --timeout 180000
           wait_with_logs npx wait-on http://localhost:4000/api/v1/health --timeout 180000
-      - name: Run contract tests (local)
-        run: npm run test:contract:local
+      - name: Seed contract fixtures
+        run: npm run seed:contract-tests
       - name: Dump backend logs on failure
         if: always()
         run: |
@@ -474,11 +473,11 @@ jobs:
             kill "$(cat /tmp/backend.pid)" || true
             rm -f /tmp/backend.pid
           fi
-      - name: Upload Newman reports (local)
+      - name: Upload Schemathesis reports (local)
         uses: actions/upload-artifact@v4
         with:
-          name: newman-contract-local
-          path: docs/internal/initiatives/tests-4-contract-tests/postman-newman/reports/local
+          name: schemathesis-contract-local
+          path: tests/contract/schemathesis/reports/local
           retention-days: 14
 ```
 

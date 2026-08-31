@@ -1372,7 +1372,7 @@ registry.registerPath({
   path: "/metric-logs/{metricId}/dummy",
   // Tagged "Dummy Data" rather than "Metric Logs" so the Schemathesis tag selection in
   // tests/contract/schemathesis/scripts/run-local.js does not fuzz a data generator that
-  // accepts count up to 1000 against the same database the newman fixtures rely on.
+  // accepts count up to 1000 against the same database the contract fixtures rely on.
   tags: ["Dummy Data"],
   summary: "Enqueue dummy metric log generation",
   description:

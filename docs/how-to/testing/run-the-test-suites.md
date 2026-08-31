@@ -28,7 +28,7 @@ cp .env.test.example .env.test
 - `1-static-checks/`: lint, typecheck, formatting, OpenAPI drift checks.
 - `2-unit-tests/`: in-memory/domain/use-case/controller unit tests with mocks.
 - `3-integration-tests/`: real app + Postgres (and optional Redis) tests.
-- `4-contract-tests/`: Postman/Newman + Schemathesis API contract enforcement.
+- `4-contract-tests/`: Schemathesis API contract enforcement.
 - `overhaul/`: historical restructuring artifacts.
 - Top-level dated docs: historical snapshots and recommendations.
 

@@ -7,7 +7,7 @@ Establish a predictable, portfolio-grade process for evaluating, triaging, and r
 ## Scope
 
 - **Runtime dependencies** (packages shipped with the service, Docker image, or Render deployment).
-- **Dev/test tooling** (lint, jest, newman, postman, etc.) — still tracked, but lower priority unless they compromise CI.
+- **Dev/test tooling** (lint, jest, schemathesis, etc.) — still tracked, but lower priority unless they compromise CI.
 - Direct and transitive packages listed in `package.json` / `package-lock.json`.
 - Node.js runtime itself (pinned to `20.x` via `.nvmrc`, `.node-version`, and CI env).
 
@@ -62,13 +62,13 @@ When upstream fixes are unavailable, document compensating controls (feature fla
 ## Runtime vs Dev/Test Triaging Guidelines
 
 - **Runtime-first:** Prioritize packages such as Express, Sequelize, JSON Web Token utilities, Redis/Postgres clients, and any middleware that processes request payloads.
-- **Dev/Test:** Tools like Jest, Newman, Prettier, ESLint are patched on a scheduled cadence unless the vulnerability leaks secrets or allows code execution during CI runs.
+- **Dev/Test:** Tools like Jest, Prettier, ESLint are patched on a scheduled cadence unless the vulnerability leaks secrets or allows code execution during CI runs.
 - Document categorization in the relevant checklist/todo.
 
 ## Upgrade Cadence
 
 - **Monthly:** Run `npm audit --production` and capture findings.
-- **Quarterly:** Refresh major dev-tooling train (Jest, ESLint, Newman) in a dedicated PR with release notes, following the doc kit pattern (plan/checklist/decisions).
+- **Quarterly:** Refresh major dev-tooling train (Jest, ESLint) in a dedicated PR with release notes, following the doc kit pattern (plan/checklist/decisions).
 - **Ad hoc:** Immediately when GitHub reports Critical/High runtime issues.
 
 ## Change Control Expectations
@@ -100,7 +100,7 @@ Rules for adding an override:
    dependency already resolves will _downgrade_ that dependency and can introduce new advisories.
    Check the full advisory range, not just the one you are fixing.
 4. **Re-run the full suite.** Overrides force a version past a declared constraint, so
-   `npm test` plus `npm run test:contract:local` are required evidence.
+   `npm test` plus `npm run contract:local:gate` are required evidence.
 5. **Prefer removal.** If the parent is itself unnecessary, drop it instead of overriding it.
 
 ## Exceptions
@@ -134,54 +134,62 @@ Rules for adding an override:
 
 ### Dev/Test Findings (Open 2026-01-19)
 
-| Package / Path                                                                            | Version | Severity        | Surface                                         | Advisory                                                                                                                                                                                                                     | Status / Plan                                                                                                                                                                                                                     |
-| ----------------------------------------------------------------------------------------- | ------- | --------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `diff` via `ts-node` (Jest CLI chain)                                                     | 4.0.2   | High            | **Dev-only** (ts-node used for tooling/scripts) | [GHSA-73rr-hh4g-fpgx](https://github.com/advisories/GHSA-73rr-hh4g-fpgx)                                                                                                                                                     | Await upstream `ts-node` release that bumps to `diff>=5`. Audit fix would downgrade to `ts-node@1.x` (breaking). Monitor npm advisories weekly and upgrade once patch lands.                                                      |
-| `newman` transitive deps (`postman-runtime` → `jose`, `node-forge`, `postman-request/qs`) | 6.2.2   | Moderate / High | **Dev-only** (contract test tooling)            | [GHSA-hhhv-q57g-882q](https://github.com/advisories/GHSA-hhhv-q57g-882q), [GHSA-554w-wpv2-vw27](https://github.com/advisories/GHSA-554w-wpv2-vw27), [GHSA-6rw7-vpxm-498p](https://github.com/advisories/GHSA-6rw7-vpxm-498p) | Latest newman still bundles vulnerable transitive packages; `npm audit fix --force` would revert to 6.2.0 (no fix). Track upstream releases and evaluate alternatives (Postman CLI, REST Client) if advisories remain unresolved. |
+| Package / Path                        | Version | Severity | Surface                                         | Advisory                                                                 | Status / Plan                                                                                                                                                                |
+| ------------------------------------- | ------- | -------- | ----------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `diff` via `ts-node` (Jest CLI chain) | 4.0.2   | High     | **Dev-only** (ts-node used for tooling/scripts) | [GHSA-73rr-hh4g-fpgx](https://github.com/advisories/GHSA-73rr-hh4g-fpgx) | Await upstream `ts-node` release that bumps to `diff>=5`. Audit fix would downgrade to `ts-node@1.x` (breaking). Monitor npm advisories weekly and upgrade once patch lands. |
 
 - These dev-only alerts do **not** ship to production builds, but we keep them documented with owners so we can react once upstream fixes exist.
 - Junior devs should reference this table before running `npm audit`; do **not** run `npm audit fix --force` (per policy) because it would downgrade or break the toolchain.
 
-## Current Audit Snapshot (2026-08-23)
+## Current Audit Snapshot (2026-08-31)
 
-Full `npm audit`: **9 moderate, 0 critical, 0 high, 0 low** (from 25: 1 critical, 12 high,
-11 moderate, 1 low).
-`npm audit --production`: **2 moderate, 0 high/critical** — the value the CI gate evaluates.
+Full `npm audit`: **3 moderate, 0 critical, 0 high, 0 low**.
+`npm audit --production`: **2 moderate, 0 high/critical** — the value the CI gate evaluates,
+unchanged.
 
 ### What changed
 
-The `newman` contract-test chain carried 1 critical and 11 of the 12 highs. `newman@6.2.2` and
-`newman-reporter-htmlextra@1.23.1` were both already the latest published releases, so no upgrade
-existed. Resolved by pinning the patched transitive leaves via `overrides` (see Transitive
-Overrides above) and removing the reporter:
+`newman` was retired (see `docs/internal/todos/2026-08-31-todo-retire-newman.md`). Its collections
+were migrated into the Jest integration suite and Schemathesis, and the devDependency was removed.
+That deleted **six of the nine** then-open findings outright — `newman`, `postman-collection`,
+`postman-request`, `postman-runtime`, `postman-sandbox`, `serialised-error` were reachable through
+no other path.
 
-| Override                | Reason                                                                                                                                                                                                                                      |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `handlebars` 4.7.9      | Cleared the **critical** (AST type confusion, `>=4.0.0 <=4.7.8`). Reachable via **two** paths — `newman-reporter-htmlextra` _and_ `newman` → `postman-runtime`. Used only by `postman-runtime`'s `pm.visualizer`, which no collection uses. |
-| `lodash` 4.18.1         | High — code injection via `_.template`.                                                                                                                                                                                                     |
-| `underscore` 1.13.8     | High — unbounded recursion; also clears `httpntlm`.                                                                                                                                                                                         |
-| `node-forge` 1.4.0      | High — ASN.1 unbounded recursion.                                                                                                                                                                                                           |
-| `flatted` 3.4.4         | High — unbounded recursion in `parse()`; also clears `uvm`.                                                                                                                                                                                 |
-| `js-yaml` 3.15.1        | High — quadratic CPU in `!!omap` resolution.                                                                                                                                                                                                |
-| `brace-expansion` 2.1.4 | High — DoS via unbounded intermediate arrays.                                                                                                                                                                                               |
-| `ip-address` 10.5.0     | High — leading-zero octets decoded as decimal.                                                                                                                                                                                              |
-| `qs` 6.15.3             | Moderate — `qs.stringify` DoS (`>=6.11.1 <=6.15.1`). **Must be 6.15.2+**: an earlier pin downgrades `express`/`body-parser`, which already resolve a safe version, and re-introduces the advisory in **production**.                        |
-| `jose` 4.15.5           | Moderate — resource exhaustion.                                                                                                                                                                                                             |
-| `esbuild` 0.28.2        | Low — arbitrary file read via dev server.                                                                                                                                                                                                   |
+It also made **eight of the eleven** `overrides` redundant. Three existed only to patch newman's
+own subtree (`node-forge`, `ip-address`, `jose`) and are gone with it. The other five were shared
+with non-newman consumers, and each of those consumers resolves the same patched version on its
+own once newman is not holding the tree down:
 
-`newman-reporter-htmlextra` was removed outright: no CI step consumed its HTML output, and it
-pulled in the `@budibase/handlebars-helpers` subtree. `tests/contract/postman-newman/scripts/run-contract-local.js`
-now reports via the built-in `cli` + `junit` reporters only.
+| Dropped override | Other consumer                                 | Its range             | Resolves to |
+| ---------------- | ---------------------------------------------- | --------------------- | ----------- |
+| `handlebars`     | `ts-jest`                                      | `^4.7.8`              | 4.7.9       |
+| `lodash`         | `hpp`, `sequelize`, `sequelize-cli`, `wait-on` | `^4.17.x`             | 4.18.1      |
+| `underscore`     | `pg-hstore`                                    | `^1.13.1`             | 1.13.8      |
+| `flatted`        | `eslint` → `flat-cache`                        | `^3.2.9`              | 3.4.4       |
+| `qs`             | `express`, `body-parser`, `superagent`         | `~6.15.1` / `^6.14.1` | 6.15.3      |
 
-### Remaining 9 (all moderate, all dev-surface except two)
+Verified empirically, not inferred: the overrides were removed, the tree reinstalled, and
+`npm audit` re-run. No finding returned. **`overrides` is now three entries** — `js-yaml`,
+`brace-expansion`, `esbuild` — none of which ever had a newman path.
+
+Note `flatted` was previously recorded as newman-exclusive. It is not; `eslint` reaches it via
+`file-entry-cache` → `flat-cache`. It is droppable anyway, but for the reason above.
+
+### Remaining 3 (all moderate)
 
 Every remaining finding has a single root: **`uuid` < 11.1.1** (missing buffer bounds check in
-`v3`/`v5`/`v6` when `buf` is provided). It surfaces as `uuid` plus the packages that depend on it —
-`sequelize`, `jest-junit`, `serialised-error`, `postman-collection`, `postman-request`,
-`postman-runtime`, `postman-sandbox`, `newman`.
+`v3`/`v5`/`v6` when `buf` is provided). It surfaces as `uuid`, `sequelize`, and `jest-junit`.
 
 **Deliberately not overridden.** The fix requires `uuid@>=11.1.1`, but `sequelize@6` — a
 **production** dependency — resolves `uuid@8.3.2`. Forcing 8 → 11 crosses three majors on the ORM
 to fix a bounds check in code paths we do not call (`src/` imports `uuid` nowhere; Sequelize uses
 only `uuid.v1`/`uuid.v4`). Per rule 1 under Transitive Overrides this is a dependency upgrade
 decision, not an override. Revisit when Sequelize bumps its own constraint.
+
+### Superseded snapshot (2026-08-23)
+
+The prior snapshot recorded **9 moderate** after an override sweep took the tree from 25 findings
+(1 critical, 12 high, 11 moderate, 1 low). That sweep pinned eleven transitive leaves to clear a
+critical in `handlebars` and eleven highs, all rooted in the newman chain. Retiring newman removed
+the cause rather than the symptom, so all but three of those pins are gone. The full rationale
+per package is preserved in `docs/internal/todos/2026-08-23-todo-newman-vulnerability-chain.md`.

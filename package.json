@@ -29,8 +29,6 @@
     "test:coverage": "npm run test:unit:coverage && npm run test:integration:coverage",
     "integration:local": "npm run db:migrate:test && npm run test:integration",
     "test:smoke": "node ./tests/smoke/run-smoke.mjs",
-    "test:contract:local": "node tests/contract/postman-newman/scripts/run-contract-local.js",
-    "test:contract:staging": "node tests/contract/postman-newman/scripts/run-contract-staging.js",
     "test:contract:schemathesis:local": "node tests/contract/schemathesis/scripts/run-local.js",
     "test:contract:schemathesis:local:quick": "SCHEMATHESIS_LOCAL_PROFILE=quick npm run test:contract:schemathesis:local",
     "test:contract:schemathesis:local:gate": "SCHEMATHESIS_LOCAL_PROFILE=gate npm run test:contract:schemathesis:local",
@@ -146,7 +144,6 @@
     "jest-junit": "^16.0.0",
     "jest-summary-reporter": "^0.0.2",
     "lint-staged": "^16.2.7",
-    "newman": "^6.2.2",
     "nodemon": "^3.1.9",
     "prettier": "^3.5.3",
     "sequelize-cli": "^6.6.2",
@@ -158,16 +155,8 @@
     "wait-on": "^9.0.3"
   },
   "overrides": {
-    "handlebars": "4.7.9",
-    "lodash": "4.18.1",
-    "underscore": "1.13.8",
-    "node-forge": "1.4.0",
-    "flatted": "3.4.4",
     "js-yaml": "3.15.1",
     "brace-expansion": "2.1.4",
-    "ip-address": "10.5.0",
-    "qs": "6.15.3",
-    "jose": "4.15.5",
     "esbuild": "0.28.2"
   }
 }
