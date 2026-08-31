@@ -21,7 +21,7 @@ For migrated non-blocking CI/contract follow-ups, see `docs/internal/initiatives
 - Ensure every backend change is:
   - Linted and type-checked,
   - Covered by unit and integration tests,
-  - Validated via API contract tests (Postman/Newman),
+  - Validated via API contract tests (Schemathesis),
     before being considered stable.
 
 - Provide a **repeatable pipeline definition** suitable for:
@@ -77,8 +77,8 @@ Later, you may add:
   - `.github/workflows/backend-ci.yml`
 
 - **Supporting scripts (recommended):**
-  - `tests/contract/postman-newman/scripts/run-contract-local.js`
-  - `tests/contract/postman-newman/scripts/run-contract-staging.js`
+  - `tests/contract/schemathesis/scripts/run-local.js`
+  - `scripts/run-contract-local-full.mjs`
 
 - **Backend configuration for CI:**
   - `package.json` scripts:
@@ -86,8 +86,8 @@ Later, you may add:
     - `typecheck`
     - `test:unit`
     - `test:integration`
-    - `test:contract:local`
-    - `test:contract:staging`
+    - `test:contract:schemathesis:local`
+    - `seed:contract-tests`
     - `format:check`
     - `docs:openapi:check`
     - `build`
@@ -113,7 +113,7 @@ The backend pipeline uses three logical environments:
 3. **Staging (PaaS)**
    - Backend deployed on Render (managed platform).
    - Configured via platform environment variables.
-   - Contract tests point to this environment using `lakira-staging.postman_environment.json`.
+   - The smoke suite points at this environment via `SMOKE_BASE_URL`.
    - Current staging API base URL: `https://lakira-backend-staging.onrender.com/api/v1`.
 
 Detailed mapping (URLs, env vars, secrets) is maintained in:
@@ -123,7 +123,7 @@ Detailed mapping (URLs, env vars, secrets) is maintained in:
 ### 5.1 Database Migrations in CI
 
 - `npm run db:migrate:test` currently runs test migrations (`sequelize-cli db:migrate`) after ensuring build artifacts exist.
-- Seeding for deterministic contract fixtures is handled separately by `npm run seed:contract-tests` (invoked by `test:contract:local` unless skipped).
+- Seeding for deterministic contract fixtures is handled separately by `npm run seed:contract-tests`, an explicit step in `contract_local` — Schemathesis reads both its token and its seeded IDs from `tmp/contract-seed.json`.
 - `npm run start:test` should assume those migrations have already run.
 - If migrations require extra flags (e.g. skipping data seeds), document them in `package.json` scripts before updating workflows.
 
@@ -148,9 +148,8 @@ See `docs/reference/environments.md` for the full secret/env mapping.
 The backend CI pipeline is tightly coupled with:
 
 - `docs/explanation/testing-strategy.md`
-- `docs/internal/initiatives/tests-4-contract-tests/postman-newman/PLAN.md`
-- `docs/internal/initiatives/tests-4-contract-tests/postman-newman/CHECKLIST.md`
-- `docs/internal/initiatives/tests-4-contract-tests/postman-newman/PIPELINE_OVERVIEW.md`
+- `docs/reference/ci-pipeline/workflow-guidelines.md`
+- `docs/internal/initiatives/tests-4-contract-tests/README.md`
 
 CI jobs call the same scripts and commands referenced in those documents, ensuring that:
 

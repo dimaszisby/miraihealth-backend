@@ -67,7 +67,7 @@ Goals:
 - **Frontend Deploy Target:** Vercel
 - **Artifacts:**
   - Jest test reports (optional).
-  - Newman contract test reports (JUnit + HTML).
+  - Schemathesis contract test reports (JUnit + HAR).
   - Build artifacts (Docker images, or platform-specific bundles).
 
 > Special Note for Codex: Prefer GitHub Actions as the default CI implementation. Only reference Jenkins for the optional `JENKINS_NOTES.md` scenarios.
@@ -87,7 +87,7 @@ Standard pipeline stages (applies to both FE and BE, with variations):
 5. **Build**
 6. **Deploy to Staging**
 7. **Contract Tests (Staging) – BE**
-   - Postman/Newman against staging backend.
+   - Smoke suite against the deployed staging backend.
 8. **E2E Tests (Optional)**
 9. **Manual Approval or Auto-Deploy to Production (Optional)**
 

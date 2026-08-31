@@ -22,7 +22,6 @@ This guide explains how Lakira Backend’s automation works and what a junior de
 4. **Integration Tests**
    - `npm run test:integration` (runs sequentially with `NODE_ENV=test`)
 5. **Contract / E2E (optional per PR)**
-   - `npm run test:contract:local` or staging variant when requested by QA.
    - `npm run test:contract:schemathesis:local` once the OpenAPI spec is regenerated to fuzz every documented path.
 
 Jobs run in the order above; a failure in any stage blocks later jobs so issues are caught early.
@@ -140,14 +139,14 @@ Always push fixes to the same branch; reruns are automatic once CI detects new c
 
    (Alternatively, point `SCHEMATHESIS_CLI` to an existing global binary.)
 
-   > Shortcut: run `npm run contract:local:full` to execute every step below automatically (build → migrate → seed → start backend → Newman → Schemathesis → cleanup). Server logs are written to `tmp/backend-contract.log`. The helper runs on port 4000, matching `.env.test.example` and CI; override with `CONTRACT_LOCAL_PORT`. The helper automatically prefers `.venv-schemathesis/bin/schemathesis` (or any binary pointed to by `SCHEMATHESIS_CLI`), so install the Python virtualenv once using the commands above.
+   > Shortcut: run `npm run contract:local:full` to execute every step below automatically (build → migrate → seed → start backend → Schemathesis → cleanup). Server logs are written to `tmp/backend-contract.log`. The helper runs on port 4000, matching `.env.test.example` and CI; override with `CONTRACT_LOCAL_PORT`. The helper automatically prefers `.venv-schemathesis/bin/schemathesis` (or any binary pointed to by `SCHEMATHESIS_CLI`), so install the Python virtualenv once using the commands above.
 
 1. **Prep the backend**
    - Run `npm run db:migrate:test`.
    - Start the API with throttling disabled so fuzzing doesn’t hit 429s:  
      `DISABLE_RATE_LIMITING=true ALLOW_TEST_HTTP_SERVER=true npm run start:test`
 2. **Seed deterministic data**  
-   `npm run seed:contract-tests` writes `tmp/contract-seed.json` containing the `primaryUser.token` consumed by Newman/Schemathesis.
+   `npm run seed:contract-tests` writes `tmp/contract-seed.json` containing the `primaryUser.token` consumed by Schemathesis.
 3. **Export Schemathesis vars**
    ```bash
    export SCHEMATHESIS_LOCAL_TOKEN=$(node -e 'const seed=require("./tmp/contract-seed.json"); if(!seed?.primaryUser?.token) process.exit(1); process.stdout.write(seed.primaryUser.token);')
@@ -156,10 +155,9 @@ Always push fixes to the same branch; reruns are automatic once CI detects new c
    ```
    The hook module keeps Hypothesis pointing at seeded IDs; the npm scripts set this env var automatically, but export it when invoking `schemathesis run …` manually.
 4. **Run suites**
-   - Newman: `npm run test:contract:local`
    - Schemathesis: `npm run docs:openapi:generate && npm run test:contract:schemathesis:local`
 5. **CI parity**  
-   The `tests` and `contract_local` jobs already set `DISABLE_RATE_LIMITING=true` and extract the same token in `backend-ci.yml`. If a contract job fails, inspect the artifacts under `docs/internal/initiatives/tests-4-contract-tests/**`, review `tmp/backend-contract.log`, and mirror `npm run contract:local:full` locally (adjust `CONTRACT_LOCAL_PORT` if needed) for parity.
+   The `tests` and `contract_local` jobs already set `DISABLE_RATE_LIMITING=true` and extract the same token in `backend-ci.yml`. If a contract job fails, inspect the artifacts under `tests/contract/schemathesis/reports/**`, review `tmp/backend-contract.log`, and mirror `npm run contract:local:full` locally (adjust `CONTRACT_LOCAL_PORT` if needed) for parity.
 
 ### Validation expectations during contract runs
 

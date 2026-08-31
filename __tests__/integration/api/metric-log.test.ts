@@ -6,6 +6,8 @@ import {
   createTestUser,
 } from "../helpers/test-utils.js";
 
+const UNKNOWN_LOG_ID = "00000000-0000-4000-8000-000000000077";
+
 describe("Metric Log API", () => {
   let token: string;
   let metricId: string;
@@ -148,6 +150,23 @@ describe("Metric Log API", () => {
     });
 
     expect(res.status).toBe(401);
+    expect(res.body.status).toBe("fail");
+  });
+
+  it("blocks unauthenticated log listing", async () => {
+    const res = await api.get("/api/v1/metric-logs").query({ limit: 5 });
+
+    expect(res.status).toBe(401);
+    expect(res.body.status).toBe("fail");
+  });
+
+  it("returns 404 for an unknown log", async () => {
+    const res = await api
+      .get(`/api/v1/metric-logs/${UNKNOWN_LOG_ID}`)
+      .set("Authorization", authHeader(token))
+      .query({ metricId });
+
+    expect(res.status).toBe(404);
     expect(res.body.status).toBe("fail");
   });
 

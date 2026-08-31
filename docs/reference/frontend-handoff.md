@@ -38,7 +38,7 @@ Secret naming already used in docs:
 - Any FE-visible contract change must update:
   - backend implementation,
   - OpenAPI spec,
-  - contract tests (Newman/Schemathesis),
+  - contract tests (Schemathesis),
   - FE integration points.
 - For potentially breaking changes, backend and frontend must explicitly decide whether to:
   - keep backward compatibility in `v1`, or
@@ -142,7 +142,7 @@ curl -fsS "$STAGING_BASE_URL/metrics?limit=1" \
 - `docs/internal/archive/frontend/ci-cd/ENVIRONMENTS_MATRIX.md`
 - `docs/internal/initiatives/tests-4-contract-tests/README.md`
 - `docs/internal/initiatives/tests-4-contract-tests/seed-strategy.md`
-- `docs/internal/initiatives/tests-4-contract-tests/postman-newman/WORKFLOW_GUIDELINES.md`
+- `docs/reference/ci-pipeline/workflow-guidelines.md`
 - `src/server.ts`
 - `src/features/auth/infrastructure/http/authMiddleware.ts`
 - `src/features/auth/infrastructure/providers/JwtTokenProvider.ts`

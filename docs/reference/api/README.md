@@ -63,6 +63,6 @@ from fuzzing:
 
 ## Contract testing
 
-The spec is the input to two suites in `tests/contract/`: curated Postman/Newman collections and
-Schemathesis property-based fuzzing. Both run in CI against a live server.
+The spec is the input to Schemathesis property-based fuzzing in `tests/contract/schemathesis/`,
+which runs in CI against a live server.
 See [`../../how-to/testing/`](../../how-to/testing/).

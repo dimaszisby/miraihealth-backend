@@ -7,9 +7,9 @@ This matrix documents **all environments** that touch the Lakira backend and how
 - Base URLs and Render service identifiers,
 - Database and Redis details,
 - Secrets / environment variables,
-- Postman environment mappings and seed data.
+- Contract-fixture seed data.
 
-Treat this as the **single source of truth** when wiring CI, Render, and Postman/Newman.
+Treat this as the **single source of truth** when wiring CI and Render.
 
 > Special Note for Codex: When asked to “run tests in CI” or “deploy to staging”, read this file first to understand which URLs and secrets to use.
 
@@ -19,12 +19,12 @@ Treat this as the **single source of truth** when wiring CI, Render, and Postman
 
 ### 2.1 Summary Table
 
-| Env       | Purpose                                  | Backend Host / Base URL                       | DB Name        | Redis                    | Postman Env File                          |
-| --------- | ---------------------------------------- | --------------------------------------------- | -------------- | ------------------------ | ----------------------------------------- |
-| `local`   | Dev machine / Docker Compose             | `http://localhost:4000`                       | `lakira_local` | `redis://localhost:6379` | `lakira-local.postman_environment.json`   |
-| `ci`      | GitHub Actions test & contract pipelines | `http://localhost:4000` (service container)   | `lakira_ci`    | `redis://localhost:6379` | `lakira-local.postman_environment.json`   |
-| `staging` | Public “portfolio” environment on Render | `https://lakira-backend-staging.onrender.com` | `lakira_stage` | Managed Redis (optional) | `lakira-staging.postman_environment.json` |
-| `prod`\*  | Optional future production environment   | `TBD` (no production web-service URL yet)     | `lakira_prod`  | Managed Redis (optional) | (TBD)                                     |
+| Env       | Purpose                                  | Backend Host / Base URL                       | DB Name        | Redis                    |
+| --------- | ---------------------------------------- | --------------------------------------------- | -------------- | ------------------------ |
+| `local`   | Dev machine / Docker Compose             | `http://localhost:4000`                       | `lakira_local` | `redis://localhost:6379` |
+| `ci`      | GitHub Actions test & contract pipelines | `http://localhost:4000` (service container)   | `lakira_ci`    | `redis://localhost:6379` |
+| `staging` | Public “portfolio” environment on Render | `https://lakira-backend-staging.onrender.com` | `lakira_stage` | Managed Redis (optional) |
+| `prod`\*  | Optional future production environment   | `TBD` (no production web-service URL yet)     | `lakira_prod`  | Managed Redis (optional) |
 
 \* For a portfolio project, `staging` may effectively act as “production”. Keep `prod` documented as a future option.
 
@@ -49,7 +49,7 @@ Related secret names:
 
 ## 3. Local Environment
 
-**Use case:** Day-to-day development and manual Postman runs.
+**Use case:** Day-to-day development and manual API exploration.
 
 - **Backend:**
   - URL: `http://localhost:4000`
@@ -68,16 +68,10 @@ Related secret names:
   - `REDIS_URL=redis://localhost:6379`
   - `JWT_SECRET_LOCAL=changeme-local`
   - `NODE_ENV=development`
-- **Postman:**
-  - Environment: `environments/lakira-local.postman_environment.json`
-  - Important variables:
-    - `baseUrl` → `http://localhost:4000/api/v1`
-    - `authToken` → token for seeded test user
-
-Seeding / fixture notes:
+    Seeding / fixture notes:
 
 - Use `npm run seed:contract-tests` when you need deterministic API fixtures for contract/smoke runs.
-- Use a dedicated test user (e.g. `test@lakira.local`) shared between Postman and automated tests.
+- Use a dedicated test user (e.g. `test@lakira.local`) shared across automated tests.
 
 ---
 
@@ -127,7 +121,7 @@ Seeding / fixture notes:
   - `REDIS_URL=redis://localhost:6379`
   - `NODE_ENV=test`
   - `JWT_SECRET=${{ secrets.JWT_SECRET_TEST }}`
-  - `DISABLE_RATE_LIMITING=true` during `tests` and `contract_local` so Newman/Schemathesis see 2xx/4xx responses instead of global 429 throttles. Leave unset in other environments to keep production limits enforced.
+  - `DISABLE_RATE_LIMITING=true` during `tests` and `contract_local` so Schemathesis sees 2xx/4xx responses instead of global 429 throttles. Leave unset in other environments to keep production limits enforced.
   - `ALLOW_TEST_HTTP_SERVER=true` is injected by `npm run start:test` so the HTTP server can bind to port `4000` even in `NODE_ENV=test`.
 
 Secrets to define in GitHub:
@@ -135,10 +129,12 @@ Secrets to define in GitHub:
 - `POSTGRES_PASSWORD_TEST`
 - `JWT_SECRET_TEST`
 
-Postman / Newman in CI:
+Contract fixtures in CI:
 
-- `test:contract:local` uses `lakira-local.postman_environment.json`, but overrides:
-  - `baseUrl` → `http://localhost:4000/api/v1`
+- `contract_local` runs `npm run seed:contract-tests` as an explicit step, writing
+  `tmp/contract-seed.json`. Schemathesis reads `primaryUser.token` from it for
+  `SCHEMATHESIS_LOCAL_TOKEN`, and `tests/contract/hooks/seeded_ids.py` reads the seeded IDs.
+  The hook degrades **silently** if the file is absent, so keep the seed step ahead of it.
 
 > Special Note for Codex: Default GitHub Actions jobs run directly on the Ubuntu host, so reference `localhost` for `DATABASE_URL`/`REDIS_URL` (ports are forwarded from the service containers). Only use the container hostnames (`postgres`, `redis`) when the workflow job itself runs inside another container. Always keep `DATABASE_URL` as the source of truth and export `DB_*` variables only when a tool (e.g., `sequelize-cli`) still expects discrete fields.
 
@@ -201,14 +197,12 @@ GitHub secrets for staging deploy:
 - `RENDER_STAGING_DEPLOY_HOOK_URL` – Render deploy hook URL.
 - `STAGING_BASE_URL` – e.g. `https://lakira-backend-staging.onrender.com/api/v1`
 - `STAGING_HEALTH_URL` – e.g. `https://lakira-backend-staging.onrender.com/api/v1/health`
-- (Optional) `STAGING_POSTMAN_API_KEY` – if you later use Postman API.
 - (Optional) `RENDER_API_KEY` / `RENDER_SERVICE_ID` – if you move from deploy hooks to Render API/CLI deployments.
 
-Postman:
+Staging verification:
 
-- Environment file: `environments/lakira-staging.postman_environment.json`
-  - `baseUrl` → `{{STAGING_BASE_URL}}` value.
-  - `authToken` → token for a **staging test user** (seeded via migrations or manual script).
+- `npm run test:smoke` reads `SMOKE_BASE_URL` (falling back to `STAGING_BASE_URL`) and needs
+  nothing else — no token, no fixtures. See `tests/smoke/run-smoke.mjs`.
 
 Seed / fixture policy:
 

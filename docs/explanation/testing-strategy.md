@@ -31,8 +31,6 @@ Execution order (left-to-right):
   - `npm run test:integration:coverage`
   - `npm run integration:local`
 - Contract tests:
-  - `npm run test:contract:local`
-  - `npm run test:contract:staging`
   - `npm run test:contract:schemathesis:local`
   - `npm run test:contract:schemathesis:staging`
 

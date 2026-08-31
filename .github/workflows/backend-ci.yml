@@ -281,6 +281,13 @@ jobs:
         # Or a dedicated contract DB migration script if you add one
         # run: npm run db:migrate:contract
 
+      # Explicit, because Schemathesis depends on it. tmp/contract-seed.json used to
+      # be a side effect of the newman runner; the token step below and the seeded-ID
+      # hook in tests/contract/hooks/seeded_ids.py both read it, and the hook fails
+      # *silently* when it is absent (empty dict, every injection no-ops).
+      - name: Seed contract fixtures
+        run: npm run seed:contract-tests
+
       - name: Start backend (test server)
         run: |
           nohup npm run start:test > /tmp/backend.log 2>&1 &
@@ -301,9 +308,6 @@ jobs:
           }
           wait_with_logs npx wait-on tcp:4000 --timeout 180000
           wait_with_logs npx wait-on http://localhost:4000/api/v1/health --timeout 180000
-
-      - name: Run contract tests (local)
-        run: npm run test:contract:local
 
       - name: Setup Python for Schemathesis
         uses: actions/setup-python@v5
@@ -352,12 +356,6 @@ jobs:
             kill "$(cat /tmp/backend.pid)" || true
             rm -f /tmp/backend.pid
           fi
-
-      - name: Upload Newman contract reports (local)
-        uses: actions/upload-artifact@v4
-        with:
-          name: newman-contract-local
-          path: tests/contract/postman-newman/reports/local
 
       - name: Upload Schemathesis contract reports (local)
         uses: actions/upload-artifact@v4

@@ -95,7 +95,6 @@ __pycache__/
 
 # generated test reports
 tests/contract/schemathesis/reports/
-tests/contract/postman-newman/reports/
 
 
 # local actionlint artifacts (downloaded binaries / archives)
