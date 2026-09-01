@@ -3,7 +3,7 @@
 One decision per file, numbered globally and ordered by the date the decision was made.
 Format: [Nygard ADR](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions).
 
-**41 records.** 22 accepted, 19 proposed.
+**42 records.** 25 accepted, 17 proposed.
 
 ## Reading these
 
@@ -64,13 +64,14 @@ constrain how the system is built, so none of them belonged in a kit.
 | [ADR-0032](./adr-0032-account-lockout-redis-sliding-window.md)                   | Account lockout: Redis sliding window vs express-brute                 | Accepted     | 2026-05-18 | production readiness |
 | [ADR-0033](./adr-0033-centralize-analytics-env-reads.md)                         | Centralize analytics env reads through `envManager`                    | Accepted     | 2026-05-21 | observability        |
 | [ADR-0034](./adr-0034-cors-origin-allowlist.md)                                  | CORS_ORIGIN accepts a comma-separated allowlist                        | Accepted     | 2026-05-22 | saas-readiness       |
-| [ADR-0035](./adr-0035-tenant-scoped-cache-keys.md)                               | Tenant scoping is required on every cache key                          | **Proposed** | 2026-06-05 | saas-readiness       |
-| [ADR-0036](./adr-0036-refuse-production-unsafe-env-switches.md)                  | Production-unsafe env switches must be refused at schema layer         | **Proposed** | 2026-06-05 | saas-readiness       |
+| [ADR-0035](./adr-0035-tenant-scoped-cache-keys.md)                               | Tenant scoping is required on every cache key                          | Accepted     | 2026-06-05 | saas-readiness       |
+| [ADR-0036](./adr-0036-refuse-production-unsafe-env-switches.md)                  | Production-unsafe env switches must be refused at schema layer         | Accepted     | 2026-06-05 | saas-readiness       |
 | [ADR-0037](./adr-0037-resolve-canonical-ddd-layout-disagreement.md)              | Resolve the canonical-DDD-layout disagreement                          | **Proposed** | 2026-06-05 | saas-readiness       |
 | [ADR-0038](./adr-0038-observability-stack-as-attached-backing-service.md)        | Observability stack attaches as a backing service, not a bundle        | **Proposed** | 2026-08-17 | twelve-factor        |
 | [ADR-0039](./adr-0039-release-identity-and-immutable-artifacts.md)               | Every deploy carries a release identity; the built artefact ships      | **Proposed** | 2026-08-17 | twelve-factor        |
 | [ADR-0040](./adr-0040-worker-process-deployment-topology.md)                     | The worker is a first-class process type with its own deployment       | **Proposed** | 2026-08-17 | twelve-factor        |
-| [ADR-0041](./adr-0041-logs-as-event-streams-on-stdout.md)                        | Logs are an event stream on stdout; the app manages no log files       | **Proposed** | 2026-08-17 | twelve-factor        |
+| [ADR-0041](./adr-0041-logs-as-event-streams-on-stdout.md)                        | Logs are an event stream on stdout; the app manages no log files       | Accepted     | 2026-08-17 | twelve-factor        |
+| [ADR-0042](./adr-0042-vps-compose-deployment-topology.md)                        | Production and staging run as Compose stacks on a self-managed VPS     | **Proposed** | 2026-09-01 | twelve-factor        |
 
 ## Adding one
 
