@@ -226,6 +226,9 @@ registry.registerPath({
         },
       },
     },
+    400: {
+      $ref: "#/components/responses/BadRequestError",
+    },
     500: {
       $ref: "#/components/responses/InternalServerError",
     },
@@ -257,6 +260,9 @@ registry.registerPath({
           schema: RefreshResponseSchema,
         },
       },
+    },
+    400: {
+      $ref: "#/components/responses/BadRequestError",
     },
     401: {
       $ref: "#/components/responses/UnauthorizedError",
@@ -419,6 +425,9 @@ registry.registerPath({
           schema: SuccessResponseSchema,
         },
       },
+    },
+    400: {
+      $ref: "#/components/responses/BadRequestError",
     },
     401: {
       $ref: "#/components/responses/UnauthorizedError",

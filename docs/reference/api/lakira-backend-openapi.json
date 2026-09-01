@@ -2620,6 +2620,9 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
           }
@@ -2653,6 +2656,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
@@ -2818,6 +2824,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
