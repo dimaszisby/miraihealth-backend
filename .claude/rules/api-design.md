@@ -36,15 +36,31 @@ export const myRouter = createMyRouter();
 
 ## Response Format
 
-Use `successResponse()` and `errorResponse()` from `src/utils/response-formatter.ts`:
+**Success** — return it. Use `successResponse()` from `src/utils/response-formatter.ts`:
 
 ```json
-// Success
 { "status": "success", "message": "...", "data": { ... }, "success": true }
-
-// Error
-{ "status": "error", "message": "...", "data": null, "success": false }
 ```
+
+**Errors** — throw them. Handlers `throw new AppError(message, statusCode)`; the global
+`errorHandler` renders the single envelope through `sendError()` in
+`src/shared/utils/error-envelope.ts`. Do not hand-format an error body in a controller.
+
+```json
+// 4xx — the caller's fault
+{ "status": "fail", "message": "...", "errors": [{ "field": "body.name", "message": "..." }] }
+
+// 5xx — ours; the message is replaced with "Something went wrong!" in production
+{ "status": "error", "message": "..." }
+```
+
+`status` is always derived from the status code, never passed in. `errors` appears only where
+there is field-level detail, and `field` is a dotted path (`"body.name"`), never an array of
+segments. This is what the OpenAPI `BadRequestError` component documents.
+
+There is no `errorResponse()` helper. One existed in `response-formatter.ts` with zero callers
+and a body shape incompatible with everything the API actually sent; it was removed rather than
+wired in (C3, `docs/internal/todos/2026-09-01-todo-error-envelope.md`).
 
 ## HTTP Status Codes
 

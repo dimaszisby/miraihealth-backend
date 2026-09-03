@@ -27,7 +27,7 @@ Create a complete feature module at `src/features/$0/` following this project's 
 
 4. **Create the infrastructure layer** (`src/features/$0/infrastructure/`):
    - `http/schema.zod.ts` — Zod schemas using base rules from `src/constants/zod/zod-rules.ts`, error messages from `ZodMessages` in `src/constants/zod/zod-messages.ts`, OpenAPI metadata via `.openapi()`
-   - `http/controller.ts` — use `catchAsync`, `pickValidated`, `successResponse`/`errorResponse`, build feature via `buildXFeature()`
+   - `http/controller.ts` — use `catchAsync`, `pickValidated`, `successResponse` for success and `throw new AppError(...)` for failures (there is no `errorResponse()`), build feature via `buildXFeature()`
    - `http/router.ts` — factory `createXRouter()`, middleware pipeline: `requireJsonObjectBody()` → `validate(schema)` → `authMiddleware` → handler, then `methodNotAllowed()` catch-alls
    - `http/dto.ts` — response DTOs if needed
    - `persistence/models/{name}.sequelize.ts` — Sequelize model with `registerXModels(sequelize)` and `associateXModels(models)`

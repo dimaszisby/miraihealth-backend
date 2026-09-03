@@ -43,6 +43,8 @@ import { requireOrgRole } from "./features/shared/auth/infrastructure/http/asser
 import { disallowTraceMethod } from "@/shared/middleware/method-guard.js";
 import { requestIdMiddleware } from "@/shared/middleware/request-id.js";
 import { accessLogMiddleware } from "@/shared/middleware/access-log.js";
+import { sendError } from "@/shared/utils/error-envelope.js";
+import { attachClientErrorHandler } from "@/shared/middleware/client-error.js";
 import * as Sentry from "@sentry/node";
 
 const visualizationInvalidationAdapter =
@@ -178,7 +180,7 @@ app.get("/api/v1/ready", (_req, res) => {
       });
     })
     .catch(() => {
-      res.status(500).json({ status: "error" });
+      sendError(res, 500, "Readiness check failed");
     });
 });
 
@@ -252,6 +254,7 @@ const startServer = async () => {
     server = app.listen(PORT, () => {
       logger.info(`[SERVER] ${APP_NAME} running on port ${PORT}`);
     });
+    attachClientErrorHandler(server);
   } catch (error) {
     logger.error("[SERVER ERROR] Server initialization failed:", error);
     process.exit(1);

@@ -253,3 +253,185 @@ regardless of how consistent the emitters became.
 
 State the production-4xx behaviour change explicitly in the PR body: it changes what deployed
 clients receive, and it is the only part of this work that is not backward compatible.
+
+---
+
+# Review — completed 2026-09-02
+
+- **Branch:** `fix/error-envelope`, cut from `origin/dev` @ `d27e78d` with `--no-track`
+- **Status:** Done. All three defects fixed; both open questions answered; one defect found that
+  this brief's census missed, fixed here because it blocked the brief's own exit criterion.
+
+## What changed
+
+**One helper, `src/shared/utils/error-envelope.ts`.** `sendError(res, statusCode, message, {errors, stack})`
+builds `{status, message, errors?, stack?}` and writes it. `status` is _derived_ from the status
+code by `envelopeStatus()` and is never passed in, so the `fail`/`error` discriminator cannot drift
+between call sites. `AppError.ts:16` no longer computes it independently — it imports
+`envelopeStatus`, so there is exactly one copy of the rule.
+
+All eight sites in the census now call it, plus a ninth found during verification:
+
+| Site                       | Before                                 | After                                     |
+| -------------------------- | -------------------------------------- | ----------------------------------------- |
+| `error.ts` malformed JSON  | `{status, errors}` — no `message`      | `+ message: "Malformed JSON payload…"`    |
+| `error.ts` Zod             | `{status, errors}` — no `message`      | `+ message: "Validation failed"`          |
+| `error.ts` production      | masked **all** statuses                | masks **5xx only**                        |
+| `error.ts` dev/test        | `{status, message, stack?}`            | unchanged in shape, now via the helper    |
+| `validation.ts`            | `{status, errors}` — no `message`      | `+ message: "Validation failed"`          |
+| `method-guard.ts` ×2 (405) | `{status, message}`                    | byte-identical, now via the helper        |
+| `require-json-object.ts`   | `{status, errors}` — no `message`      | `+ message` (the guard's own message)     |
+| `server.ts` `/ready` catch | `{status}` — **no message at all**     | `+ message: "Readiness check failed"`     |
+| **`clientError` (new)**    | Node's bodyless 400, no `Content-Type` | the envelope — see "The ninth site" below |
+
+`errors` entries keep their existing content byte for byte; only a top-level `message` was added.
+That is what makes `message` requirable, which is what makes defect 3's fix possible.
+
+## The three defects
+
+**1. `path` → `field`.** Changed the spec to match the code, as the brief directed. Found a
+**second** wrong copy the brief did not list: `components/schemas/ValidationError`
+(`openapi-schemas.ts:58`) declared the same `path: string[]` shape. It is referenced by zero
+operations but is still emitted into the spec and still generates a frontend type, so it was
+aligned too. A scan of the generated spec now finds no `errors[].path` anywhere.
+
+**2. Production 4xx.** Masking is gated on `statusCode >= 500`. `error.test.ts` now asserts the
+inverse of what it used to: a 409 in production returns its real message, a 500 returns
+`"Something went wrong!"`. Both directions are covered.
+
+Security check the brief asked for: every 4xx `AppError` message in `src/` is a string literal or a
+module constant. The only interpolated message is
+`ResendEmailSender.ts:34` — `` `Resend email send failed: ${error.message}` `` — which is a **500**
+and therefore still masked. `UniqueConstraintError` remains the fixed `"Duplicate value"` at 409.
+Nothing leaks.
+
+**3. The vacuous gate.** All seven response components now declare `required: ["status","message"]`,
+and `BadRequestError`'s `errors` items declare `required: ["field","message"]`.
+
+`additionalProperties: false` was deliberately **not** set. The handler appends `stack` in
+development, so closing the schemas would fail against a dev server, and it would turn any future
+additive field into a breaking change. `required` is what converts the check from "validates `{}`"
+into one that can actually fail; that is the fix the brief asked for.
+
+## The ninth site — found during verification, not in the census
+
+`npm run contract:local:gate` **is red on `dev` today**, before any of this work. Verified by
+stashing the entire change set and running the gate on the pristine tree: identical failure,
+identical operation, identical cause.
+
+```
+POST /auth/refresh — JSON deserialization error + Missing Content-Type header
+[400] Bad Request: <EMPTY>
+```
+
+The response carried exactly one header, `connection: close`, and no body — not an Express response
+at all. **Node's HTTP parser** rejects a request with an illegal byte in a header (Schemathesis
+fuzzes the `Cookie` value) and answers before any middleware runs, so the error handler never sees
+it. Reproducible directly:
+
+```
+printf 'POST /api/v1/auth/refresh HTTP/1.1\r\nHost: x\r\nCookie: a=\x7f\r\n\r\n' | nc localhost 4000
+```
+
+This is an error response the API emits that does not carry the envelope, so it is a C3 defect —
+just one invisible to a `grep` for `.json(` in `src/`, which is why the census has eight rows and
+not nine. It is fixed by `src/shared/middleware/client-error.ts`, which answers the socket by hand
+with the same envelope. That is a scope addition beyond the brief; it is included because the
+brief's own exit criterion (`contract:local:gate` exits 0) is unreachable without it, and landing
+the tightened schemas onto an already-red gate would have left the next person with exactly the
+two-candidate-causes problem THE TRAP warns about.
+
+`attachClientErrorHandler(server)` is called from both `startServer()` and `jest.setup.ts`. A server
+that skips it silently reverts to Node's bodyless 400, so it is a named export rather than an inline
+`server.on(...)`.
+
+**Note the brief's baseline "gate exits 0 with 1371/1371" no longer held as written on 2026-09-01.**
+The run is unseeded, so whether the fuzzer generates a malformed cookie varies; it failed on 3 of 3
+runs during this work, including the pristine-tree run.
+
+## Open question: `errorResponse()` — deleted, not wired in
+
+**Deleted**, along with its `ErrorResponse` interface and its two unit tests.
+
+Wiring it in would have meant rewriting it completely, at which point nothing of the original
+remained. Its body was `{status:"error", message, error, code, errors, data:null, success:false}` —
+a fourth shape, incompatible in three separate ways:
+
+- hardcoded `status:"error"`, so every 4xx would be mislabelled — the exact defect 2 being fixed
+- `errors?: string[]`, not `{field,message}[]` — the exact defect 1 being fixed
+- an `error: unknown` field serialising the raw error object to the client, which is a leak the 5xx
+  masking exists to prevent
+
+More to the point, the architecture it implied was never the one this codebase has. Errors here are
+**thrown** (`AppError`) and rendered centrally; that is a better design than 52 controllers each
+hand-formatting a body, and it is what `successResponse()`'s 52 callers do _not_ have an equivalent
+of by accident. `api-design.md:39` mandated a helper describing an architecture that was never
+built. The rule was rewritten to document the real contract; `.claude/skills/new-feature/SKILL.md:30`
+was corrected to match.
+
+## Decision: 405 stays undocumented, deliberately
+
+No `MethodNotAllowedError` component was added. 405 is only ever returned for a method/path pair
+that is **not an operation in this spec** — `TRACE` anywhere via `disallowTraceMethod`, or
+`methodNotAllowed([...])` catch-alls such as `DELETE /auth/login`. There is no operation to hang the
+response on, OpenAPI cannot describe a response for an undefined method, and Schemathesis never
+generates such a request. An unreferenced component would be dead weight here and would generate an
+unused type in `lakira-frontend`. The status-code census is unchanged and still omits 405; the
+reasoning is recorded in a comment in `openapi-config.ts` so the next reader does not re-open it.
+The body it sends is the same envelope as everything else.
+
+## Verification
+
+```
+npm run lint            ✅
+npm run typecheck       ✅
+npm run format:check    ✅
+npm run docs:openapi:check   ✅ (spec generation confirmed idempotent — regenerating twice is a no-op)
+npm test                ✅ 556 unit (88 suites) + 182 integration (26 suites, 5 skipped)
+npm run contract:local:gate  ✅ exit 0 — 1370 generated, 1370 passed, 46 operations, 37 selected
+```
+
+Neither 46 nor 37 moved, as required.
+
+```
+UnauthorizedError    required= ['status', 'message']
+ForbiddenError       required= ['status', 'message']
+NotFoundError        required= ['status', 'message']
+BadRequestError      required= ['status', 'message']
+InternalServerError  required= ['status', 'message']
+ConflictError        required= ['status', 'message']
+TooManyRequestsError required= ['status', 'message']
+```
+
+No `<NONE — NOT FIXED>`. Defect 3 is addressed.
+
+### One warning count moved, and it is explained
+
+The gate now reports `Schema validation mismatch: 3 operations` where the brief characterised 2. The
+third is `POST /auth/refresh`, which was **already** in the warning set under the _other_ heading
+(401, cookie-based auth — `2026-09-01-todo-schemathesis-gate-warnings.md`). It now appears under
+both because malformed-cookie requests receive a documented 400 rejection instead of aborting at the
+protocol layer. Still the same four operations; no new operation entered the set, and the four
+remain not-defects.
+
+## Follow-ups, not done here
+
+1. **`lakira-frontend` must regenerate `lakira-backend.d.ts`.** `src/types/api/generated/lakira-backend.d.ts:3079-3082`
+   currently types `errors?: {message?: string; path?: string[]}[]`; `path` becomes `field`, and
+   `status`/`message` become required rather than optional. Nothing reads `errors` at runtime yet
+   (the hits in `InviteMemberForm.tsx` / `MetricForm.tsx` are react-hook-form's local
+   `formState.errors`), and no hand-written code references the `ValidationError` type, so this is a
+   type-surface change only. `src/types/generics/ApiResponse.ts:18`'s hand-declared
+   `errors?: string[]` should collapse onto the generated type in the same PR. Flagging it because
+   the last spec defect to cross this boundary broke `api:types:generate` and had to be fixed in
+   frontend PR #68.
+2. **`components/schemas/Error` and `ValidationError` are referenced by zero operations.** They were
+   aligned rather than deleted, to keep this PR's cross-repo type-surface change to the single
+   `path` → `field` rename. Removing them is a reasonable follow-up, best done with the frontend
+   regeneration above.
+3. **The rate limiters remain the one deliberate exception.** `express-rate-limit` renders its own
+   `message` option and sends `status` as the number `429`, not the string `"fail"`.
+   `TooManyRequestsError` documents that truthfully and now requires it. Routing the limiters through
+   `sendError` would change a deployed response shape for no gain C3 was about.
+4. **`/health` and `/ready` are still in no path in the spec**, as the brief noted. `/ready`'s error
+   branch now carries a `message`, but nothing validates it beyond `tests/smoke/run-smoke.mjs`.

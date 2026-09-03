@@ -1,11 +1,7 @@
 import type { ZodError } from "zod";
+import type { FieldIssue } from "@/shared/utils/error-envelope.js";
 
-type FormattedIssue = {
-  field: string;
-  message: string;
-};
-
-export const formatZodIssues = (error: ZodError): FormattedIssue[] =>
+export const formatZodIssues = (error: ZodError): FieldIssue[] =>
   error.errors.map((issue) => ({
     field: issue.path.join(".") || "body",
     message: issue.message,

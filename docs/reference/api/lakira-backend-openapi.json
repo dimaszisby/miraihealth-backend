@@ -61,6 +61,7 @@
           "application/json": {
             "schema": {
               "type": "object",
+              "required": ["status", "message"],
               "properties": {
                 "status": {
                   "type": "string",
@@ -81,6 +82,7 @@
           "application/json": {
             "schema": {
               "type": "object",
+              "required": ["status", "message"],
               "properties": {
                 "status": {
                   "type": "string",
@@ -101,6 +103,7 @@
           "application/json": {
             "schema": {
               "type": "object",
+              "required": ["status", "message"],
               "properties": {
                 "status": {
                   "type": "string",
@@ -121,6 +124,7 @@
           "application/json": {
             "schema": {
               "type": "object",
+              "required": ["status", "message"],
               "properties": {
                 "status": {
                   "type": "string",
@@ -128,18 +132,18 @@
                 },
                 "message": {
                   "type": "string",
-                  "example": "Bad Request"
+                  "example": "Validation failed"
                 },
                 "errors": {
+                  "description": "Field-level detail. Present only for validation and body-shape failures.",
                   "type": "array",
                   "items": {
                     "type": "object",
+                    "required": ["field", "message"],
                     "properties": {
-                      "path": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
+                      "field": {
+                        "type": "string",
+                        "example": "body.name"
                       },
                       "message": {
                         "type": "string"
@@ -158,6 +162,7 @@
           "application/json": {
             "schema": {
               "type": "object",
+              "required": ["status", "message"],
               "properties": {
                 "status": {
                   "type": "string",
@@ -178,6 +183,7 @@
           "application/json": {
             "schema": {
               "type": "object",
+              "required": ["status", "message"],
               "properties": {
                 "status": {
                   "type": "string",
@@ -198,6 +204,7 @@
           "application/json": {
             "schema": {
               "type": "object",
+              "required": ["status", "message"],
               "properties": {
                 "status": {
                   "type": "number",
@@ -244,26 +251,23 @@
           },
           "message": {
             "type": "string",
-            "example": "Validation Error"
+            "example": "Validation failed"
           },
           "errors": {
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
-                "path": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "example": ["body", "email"]
+                "field": {
+                  "type": "string",
+                  "example": "body.email"
                 },
                 "message": {
                   "type": "string",
                   "example": "Invalid email format"
                 }
               },
-              "required": ["path", "message"]
+              "required": ["field", "message"]
             }
           }
         },
