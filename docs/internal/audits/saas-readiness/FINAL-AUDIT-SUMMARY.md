@@ -2,7 +2,8 @@
 
 **Status:** ⚠️ **GOLD WITH CAVEATS** — the N1+N2+F1 downgrade is **lifted as of 2026-08-23**.
 N1, N2, N3 and F1 all landed together (tenant-scoped cache keys per ADR-0035, production-unsafe
-env refusal per ADR-0036, both now Accepted). The original C1–C6 caveats remain open-unchanged.
+env refusal per ADR-0036, both now Accepted). Of the original C1–C6 caveats, **C3 is closed**
+(`75cfdaa`, 2026-09-03); C1, C2, C4, C5 and C6 remain open-unchanged.
 Historical context follows.
 The 2026-06-05 re-audit confirmed the 05-24 baseline holds (zero source code drift between
 audits) but surfaced two **NEW P0** (cache-layer cross-tenant scoping) and one **NEW HIGH**
@@ -119,14 +120,14 @@ Each is scoped to ≤1 day. None blocks the ADR-001 gate or represents an exploi
 **Recommended order:** C1 and C3 first (a forker / API consumer hits these first), then the
 fast hardening wins C2/C5/C6, then C4.
 
-| ID     | Caveat                                                                                                                                                                                                                                                                                      | Sev | Scope | Status |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- | ----- | ------ |
-| **C1** | **Fork flow doesn't work as printed** — `bootstrap-fork.sh` rotates `JWT_SECRET` / sets `APP_NAME` only in `.env.development` (gitignored, absent on fresh clone → silent no-op); its printed step 4 `npm test` fails out-of-box (84 suites) without `.env.test`, which is never mentioned. | P1  | ≤1d   | ☐ Open |
-| **C2** | **Lakira branding leaks into the forked runtime** — `src/config/app-name.ts:4` defaults to `"lakira-backend"`; because C1's `APP_NAME` write misses, a fresh fork brands logs/OpenAPI/queues/emails as "lakira-backend".                                                                    | P2  | ≤1h   | ☐ Open |
-| **C3** | **Error envelope inconsistent + undocumented** — `error.ts` hand-rolls 3 shapes (incl. an undocumented `"fail"` status), bypassing `errorResponse()`, violating `api-design.md`; OpenAPI documents no 4xx/5xx schema (only 429).                                                            | P1  | ≤1d   | ☐ Open |
-| **C4** | **Architecture test too weak** — enforces only 3 narrow checks, no negative cases; real app→infra ORM writes, `AppError` in domain entities, and cross-feature deep imports pass green.                                                                                                     | P1  | ≤1d   | ☐ Open |
-| **C5** | **Sentry has no PII scrubbing** — `Sentry.init()` lacks a `beforeSend` to strip `authorization`/`cookie`/body secrets before egress.                                                                                                                                                        | P2  | ≤1h   | ☐ Open |
-| **C6** | **Log-redaction suffix-anchored** — `SENSITIVE_KEY_PATTERN` misses `authorization`, `cookie`, `bearer`, `passwordHash` (latent: nothing logs them today).                                                                                                                                   | P2  | ≤1h   | ☐ Open |
+| ID     | Caveat                                                                                                                                                                                                                                                                                      | Sev | Scope | Status               |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- | ----- | -------------------- |
+| **C1** | **Fork flow doesn't work as printed** — `bootstrap-fork.sh` rotates `JWT_SECRET` / sets `APP_NAME` only in `.env.development` (gitignored, absent on fresh clone → silent no-op); its printed step 4 `npm test` fails out-of-box (84 suites) without `.env.test`, which is never mentioned. | P1  | ≤1d   | ☐ Open               |
+| **C2** | **Lakira branding leaks into the forked runtime** — `src/config/app-name.ts:4` defaults to `"lakira-backend"`; because C1's `APP_NAME` write misses, a fresh fork brands logs/OpenAPI/queues/emails as "lakira-backend".                                                                    | P2  | ≤1h   | ☐ Open               |
+| **C3** | **Error envelope inconsistent + undocumented** — `error.ts` hand-rolls 3 shapes (incl. an undocumented `"fail"` status), bypassing `errorResponse()`, violating `api-design.md`; OpenAPI documents no 4xx/5xx schema (only 429).                                                            | P1  | ≤1d   | ✅ Fixed (`75cfdaa`) |
+| **C4** | **Architecture test too weak** — enforces only 3 narrow checks, no negative cases; real app→infra ORM writes, `AppError` in domain entities, and cross-feature deep imports pass green.                                                                                                     | P1  | ≤1d   | ☐ Open               |
+| **C5** | **Sentry has no PII scrubbing** — `Sentry.init()` lacks a `beforeSend` to strip `authorization`/`cookie`/body secrets before egress.                                                                                                                                                        | P2  | ≤1h   | ☐ Open               |
+| **C6** | **Log-redaction suffix-anchored** — `SENSITIVE_KEY_PATTERN` misses `authorization`, `cookie`, `bearer`, `passwordHash` (latent: nothing logs them today).                                                                                                                                   | P2  | ≤1h   | ☐ Open               |
 
 > **Fix-status convention:** flip ☐ Open → ✅ Fixed (with commit SHA) as each lands. When all
 > six are closed, the verdict can be re-stated as **GOLD** and a new dated audit run produced
