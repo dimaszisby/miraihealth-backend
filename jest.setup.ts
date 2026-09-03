@@ -5,6 +5,7 @@ import type { Server } from "http";
 import { QueryTypes } from "sequelize";
 import { setImmediate } from "timers";
 import app from "./src/server.js";
+import { attachClientErrorHandler } from "./src/shared/middleware/client-error.js";
 import sequelize from "./src/config/db.js";
 import { disconnectRedis } from "./src/utils/redis-client.js";
 import request from "supertest";
@@ -48,6 +49,7 @@ if (!skipDbLifecycle) {
           `[PROCESS] Test server running on port ${TEST_SERVER_PORT}`,
         );
       });
+      attachClientErrorHandler(server);
 
       await sequelize.authenticate();
       logger.info("[PROCESS] Database connection established.");

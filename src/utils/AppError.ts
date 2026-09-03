@@ -1,3 +1,5 @@
+import { envelopeStatus } from "@/shared/utils/error-envelope.js";
+
 class AppError extends Error {
   public readonly statusCode: number;
   public readonly status: "fail" | "error";
@@ -13,7 +15,7 @@ class AppError extends Error {
     Object.setPrototypeOf(this, new.target.prototype); // Maintain correct prototype chain
 
     this.statusCode = statusCode;
-    this.status = statusCode >= 400 && statusCode < 500 ? "fail" : "error";
+    this.status = envelopeStatus(statusCode);
     this.isOperational = true; // Distinguish operational errors from programming errors
 
     Error.captureStackTrace(this);

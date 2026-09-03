@@ -70,6 +70,25 @@ export const openApiDocument = {
         description: "JWT authentication using a bearer token",
       },
     },
+    // Every error body the API emits comes from `src/shared/utils/error-envelope.ts`
+    // and has the shape `{ status, message, errors? }`. The components below
+    // describe exactly that.
+    //
+    // Each declares `required` — before the C3 error-envelope work none did, and a
+    // JSON Schema with no `required` and no `additionalProperties` validates `{}`
+    // and `{"anything":1}` alike. Schemathesis's `response_schema_conformance`
+    // check therefore passed trivially for all seven components across 46
+    // operations: a gate that could not fail. `additionalProperties: false` is
+    // deliberately *not* set — the handler appends `stack` in development, and
+    // closing the schemas would make an additive change a breaking one.
+    //
+    // 405 is emitted by `method-guard.ts` and is deliberately undocumented: it is
+    // only ever returned for a method/path pair that is not an operation in this
+    // spec (TRACE anywhere, or e.g. DELETE /auth/login), so there is no operation
+    // to hang the response on and Schemathesis never generates such a request. A
+    // `MethodNotAllowedError` component would be unreferenced here and would
+    // generate an unused type in lakira-frontend. The body it sends is the same
+    // envelope as everything else.
     responses: {
       UnauthorizedError: {
         description: "Authentication required or invalid token",
@@ -77,6 +96,7 @@ export const openApiDocument = {
           "application/json": {
             schema: {
               type: "object",
+              required: ["status", "message"],
               properties: {
                 status: { type: "string", example: "fail" },
                 message: { type: "string", example: "Unauthorized" },
@@ -91,6 +111,7 @@ export const openApiDocument = {
           "application/json": {
             schema: {
               type: "object",
+              required: ["status", "message"],
               properties: {
                 status: { type: "string", example: "fail" },
                 message: { type: "string", example: "Forbidden" },
@@ -105,6 +126,7 @@ export const openApiDocument = {
           "application/json": {
             schema: {
               type: "object",
+              required: ["status", "message"],
               properties: {
                 status: { type: "string", example: "fail" },
                 message: { type: "string", example: "Resource not found" },
@@ -119,15 +141,25 @@ export const openApiDocument = {
           "application/json": {
             schema: {
               type: "object",
+              required: ["status", "message"],
               properties: {
                 status: { type: "string", example: "fail" },
-                message: { type: "string", example: "Bad Request" },
+                message: { type: "string", example: "Validation failed" },
+                // `field` — not `path`. The emitter
+                // (`zod-error-formatter.ts`) produces a dotted string such as
+                // "body.name", which is what a form needs; this component used
+                // to declare `path: string[]`, a key no response has ever
+                // carried. lakira-frontend generated its types from that and
+                // typed a property that is always undefined.
                 errors: {
+                  description:
+                    "Field-level detail. Present only for validation and body-shape failures.",
                   type: "array",
                   items: {
                     type: "object",
+                    required: ["field", "message"],
                     properties: {
-                      path: { type: "array", items: { type: "string" } },
+                      field: { type: "string", example: "body.name" },
                       message: { type: "string" },
                     },
                   },
@@ -143,6 +175,7 @@ export const openApiDocument = {
           "application/json": {
             schema: {
               type: "object",
+              required: ["status", "message"],
               properties: {
                 status: { type: "string", example: "error" },
                 message: { type: "string", example: "Internal Server Error" },
@@ -157,6 +190,7 @@ export const openApiDocument = {
           "application/json": {
             schema: {
               type: "object",
+              required: ["status", "message"],
               properties: {
                 status: { type: "string", example: "fail" },
                 message: { type: "string", example: "Resource already exists" },
@@ -165,15 +199,18 @@ export const openApiDocument = {
           },
         },
       },
-      // The rate limiters emit `status` as a number (429), while every response
-      // component above documents it as a string ("fail"/"error"). This documents
-      // what the code actually returns; the divergence is tracked as caveat C3.
+      // The rate limiters do not go through the shared envelope: express-rate-limit
+      // renders its own `message` option, which sends `status` as the number 429
+      // rather than the string "fail". This documents what the code actually
+      // returns. Unifying it would change a deployed response shape for no gain
+      // that C3 was about, so it is left as the one deliberate exception.
       TooManyRequestsError: {
         description: "Rate limit exceeded",
         content: {
           "application/json": {
             schema: {
               type: "object",
+              required: ["status", "message"],
               properties: {
                 status: { type: "number", example: 429 },
                 message: {

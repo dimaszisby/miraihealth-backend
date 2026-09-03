@@ -3,6 +3,10 @@ import { Response, NextFunction } from "express";
 import { ZodError, ZodTypeAny } from "zod";
 import logger from "@/utils/logger.js";
 import { formatZodIssues } from "@/shared/utils/zod-error-formatter.js";
+import {
+  sendError,
+  VALIDATION_FAILED_MESSAGE,
+} from "@/shared/utils/error-envelope.js";
 
 type SchemaBag = {
   body?: ZodTypeAny;
@@ -13,7 +17,7 @@ type SchemaBag = {
 const handleError = (res: Response, error: ZodError) => {
   const formattedErrors = formatZodIssues(error);
   logger.error("Validation Errors:", formattedErrors);
-  res.status(400).json({ status: "fail", errors: formattedErrors });
+  sendError(res, 400, VALIDATION_FAILED_MESSAGE, { errors: formattedErrors });
 };
 
 type SafeParseHolder = { safeParse: ZodTypeAny["safeParse"] };

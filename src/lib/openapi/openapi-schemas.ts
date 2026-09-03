@@ -55,14 +55,18 @@ export const ErrorSchema = registerSchema(
   }),
 );
 
+// `field`, a dotted string — not `path`, an array of segments. This mirrors
+// `zod-error-formatter.ts` and the `BadRequestError` response component. The
+// array form was documented here and in that component for as long as both have
+// existed, and no response has ever carried it.
 export const ValidationErrorSchema = registerSchema(
   "ValidationError",
   z.object({
     status: z.string().openapi({ example: "fail" }),
-    message: z.string().openapi({ example: "Validation Error" }),
+    message: z.string().openapi({ example: "Validation failed" }),
     errors: z.array(
       z.object({
-        path: z.array(z.string()).openapi({ example: ["body", "email"] }),
+        field: z.string().openapi({ example: "body.email" }),
         message: z.string().openapi({ example: "Invalid email format" }),
       }),
     ),
