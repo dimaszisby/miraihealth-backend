@@ -58,6 +58,10 @@ const LOCAL_PROFILE_PRESETS = {
     maxExamples: "15",
     maxFailures: "15",
     suppressHealthChecks: "too_slow,filter_too_much",
+    // Fixed, arbitrary seed: a gate verdict must be reproducible on an
+    // unchanged tree. `full` and `exploratory` deliberately have no preset
+    // seed so they keep drawing fresh Hypothesis input each run.
+    seed: "42",
   },
   full: {
     mode: "positive",
@@ -86,22 +90,42 @@ function buildTags(tagString) {
 }
 
 function runCommand(command, args, options = {}) {
+  const { captureStdout, ...spawnOptions } = options;
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: "inherit", ...options });
-    child.on("error", reject);
+    const stdio = captureStdout ? ["inherit", "pipe", "inherit"] : "inherit";
+    const child = spawn(command, args, { stdio, ...spawnOptions });
+    let capturedStdout = "";
+    if (captureStdout) {
+      child.stdout.on("data", (chunk) => {
+        process.stdout.write(chunk);
+        capturedStdout += chunk.toString();
+      });
+    }
+    child.on("error", (error) => {
+      error.capturedStdout = capturedStdout;
+      reject(error);
+    });
     child.on("exit", (code) => {
       if (code === 0) {
-        resolve(undefined);
+        resolve(capturedStdout);
         return;
       }
 
-      reject(
-        new Error(
-          `Command "${[command, ...args].join(" ")}" exited with code ${code}`,
-        ),
+      const error = new Error(
+        `Command "${[command, ...args].join(" ")}" exited with code ${code}`,
       );
+      error.capturedStdout = capturedStdout;
+      reject(error);
     });
   });
+}
+
+async function writeEffectiveSeed(reportDir, capturedStdout) {
+  const match = capturedStdout?.match(/^Seed:\s*(\S+)/m);
+  if (!match) {
+    return;
+  }
+  await fs.writeFile(path.join(reportDir, "seed.txt"), `${match[1]}\n`);
 }
 
 function findBundledSchemathesisCli() {
@@ -213,7 +237,7 @@ async function main() {
   const maxFailures =
     process.env.SCHEMATHESIS_LOCAL_MAX_FAILURES ?? preset.maxFailures;
   const requestTimeout = process.env.SCHEMATHESIS_LOCAL_REQUEST_TIMEOUT;
-  const seed = process.env.SCHEMATHESIS_LOCAL_SEED;
+  const seed = process.env.SCHEMATHESIS_LOCAL_SEED ?? preset.seed;
   const cli = resolveSchemathesisCli();
 
   const args = [
@@ -281,7 +305,7 @@ async function main() {
   }
 
   logger.info(
-    `[schemathesis:local] Profile "${profile}" resolved to mode=${mode}, phases=${phases}, workers=${workers}, maxExamples=${maxExamples}, maxFailures=${maxFailures ?? "unset"}, suppressHealthChecks=${suppressHealthChecks ?? "unset"}.`,
+    `[schemathesis:local] Profile "${profile}" resolved to mode=${mode}, phases=${phases}, workers=${workers}, maxExamples=${maxExamples}, maxFailures=${maxFailures ?? "unset"}, suppressHealthChecks=${suppressHealthChecks ?? "unset"}, seed=${seed ?? 'unset (Schemathesis will pick one and print it as "Seed: <value>" at the end of this run)'}.`,
   );
   logger.info(`[schemathesis:local] Using Schemathesis CLI: ${cli}`);
   logger.info("[schemathesis:local] Running Schemathesis with args:", args);
@@ -297,11 +321,17 @@ async function main() {
         .filter(Boolean)
         .join(path.delimiter),
     };
-    await runCommand(cli, args, { cwd: repoRoot, env });
+    const capturedStdout = await runCommand(cli, args, {
+      cwd: repoRoot,
+      env,
+      captureStdout: true,
+    });
+    await writeEffectiveSeed(reportDir, capturedStdout);
     logger.info(
       `[schemathesis:local] Completed. Reports stored under ${reportDir}`,
     );
   } catch (error) {
+    await writeEffectiveSeed(reportDir, error.capturedStdout);
     if (error.code === "ENOENT") {
       logger.error(
         `[schemathesis:local] Unable to find "${cli}". Install Schemathesis via "pip install -r tests/contract/schemathesis/requirements.txt" or point SCHEMATHESIS_CLI to the binary.`,

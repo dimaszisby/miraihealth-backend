@@ -37,6 +37,18 @@ Reports are written under `reports/local|staging/<timestamp>/`.
 - Local: `SCHEMATHESIS_LOCAL_TOKEN`, optional local profile overrides.
 - Staging: `SCHEMATHESIS_STAGING_BASE_URL`, `SCHEMATHESIS_STAGING_TOKEN`.
 
+## Seed / reproducibility
+
+- `gate` pins a default seed (`LOCAL_PROFILE_PRESETS.gate.seed` in `run-local.js`) so a gate verdict
+  on an unchanged tree is reproducible instead of a fresh Hypothesis sample each run. `full` and
+  `exploratory` intentionally have no preset seed and keep drawing a new one per run, to retain their
+  exploratory value.
+- Any profile's seed can be overridden with `SCHEMATHESIS_LOCAL_SEED` — e.g. to replay a specific past
+  run or explore beyond `gate`'s default.
+- The effective seed is logged in the runner's `Profile "..." resolved to ...` line, and Schemathesis's
+  own `Seed: <value>` line (printed at the end of every run, pass or fail) is captured into
+  `reports/local/<timestamp>/seed.txt` alongside the JUnit/HAR reports.
+
 ## Maintenance Rules
 
 - Keep hooks and profile defaults aligned with runtime validation behavior.
