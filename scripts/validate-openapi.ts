@@ -112,8 +112,33 @@ const validate = (): string[] => {
     }
   }
 
+  // 4. Every component schema must be reachable by $ref. An orphan is dead
+  //    weight that downstream generators still turn into an exported type — and
+  //    a plausible-looking one, which is worse than none. Seven had accumulated
+  //    before this check existed, two of them error envelopes that had drifted
+  //    from the real response shape.
+  //
+  //    This is exact rather than allowlisted because query-parameter schemas are
+  //    no longer registered: `zod-to-openapi` inlines them into each operation
+  //    either way, so registering them only ever added an unreferenced entry
+  //    here. If a new orphan appears, it is genuinely unreachable.
+  const schemas = ((doc.components ?? {}) as Record<string, Json>).schemas as
+    | Record<string, Json>
+    | undefined;
+
+  if (schemas) {
+    const referenced = new Set(refs.map(([ref]) => ref));
+    for (const name of Object.keys(schemas)) {
+      if (!referenced.has(`#/components/schemas/${name}`)) {
+        problems.push(
+          `unreferenced schema "${name}" — delete it, or $ref it from an operation`,
+        );
+      }
+    }
+  }
+
   logger.info(
-    `[OpenAPI] Validated ${operationCount} operations and ${refs.length} $refs.`,
+    `[OpenAPI] Validated ${operationCount} operations, ${refs.length} $refs, and ${Object.keys(schemas ?? {}).length} schemas.`,
   );
   return problems;
 };
