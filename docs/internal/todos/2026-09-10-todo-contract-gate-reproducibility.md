@@ -177,6 +177,27 @@ not just the historical evidence in the table earlier in this doc. The run 3 fai
 previously-unseen finding (not the `POST /auth/refresh` case PR #79 already fixed); it is logged here
 as evidence and is otherwise out of scope for this change — no fix attempted.
 
+**Correction, 2026-09-10 — the trigger is not a space, and this is not a new defect class.** A space
+is `0x20`, and `hasInvalidControlChars` (`src/shared/utils/text-validation.ts:9`) rejects
+`code === 0x7f || code < 0x20`, so a space passes. It also satisfies the documented pattern. The spec
+is accurate here: `UpdateDisplayOptionsRequest.displayOptions.color` carries
+`pattern: "^[^\u0000-\u001F\u007F]*$"`, and Schemathesis honours patterns when generating, so it
+would not produce a control character in the first place.
+
+The remaining trigger is `hasUnpairedSurrogates` (`text-validation.ts:19`) — a lone `\uD800`–`\uDBFF`
+or `\uDC00`–`\uDFFF`. Such a code unit is not inside `\u0000-\u001F\u007F`, so it satisfies the
+documented pattern while the code rejects it, and no JSON Schema `pattern` can express "no unpaired
+surrogates".
+
+That makes this a **fifth instance of the class already characterised** in
+[`2026-09-01-todo-schemathesis-gate-warnings.md`](./2026-09-01-todo-schemathesis-gate-warnings.md) —
+a constraint OpenAPI cannot state — rather than a spec-versus-code mismatch. Tightening the spec
+would fix nothing. Fold it into whatever decision that todo reaches.
+
+One consequence of pinning worth recording: seed 42 passes, so `gate` will not surface this case
+again. That is the fuzzer-as-fixture tradeoff accepted above, and it holds only while `full` or
+`exploratory` actually get run — nothing currently schedules either.
+
 **Verification — after (same tree, code change applied, 3 runs):**
 
 | Run | Verdict | Test cases                  | Seed (pinned) | `seed.txt` written |

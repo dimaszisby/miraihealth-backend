@@ -1,6 +1,6 @@
 # Todo — remove the orphaned OpenAPI schemas
 
-- **Status:** Open — small, self-contained, no blockers
+- **Status:** Complete (2026-09-10) — all 16 removed, and the gate that would have caught them exists
 - **Created:** 2026-09-10
 - **Owner:** unassigned
 - **Origin:** follow-up 2 from the C3 error-envelope work
@@ -110,3 +110,82 @@ for n in sorted(dead): print('  -', n)
 
 Operation count must stay **46** and Schemathesis selection **37/46**. Removing an unreferenced
 schema must move neither; a change in either means something referenced was deleted.
+
+---
+
+## Review — completed 2026-09-10
+
+Branch `fix/orphaned-openapi-schemas` off `dev` @ `fa1933e`.
+
+**All 16 unreferenced schemas are gone, not the 7 planned.** The nine query-parameter schemas were
+unregistered rather than deleted — option 2 from the open question — which removes them from
+`components/schemas` while leaving every operation untouched.
+
+### The open question resolved by experiment, before any of the work
+
+The todo flagged option 2 as "the only one of the three that could turn out to be impossible".
+Tested it first, on a throwaway edit: unregistered `MetricIdQuery` alone, regenerated, diffed.
+
+```
+components.schemas   64 → 63
+operations           46 → 46      unchanged
+metricId parameters   7 →  7      unchanged
+spec diff            8 deletions — the schema definition, nothing else
+```
+
+`zod-to-openapi` inlines parameter schemas identically whether or not they are registered, so
+registering them only ever added an unreferenced entry. Reverted, then did the real work knowing the
+answer rather than hoping for it.
+
+### Result
+
+```
+schemas        64 → 48     (7 dead deleted, 9 parameter schemas unregistered)
+operations     46          unchanged
+$refs         342 → 333
+unreferenced   16 → 0
+```
+
+`paths` is **byte-identical** to `origin/dev`, `components.responses` is identical, and no surviving
+schema definition changed. Verified by parsing both documents and comparing, not by reading the
+diff.
+
+### The gate, which can actually fail
+
+`scripts/validate-openapi.ts` grew a fourth check: every `components/schemas` entry must be reachable
+by `$ref`. It is **exact, with no allowlist**, because unregistering the parameter schemas removed
+the only category that would have needed one — a hand-maintained exception list is the same drift
+this check exists to stop.
+
+Proven by injecting a `DeliberateOrphan` schema into the generated spec:
+
+```
+[OpenAPI] Specification is invalid — 1 problem(s):
+  - unreferenced schema "DeliberateOrphan" — delete it, or $ref it from an operation
+exit 1
+```
+
+and `exit 0` once removed. This repo has shipped three gates that could not fail
+(`docs:openapi:check` validating drift but not validity, `contract_staging` never issuing a request,
+the error components validating `{}`), so a new check is not credible until it has been seen to
+reject something.
+
+`docs:openapi:validate` already runs inside `docs:openapi:generate`, so `docs:openapi:check` enforces
+this in CI with no workflow change.
+
+### Cross-repo
+
+`lakira-frontend` regenerates from this spec and loses 16 exported types it never used, `Error` and
+`ValidationError` among them — both looked like the error envelope and neither was, which is exactly
+how its hand-written `ApiFailure` drifted in the first place. Its `api-contract` job will flag the
+snapshot as stale on the next PR; the fix there is the documented
+`npm run api:spec:sync && npm run api:types:generate`.
+
+### Also in this branch
+
+A correction to `2026-09-10-todo-contract-gate-reproducibility.md`'s Review. It recorded the
+intermittent `PATCH /metric-settings/{id}/display` failure as triggered by "a bare space"; a space is
+`0x20` and `hasInvalidControlChars` rejects `< 0x20`, so that cannot be it. The real trigger is
+`hasUnpairedSurrogates`, which no JSON Schema `pattern` can express — making it a fifth instance of
+the class in `2026-09-01-todo-schemathesis-gate-warnings.md` rather than a spec-versus-code mismatch.
+Details there.
